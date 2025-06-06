@@ -1,8 +1,9 @@
-import { PrismaClient } from '@prisma/client'
-import type { DynamicParam, Endpoint, TypedFetchInput, TypedFetchRequestInit } from 'fetchdts'
-import { graphql, type ResultOf, type VariablesOf } from 'gql.tada'
+import type { Endpoint, TypedFetchInput, TypedFetchRequestInit } from 'fetchdts'
+import {
+  graphql, type ResultOf, type VariablesOf
+} from 'gql.tada'
+import { GraphQLError } from 'graphql'
 
-const prisma = new PrismaClient()
 
 // Define types for GraphQL operations
 interface User {
@@ -22,60 +23,6 @@ interface Post {
   updatedAt: string
   viewCount: number
 }
-
-interface AuthPayload {
-  token?: string
-  user: User
-}
-
-interface PostCreateInput {
-  title: string
-  content?: string
-}
-
-interface UserUniqueInput {
-  id?: number
-  email?: string
-}
-
-interface PostOrderByUpdatedAtInput {
-  updatedAt: 'asc' | 'desc'
-}
-
-// GraphQL Tada typed queries - fully type-safe with your schema
-export const GetMeQuery = graphql(`
-  query GetMe {
-    me {
-      id
-      email
-      name
-      posts {
-        id
-        title
-        published
-      }
-    }
-  }
-`)
-
-export const GetFeedQuery = graphql(`
-  query GetFeed($searchString: String, $skip: Int, $take: Int, $orderBy: PostOrderByUpdatedAtInput) {
-    feed(searchString: $searchString, skip: $skip, take: $take, orderBy: $orderBy) {
-      id
-      title
-      content
-      published
-      createdAt
-      updatedAt
-      viewCount
-      author {
-        id
-        name
-        email
-      }
-    }
-  }
-`)
 
 export const LoginMutation = graphql(`
   mutation Login($email: String!, $password: String!) {
@@ -119,9 +66,6 @@ export const CreateDraftMutation = graphql(`
 `)
 
 // Type aliases for easy access to query types
-export type GetMeResult = ResultOf<typeof GetMeQuery>
-export type GetFeedResult = ResultOf<typeof GetFeedQuery>
-export type GetFeedVariables = VariablesOf<typeof GetFeedQuery>
 export type LoginResult = ResultOf<typeof LoginMutation>
 export type LoginVariables = VariablesOf<typeof LoginMutation>
 export type SignupResult = ResultOf<typeof SignupMutation>
@@ -136,7 +80,7 @@ export interface GraphQLAPISchema {
       POST: {
         body: {
           query: string
-          variables?: any
+          variables?: Record<string, unknown>
           operationName?: string
         }
         headers?: {
@@ -144,7 +88,7 @@ export interface GraphQLAPISchema {
           'content-type': string
         }
         response: {
-          data?: any
+          data?: Record<string, unknown>
           errors?: Array<{
             message: string
             locations?: Array<{ line: number; column: number }>
@@ -154,24 +98,8 @@ export interface GraphQLAPISchema {
       }
     }
   }
-  // Typed endpoints using GraphQL Tada types
-  '/query/me': {
-    [Endpoint]: {
-      GET: {
-        headers?: { authorization?: string }
-        response: { data: GetMeResult }
-      }
-    }
-  }
-  '/query/feed': {
-    [Endpoint]: {
-      GET: {
-        query?: GetFeedVariables
-        headers?: { authorization?: string }
-        response: { data: GetFeedResult }
-      }
-    }
-  }
+
+  // Authentication endpoints
   '/mutation/login': {
     [Endpoint]: {
       POST: {
@@ -204,27 +132,23 @@ export type TypedRequest<T extends TypedFetchInput<GraphQLAPISchema> = TypedFetc
   url: T
   method?: string
   headers?: Record<string, string>
-  body?: any
+  body?: TypedFetchRequestInit<GraphQLAPISchema, T>['body']
 } & TypedFetchRequestInit<GraphQLAPISchema, T>
 
 export interface Context {
-  prisma: PrismaClient
   req: TypedRequest // Typed with both fetchdts and GraphQL Tada
 }
 
-export function createContext({ req }: { req: TypedRequest }): Context {
-  return {
-    req,
-    prisma,
-  }
+export function createContext<T extends TypedFetchInput<GraphQLAPISchema> = TypedFetchInput<GraphQLAPISchema>>({ req }: { req: TypedRequest<T> }) {
+  return { req }
 }
 
 // Helper function for type-safe GraphQL execution
-export async function executeGraphQL<TData = any, TVariables = any>(
+export async function executeGraphQL<TData = Record<string, unknown>, TVariables = Record<string, unknown>>(
   query: string,
   variables?: TVariables,
   headers?: Record<string, string>
-): Promise<{ data?: TData; errors?: any[] }> {
+): Promise<{ data?: TData; errors?: GraphQLError[] }> {
   const response = await fetch('/graphql', {
     method: 'POST',
     headers: {
@@ -237,5 +161,5 @@ export async function executeGraphQL<TData = any, TVariables = any>(
     }),
   })
 
-  return response.json() as Promise<{ data?: TData; errors?: any[] }>
+  return response.json() as Promise<{ data?: TData; errors?: GraphQLError[] }>
 }

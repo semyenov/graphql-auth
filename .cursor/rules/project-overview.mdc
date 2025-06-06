@@ -3,53 +3,41 @@ description:
 globs: 
 alwaysApply: false
 ---
-# GraphQL Auth Project Overview
+# GraphQL Auth Server - Project Overview
 
-This is a modern GraphQL authentication server built with advanced TypeScript typing and multiple API patterns.
+This is a GraphQL authentication server built with Pothos, Prisma, and H3.
 
-## 🏗️ Architecture
+## Architecture Stack
+- **GraphQL Schema**: Pothos (migrated from Nexus)
+- **Database ORM**: Prisma with SQLite
+- **HTTP Server**: H3 + Bun runtime
+- **Authentication**: JWT tokens with bcrypt
+- **Permissions**: GraphQL Shield middleware
+- **Type Safety**: TypeScript throughout
 
-**Core Technologies:**
-- **H3** - Modern web framework for unified REST + GraphQL server
-- **Apollo Server** - GraphQL server with schema-first approach
-- **Bun** - Fast JavaScript runtime and package manager
-- **Prisma** - Type-safe database ORM
-- **GraphQL Tada** - Compile-time GraphQL type generation
-- **fetchdts** - Type-safe HTTP request definitions
+## Key Files Structure
 
-## 📁 Key Files
+### Core Schema & API
+- [src/schema.ts](mdc:src/schema.ts) - Main GraphQL schema using Pothos
+- [src/builder.ts](mdc:src/builder.ts) - Pothos builder configuration with Prisma plugin
+- [src/server.ts](mdc:src/server.ts) - H3 server setup with GraphQL endpoint
+- [src/context.ts](mdc:src/context.ts) - GraphQL context creation
 
-- [src/server.ts](mdc:src/server.ts) - Main H3 + Apollo server setup
-- [src/context.ts](mdc:src/context.ts) - Typed context with GraphQL Tada queries
-- [src/h3-routes.ts](mdc:src/h3-routes.ts) - REST API endpoints
-- [src/schema.ts](mdc:src/schema.ts) - GraphQL schema definition
-- [src/graphql-env.d.ts](mdc:src/graphql-env.d.ts) - Auto-generated GraphQL types
-- [schema.graphql](mdc:schema.graphql) - GraphQL schema output
-- [tsconfig.json](mdc:tsconfig.json) - TypeScript config with GraphQL Tada plugin
+### Authentication & Security
+- [src/utils.ts](mdc:src/utils.ts) - JWT utilities and user ID extraction
+- [src/permissions/index.ts](mdc:src/permissions/index.ts) - GraphQL Shield permissions rules
 
-## 🔄 API Patterns
+### Database
+- [prisma/schema.prisma](mdc:prisma/schema.prisma) - Database schema with User/Post models
+- [.pothos/types.d.ts](mdc:.pothos/types.d.ts) - Auto-generated Pothos types from Prisma
 
-**GraphQL Endpoints:**
-- `POST /graphql` - Main GraphQL API with full type safety
+### Configuration
+- [package.json](mdc:package.json) - Dependencies and scripts
+- [tsconfig.json](mdc:tsconfig.json) - TypeScript configuration
 
-**REST Endpoints:**
-- `GET /` - Welcome page with endpoint listing
-- `GET /api/health` - Health check
-- `GET /api/users` - List users
-- `GET /api/posts` - Paginated posts
-- `POST /api/posts/:id/view` - Increment views
-- `GET /api/me` - Protected endpoint
-
-## 🎯 Type Safety Features
-
-1. **GraphQL Tada** - Queries are typed at compile time from schema
-2. **fetchdts** - HTTP requests have typed paths, bodies, and responses  
-3. **Prisma** - Database operations are fully typed
-4. **Context Integration** - Request context combines all typing systems
-
-## 🚀 Development Commands
-
-- `bun run dev` - Start development server with watch mode
-- `bun run generate` - Regenerate all types (Prisma + Nexus + GraphQL Tada)
-- `bun run demo` - Run demo showing REST + GraphQL usage
-- `bun run generate:gql` - Regenerate GraphQL Tada types only
+## API Features
+- User signup/login with JWT tokens
+- CRUD operations for posts (drafts and published)
+- Role-based permissions (author ownership rules)
+- Public feed endpoint for published posts
+- User profile management

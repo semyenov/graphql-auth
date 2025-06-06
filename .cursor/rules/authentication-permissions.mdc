@@ -1,0 +1,112 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Authentication & Permissions System
+
+This project implements JWT-based authentication with field-level permissions using GraphQL Shield.
+
+## Authentication Flow
+
+### JWT Utils ([src/utils.ts](mdc:src/utils.ts))
+```typescript
+// Extract user ID from JWT token in context
+const userId = getUserId(context);
+
+// Sign new JWT tokens
+const token = sign({ userId: user.id }, APP_SECRET);
+```
+
+### Context Creation ([src/context.ts](mdc:src/context.ts))
+- Extracts JWT from Authorization header
+- Creates typed context with Prisma client
+- Provides user authentication state to resolvers
+
+## Permissions System ([src/permissions/index.ts](mdc:src/permissions/index.ts))
+
+Uses **GraphQL Shield** for declarative permissions:
+
+### Permission Rules
+```typescript
+const rules = {
+  isAuthenticatedUser: rule()((_parent, _args, context) => {
+    const userId = getUserId(context);
+    return Boolean(userId);
+  }),
+  
+  isPostOwner: rule()(async (_parent, args, context) => {
+    const userId = getUserId(context);
+    const author = await context.prisma.post
+      .findUnique({ where: { id: Number(args.id) } })
+      .author();
+    return userId === author.id;
+  }),
+};
+```
+
+### Applied Permissions
+```typescript
+export const permissions = shield({
+  Query: {
+    me: rules.isAuthenticatedUser,
+    draftsByUser: rules.isAuthenticatedUser,
+    postById: rules.isAuthenticatedUser,
+    // feed and allUsers are PUBLIC (no rules applied)
+  },
+  Mutation: {
+    createDraft: rules.isAuthenticatedUser,
+    deletePost: rules.isPostOwner,
+    togglePublishPost: rules.isPostOwner,
+    incrementPostViewCount: rules.isAuthenticatedUser,
+    // signup and login are PUBLIC
+  },
+});
+```
+
+## Authentication Endpoints
+
+### Public Endpoints (No Auth Required)
+- `signup` - Create new user account
+- `login` - Authenticate existing user
+- `feed` - Get published posts
+- `allUsers` - List all users (for demo)
+
+### Protected Endpoints (JWT Required)
+- `me` - Get current user profile
+- `createDraft` - Create new draft post
+- `incrementPostViewCount` - Track post views
+- `draftsByUser` - Get user's unpublished posts
+- `postById` - Get specific post details
+
+### Owner-Only Endpoints (Resource Ownership)
+- `deletePost` - Only post author can delete
+- `togglePublishPost` - Only post author can publish/unpublish
+
+## Usage Examples
+
+### Login & Get Token
+```graphql
+mutation {
+  login(email: "user@example.com", password: "password") {
+    token
+    user { id name email }
+  }
+}
+```
+
+### Authenticated Request
+```bash
+curl -X POST http://localhost:3000/graphql \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ me { id name email } }"}'
+```
+
+## Security Features
+
+- **Password Hashing**: bcrypt with 10 rounds
+- **JWT Expiration**: Tokens should include expiry (add `exp` claim)
+- **Field-Level Security**: GraphQL Shield protects individual fields
+- **Resource Ownership**: Post authors can only modify their own posts
+- **Type Safety**: All auth logic is TypeScript-typed

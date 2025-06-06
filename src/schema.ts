@@ -1,366 +1,309 @@
-import { permissions } from './permissions'
-import { APP_SECRET, getUserId } from './utils'
-import { compare, hash } from 'bcryptjs'
-import { sign } from 'jsonwebtoken'
-import { applyMiddleware } from 'graphql-middleware'
-import {
-    intArg,
-    makeSchema,
-    nonNull,
-    objectType,
-    stringArg,
-    inputObjectType,
-    arg,
-    asNexusMethod,
-    enumType,
-} from 'nexus'
-import { resolve } from 'pathe'
-import { DateTimeResolver } from 'graphql-scalars'
-import type { Context } from './context'
+import { compare, hash } from 'bcryptjs';
+import { applyMiddleware } from 'graphql-middleware';
+import { DateTimeResolver } from 'graphql-scalars';
+import { sign } from 'jsonwebtoken';
+import { builder } from './builder';
+import { permissions } from './permissions';
+import { prisma } from './prisma';
+import { APP_SECRET, getUserId } from './utils';
 
-export const DateTime = asNexusMethod(DateTimeResolver, 'date')
+// Add DateTime scalar
+builder.scalarType('DateTime', {
+    serialize: DateTimeResolver.serialize,
+    parseValue: DateTimeResolver.parseValue,
+    parseLiteral: DateTimeResolver.parseLiteral,
+});
 
-const Query = objectType({
-    name: 'Query',
-    definition(t) {
-        t.nonNull.list.nonNull.field('allUsers', {
-            type: 'User',
-            resolve: (_parent, _args, context: Context) => {
-                return context.prisma.user.findMany()
-            },
-        })
+// Define Query and Mutation root types
+builder.queryType({});
+builder.mutationType({});
 
-        t.nullable.field('me', {
-            type: 'User',
-            resolve: (parent, args, context: Context) => {
-                const userId = getUserId(context)
-                return context.prisma.user.findUnique({
-                    where: {
-                        id: Number(userId),
-                    },
-                })
-            },
-        })
+// Define enums and input types
+const SortOrder = builder.enumType('SortOrder', {
+    values: ['asc', 'desc'] as const,
+});
 
-        t.nullable.field('postById', {
-            type: 'Post',
-            args: {
-                id: intArg(),
-            },
-            resolve: (_parent, args, context: Context) => {
-                return context.prisma.post.findUnique({
-                    where: { id: args.id || undefined },
-                })
-            },
-        })
+const PostOrderByUpdatedAtInput = builder.inputType('PostOrderByUpdatedAtInput', {
+    fields: (t) => ({
+        updatedAt: t.field({
+            type: SortOrder,
+            required: true,
+        }),
+    }),
+});
 
-        t.nonNull.list.nonNull.field('feed', {
-            type: 'Post',
-            args: {
-                searchString: stringArg(),
-                skip: intArg(),
-                take: intArg(),
-                orderBy: arg({
-                    type: 'PostOrderByUpdatedAtInput',
-                }),
-            },
-            resolve: (_parent, args, context: Context) => {
-                const or = args.searchString
-                    ? {
-                        OR: [
-                            { title: { contains: args.searchString } },
-                            { content: { contains: args.searchString } },
-                        ],
-                    }
-                    : {}
+const UserUniqueInput = builder.inputType('UserUniqueInput', {
+    fields: (t) => ({
+        id: t.int(),
+        email: t.string(),
+    }),
+});
 
-                return context.prisma.post.findMany({
-                    where: {
-                        published: true,
-                        ...or,
-                    },
-                    take: args.take || undefined,
-                    skip: args.skip || undefined,
-                    orderBy: args.orderBy || undefined,
-                })
-            },
-        })
+const PostCreateInput = builder.inputType('PostCreateInput', {
+    fields: (t) => ({
+        title: t.string({ required: true }),
+        content: t.string(),
+    }),
+});
 
-        t.list.field('draftsByUser', {
-            type: 'Post',
-            args: {
-                userUniqueInput: nonNull(
-                    arg({
-                        type: 'UserUniqueInput',
-                    }),
-                ),
-            },
-            resolve: (_parent, args, context: Context) => {
-                return context.prisma.user
-                    .findUnique({
-                        where: {
-                            id: args.userUniqueInput.id || undefined,
-                            email: args.userUniqueInput.email || undefined,
-                        },
-                    })
-                    .posts({
-                        where: {
-                            published: false,
-                        },
-                    })
-            },
-        })
-    },
-})
+// Define object types
+builder.prismaObject('User', {
+    fields: (t: any) => ({
+        id: t.expose('id', { type: 'Int' }),
+        name: t.expose('name', { type: 'String', nullable: true }),
+        email: t.expose('email', { type: 'String' }),
+        posts: t.relation('posts'),
+    }),
+});
 
-const Mutation = objectType({
-    name: 'Mutation',
-    definition(t) {
-        t.field('signup', {
-            type: 'AuthPayload',
-            args: {
-                name: stringArg(),
-                email: nonNull(stringArg()),
-                password: nonNull(stringArg()),
-            },
-            resolve: async (_parent, args, context: Context) => {
-                const hashedPassword = await hash(args.password, 10)
-                const user = await context.prisma.user.create({
-                    data: {
-                        name: args.name,
-                        email: args.email,
-                        password: hashedPassword,
-                    },
-                })
-                return {
-                    token: sign({ userId: user.id }, APP_SECRET),
-                    user,
+builder.prismaObject('Post', {
+    fields: (t: any) => ({
+        id: t.expose('id', { type: 'Int' }),
+        createdAt: t.expose('createdAt', { type: 'DateTime' }),
+        updatedAt: t.expose('updatedAt', { type: 'DateTime' }),
+        title: t.expose('title', { type: 'String' }),
+        content: t.exposeString('content', { nullable: true }),
+        published: t.exposeBoolean('published'),
+        viewCount: t.exposeInt('viewCount'),
+        author: t.relation('author'),
+    }),
+});
+
+// Define queries
+builder.queryField('allUsers', (t) =>
+    t.prismaField({
+        type: ['User'],
+        resolve: () => prisma.user.findMany(),
+    })
+);
+
+builder.queryField('me', (t) =>
+    t.prismaField({
+        type: 'User',
+        nullable: true,
+        resolve: (query, _parent, _args, context) => {
+            const userId = getUserId(context);
+            return prisma.user.findUnique({
+                ...query,
+                where: { id: Number(userId) },
+            });
+        },
+    })
+);
+
+builder.queryField('postById', (t) =>
+    t.prismaField({
+        type: 'Post',
+        nullable: true,
+        args: {
+            id: t.arg.int(),
+        },
+        resolve: (query, _parent, args) => {
+            return prisma.post.findUnique({
+                ...query,
+                where: { id: args.id || undefined },
+            });
+        },
+    })
+);
+
+builder.queryField('feed', (t) =>
+    t.prismaField({
+        type: ['Post'],
+        args: {
+            searchString: t.arg.string(),
+            skip: t.arg.int(),
+            take: t.arg.int(),
+            orderBy: t.arg({
+                type: PostOrderByUpdatedAtInput,
+            }),
+        },
+        resolve: (query, _parent, args) => {
+            const or = args.searchString
+                ? {
+                    OR: [
+                        { title: { contains: args.searchString } },
+                        { content: { contains: args.searchString } },
+                    ],
                 }
-            },
-        })
+                : {};
 
-        t.field('login', {
-            type: 'AuthPayload',
-            args: {
-                email: nonNull(stringArg()),
-                password: nonNull(stringArg()),
-            },
-            resolve: async (_parent, { email, password }, context: Context) => {
-                const user = await context.prisma.user.findUnique({
-                    where: {
-                        email,
-                    },
-                })
-                if (!user) {
-                    throw new Error(`No user found for email: ${email}`)
-                }
-                const passwordValid = await compare(password, user.password)
-                if (!passwordValid) {
-                    throw new Error('Invalid password')
-                }
-                return {
-                    token: sign({ userId: user.id }, APP_SECRET),
-                    user,
-                }
-            },
-        })
+            return prisma.post.findMany({
+                ...query,
+                where: {
+                    published: true,
+                    ...or,
+                },
+                take: args.take || undefined,
+                skip: args.skip || undefined,
+                orderBy: args.orderBy || undefined,
+            });
+        },
+    })
+);
 
-        t.field('createDraft', {
-            type: 'Post',
-            args: {
-                data: nonNull(
-                    arg({
-                        type: 'PostCreateInput',
-                    }),
-                ),
-            },
-            resolve: (_, args, context: Context) => {
-                const userId = getUserId(context)
-                return context.prisma.post.create({
-                    data: {
-                        title: args.data.title,
-                        content: args.data.content,
-                        authorId: userId,
-                    },
-                })
-            },
-        })
+builder.queryField('draftsByUser', (t) =>
+    t.prismaField({
+        type: ['Post'],
+        nullable: true,
+        args: {
+            userUniqueInput: t.arg({
+                type: UserUniqueInput,
+                required: true,
+            }),
+        },
+        resolve: async (query, _parent, args) => {
+            const user = await prisma.user.findUnique({
+                where: {
+                    id: args.userUniqueInput.id || undefined,
+                    email: args.userUniqueInput.email || undefined,
+                },
+            });
 
-        t.field('togglePublishPost', {
-            type: 'Post',
-            args: {
-                id: nonNull(intArg()),
-            },
-            resolve: async (_, args, context: Context) => {
-                try {
-                    const post = await context.prisma.post.findUnique({
-                        where: { id: args.id || undefined },
-                        select: {
-                            published: true,
-                        },
-                    })
-                    return context.prisma.post.update({
-                        where: { id: args.id || undefined },
-                        data: { published: !post?.published },
-                    })
-                } catch (e) {
-                    throw new Error(
-                        `Post with ID ${args.id} does not exist in the database.`,
-                        { cause: e },
-                    )
-                }
-            },
-        })
+            if (!user) return null;
 
-        t.field('incrementPostViewCount', {
-            type: 'Post',
-            args: {
-                id: nonNull(intArg()),
-            },
-            resolve: (_, args, context: Context) => {
-                return context.prisma.post.update({
-                    where: { id: args.id || undefined },
-                    data: {
-                        viewCount: {
-                            increment: 1,
-                        },
-                    },
-                })
-            },
-        })
+            return prisma.post.findMany({
+                ...query,
+                where: {
+                    authorId: user.id,
+                    published: false,
+                },
+            });
+        },
+    })
+);
 
-        t.field('deletePost', {
-            type: 'Post',
-            args: {
-                id: nonNull(intArg()),
-            },
-            resolve: (_, args, context: Context) => {
-                return context.prisma.post.delete({
+// Define mutations
+builder.mutationField('signup', (t) =>
+    t.field({
+        type: 'String',
+        args: {
+            name: t.arg.string(),
+            email: t.arg.string({ required: true }),
+            password: t.arg.string({ required: true }),
+        },
+        resolve: async (_parent, args) => {
+            const hashedPassword = await hash(args.password, 10);
+            const user = await prisma.user.create({
+                data: {
+                    name: args.name,
+                    email: args.email,
+                    password: hashedPassword,
+                },
+            });
+            return sign({ userId: user.id }, APP_SECRET);
+        },
+    })
+);
+
+builder.mutationField('login', (t) =>
+    t.field({
+        type: 'String',
+        args: {
+            email: t.arg.string({ required: true }),
+            password: t.arg.string({ required: true }),
+        },
+        resolve: async (_parent, { email, password }) => {
+            const user = await prisma.user.findUnique({
+                where: { email },
+            });
+            if (!user) {
+                throw new Error(`No user found for email: ${email}`);
+            }
+            const passwordValid = await compare(password, user.password);
+            if (!passwordValid) {
+                throw new Error('Invalid password');
+            }
+            return sign({ userId: user.id }, APP_SECRET);
+        },
+    })
+);
+
+builder.mutationField('createDraft', (t) =>
+    t.prismaField({
+        type: 'Post',
+        args: {
+            data: t.arg({
+                type: PostCreateInput,
+                required: true,
+            }),
+        },
+        resolve: (query, _parent, args, context) => {
+            const userId = getUserId(context);
+            return prisma.post.create({
+                ...query,
+                data: {
+                    title: args.data.title,
+                    content: args.data.content,
+                    authorId: userId,
+                },
+            });
+        },
+    })
+);
+
+builder.mutationField('togglePublishPost', (t) =>
+    t.prismaField({
+        type: 'Post',
+        args: {
+            id: t.arg.int({ required: true }),
+        },
+        resolve: async (query, _parent, args) => {
+            try {
+                const post = await prisma.post.findUnique({
                     where: { id: args.id },
-                })
-            },
-        })
-    },
-})
+                    select: { published: true },
+                });
 
-const User = objectType({
-    name: 'User',
-    definition(t) {
-        t.nonNull.int('id')
-        t.string('name')
-        t.nonNull.string('email')
-        t.nonNull.list.nonNull.field('posts', {
-            type: 'Post',
-            resolve: async (parent, _, context: Context) => {
-                const result = await context.prisma.user
-                    .findUnique({
-                        where: { id: parent.id || undefined },
-                    })
-                    .posts()
-                return result || []
-            },
-        })
-    },
-})
+                return prisma.post.update({
+                    ...query,
+                    where: { id: args.id },
+                    data: { published: !post?.published },
+                });
+            } catch (e) {
+                throw new Error(
+                    `Post with ID ${args.id} does not exist in the database.`,
+                    { cause: e },
+                );
+            }
+        },
+    })
+);
 
-const Post = objectType({
-    name: 'Post',
-    definition(t) {
-        t.nonNull.int('id')
-        t.nonNull.field('createdAt', { type: 'DateTime' })
-        t.nonNull.field('updatedAt', { type: 'DateTime' })
-        t.nonNull.string('title')
-        t.string('content')
-        t.nonNull.boolean('published')
-        t.nonNull.int('viewCount')
-        t.field('author', {
-            type: 'User',
-            resolve: (parent, _, context: Context) => {
-                return context.prisma.post
-                    .findUnique({
-                        where: { id: parent.id || undefined },
-                    })
-                    .author()
-            },
-        })
-    },
-})
+builder.mutationField('incrementPostViewCount', (t) =>
+    t.prismaField({
+        type: 'Post',
+        args: {
+            id: t.arg.int({ required: true }),
+        },
+        resolve: (query, _parent, args) => {
+            return prisma.post.update({
+                ...query,
+                where: { id: args.id },
+                data: {
+                    viewCount: {
+                        increment: 1,
+                    },
+                },
+            });
+        },
+    })
+);
 
-const SortOrder = enumType({
-    name: 'SortOrder',
-    members: ['asc', 'desc'],
-})
+builder.mutationField('deletePost', (t) =>
+    t.prismaField({
+        type: 'Post',
+        args: {
+            id: t.arg.int({ required: true }),
+        },
+        resolve: (query, _parent, args) => {
+            return prisma.post.delete({
+                ...query,
+                where: { id: args.id },
+            });
+        },
+    })
+);
 
-const PostOrderByUpdatedAtInput = inputObjectType({
-    name: 'PostOrderByUpdatedAtInput',
-    definition(t) {
-        t.nonNull.field('updatedAt', { type: 'SortOrder' })
-    },
-})
-
-const UserUniqueInput = inputObjectType({
-    name: 'UserUniqueInput',
-    definition(t) {
-        t.int('id')
-        t.string('email')
-    },
-})
-
-const PostCreateInput = inputObjectType({
-    name: 'PostCreateInput',
-    definition(t) {
-        t.nonNull.string('title')
-        t.string('content')
-    },
-})
-
-const UserCreateInput = inputObjectType({
-    name: 'UserCreateInput',
-    definition(t) {
-        t.nonNull.string('email')
-        t.string('name')
-        t.list.nonNull.field('posts', { type: 'PostCreateInput' })
-    },
-})
-
-const AuthPayload = objectType({
-    name: 'AuthPayload',
-    definition(t) {
-        t.string('token')
-        t.field('user', { type: 'User' })
-    },
-})
-
-const schemaWithoutPermissions = makeSchema({
-    types: [
-        Query,
-        Mutation,
-        Post,
-        User,
-        AuthPayload,
-        UserUniqueInput,
-        UserCreateInput,
-        PostCreateInput,
-        SortOrder,
-        PostOrderByUpdatedAtInput,
-        DateTime,
-    ],
-    outputs: {
-        schema: resolve(__dirname, '../schema.graphql'),
-        typegen: resolve(__dirname, '../generated/nexus.ts'),
-    },
-    contextType: {
-        module: require.resolve('./context'),
-        export: 'Context',
-    },
-    sourceTypes: {
-        modules: [
-            {
-                module: '@prisma/client',
-                alias: 'prisma',
-            },
-        ],
-    },
-})
-
-export const schema = applyMiddleware(schemaWithoutPermissions, permissions)
+const pothosSchema = builder.toSchema();
+export const schema = applyMiddleware(pothosSchema, permissions);
