@@ -1,0 +1,214 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Development Workflow Guide
+
+Complete workflow guide for developing with this GraphQL + H3 + Bun setup.
+
+## 🚀 Getting Started
+
+### Initial Setup
+```bash
+bun install              # Install dependencies
+bun run generate         # Generate all types (Prisma + GraphQL Tada)
+bun run dev             # Start development server
+```
+
+### Required Files Check
+Ensure these key files exist:
+- [src/graphql-env.d.ts](mdc:src/graphql-env.d.ts) - GraphQL Tada types
+- [schema.graphql](mdc:schema.graphql) - Generated GraphQL schema
+- [prisma/schema.prisma](mdc:prisma/schema.prisma) - Database schema
+
+## 🔄 Common Development Tasks
+
+### 1. Adding a New GraphQL Query/Mutation
+
+**Step 1:** Update schema in [src/schema.ts](mdc:src/schema.ts)
+```typescript
+export const Query = queryType({
+  definition(t) {
+    t.field('newField', {
+      type: 'String',
+      resolve: () => 'Hello World'
+    })
+  }
+})
+```
+
+**Step 2:** Regenerate types
+```bash
+bun run generate:nexus   # Regenerate schema.graphql
+bun run generate:gql     # Regenerate GraphQL Tada types
+```
+
+**Step 3:** Add typed query to [src/context.ts](mdc:src/context.ts)
+```typescript
+export const NewQuery = graphql(`
+  query NewQuery {
+    newField
+  }
+`)
+
+export type NewQueryResult = ResultOf<typeof NewQuery>
+```
+
+### 2. Adding a New REST Endpoint
+
+**Step 1:** Add route to [src/h3-routes.ts](mdc:src/h3-routes.ts)
+```typescript
+apiRouter.get('/api/new-endpoint', defineEventHandler(async (event) => {
+  // Implementation
+  return { data: 'result' }
+}))
+```
+
+**Step 2:** Update types in [src/context.ts](mdc:src/context.ts)
+```typescript
+interface GraphQLAPISchema {
+  '/api/new-endpoint': {
+    [Endpoint]: {
+      GET: {
+        response: { data: string }
+      }
+    }
+  }
+}
+```
+
+### 3. Database Schema Changes
+
+**Step 1:** Update [prisma/schema.prisma](mdc:prisma/schema.prisma)
+
+**Step 2:** Generate migration
+```bash
+bunx prisma migrate dev --name descriptive-name
+```
+
+**Step 3:** Regenerate Prisma client
+```bash
+bun run generate:prisma
+```
+
+### 4. Testing Changes
+
+**Manual Testing:**
+```bash
+bun run demo           # Run comprehensive demo
+curl http://localhost:3000/api/health  # Test REST endpoints
+```
+
+**GraphQL Testing:**
+- Use GraphQL Playground at `http://localhost:3000/graphql`
+- Or test via [src/h3-demo.ts](mdc:src/h3-demo.ts) examples
+
+## 🔧 Development Scripts
+
+### Core Scripts
+```bash
+bun run dev                    # Start with hot reload
+bun run build                 # Production build
+bun run start                 # Start production server
+```
+
+### Type Generation
+```bash
+bun run generate              # All types (recommended)
+bun run generate:prisma       # Prisma client only
+bun run generate:nexus        # GraphQL schema only  
+bun run generate:gql          # GraphQL Tada types only
+```
+
+### Utilities
+```bash
+bun run demo                  # Test both REST + GraphQL
+bun run clean                 # Clean build artifacts
+```
+
+## 🎯 Type Safety Workflow
+
+### 1. Schema-First Development
+1. Define types in Prisma schema
+2. Define GraphQL operations in [src/schema.ts](mdc:src/schema.ts)
+3. Generate types with `bun run generate`
+4. Implement with full type safety
+
+### 2. Type Checking
+```bash
+bunx tsc --noEmit           # Check types without building
+```
+
+### 3. Editor Integration
+- Ensure TypeScript server is running
+- GraphQL Tada provides inline type hints
+- fetchdts provides HTTP endpoint typing
+
+## 🐛 Debugging & Troubleshooting
+
+### Common Issues
+
+**GraphQL Tada types not updating:**
+```bash
+bun run generate:gql
+# Restart TypeScript server in editor
+```
+
+**Prisma client issues:**
+```bash
+bunx prisma generate
+bunx prisma db push        # Push schema changes
+```
+
+**H3 server not starting:**
+- Check port 3000 availability
+- Verify [src/server.ts](mdc:src/server.ts) syntax
+- Check console for startup errors
+
+**Type errors:**
+- Run `bun run generate` to ensure all types are current
+- Check [tsconfig.json](mdc:tsconfig.json) configuration
+- Verify imports are correct
+
+### Debugging Tools
+
+**Server logs:**
+```bash
+bun run dev    # Detailed request logging
+```
+
+**Database inspection:**
+```bash
+bunx prisma studio    # Visual database browser
+```
+
+**GraphQL introspection:**
+- Check [src/graphql-env.d.ts](mdc:src/graphql-env.d.ts) for current types
+- Use GraphQL Playground for query testing
+
+## 📋 Pre-commit Checklist
+
+1. ✅ Run `bun run generate` to ensure types are current
+2. ✅ Test with `bun run demo`
+3. ✅ Check TypeScript errors: `bunx tsc --noEmit`
+4. ✅ Verify server starts: `bun run dev`
+5. ✅ Test key endpoints manually
+
+## 🚀 Production Deployment
+
+### Build Process
+```bash
+bun run build           # Compiles TypeScript
+bun run start          # Starts production server
+```
+
+### Environment Variables
+Ensure these are set in production:
+- Database connection string
+- JWT secrets
+- Port configuration
+
+### Health Checks
+- `GET /api/health` - Application health
+- `POST /graphql` with introspection query - GraphQL health

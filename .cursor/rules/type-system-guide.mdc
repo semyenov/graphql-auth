@@ -1,0 +1,74 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Advanced Type System Guide
+
+This project uses a sophisticated type system that combines multiple TypeScript libraries for maximum type safety.
+
+## 🔧 Type System Stack
+
+### 1. GraphQL Tada (Compile-time GraphQL typing)
+- **Config**: [tsconfig.json](mdc:tsconfig.json) plugin configuration
+- **Types**: [src/graphql-env.d.ts](mdc:src/graphql-env.d.ts) auto-generated from schema
+- **Usage**: [src/context.ts](mdc:src/context.ts) defines typed queries
+
+```typescript
+// Fully typed GraphQL operations
+export const GetMeQuery = graphql(`
+  query GetMe { 
+    me { id email name }
+  }
+`)
+type GetMeResult = ResultOf<typeof GetMeQuery>
+```
+
+### 2. fetchdts (HTTP Request typing)
+- **Schema**: Defined in [src/context.ts](mdc:src/context.ts) `GraphQLAPISchema`
+- **Integration**: Combined with GraphQL Tada types for endpoints
+- **Usage**: `TypedRequest` type for context
+
+```typescript
+// Typed API schema combining GraphQL Tada types
+interface GraphQLAPISchema {
+  '/query/me': {
+    [Endpoint]: {
+      GET: {
+        response: { data: GetMeResult } // Uses GraphQL Tada type
+      }
+    }
+  }
+}
+```
+
+### 3. Prisma (Database typing)
+- **Client**: Auto-generated from schema
+- **Usage**: In [src/h3-routes.ts](mdc:src/h3-routes.ts) for REST endpoints
+
+## 🎯 Type Flow
+
+1. **Schema** → GraphQL Tada generates types
+2. **GraphQL Types** → Combined with fetchdts for HTTP typing
+3. **HTTP Types** → Used in H3 routes and context
+4. **Prisma Types** → Used for database operations
+
+## 📝 Adding New Types
+
+**For GraphQL:**
+1. Update schema in [src/schema.ts](mdc:src/schema.ts)
+2. Run `bun run generate:gql` to update types
+3. Add typed queries to [src/context.ts](mdc:src/context.ts)
+
+**For REST:**
+1. Add endpoint to `GraphQLAPISchema` in [src/context.ts](mdc:src/context.ts)
+2. Implement route in [src/h3-routes.ts](mdc:src/h3-routes.ts)
+3. TypeScript ensures type consistency
+
+## ⚡ Type Regeneration
+
+```bash
+bun run generate:gql     # GraphQL Tada types only
+bun run generate:prisma  # Prisma client only  
+bun run generate         # All types (recommended)
+```

@@ -1,0 +1,126 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# H3 Development Patterns
+
+Guide for working with H3 web framework in this GraphQL + REST hybrid server.
+
+## 🏗️ Server Architecture
+
+### Main Server Setup
+[src/server.ts](mdc:src/server.ts) shows the H3 + Apollo integration:
+
+```typescript
+// H3 app with multiple routers
+const app = createApp()
+const router = createRouter()
+
+// GraphQL endpoint
+router.post('/graphql', defineEventHandler(async (event) => {
+  // Apollo Server integration
+}))
+
+// Bun server with Web API compatibility
+Bun.serve({
+  fetch: toWebHandler(app) as (request: Request) => Response | Promise<Response>
+})
+```
+
+### REST API Patterns
+[src/h3-routes.ts](mdc:src/h3-routes.ts) demonstrates common H3 patterns:
+
+## 📋 Common Patterns
+
+### 1. Basic Route Handler
+```typescript
+apiRouter.get('/api/health', defineEventHandler(() => {
+  return { status: 'ok', timestamp: new Date().toISOString() }
+}))
+```
+
+### 2. Route with Parameters
+```typescript
+apiRouter.post('/api/posts/:id/view', defineEventHandler(async (event) => {
+  const id = Number(event.context.params?.id)
+  // Handle dynamic route parameter
+}))
+```
+
+### 3. Query Parameters
+```typescript
+apiRouter.get('/api/posts', defineEventHandler(async (event) => {
+  const query = getQuery(event)
+  const limit = Number(query.limit) || 10
+  const skip = Number(query.offset) || 0
+}))
+```
+
+### 4. Request Headers
+```typescript
+apiRouter.get('/api/me', defineEventHandler(async (event) => {
+  const authHeader = getHeader(event, 'authorization')
+  if (!authHeader) {
+    throw createError({ statusCode: 401, statusMessage: 'Auth required' })
+  }
+}))
+```
+
+### 5. Error Handling
+```typescript
+try {
+  // Operation
+} catch (error: unknown) {
+  if (error instanceof Error && 'code' in error && error.code === 'P2025') {
+    throw createError({ statusCode: 404, statusMessage: 'Not found' })
+  }
+  throw createError({ statusCode: 500, statusMessage: 'Internal error' })
+}
+```
+
+## 🔧 Adding New Endpoints
+
+### REST Endpoint
+1. Add to [src/h3-routes.ts](mdc:src/h3-routes.ts):
+```typescript
+apiRouter.get('/api/new-endpoint', defineEventHandler(async (event) => {
+  // Implementation
+}))
+```
+
+2. Update type schema in [src/context.ts](mdc:src/context.ts):
+```typescript
+interface GraphQLAPISchema {
+  '/api/new-endpoint': {
+    [Endpoint]: {
+      GET: {
+        response: { data: YourType }
+      }
+    }
+  }
+}
+```
+
+### GraphQL Endpoint Integration
+The GraphQL endpoint in [src/server.ts](mdc:src/server.ts) shows how to:
+- Extract request body with `readBody(event)`
+- Create typed context
+- Execute Apollo operations
+- Return properly formatted responses
+
+## 🎯 Best Practices
+
+1. **Always use `defineEventHandler`** for proper type inference
+2. **Handle errors explicitly** with typed catch blocks
+3. **Validate input parameters** before processing
+4. **Use proper HTTP status codes** via `createError`
+5. **Leverage Prisma types** for database operations
+6. **Combine with GraphQL Tada types** for consistency
+
+## 🚀 Development Workflow
+
+1. Start server: `bun run dev`
+2. Test endpoints: [src/h3-demo.ts](mdc:src/h3-demo.ts) shows usage examples
+3. Monitor logs: H3 provides detailed request logging
+4. Debug: Use TypeScript errors to catch issues early

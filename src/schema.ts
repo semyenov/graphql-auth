@@ -14,6 +14,7 @@ import {
     asNexusMethod,
     enumType,
 } from 'nexus'
+import { resolve } from 'pathe'
 import { DateTimeResolver } from 'graphql-scalars'
 import type { Context } from './context'
 
@@ -66,11 +67,11 @@ const Query = objectType({
             resolve: (_parent, args, context: Context) => {
                 const or = args.searchString
                     ? {
-                          OR: [
-                              { title: { contains: args.searchString } },
-                              { content: { contains: args.searchString } },
-                          ],
-                      }
+                        OR: [
+                            { title: { contains: args.searchString } },
+                            { content: { contains: args.searchString } },
+                        ],
+                    }
                     : {}
 
                 return context.prisma.post.findMany({
@@ -205,6 +206,7 @@ const Mutation = objectType({
                 } catch (e) {
                     throw new Error(
                         `Post with ID ${args.id} does not exist in the database.`,
+                        { cause: e },
                     )
                 }
             },
@@ -344,8 +346,8 @@ const schemaWithoutPermissions = makeSchema({
         DateTime,
     ],
     outputs: {
-        schema: __dirname + '/../schema.graphql',
-        typegen: __dirname + '/generated/nexus.ts',
+        schema: resolve(__dirname, '../schema.graphql'),
+        typegen: resolve(__dirname, '../generated/nexus.ts'),
     },
     contextType: {
         module: require.resolve('./context'),

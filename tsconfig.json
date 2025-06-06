@@ -3,8 +3,33 @@
     "esModuleInterop": true,
     "outDir": "dist",
     "rootDir": "src",
-    "lib": ["esnext"],
-    "strict": true
+    "strict": true,
+    "module": "ESNext",
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "types": ["bun"],
+    "plugins": [
+      {
+        "name": "gql.tada/ts-plugin",
+        "schema": "./schema.graphql",
+        "tadaOutputLocation": "./src/graphql-env.d.ts"
+      }
+    ],
+    "paths": {
+      "@prisma/client": ["./src/generated/prisma/client"]
+    }
   },
   "include": ["src/**/*"]
 }
