@@ -1,9 +1,6 @@
 import type { Endpoint, TypedFetchInput, TypedFetchRequestInit } from 'fetchdts'
-import {
-  graphql, type ResultOf, type VariablesOf
-} from 'gql.tada'
+import { graphql, type ResultOf, type VariablesOf } from 'gql.tada'
 import { GraphQLError } from 'graphql'
-
 
 // Define types for GraphQL operations
 interface User {
@@ -139,7 +136,7 @@ export interface Context {
   req: TypedRequest // Typed with both fetchdts and GraphQL Tada
 }
 
-export function createContext<T extends TypedFetchInput<GraphQLAPISchema> = TypedFetchInput<GraphQLAPISchema>>({ req }: { req: TypedRequest<T> }) {
+export async function createContext({ req }: { req: TypedRequest }): Promise<Context> {
   return { req }
 }
 

@@ -45,3 +45,55 @@ The remaining linter errors are related to the mutation resolvers returning the 
 
 ---
 
+_**User**_
+
+For the code present, we get this error:
+```
+No overload matches this call.
+  Overload 1 of 2, '(server: ApolloServer<BaseContext>, options?: (StartStandaloneServerOptions<BaseContext> & { listen?: ListenOptions | undefined; }) | undefined): Promise<...>', gave the following error.
+    Argument of type 'ApolloServer<Context>' is not assignable to parameter of type 'ApolloServer<BaseContext>'.
+      Property 'req' is missing in type 'BaseContext' but required in type 'Context'.
+  Overload 2 of 2, '(server: ApolloServer<Context>, options: StartStandaloneServerOptions<Context> & Required<Pick<StartStandaloneServerOptions<Context>, "context">> & { ...; }): Promise<...>', gave the following error.
+    Type '<T extends TypedFetchInput<GraphQLAPISchema> = TypedFetchInput<GraphQLAPISchema>>({ req }: { req: TypedRequest<T>; }) => { req: TypedRequest<T>; }' is not assignable to type 'ContextFunction<[StandaloneServerContextFunctionArgument], Context>'.
+      Types of parameters '__0' and 'integrationContext_0' are incompatible.
+        Type 'StandaloneServerContextFunctionArgument' is not assignable to type '{ req: TypedRequest<TypedFetchInput<GraphQLAPISchema>>; }'.
+          Types of property 'req' are incompatible.
+            Type 'IncomingMessage' is not assignable to type 'TypedRequest<TypedFetchInput<GraphQLAPISchema>>'.
+              Type 'IncomingMessage' is not assignable to type '{ url: TypedFetchInput<GraphQLAPISchema>; method?: string | undefined; headers?: Record<string, string> | undefined; body?: { query: string; variables?: Record<...> | undefined; operationName?: string | undefined; } | { ...; } | { ...; } | { ...; } | undefined; }'.
+                Types of property 'url' are incompatible.
+                  Type 'string | undefined' is not assignable to type 'TypedFetchInput<GraphQLAPISchema>'.
+                    Type 'undefined' is not assignable to type 'TypedFetchInput<GraphQLAPISchema>'.
+```
+How can I resolve this? If you propose a fix, please make it concise.
+
+---
+
+_**Assistant**_
+
+
+
+---
+
+I need to examine the context file to understand the type mismatch.
+
+---
+
+<details>
+            <summary>Searched codebase "context" • **1** results</summary>
+        
+| File |
+|------|
+| `undefined` |
+
+</details>
+
+---
+
+Read file: src/context.ts
+
+---
+
+
+
+---
+

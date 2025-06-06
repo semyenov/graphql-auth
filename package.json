@@ -9,7 +9,8 @@
     "generate": "bun run generate:prisma && bun run generate:gql",
     "generate:prisma": "prisma generate",
     "generate:gql": "bunx gql.tada generate-output",
-    "demo": "bun run src/h3-demo.ts"
+    "demo": "bun run src/h3-demo.ts",
+    "seed": "bun run prisma/seed.ts"
   },
   "prettier": {
     "semi": false,
