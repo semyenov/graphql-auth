@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Quick Command Reference
+
+```bash
+# Development
+bun run dev                             # Start dev server (port 4000)
+bun run test                            # Run all tests
+bun run test -t "test name"             # Run specific test
+
+# Database
+bunx prisma migrate dev --name feature  # Create migration
+bun run generate                        # Generate all types
+bun run db:reset                        # Reset database
+
+# Common Issues
+bun run generate                        # Fix type errors
+bunx prisma studio                      # View database
+```
+
 ## Tech Stack
 
 - **Runtime**: Bun (JavaScript/TypeScript runtime)
@@ -104,8 +122,20 @@ src/
 ├── server.ts           # Apollo Server setup with H3
 ├── schema.ts           # GraphQL schema definitions (Pothos)
 ├── builder.ts          # Pothos builder configuration
-├── context.ts          # GraphQL context (auth extraction)
+├── context.ts          # Main context export (re-exports all modules)
+├── context/            # Modular context system
+│   ├── auth.ts         # Authentication & authorization utilities
+│   ├── constants.ts    # Centralized constants (errors, headers, defaults)
+│   ├── creation.ts     # Context creation orchestration
+│   ├── types.ts        # Comprehensive type definitions
+│   ├── utils.ts        # Reusable utility functions
+│   └── validation.ts   # Context validation & type guards
+├── graphql/            # GraphQL-specific modules
+│   ├── types.ts        # Core GraphQL types and interfaces
+│   ├── operations.ts   # Type-safe GraphQL operations
+│   └── utils.ts        # GraphQL utility functions
 ├── prisma.ts           # Prisma client instance
+├── shared-prisma.ts    # Shared Prisma client for testing
 ├── utils.ts            # JWT utilities
 ├── generate-schema.ts  # Schema generation script
 └── permissions/        # GraphQL Shield authorization
@@ -121,7 +151,9 @@ test/
 ├── setup.ts            # Test setup and database cleanup
 ├── test-utils.ts       # Helper functions for testing
 ├── auth.test.ts        # Authentication tests
-└── posts.test.ts       # Post CRUD operation tests
+├── posts.test.ts       # Post CRUD operation tests
+├── user.test.ts        # User-related tests
+└── permissions.test.ts # Permission system tests
 
 _docs/
 ├── audit-report.md     # Security audit findings
@@ -132,6 +164,9 @@ types/
 
 .pothos/
 └── types.d.ts          # Pothos type definitions
+
+.cursor/
+└── rules/              # Cursor-specific development rules
 
 graphql-env.d.ts        # GraphQL Tada environment
 ```
@@ -319,6 +354,46 @@ curl -X POST http://localhost:4000 \
   -d '{"query":"{ me { id email } }"}'
 ```
 
+## Modular Context System
+
+The project features a clean, modular context system with enhanced type safety:
+
+### Context Architecture
+- **`context/constants.ts`** - Centralized constants eliminating magic values
+- **`context/types.ts`** - Operation-specific context types with proper typing
+- **`context/auth.ts`** - Type-safe authentication guards and helpers
+- **`context/validation.ts`** - Structured validation with error reporting
+- **`context/creation.ts`** - Context creation with comprehensive error handling
+- **`context/utils.ts`** - Reusable utilities for context processing
+
+### Enhanced Type Guards
+```typescript
+// Operation-specific type guards
+if (isLoginContext(context)) {
+  // TypeScript knows variables contain email & password
+  const { email, password } = context.variables
+}
+
+// Authentication-aware guards
+if (isAuthenticated(context)) {
+  // TypeScript knows context.userId is number
+  const userId = context.userId
+}
+```
+
+### Permission Helpers
+```typescript
+// Single permission check
+if (hasPermission(context, 'write:posts')) {
+  // User can create posts
+}
+
+// Multiple permissions
+if (hasAllPermissions(context, ['read:posts', 'write:posts'])) {
+  // User has full post access
+}
+```
+
 ## Testing
 
 The project uses **Vitest** for testing with the following setup:
@@ -376,8 +451,17 @@ bun run test -- --watch
 # Run specific test file
 bun run test auth.test.ts
 
+# Run specific test by name pattern
+bun run test -t "should create draft"
+
+# Run tests for a specific module
+bun run test permissions
+
 # Generate coverage report
 bun run test:coverage
+
+# Run tests with UI
+bun run test:ui
 ```
 
 ## Error Handling and Logging
@@ -420,3 +504,27 @@ process.on('SIGINT', async () => {
   process.exit(0)
 })
 ```
+
+## Database Client Management
+
+The project uses a shared Prisma client pattern for better test isolation:
+
+### Production Client
+```typescript
+// src/prisma.ts - Production singleton
+import { PrismaClient } from '@prisma/client'
+export const prisma = new PrismaClient()
+```
+
+### Test Client
+```typescript
+// src/shared-prisma.ts - Shared client for testing
+import { getSharedClient } from './shared-prisma'
+const prisma = getSharedClient()
+```
+
+This pattern ensures:
+- Proper connection management in tests
+- Isolated test transactions
+- No connection pool exhaustion
+- Clean test teardown

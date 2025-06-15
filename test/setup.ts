@@ -4,7 +4,7 @@ import { rm } from 'fs/promises'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { afterAll, beforeAll, beforeEach } from 'vitest'
-import { setPrismaClient } from '../src/shared-prisma'
+import { setPrismaClient } from '../src/prisma'
 import { TEST_DATABASE_URL } from './test-env'
 
 // Create a test database client
