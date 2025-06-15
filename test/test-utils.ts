@@ -1,11 +1,36 @@
 // Import test environment first to ensure environment variables are set
 import './test-env'
 
+// =============================================================================
+// TEST UTILITIES - UPDATED FOR GRAPHQL ARCHITECTURE GUIDE
+// =============================================================================
+/**
+ * This file provides testing utilities that follow the GraphQL Architecture Guide patterns:
+ * 
+ * ARCHITECTURE COMPLIANCE:
+ * ✅ Imports from unified `src/gql` directory (not old `src/graphql`)
+ * ✅ Uses convenience functions from `src/gql/client.ts` when appropriate
+ * ✅ Provides both low-level (gqlHelpers) and high-level (convenienceHelpers) testing patterns
+ * ✅ Demonstrates proper type-safe imports with `type` keyword
+ * ✅ Shows single source of truth pattern for GraphQL operations
+ * 
+ * AVAILABLE PATTERNS:
+ * 1. gqlHelpers - Apollo Server testing with GraphQL operations
+ * 2. testData - Factory functions for creating test data
+ * 3. Context helpers - createMockContext, createAuthContext
+ * 
+ * RECOMMENDED USAGE:
+ * - Use gqlHelpers for comprehensive server-side testing
+ * - Use testData factories for consistent test data creation
+ * - See test/graphql-architecture-example.test.ts for complete examples
+ * - See test/auth.test.ts for proper testing patterns
+ */
+
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import jwt from 'jsonwebtoken'
 import type { Context } from '../src/context/types'
 import { env } from '../src/environment'
-import type { HTTPMethod } from '../src/graphql/types'
+import type { HTTPMethod } from '../src/gql/types'
 
 // Import the already built schema with permissions
 import { schema } from '../src/schema'
@@ -264,3 +289,19 @@ export const gqlHelpers = {
     return errors
   },
 }
+
+// =============================================================================
+// ARCHITECTURE NOTES FOR CONVENIENCE FUNCTIONS
+// =============================================================================
+
+/*
+ * NOTE: The convenience functions from src/gql/client.ts (mutateLogin, queryMe, etc.)
+ * are designed for runtime use with real HTTP requests, not for server-side testing.
+ * 
+ * They use fetch() internally and expect a running GraphQL server, which doesn't work
+ * with Apollo Server's executeOperation test setup.
+ * 
+ * For testing, use the gqlHelpers patterns shown throughout this file and in the test files.
+ * The convenience functions are perfect for frontend applications and integration tests
+ * with a running server, but not for unit tests of the GraphQL schema itself.
+ */

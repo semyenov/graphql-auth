@@ -135,4 +135,25 @@ describe('Authentication', () => {
       )
     })
   })
+
+  // =============================================================================
+  // ARCHITECTURE NOTES
+  // =============================================================================
+
+  /*
+   * NOTE: Convenience functions (mutateLogin, mutateSignup, etc.) from src/gql/client.ts
+   * are designed for runtime use with real HTTP requests, not for server-side testing.
+   * 
+   * For testing GraphQL operations:
+   * ✅ Use gqlHelpers with Apollo Server's executeOperation (as shown above)
+   * ❌ Don't use convenience functions that make fetch() requests in tests
+   * 
+   * The convenience functions are perfect for:
+   * - Frontend applications making real API calls
+   * - Integration tests with a running server
+   * - Development scripts and tools
+   * 
+   * But for unit/integration tests of the GraphQL schema itself,
+   * use the Apollo Server test patterns shown in this file.
+   */
 })
