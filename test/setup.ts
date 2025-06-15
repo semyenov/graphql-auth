@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client'
 import { execSync } from 'child_process'
-import { unlink } from 'fs/promises'
+import { rm } from 'fs/promises'
+import { dirname, resolve } from 'path'
+import { fileURLToPath } from 'url'
 import { afterAll, beforeAll, beforeEach } from 'vitest'
 import { setPrismaClient } from '../src/shared-prisma'
 import { TEST_DATABASE_URL } from './test-env'
@@ -14,8 +16,11 @@ export const prisma = new PrismaClient({
   },
 })
 
-// Extract database file path for cleanup
-const dbFilePath = TEST_DATABASE_URL.replace('file:', '')
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+const prismaPath = resolve(__dirname, "..", "prisma")
+const dbFilePath = resolve(prismaPath, TEST_DATABASE_URL.replace('file:', ''))
 
 beforeAll(async () => {
   try {
@@ -53,7 +58,7 @@ afterAll(async () => {
 
     // Clean up the temporary database file
     try {
-      await unlink(dbFilePath)
+      await rm(dbFilePath)
       console.log('Test database file cleaned up')
     } catch (unlinkError) {
       // File might not exist or already be deleted, which is fine

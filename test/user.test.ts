@@ -73,7 +73,7 @@ describe('User queries', () => {
       if (result.body.kind === 'single') {
         // The me query should be protected by permissions
         expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors![0]!.message).toContain('User is not authenticated')
+        expect(result.body.singleResult.errors![0]!.message).toContain('Authentication required')
       }
     })
   })

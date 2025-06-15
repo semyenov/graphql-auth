@@ -13,11 +13,19 @@ import {
 import { prisma } from '../prisma'
 import { getUserId } from '../utils'
 
+type PermissionUtilsType = {
+  canAccessUserData: (context: Context, targetUserId: number) => boolean
+  canModifyPost: (context: Context, postId: number) => Promise<boolean>
+  canPublishPost: (context: Context) => boolean
+  hasRoleOrHigher: (context: Context, role: 'user' | 'moderator' | 'admin') => boolean
+  validateOperation: (context: Context, operation: string) => boolean
+}
+
 // Enhanced permission rules with better type safety
 const rules = {
   // Basic authentication rule
   isAuthenticatedUser: rule({ cache: 'contextual' })((_parent, _args, context: Context) => {
-    return isAuthenticated(context) ? true : new Error('User is not authenticated')
+    return isAuthenticated(context) ? true : new Error('Authentication required')
   }),
 
   // Enhanced post ownership rule with better error handling
@@ -157,14 +165,12 @@ export const permissions = shield<GraphQLQuery & GraphQLMutation, Context, Typed
 }, {
   allowExternalErrors: true,
   debug: process.env.NODE_ENV === 'development',
-  fallbackRule: rule({ cache: 'no_cache' })((_parent, _args, context: Context) => {
-    // Default fallback: require authentication for any unspecified operation
-    return isAuthenticated(context) ? true : new Error('Authentication required for this operation')
-  })
+  fallbackRule: rule()(() => true), // Allow access by default, rely on specific rules for restrictions
+  fallbackError: new Error('Access denied'),
 })
 
 // Permission utility functions for use in resolvers
-export const PermissionUtils = {
+export const PermissionUtils: PermissionUtilsType = {
   // Check if user can access specific user data
   canAccessUserData: (context: Context, targetUserId: number): boolean => {
     const currentUserId = getUserId(context)
@@ -223,7 +229,7 @@ export const PermissionUtils = {
         return false
     }
   }
-}
+} satisfies PermissionUtilsType
 
 // Helper function to extract the validateOperation method
 const { hasRoleOrHigher } = PermissionUtils

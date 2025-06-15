@@ -94,14 +94,16 @@ export function generateTestToken(userId: string): string {
   })
 }
 
+export type VariableValues = { [name: string]: unknown }
+
 // GraphQL query helper
-export async function executeOperation<TData = unknown>(
+export async function executeOperation<TData = unknown, TVariables extends VariableValues = VariableValues>(
   server: ApolloServer<Context>,
   query: string,
   variables?: any,
   context?: Context,
 ): Promise<GraphQLResponse<TData>> {
-  const response = await server.executeOperation<TData>(
+  const response = await server.executeOperation<TData, TVariables>(
     {
       query,
       variables,

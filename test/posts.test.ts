@@ -139,7 +139,50 @@ describe('Posts', () => {
       expect(result.body.kind).toBe('single')
       if (result.body.kind === 'single') {
         expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors![0]!.message).toContain('User is not authenticated')
+        expect(result.body.singleResult.errors![0]!.message).toContain('Authentication is required to access this resource')
+      }
+    })
+
+    it('should not allow accessing other users drafts', async () => {
+      // Create another user
+      const otherUser = await prisma.user.create({
+        data: {
+          email: `otheruser${testCounter}@example.com`,
+          password: await bcrypt.hash('password', 10),
+          name: 'Other User',
+        },
+      })
+
+      // Create drafts for other user
+      await prisma.post.create({
+        data: {
+          title: 'Other User Draft',
+          content: 'Private draft',
+          published: false,
+          authorId: otherUser.id,
+        },
+      })
+
+      const draftsQuery = `
+        query DraftsByUser($userUniqueInput: UserUniqueInput!) {
+          draftsByUser(userUniqueInput: $userUniqueInput) {
+            id
+            title
+          }
+        }
+      `
+
+      const result = await executeOperation(
+        server,
+        draftsQuery,
+        { userUniqueInput: { id: otherUser.id } },
+        createAuthContext(testUserId.toString()) // Different user
+      )
+
+      expect(result.body.kind).toBe('single')
+      if (result.body.kind === 'single') {
+        expect(result.body.singleResult.errors).toBeDefined()
+        expect(result.body.singleResult.errors![0]!.message).toContain('Access denied: cannot access other user\'s data')
       }
     })
   })
@@ -220,7 +263,7 @@ describe('Posts', () => {
       expect(result.body.kind).toBe('single')
       if (result.body.kind === 'single') {
         expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors![0]!.message).toContain('User is not authenticated')
+        expect(result.body.singleResult.errors![0]!.message).toContain('Authentication required')
       }
     })
   })
@@ -271,7 +314,7 @@ describe('Posts', () => {
       // Create another user
       const otherUser = await prisma.user.create({
         data: {
-          email: 'other@example.com',
+          email: `deleteother${testCounter}@example.com`,
           password: await bcrypt.hash('password', 10),
           name: 'Other User',
         },
@@ -307,6 +350,46 @@ describe('Posts', () => {
       if (result.body.kind === 'single') {
         expect(result.body.singleResult.errors).toBeDefined()
         expect(result.body.singleResult.errors![0]!.message).toContain('User is not the owner of the post')
+      }
+
+      // Verify post still exists
+      const existingPost = await prisma.post.findUnique({
+        where: { id: post.id },
+      })
+      expect(existingPost).not.toBeNull()
+    })
+
+    it('should require authentication to delete posts', async () => {
+      // Create a post
+      const post = await prisma.post.create({
+        data: {
+          title: 'Post to Delete',
+          content: 'Will not be deleted',
+          published: false,
+          authorId: testUserId,
+        },
+      })
+
+      const deletePostMutation = `
+        mutation DeletePost($id: Int!) {
+          deletePost(id: $id) {
+            id
+            title
+          }
+        }
+      `
+
+      const result = await executeOperation(
+        server,
+        deletePostMutation,
+        { id: post.id },
+        createMockContext() // No auth
+      )
+
+      expect(result.body.kind).toBe('single')
+      if (result.body.kind === 'single') {
+        expect(result.body.singleResult.errors).toBeDefined()
+        expect(result.body.singleResult.errors![0]!.message).toContain('Authentication is required to access this resource')
       }
 
       // Verify post still exists
@@ -398,6 +481,155 @@ describe('Posts', () => {
         expect(result.body.singleResult.errors).toBeDefined()
         expect(result.body.singleResult.errors![0]!.message).toContain('No record was found')
       }
+    })
+  })
+
+  describe('Toggle publish post', () => {
+    it('should toggle post publish status when owner', async () => {
+      // Create a draft post
+      const post = await prisma.post.create({
+        data: {
+          title: 'Post to Toggle',
+          content: 'Toggle content',
+          published: false,
+          authorId: testUserId,
+        },
+      })
+
+      const togglePublishMutation = `
+        mutation TogglePublishPost($id: Int!) {
+          togglePublishPost(id: $id) {
+            id
+            title
+            published
+          }
+        }
+      `
+
+      // First toggle - should publish
+      const result1 = await executeOperation(
+        server,
+        togglePublishMutation,
+        { id: post.id },
+        createAuthContext(testUserId.toString())
+      )
+
+      expect(result1.body.kind).toBe('single')
+      if (result1.body.kind === 'single') {
+        expect(result1.body.singleResult.errors).toBeUndefined()
+        const data = result1.body.singleResult.data as any
+        expect(data?.togglePublishPost.published).toBe(true)
+      }
+
+      // Second toggle - should unpublish
+      const result2 = await executeOperation(
+        server,
+        togglePublishMutation,
+        { id: post.id },
+        createAuthContext(testUserId.toString())
+      )
+
+      expect(result2.body.kind).toBe('single')
+      if (result2.body.kind === 'single') {
+        expect(result2.body.singleResult.errors).toBeUndefined()
+        const data = result2.body.singleResult.data as any
+        expect(data?.togglePublishPost.published).toBe(false)
+      }
+
+      // Verify in database
+      const updatedPost = await prisma.post.findUnique({
+        where: { id: post.id },
+      })
+      expect(updatedPost?.published).toBe(false)
+    })
+
+    it('should not allow toggling posts by other users', async () => {
+      // Create another user
+      const otherUser = await prisma.user.create({
+        data: {
+          email: `toggleother${testCounter}@example.com`,
+          password: await bcrypt.hash('password', 10),
+          name: 'Other User',
+        },
+      })
+
+      // Create a post by other user
+      const post = await prisma.post.create({
+        data: {
+          title: 'Other User Post',
+          content: 'Not mine to toggle',
+          published: false,
+          authorId: otherUser.id,
+        },
+      })
+
+      const togglePublishMutation = `
+        mutation TogglePublishPost($id: Int!) {
+          togglePublishPost(id: $id) {
+            id
+            published
+          }
+        }
+      `
+
+      const result = await executeOperation(
+        server,
+        togglePublishMutation,
+        { id: post.id },
+        createAuthContext(testUserId.toString()) // Different user
+      )
+
+      expect(result.body.kind).toBe('single')
+      if (result.body.kind === 'single') {
+        expect(result.body.singleResult.errors).toBeDefined()
+        expect(result.body.singleResult.errors![0]!.message).toContain('User is not the owner of the post')
+      }
+
+      // Verify post wasn't changed
+      const unchangedPost = await prisma.post.findUnique({
+        where: { id: post.id },
+      })
+      expect(unchangedPost?.published).toBe(false)
+    })
+
+    it('should require authentication to toggle publish status', async () => {
+      // Create a post
+      const post = await prisma.post.create({
+        data: {
+          title: 'Post to Toggle',
+          content: 'Toggle content',
+          published: false,
+          authorId: testUserId,
+        },
+      })
+
+      const togglePublishMutation = `
+        mutation TogglePublishPost($id: Int!) {
+          togglePublishPost(id: $id) {
+            id
+            published
+          }
+        }
+      `
+
+      const result = await executeOperation(
+        server,
+        togglePublishMutation,
+        { id: post.id },
+        createMockContext() // No auth
+      )
+
+      expect(result.body.kind).toBe('single')
+      if (result.body.kind === 'single') {
+        expect(result.body.singleResult.errors).toBeDefined()
+        expect(result.body.singleResult.errors![0]!.message).toContain('Authentication is required to access this resource')
+      }
+
+      // Verify post wasn't changed
+      const unchangedPost = await prisma.post.findUnique({
+        where: { id: post.id },
+      })
+      expect(unchangedPost?.published).toBe(false)
     })
   })
 })
