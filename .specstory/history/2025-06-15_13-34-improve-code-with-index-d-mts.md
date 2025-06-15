@@ -1646,3 +1646,46 @@ Fixed! I simplified the complex type to use the already-defined `GraphQLRequestB
 
 ---
 
+_**User**_
+
+For the code present, we get this error:
+```
+Argument of type '(_parent: any, args: any, context: Context) => Promise<IRuleResult>' is not assignable to parameter of type 'IRuleFunction'.
+  Type 'Promise<IRuleResult>' is not assignable to type 'IRuleResult | Promise<IRuleResult>'.
+    Type 'Promise<IRuleResult>' is not assignable to type 'Promise<import("/Users/aleksandrsemenov/Projects/graphql-auth/node_modules/graphql-shield/typings/types").IRuleResult>'.
+      Type 'IRuleResult' is not assignable to type 'import("/Users/aleksandrsemenov/Projects/graphql-auth/node_modules/graphql-shield/typings/types").IRuleResult'.
+```
+How can I resolve this? If you propose a fix, please make it concise.
+
+---
+
+_**Assistant**_
+
+
+
+---
+
+The issue is that you're defining a custom `IRuleResult` type that conflicts with graphql-shield's built-in types. Here's the fix:
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+Fixed! I removed the custom `IRuleResult` type and `IRules` type annotation, and changed the return values to use graphql-shield's standard pattern: `true` for success or `new Error()` for failure. This resolves the type conflicts.
+
+---
+

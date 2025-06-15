@@ -14,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Type Safety**: 
   - GraphQL Tada for compile-time GraphQL typing
   - fetchdts for typed HTTP requests
+- **Testing**: Vitest with happy-dom
 
 ## Essential Commands
 
@@ -41,6 +42,13 @@ bun run generate:gql        # Generate GraphQL types only
 bun run gen:schema          # Generate GraphQL schema file
 ```
 
+### Testing
+```bash
+bun run test                # Run tests with Vitest
+bun run test:ui             # Run tests with Vitest UI
+bun run test:coverage       # Run tests with coverage report
+```
+
 ## Code Style
 
 The project uses Prettier with the following configuration:
@@ -65,8 +73,6 @@ The project uses **Pothos** (not Nexus as mentioned in README) for type-safe Gra
 4. **Permission Rules**: 
    - `isAuthenticatedUser` - Requires valid JWT
    - `isPostOwner` - Requires user to own the resource
-5. **Type-Safe GraphQL Operations**: Use GraphQL Tada for compile-time typed queries/mutations
-6. **Query Optimization**: Always spread `...query` in Prisma resolvers for automatic optimization
 
 ### Adding New Features
 
@@ -110,6 +116,12 @@ prisma/
 ├── schema.prisma       # Database models
 ├── seed.ts             # Database seeding
 └── migrations/         # Migration history
+
+test/
+├── setup.ts            # Test setup and database cleanup
+├── test-utils.ts       # Helper functions for testing
+├── auth.test.ts        # Authentication tests
+└── posts.test.ts       # Post CRUD operation tests
 
 _docs/
 ├── audit-report.md     # Security audit findings
@@ -159,171 +171,6 @@ mutation {
   }
 }
 ```
-
-## Pothos Schema Patterns
-
-### Object Type Definition
-```typescript
-// Always use builder.prismaObject for Prisma models
-builder.prismaObject('User', {
-  fields: (t) => ({
-    id: t.exposeInt('id'),
-    email: t.exposeString('email'),
-    name: t.exposeString('name', { nullable: true }),
-    posts: t.relation('posts'), // Auto-resolved by Prisma plugin
-  }),
-})
-```
-
-### Query Fields with Prisma
-```typescript
-builder.queryField('feed', (t) =>
-  t.prismaField({
-    type: ['Post'],
-    resolve: (query, _parent, _args, _context) =>
-      prisma.post.findMany({
-        ...query, // IMPORTANT: Always spread query for optimization
-        where: { published: true },
-        orderBy: { createdAt: 'desc' },
-      }),
-  })
-)
-```
-
-### Mutations with Auth
-```typescript
-builder.mutationField('createDraft', (t) =>
-  t.prismaField({
-    type: 'Post',
-    args: {
-      data: t.arg({ type: PostCreateInput, required: true }),
-    },
-    resolve: (query, _parent, args, context) => {
-      const userId = getUserId(context) // Extract from JWT
-      return prisma.post.create({
-        ...query,
-        data: {
-          ...args.data,
-          authorId: userId,
-        },
-      })
-    },
-  })
-)
-```
-
-### Input Types
-```typescript
-const PostCreateInput = builder.inputType('PostCreateInput', {
-  fields: (t) => ({
-    title: t.string({ required: true }),
-    content: t.string(),
-  }),
-})
-```
-
-## Type-Safe GraphQL with GraphQL Tada
-
-### Define Typed Queries
-```typescript
-// In src/context.ts
-import { graphql } from '@/gql'
-
-export const LoginMutation = graphql(`
-  mutation Login($email: String!, $password: String!) {
-    login(email: $email, password: $password) {
-      token
-      user {
-        id
-        email
-        name
-      }
-    }
-  }
-`)
-
-// Export types for use elsewhere
-export type LoginResult = ResultOf<typeof LoginMutation>
-export type LoginVariables = VariablesOf<typeof LoginMutation>
-```
-
-### Type Flow Integration
-1. **GraphQL Schema** → Pothos generates schema.graphql
-2. **GraphQL Tada** → Reads schema and generates types
-3. **TypeScript** → Provides compile-time type safety
-4. **Runtime** → GraphQL Shield enforces permissions
-
-## Permission Patterns
-
-### Define Permission Rules
-```typescript
-// In src/permissions/index.ts
-const rules = {
-  isAuthenticatedUser: rule()((_parent, _args, context) => {
-    const userId = getUserId(context)
-    return Boolean(userId)
-  }),
-  
-  isPostOwner: rule()(async (_parent, args, context) => {
-    const userId = getUserId(context)
-    const author = await context.prisma.post
-      .findUnique({ where: { id: Number(args.id) } })
-      .author()
-    return userId === author.id
-  }),
-}
-```
-
-### Apply Permissions to Schema
-```typescript
-export const permissions = shield({
-  Query: {
-    me: rules.isAuthenticatedUser,
-    draftsByUser: rules.isAuthenticatedUser,
-    // feed is PUBLIC (no rule = open access)
-  },
-  Mutation: {
-    createDraft: rules.isAuthenticatedUser,
-    deletePost: rules.isPostOwner,
-    // signup/login are PUBLIC
-  },
-})
-```
-
-## Development Workflow Best Practices
-
-1. **Type Generation Workflow**:
-   ```bash
-   # After schema changes, regenerate everything
-   bun run generate
-   
-   # Or regenerate specific types
-   bun run generate:prisma  # After database changes
-   bun run generate:gql     # After GraphQL schema changes
-   ```
-
-2. **Adding Features Checklist**:
-   - [ ] Update Prisma schema if needed
-   - [ ] Run migrations: `bunx prisma migrate dev`
-   - [ ] Add GraphQL types in `src/schema.ts`
-   - [ ] Define permissions in `src/permissions/index.ts`
-   - [ ] Add typed queries in `src/context.ts` if needed
-   - [ ] Regenerate types: `bun run generate`
-   - [ ] Test in GraphQL Playground
-
-3. **Authentication Headers**:
-   ```bash
-   # Get token via login
-   curl -X POST http://localhost:4000/graphql \
-     -H "Content-Type: application/json" \
-     -d '{"query":"mutation { login(email: \"test@example.com\", password: \"password\") { token } }"}'
-   
-   # Use token in subsequent requests
-   curl -X POST http://localhost:4000/graphql \
-     -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-     -H "Content-Type: application/json" \
-     -d '{"query":"{ me { id email name } }"}'
-   ```
 
 ## Common Issues
 
@@ -472,3 +319,104 @@ curl -X POST http://localhost:4000 \
   -d '{"query":"{ me { id email } }"}'
 ```
 
+## Testing
+
+The project uses **Vitest** for testing with the following setup:
+
+### Test Structure
+```
+test/
+├── setup.ts          # Test setup and database cleanup
+├── test-utils.ts     # Helper functions for testing
+├── auth.test.ts      # Authentication tests
+└── posts.test.ts     # Post CRUD operation tests
+```
+
+### Writing Tests
+```typescript
+import { describe, it, expect } from 'vitest'
+import { executeOperation, createTestServer, createAuthContext } from './test-utils'
+
+describe('Feature', () => {
+  const server = createTestServer()
+
+  it('should work', async () => {
+    const result = await executeOperation(
+      server,
+      'query { feed { id } }',
+      {},
+      createAuthContext('1') // For authenticated requests
+    )
+    
+    expect(result.body.kind).toBe('single')
+  })
+})
+```
+
+### Test Utilities
+- `createMockContext()` - Creates a basic context for testing
+- `createAuthContext(userId)` - Creates authenticated context with JWT
+- `createTestServer()` - Creates Apollo Server instance for testing
+- `executeOperation()` - Executes GraphQL operations against test server
+- `generateTestToken(userId)` - Generates test JWT tokens
+
+### Test Database
+- Tests use a separate SQLite database (`test.db`)
+- Database is cleaned between tests automatically
+- No need to manually manage test data cleanup
+
+### Running Tests
+```bash
+# Run all tests
+bun run test
+
+# Run tests in watch mode
+bun run test -- --watch
+
+# Run specific test file
+bun run test auth.test.ts
+
+# Generate coverage report
+bun run test:coverage
+```
+
+## Error Handling and Logging
+
+The project uses **Consola** for structured logging with the following patterns:
+
+### Logging Examples
+```typescript
+// Success logging
+consola.success(`🚀 GraphQL Server ready at: ${url}`)
+
+// Error logging with structured data
+consola.error('GraphQL Error:', {
+  message: error.message,
+  path: error.path,
+  locations: error.locations
+})
+
+// Info logging with metadata
+consola.info(`${method} ${url}`, {
+  operationName: request.operationName,
+  variables: Object.keys(variables)
+})
+```
+
+### Error Response Structure
+GraphQL errors include:
+- `message` - Human-readable error message
+- `locations` - Query locations where errors occurred
+- `path` - GraphQL field path
+- `extensions.code` - Error classification
+- `extensions.timestamp` - ISO timestamp
+- `extensions.stacktrace` - Stack trace (development only)
+
+### Graceful Shutdown
+The server implements proper shutdown handling:
+```typescript
+process.on('SIGINT', async () => {
+  await server.stop()
+  process.exit(0)
+})
+```

@@ -2,6 +2,7 @@
   "name": "graphql-auth",
   "license": "MIT",
   "scripts": {
+    "postinstall": "patch-package",
     "dev": "bun run src/server",
     "start": "bun dist/server.js",
     "clean": "rm -rf dist",
@@ -12,7 +13,10 @@
     "gen:schema": "bun run src/generate-schema.ts",
     "demo": "bun run src/h3-demo.ts",
     "seed": "bun run prisma/seed.ts",
-    "db:reset": "bunx prisma migrate reset --force"
+    "db:reset": "bunx prisma migrate reset --force",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
   },
   "prettier": {
     "semi": false,
@@ -28,7 +32,7 @@
     "@prisma/extension-accelerate": "^2.0.1",
     "bcryptjs": "3.0.2",
     "consola": "^3.4.2",
-    "fetchdts": "^0.1.1",
+    "fetchdts": "^0.1.4",
     "gql.tada": "^1.8.10",
     "graphql": "16.11.0",
     "graphql-middleware": "6.1.35",
@@ -40,8 +44,10 @@
     "zod": "^3.25.64"
   },
   "devDependencies": {
+    "@graphql-tools/mock": "^9.0.23",
+    "@graphql-tools/schema": "^10.0.23",
     "@types/bcryptjs": "3.0.0",
-    "@types/bun": "latest",
+    "@types/bun": "^1.2.16",
     "@types/jsonwebtoken": "9.0.9",
     "@types/node": "^22.15.29",
     "prisma": "^6.9.0",
