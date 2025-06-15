@@ -1,5 +1,5 @@
 /* eslint-disable */
-import type { Prisma, User, Post } from "/Users/aleksandrsemenov/Projects/graphql-auth/node_modules/@prisma/client/index.js";
+import type { Prisma, User, Post } from "/workspace/node_modules/@prisma/client/index.js";
 export default interface PrismaTypes {
     User: {
         Name: "User";
