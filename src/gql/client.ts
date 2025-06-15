@@ -1,10 +1,7 @@
-import type { HTTPMethod } from 'fetchdts'
 import { print } from 'graphql'
 import type {
-    GraphQLAPISchema,
-    GraphQLResponse,
+    GraphQLResponse
 } from '../context/types'
-import { GraphQLRequestBody } from '../graphql/types'
 import {
     CreateDraftMutation,
     DeletePostMutation,
@@ -42,6 +39,8 @@ import type {
     TogglePublishPostResult,
     TogglePublishPostVariables
 } from './types'
+import { GraphQLRequestBody } from './types'
+import { executeGraphQL } from './utils'
 
 // =============================================================================
 // GRAPHQL CLIENT
@@ -118,68 +117,37 @@ export const graphqlClient = new GraphQLClient()
 // CONVENIENCE FUNCTIONS
 // =============================================================================
 
-// Type-safe GraphQL execution with automatic query printing
-export async function executeGraphQL<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-    query: string | any, // Support both string and GraphQL document
-    variables?: TVariables,
-    headers?: Record<string, string>
-): Promise<GraphQLResponse<TData>> {
-    const queryString = typeof query === 'string' ? query : print(query)
-    return graphqlClient.execute<TData, TVariables>(queryString, variables, headers)
-}
-
 // Query execution helpers
 export const queryMe = (headers?: Record<string, string>) =>
-    executeGraphQL<GetMeResult>(GetMeQuery, undefined, headers)
+    executeGraphQL<Record<string, unknown>, GetMeResult>(print(GetMeQuery), undefined, headers)
 
 export const queryAllUsers = (headers?: Record<string, string>) =>
-    executeGraphQL<GetAllUsersResult>(GetAllUsersQuery, undefined, headers)
+    executeGraphQL<Record<string, unknown>, GetAllUsersResult>(print(GetAllUsersQuery), undefined, headers)
 
 export const queryPostById = (variables: GetPostByIdVariables, headers?: Record<string, string>) =>
-    executeGraphQL<GetPostByIdResult, GetPostByIdVariables>(GetPostByIdQuery, variables, headers)
+    executeGraphQL<GetPostByIdVariables, GetPostByIdResult>(print(GetPostByIdQuery), variables, headers)
 
 export const queryFeed = (variables?: GetFeedVariables, headers?: Record<string, string>) =>
-    executeGraphQL<GetFeedResult, GetFeedVariables>(GetFeedQuery, variables, headers)
+    executeGraphQL<GetFeedVariables, GetFeedResult>(print(GetFeedQuery), variables, headers)
 
 export const queryDraftsByUser = (variables: GetDraftsByUserVariables, headers?: Record<string, string>) =>
-    executeGraphQL<GetDraftsByUserResult, GetDraftsByUserVariables>(GetDraftsByUserQuery, variables, headers)
+    executeGraphQL<GetDraftsByUserVariables, GetDraftsByUserResult>(print(GetDraftsByUserQuery), variables, headers)
 
 // Mutation execution helpers
 export const mutateLogin = (variables: LoginVariables, headers?: Record<string, string>) =>
-    executeGraphQL<LoginResult, LoginVariables>(LoginMutation, variables, headers)
+    executeGraphQL<LoginVariables, LoginResult>(print(LoginMutation), variables, headers)
 
 export const mutateSignup = (variables: SignupVariables, headers?: Record<string, string>) =>
-    executeGraphQL<SignupResult, SignupVariables>(SignupMutation, variables, headers)
+    executeGraphQL<SignupVariables, SignupResult>(print(SignupMutation), variables, headers)
 
 export const mutateCreateDraft = (variables: CreateDraftVariables, headers?: Record<string, string>) =>
-    executeGraphQL<CreateDraftResult, CreateDraftVariables>(CreateDraftMutation, variables, headers)
+    executeGraphQL<CreateDraftVariables, CreateDraftResult>(print(CreateDraftMutation), variables, headers)
 
 export const mutateDeletePost = (variables: DeletePostVariables, headers?: Record<string, string>) =>
-    executeGraphQL<DeletePostResult, DeletePostVariables>(DeletePostMutation, variables, headers)
+    executeGraphQL<DeletePostVariables, DeletePostResult>(print(DeletePostMutation), variables, headers)
 
 export const mutateTogglePublishPost = (variables: TogglePublishPostVariables, headers?: Record<string, string>) =>
-    executeGraphQL<TogglePublishPostResult, TogglePublishPostVariables>(TogglePublishPostMutation, variables, headers)
+    executeGraphQL<TogglePublishPostVariables, TogglePublishPostResult>(print(TogglePublishPostMutation), variables, headers)
 
 export const mutateIncrementPostViewCount = (variables: IncrementPostViewCountVariables, headers?: Record<string, string>) =>
-    executeGraphQL<IncrementPostViewCountResult, IncrementPostViewCountVariables>(IncrementPostViewCountMutation, variables, headers)
-
-// =============================================================================
-// TYPE-SAFE REQUEST HELPER
-// =============================================================================
-
-// Type-safe request helper using fetchdts types
-export function createTypedRequest<T extends keyof GraphQLAPISchema, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-    endpoint: T,
-    method: HTTPMethod,
-    body?: GraphQLRequestBody<TVariables>,
-    headers?: Record<string, string>
-): RequestInit {
-    return {
-        method,
-        headers: {
-            'Content-Type': 'application/json',
-            ...headers,
-        },
-        body: body ? JSON.stringify(body) : undefined,
-    }
-} 
+    executeGraphQL<IncrementPostViewCountVariables, IncrementPostViewCountResult>(print(IncrementPostViewCountMutation), variables, headers) 

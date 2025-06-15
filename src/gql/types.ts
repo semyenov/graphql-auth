@@ -1,4 +1,5 @@
 import type { ResultOf, VariablesOf } from 'gql.tada'
+import type { introspection_types } from '../graphql-env'
 import type {
     PostInfoFragment,
     PostWithAuthorFragment,
@@ -19,6 +20,83 @@ import type {
     GetMeQuery,
     GetPostByIdQuery
 } from './queries'
+
+// =============================================================================
+// HTTP AND GRAPHQL BASE TYPES
+// =============================================================================
+
+// HTTP method types
+export type HTTPMethod =
+    | 'GET'
+    | 'POST'
+    | 'PUT'
+    | 'DELETE'
+    | 'PATCH'
+    | 'HEAD'
+    | 'OPTIONS'
+    | 'CONNECT'
+    | 'TRACE'
+
+export type MimeType =
+    | 'application/json'
+    | 'application/xml'
+    | 'text/plain'
+    | 'text/html'
+    | string
+
+// GraphQL request body type with proper validation
+export interface GraphQLRequestBody<TVariables = Record<string, unknown>> {
+    query: string
+    variables?: TVariables
+    operationName?: string
+}
+
+export interface GraphQLError extends Error {
+    message: string
+    locations?: Array<{ line: number; column: number }>
+    path?: Array<string | number>
+    extensions?: {
+        code?: string
+        field?: string
+        timestamp?: string
+    }
+}
+
+// Enhanced GraphQL response type
+export interface GraphQLResponse<T = unknown, E extends GraphQLError = GraphQLError> {
+    data?: T
+    errors?: Array<E>
+}
+
+// GraphQL operation metadata
+export interface GraphQLOperationMeta {
+    operationName?: string
+    operationType: 'query' | 'mutation' | 'subscription'
+    variables?: Record<string, unknown>
+}
+
+// GraphQL Schema Types from introspection (for reference)
+export type GraphQLPost = introspection_types['Post']
+export type GraphQLUser = introspection_types['User']
+export type GraphQLMutation = introspection_types['Mutation']
+export type GraphQLQuery = introspection_types['Query']
+
+// GraphQL input types
+export interface PostCreateInput {
+    title: string
+    content?: string | null
+}
+
+export interface PostOrderByUpdatedAtInput {
+    updatedAt: 'asc' | 'desc'
+}
+
+export interface UserUniqueInput {
+    id?: number | null
+    email?: string | null
+}
+
+export type SortOrder = 'asc' | 'desc'
 
 // =============================================================================
 // TYPE EXPORTS (gql.tada generated types)

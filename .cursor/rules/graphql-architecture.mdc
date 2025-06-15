@@ -1,0 +1,217 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# GraphQL Architecture Guide
+
+## Overview
+All GraphQL functionality has been consolidated into the `src/gql/` directory, providing a single source of truth for all GraphQL operations, types, and utilities.
+
+## Directory Structure
+
+```
+src/gql/
+├── client.ts      # GraphQL client + convenience functions
+├── fragments.ts   # Reusable GraphQL fragments  
+├── index.ts       # Main exports
+├── mutations.ts   # All GraphQL mutations
+├── queries.ts     # All GraphQL queries
+├── types.ts       # Comprehensive type definitions
+└── utils.ts       # Utilities + execution functions
+```
+
+## Key Files
+
+### Core GraphQL Operations
+- **Queries**: [src/gql/queries.ts](mdc:src/gql/queries.ts) - All GraphQL queries using gql.tada
+- **Mutations**: [src/gql/mutations.ts](mdc:src/gql/mutations.ts) - All GraphQL mutations using gql.tada
+- **Fragments**: [src/gql/fragments.ts](mdc:src/gql/fragments.ts) - Reusable GraphQL fragments
+
+### Type System
+- **Types**: [src/gql/types.ts](mdc:src/gql/types.ts) - Comprehensive type definitions including:
+  - HTTP types (`HTTPMethod`, `MimeType`)
+  - GraphQL base types (`GraphQLResponse`, `GraphQLError`, `GraphQLRequestBody`)
+  - Schema input types (`PostCreateInput`, `UserUniqueInput`)
+  - Generated gql.tada types (variables, results)
+
+### Client & Utilities
+- **Client**: [src/gql/client.ts](mdc:src/gql/client.ts) - GraphQL client class and convenience functions
+- **Utils**: [src/gql/utils.ts](mdc:src/gql/utils.ts) - Execution utilities and helper functions
+- **Main Export**: [src/gql/index.ts](mdc:src/gql/index.ts) - Re-exports all GraphQL functionality
+
+## Usage Patterns
+
+### Import Everything from Single Source
+```typescript
+import {
+  // Queries & Mutations
+  GetMeQuery,
+  LoginMutation,
+  
+  // Types
+  type LoginVariables,
+  type GetMeResult,
+  
+  // Convenience functions
+  queryMe,
+  mutateLogin,
+  
+  // Client & utilities
+  GraphQLClient,
+  executeGraphQL
+} from './gql'
+```
+
+### Using Convenience Functions (Recommended)
+```typescript
+// Query execution
+const userResult = await queryMe({ authorization: `Bearer ${token}` })
+const feedResult = await queryFeed({ take: 10, skip: 0 })
+
+// Mutation execution  
+const loginResult = await mutateLogin({ email, password })
+const postResult = await mutateCreateDraft({ data: { title, content } })
+```
+
+### Using GraphQL Client Directly
+```typescript
+import { GraphQLClient, print, GetMeQuery } from './gql'
+
+const client = new GraphQLClient('/graphql', {
+  authorization: 'Bearer token'
+})
+
+const result = await client.query(print(GetMeQuery))
+```
+
+### Type-Safe Development
+```typescript
+import type { 
+  LoginVariables,
+  LoginResult,
+  CreateDraftVariables,
+  PostInfo 
+} from './gql'
+
+// Variables are fully typed
+const loginData: LoginVariables = {
+  email: 'user@example.com',
+  password: 'securePassword'
+}
+
+// Results are fully typed
+const handleLogin = (result: LoginResult) => {
+  if (result.login) {
+    // Token is properly typed as string | null
+    localStorage.setItem('token', result.login)
+  }
+}
+```
+
+## Best Practices
+
+### 1. Always Use Type-Safe Imports
+```typescript
+// ✅ Good - Import types explicitly
+import type { GetFeedVariables, GetFeedResult } from './gql'
+
+// ❌ Avoid - Runtime imports for types
+import { GetFeedVariables } from './gql'
+```
+
+### 2. Prefer Convenience Functions
+```typescript
+// ✅ Good - Use convenience functions
+const result = await queryFeed({ take: 5 })
+
+// ⚠️ Acceptable but verbose - Direct execution
+const result = await executeGraphQL(print(GetFeedQuery), { take: 5 })
+```
+
+### 3. Use Fragments for Consistency
+```typescript
+// ✅ Good - Fragments ensure consistent field selection
+import { UserInfoFragment, PostWithAuthorFragment } from './gql'
+
+// All queries using these fragments will have consistent typing
+```
+
+### 4. Handle Errors Properly
+```typescript
+import { devUtils } from './gql'
+
+try {
+  // Will throw on GraphQL errors
+  const data = devUtils.validateResponse(result)
+  console.log('Safe data:', data)
+} catch (error) {
+  console.error('GraphQL error:', error.message)
+}
+```
+
+### 5. Use Schema Helpers for Inputs
+```typescript
+import { createPostInput, createUserUniqueInput } from './gql'
+
+// ✅ Good - Type-safe input creation
+const postData = createPostInput('My Title', 'Content here')
+const userSelector = createUserUniqueInput({ id: 123 })
+```
+
+## Testing Patterns
+
+### Import Test Utilities
+```typescript
+// In test files
+import { 
+  LoginMutation, 
+  SignupMutation,
+  type LoginVariables,
+  type SignupVariables 
+} from '../src/gql'
+```
+
+### Use Convenience Functions in Tests
+```typescript
+// ✅ Good - Clean test code
+const data = await gqlHelpers.expectSuccessfulMutation<AuthResponse, LoginVariables>(
+  server,
+  print(LoginMutation),
+  variables,
+  context
+)
+```
+
+## Migration Notes
+
+- **Old `/graphql` directory**: Removed - all functionality moved to `/gql`
+- **Import updates**: Change `../graphql/types` → `../gql/types`
+- **Type changes**: `GetPostsVariables` → `GetFeedVariables`
+- **Unified utilities**: All execution functions now in [src/gql/utils.ts](mdc:src/gql/utils.ts)
+
+## Development Tools
+
+### GraphQL Examples
+See [src/graphql-examples.ts](mdc:src/graphql-examples.ts) for comprehensive usage examples including:
+- Basic queries and mutations
+- Advanced client usage
+- Fragment usage patterns
+- Error handling
+- Caching strategies
+
+### Utilities Available
+- **Development**: `devUtils.logOperation`, `devUtils.validateResponse`
+- **Execution**: `executeGraphQL`, `createTypedRequest`  
+- **Schema helpers**: `createPostInput`, `createPostOrderBy`, `createUserUniqueInput`
+- **Advanced**: Query builder, response transformer, caching utilities
+
+## Context Integration
+
+The GraphQL system integrates with the context system through [src/context/types.ts](mdc:src/context/types.ts), which imports GraphQL types for operation-specific context typing.
+
+**Key Integration Points**:
+- `GraphQLRequestBody` - Request typing
+- `GraphQLResponse` - Response typing  
+- `GraphQLError` - Error handling
+- Operation variables - Context-specific typing

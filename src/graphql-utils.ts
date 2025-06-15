@@ -279,7 +279,7 @@ export class GraphQLBatcher {
 
       requests.forEach((request, index) => {
         request.resolve(
-          responses[index] || { errors: [{ message: 'No response' }] },
+          responses[index] || { errors: [{ name: 'NoResponseError', message: 'No response' }] },
         )
       })
     } catch (error) {

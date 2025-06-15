@@ -1,4 +1,4 @@
-import type { HTTPMethod } from '../graphql/types'
+import type { HTTPMethod } from '../gql/types'
 import type { RequestMetadata, SecurityContext } from '../types'
 import { DEFAULT_VALUES, HEADER_KEYS } from './constants'
 import type { Context, GraphQLIncomingMessage } from './types'

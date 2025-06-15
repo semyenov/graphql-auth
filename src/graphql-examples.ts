@@ -160,8 +160,8 @@ export async function exampleFragments() {
   console.log(print(PostInfoFragment))
 
   // Use fragment-based query
-  const result = await executeGraphQL<GetFeedResult, GetFeedVariables>(
-    GetFeedQuery,
+  const result = await executeGraphQL<GetFeedVariables, GetFeedResult>(
+    print(GetFeedQuery),
     { take: 5 },
   )
 
@@ -290,7 +290,7 @@ export async function exampleErrorHandling() {
 
   try {
     // Intentionally cause an error with invalid variables
-    const result = await executeGraphQL(GetPostByIdQuery, { id: -1 })
+    const result = await executeGraphQL(print(GetPostByIdQuery), { id: -1 })
 
     if (result.errors && result.errors.length > 0) {
       console.log('GraphQL errors detected:')

@@ -3,14 +3,14 @@ import type { Endpoint, HTTPMethod } from 'fetchdts'
 import { IncomingMessage } from 'http'
 import type {
     CreateDraftVariables,
-    GetPostsVariables,
+    GetFeedVariables,
     LoginVariables,
     SignupVariables
-} from '../graphql/operations'
+} from '../gql'
 import type {
     GraphQLRequestBody,
     MimeType
-} from '../graphql/types'
+} from '../gql/types'
 import type { RequestMetadata, SecurityContext, User } from '../types'
 
 /**
@@ -36,7 +36,8 @@ export interface GraphQLResponse<T = unknown> {
 /**
  * GraphQL error type with location and path information
  */
-export interface GraphQLError {
+export interface GraphQLError extends Error {
+    name: string
     message: string
     locations?: Array<{ line: number; column: number }>
     path?: Array<string | number>
@@ -155,7 +156,7 @@ export interface GetMeContext extends Context<never, 'GetMe'> {
 /**
  * Context type for GetPosts operations
  */
-export interface GetPostsContext extends Context<GetPostsVariables, 'GetPosts'> {
+export interface GetPostsContext extends Context<GetFeedVariables, 'GetPosts'> {
     readonly operationName: 'GetPosts'
 }
 
@@ -209,7 +210,7 @@ export type VariablesForOperation<TOperationName extends OperationName> =
     TOperationName extends 'Signup' ? SignupVariables :
     TOperationName extends 'CreateDraft' ? CreateDraftVariables :
     TOperationName extends 'GetMe' ? never :
-    TOperationName extends 'GetPosts' ? GetPostsVariables :
+    TOperationName extends 'GetPosts' ? GetFeedVariables :
     Record<string, unknown>
 
 // ============================================================================
