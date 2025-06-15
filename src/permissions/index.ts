@@ -8,6 +8,7 @@ import {
   requireAuthentication,
 } from '../context'
 import { getUserId } from '../context/utils'
+import { isDevelopment } from '../environment'
 import { prisma } from '../prisma'
 
 type PermissionUtilsType = {
@@ -161,7 +162,7 @@ export const permissions = shield({
   },
 }, {
   allowExternalErrors: true,
-  debug: process.env.NODE_ENV === 'development',
+  debug: isDevelopment,
   fallbackRule: rule()(() => true), // Allow access by default, rely on specific rules for restrictions
   fallbackError: new Error('Access denied'),
 })

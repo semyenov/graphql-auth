@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { printSchema } from 'graphql';
 import path from 'path';
-import { schema } from './schema';
+import { schema } from '../src/schema';
 
 // Ensure _docs directory exists
 const docsDir = path.join(process.cwd(), '_docs');

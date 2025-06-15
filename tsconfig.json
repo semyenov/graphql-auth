@@ -20,7 +20,10 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "types": ["bun"],
-    "typeRoots": ["./node_modules/@types", "./.specstory/types", "./.pothos"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types"
+    ],
     "plugins": [
       {
         "name": "gql.tada/ts-plugin",
@@ -32,8 +35,6 @@
       }
     ],
     "paths": {
-      "@prisma/client": ["./.prisma/client"],
-      "@generated/pothos": ["./generated/pothos.ts"],
       "@": ["./src"]
     }
   },

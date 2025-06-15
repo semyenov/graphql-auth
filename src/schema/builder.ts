@@ -2,7 +2,8 @@ import SchemaBuilder from '@pothos/core';
 import PrismaPlugin from '@pothos/plugin-prisma';
 import type PrismaTypes from '@pothos/plugin-prisma/generated';
 import RelayPlugin from '@pothos/plugin-relay';
-import type { Context } from '../context/types';
+import type { Context } from '../context';
+import { isProduction } from '../environment';
 import { prisma } from '../prisma';
 
 export const builder = new SchemaBuilder<{
@@ -20,6 +21,6 @@ export const builder = new SchemaBuilder<{
         client: prisma,
         exposeDescriptions: true,
         filterConnectionTotalCount: true,
-        onUnusedQuery: process.env.BUN_ENV === 'production' ? null : 'warn',
+        onUnusedQuery: isProduction ? null : 'warn',
     },
 });

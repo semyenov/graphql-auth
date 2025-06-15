@@ -10,6 +10,7 @@ import type { HTTPMethod, MimeType } from 'fetchdts'
 import { GraphQLError, type GraphQLFormattedError } from 'graphql'
 import { createContext } from './context/creation'
 import type { Context } from './context/types'
+import { env, isDevelopment } from './environment'
 import { schema } from './schema'
 
 // Enhanced Apollo Server with better typing
@@ -62,7 +63,7 @@ const server = new ApolloServer<Context>({
                 ...formattedError.extensions,
                 code: formattedError.extensions?.code || 'INTERNAL_ERROR',
                 timestamp: new Date().toISOString(),
-                ...(process.env.NODE_ENV === 'development' && error instanceof GraphQLError && {
+                ...(isDevelopment && error instanceof GraphQLError && {
                     stacktrace: error.extensions?.stacktrace
                 })
             }
@@ -75,8 +76,8 @@ async function startServer() {
     try {
         const { url } = await startStandaloneServer(server, {
             listen: {
-                port: process.env.PORT ? parseInt(process.env.PORT) : 4000,
-                host: process.env.HOST || 'localhost'
+                port: env.PORT,
+                host: env.HOST
             },
             context: createContext,
         })

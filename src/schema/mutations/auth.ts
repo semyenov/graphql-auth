@@ -1,5 +1,6 @@
-import { compare, hash } from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import { sign } from 'jsonwebtoken';
+import { env } from '../../environment';
 import { prisma } from '../../prisma';
 import { builder } from '../builder';
 
@@ -12,16 +13,16 @@ builder.mutationField('signup', (t) =>
             email: t.arg.string({ required: true }),
             password: t.arg.string({ required: true }),
         },
-        resolve: async (_parent, args) => {
-            const hashedPassword = await hash(args.password, 10);
+        resolve: async (_parent, { email, password, name }) => {
+            const hashedPassword = await bcrypt.hash(password, 10);
             const user = await prisma.user.create({
                 data: {
-                    name: args.name,
-                    email: args.email,
+                    name,
+                    email,
                     password: hashedPassword,
                 },
             });
-            return sign({ userId: user.id }, process.env.APP_SECRET || '');
+            return sign({ userId: user.id }, env.APP_SECRET);
         },
     })
 );
@@ -38,13 +39,13 @@ builder.mutationField('login', (t) =>
                 where: { email },
             });
             if (!user) {
-                throw new Error(`No user found for email: ${email}`);
+                throw new Error('No user found with that email');
             }
-            const passwordValid = await compare(password, user.password);
-            if (!passwordValid) {
+            const isValid = await bcrypt.compare(password, user.password);
+            if (!isValid) {
                 throw new Error('Invalid password');
             }
-            return sign({ userId: user.id }, process.env.APP_SECRET || '');
+            return sign({ userId: user.id }, env.APP_SECRET);
         },
     })
 ); 

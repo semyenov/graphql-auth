@@ -1,2 +1,0 @@
-$ vitest test/permissions.test.ts
-error: script "test" was terminated by signal SIGHUP (Terminal hung up)

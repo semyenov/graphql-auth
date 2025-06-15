@@ -4,6 +4,7 @@ import './test-env'
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import jwt from 'jsonwebtoken'
 import type { Context } from '../src/context/types'
+import { env } from '../src/environment'
 import type { HTTPMethod } from '../src/graphql/types'
 
 // Import the already built schema with permissions
@@ -81,7 +82,7 @@ export function createTestServer() {
 
 // Generate test JWT token
 export function generateTestToken(userId: string): string {
-  return jwt.sign({ userId }, process.env.APP_SECRET || 'test-secret')
+  return jwt.sign({ userId }, env.APP_SECRET)
 }
 
 export type VariableValues = { [name: string]: unknown }

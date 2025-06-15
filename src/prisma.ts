@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaClientOptions } from '@prisma/client/runtime/library';
-import { withAccelerate } from '@prisma/extension-accelerate';
+import { env } from './environment';
 
 // Global variable to hold the prisma instance
-export type PrismaClientType = ReturnType<typeof createPrismaClient>
+export type PrismaClientType = PrismaClient
 let globalPrisma: PrismaClientType | null = null;
 
 // Factory function to create prisma client
@@ -15,16 +15,12 @@ function createPrismaClient() {
         },
         datasources: {
             db: {
-                url: process.env.DATABASE_URL,
+                url: env.DATABASE_URL,
             },
         },
     } satisfies PrismaClientOptions
 
-    return new PrismaClient(prismaOptions).$extends(withAccelerate({
-        fetch: (input, init) => {
-            return fetch(input, init)
-        }
-    }));
+    return new PrismaClient(prismaOptions);
 }
 
 // Function to get or create prisma instance
@@ -39,7 +35,7 @@ function getPrismaClient() {
 
 // Function to set prisma instance (used by tests)
 function setPrismaClient(prismaInstance: PrismaClient) {
-    globalPrisma = prismaInstance as unknown as PrismaClientType;
+    globalPrisma = prismaInstance;
 }
 
 export const prisma = getPrismaClient();
