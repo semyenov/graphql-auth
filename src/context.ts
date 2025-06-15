@@ -1,6 +1,11 @@
-import type { Endpoint, TypedFetchInput, TypedFetchRequestInit } from 'fetchdts'
+import { ContextFunction } from '@apollo/server'
+import type {
+  Endpoint,
+  HTTPMethod,
+  TypedFetchResponseBody
+} from 'fetchdts'
 import { graphql, type ResultOf, type VariablesOf } from 'gql.tada'
-import { GraphQLError } from 'graphql'
+import { IncomingMessage } from 'http'
 
 // Define types for GraphQL operations
 interface User {
@@ -70,93 +75,122 @@ export type SignupVariables = VariablesOf<typeof SignupMutation>
 export type CreateDraftResult = ResultOf<typeof CreateDraftMutation>
 export type CreateDraftVariables = VariablesOf<typeof CreateDraftMutation>
 
-// Enhanced API Schema for fetchdts with GraphQL Tada integration
+// GraphQL request body type
+interface GraphQLRequestBody {
+  query: string
+  variables?: Record<string, unknown>
+  operationName?: string
+}
+
+// GraphQL response type
+export interface GraphQLResponse<T = unknown> {
+  data?: T
+  errors?: Array<{
+    message: string
+    locations?: Array<{ line: number; column: number }>
+    path?: Array<string | number>
+  }>
+}
+
+// Enhanced API Schema for fetchdts with proper endpoint typing
 export interface GraphQLAPISchema {
   '/graphql': {
     [Endpoint]: {
       POST: {
-        body: {
-          query: string
-          variables?: Record<string, unknown>
-          operationName?: string
-        }
-        headers?: {
+        body: GraphQLRequestBody
+        headers: {
+          'content-type': 'application/json'
           authorization?: string
-          'content-type': string
         }
-        response: {
-          data?: Record<string, unknown>
-          errors?: Array<{
-            message: string
-            locations?: Array<{ line: number; column: number }>
-            path?: Array<string | number>
-          }>
+        response: GraphQLResponse
+        responseHeaders: {
+          'content-type': 'application/json'
         }
-      }
-    }
-  }
-
-  // Authentication endpoints
-  '/mutation/login': {
-    [Endpoint]: {
-      POST: {
-        body: LoginVariables
-        response: { data: LoginResult }
-      }
-    }
-  }
-  '/mutation/signup': {
-    [Endpoint]: {
-      POST: {
-        body: SignupVariables
-        response: { data: SignupResult }
-      }
-    }
-  }
-  '/mutation/createDraft': {
-    [Endpoint]: {
-      POST: {
-        body: CreateDraftVariables
-        headers?: { authorization?: string }
-        response: { data: CreateDraftResult }
       }
     }
   }
 }
 
-// Type the request using fetchdts with GraphQL Tada integration
-export type TypedRequest<T extends TypedFetchInput<GraphQLAPISchema> = TypedFetchInput<GraphQLAPISchema>> = {
-  url: T
-  method?: string
-  headers?: Record<string, string>
-  body?: TypedFetchRequestInit<GraphQLAPISchema, T>['body']
-} & TypedFetchRequestInit<GraphQLAPISchema, T>
-
+// Enhanced context interface with proper typing
 export interface Context {
-  req: TypedRequest // Typed with both fetchdts and GraphQL Tada
+  req: {
+    url: string
+    method: HTTPMethod
+    headers: Record<string, string>
+    body?: GraphQLRequestBody
+  }
+  headers: Record<string, string>
+  method: HTTPMethod
+  contentType: string
 }
 
-export async function createContext({ req }: { req: TypedRequest }): Promise<Context> {
-  return { req }
+// Update the context function to handle Apollo Server's context with better typing
+export const createContext: ContextFunction<[{ req: IncomingMessage }], Context> = async ({ req }) => {
+  // Convert IncomingMessage headers to record
+  const headers: Record<string, string> = {}
+  Object.entries(req.headers).forEach(([key, value]) => {
+    if (value) {
+      headers[key] = Array.isArray(value) ? value.join(', ') : String(value)
+    }
+  })
+
+  // Create context with proper typing
+  const context: Context = {
+    req: {
+      url: req.url || '/graphql',
+      method: (req.method as HTTPMethod) || 'POST',
+      headers,
+      body: (req as any).body
+    },
+    headers,
+    method: (req.method as HTTPMethod) || 'POST',
+    contentType: headers['content-type'] || 'application/json'
+  }
+
+  return context
 }
 
-// Helper function for type-safe GraphQL execution
-export async function executeGraphQL<TData = Record<string, unknown>, TVariables = Record<string, unknown>>(
+// Type-safe GraphQL execution with fetchdts integration
+export async function executeGraphQL<TData = unknown, TVariables = Record<string, unknown>>(
   query: string,
   variables?: TVariables,
   headers?: Record<string, string>
-): Promise<{ data?: TData; errors?: GraphQLError[] }> {
+): Promise<GraphQLResponse<TData>> {
+  const requestBody = JSON.stringify({
+    query,
+    variables,
+  })
+
   const response = await fetch('/graphql', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...headers,
     },
-    body: JSON.stringify({
-      query,
-      variables,
-    }),
+    body: requestBody,
   })
 
-  return response.json() as Promise<{ data?: TData; errors?: GraphQLError[] }>
+  return response.json() as Promise<GraphQLResponse<TData>>
+}
+
+// Helper type for GraphQL endpoint response
+export type GraphQLEndpointResponse<T> = TypedFetchResponseBody<GraphQLAPISchema, '/graphql', 'POST'> & {
+  data?: T
+}
+
+// Type-safe request helper using fetchdts types
+export function createTypedRequest<T extends keyof GraphQLAPISchema>(
+  endpoint: T,
+  method: HTTPMethod,
+  body?: GraphQLRequestBody,
+  headers?: Record<string, string>
+): RequestInit {
+  return {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  }
 }

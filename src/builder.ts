@@ -20,6 +20,6 @@ export const builder = new SchemaBuilder<{
         client: prisma,
         exposeDescriptions: true,
         filterConnectionTotalCount: true,
-        onUnusedQuery: process.env.NODE_ENV === 'production' ? null : 'warn',
+        onUnusedQuery: process.env.BUN_ENV === 'production' ? null : 'warn',
     },
 });

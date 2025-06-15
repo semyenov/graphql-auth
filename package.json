@@ -3,14 +3,16 @@
   "license": "MIT",
   "scripts": {
     "dev": "bun run src/server",
-    "start": "node dist/server",
+    "start": "bun dist/server.js",
     "clean": "rm -rf dist",
     "build": "bun run clean && bun run generate && bun build src/server.ts --outdir dist",
     "generate": "bun run generate:prisma && bun run generate:gql",
     "generate:prisma": "prisma generate",
     "generate:gql": "bunx gql.tada generate-output",
+    "gen:schema": "bun run src/generate-schema.ts",
     "demo": "bun run src/h3-demo.ts",
-    "seed": "bun run prisma/seed.ts"
+    "seed": "bun run prisma/seed.ts",
+    "db:reset": "bunx prisma migrate reset --force"
   },
   "prettier": {
     "semi": false,

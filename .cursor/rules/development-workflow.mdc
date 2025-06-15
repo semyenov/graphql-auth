@@ -3,153 +3,162 @@ description:
 globs: 
 alwaysApply: false
 ---
-# Development Workflow & Commands
+# Development Workflow Guide
 
-This guide covers the development workflow for this GraphQL Auth server.
+## Getting Started
+This project uses Bun as the JavaScript runtime for better performance and developer experience.
 
-## Prerequisites
+### Prerequisites
+- Bun installed (`curl -fsSL https://bun.sh/install | bash`)
+- Node.js 18+ (for compatibility)
+- TypeScript knowledge
+- GraphQL familiarity
 
-- **Bun** runtime (preferred over Node.js)
-- **SQLite** database (file-based, no server required)
-- **Environment Variables**: Create `.env` with `APP_SECRET`
-
-## Development Commands
-
-### Start Development Server
+### Setup Commands
 ```bash
-bun run dev                    # Start with auto-reload
-bun run --bun src/server.ts    # Direct start with Bun runtime
+# Install dependencies
+bun install
+
+# Generate GraphQL schema
+bun run generate
+
+# Start development server
+bun run dev
+
+# Build for production
+bun run build
+
+# Start production server
+bun run start
 ```
 
-### Database Management
-```bash
-bun run generate:prisma       # Generate Prisma client & Pothos types
-bunx prisma migrate dev        # Create and apply database migrations
-bunx prisma studio            # Open visual database browser
-bunx prisma db seed           # Run seed script (if exists)
+## Development Server
+The development server runs on `http://localhost:4000` with the following endpoints:
+- `http://localhost:4000/graphql` - GraphQL endpoint
+- `http://localhost:4000/graphql` - GraphQL Playground (development)
+
+## Type Safety Development Flow
+
+### 1. GraphQL Schema First
+- Define mutations and queries in [src/context.ts](mdc:src/context.ts) using GraphQL Tada
+- Use the `graphql()` template literal for type-safe operations
+- Export both `ResultOf` and `VariablesOf` types for each operation
+
+### 2. API Schema Definition
+- Define API schemas using fetchdts `Endpoint` pattern
+- Include proper request/response typing
+- Specify headers and content types explicitly
+
+### 3. Context Enhancement
+- Leverage the enhanced context from [src/context.ts](mdc:src/context.ts)
+- Use fetchdts types for HTTP-level operations
+- Implement type-safe request helpers
+
+### 4. Server Configuration
+- Extend the Apollo Server setup in [src/server.ts](mdc:src/server.ts)
+- Add custom plugins for logging and error handling
+- Use fetchdts types in server middleware
+
+## Code Organization Best Practices
+
+### File Structure
+```
+src/
+├── server.ts          # Apollo Server setup with enhanced plugins
+├── context.ts         # Type-safe GraphQL context with fetchdts
+├── schema.ts          # GraphQL schema definition
+├── builder.ts         # Pothos GraphQL schema builder
+├── generate-schema.ts # Schema generation utilities
+└── utils.ts           # Utility functions
 ```
 
-### Type Generation
-```bash
-bun run generate              # Generate all types (Prisma + GraphQL Tada)
-bun run generate:gql          # Generate GraphQL Tada types only
+### Import Patterns
+Always organize imports in this order:
+1. Node.js built-ins
+2. Third-party libraries (Apollo, GraphQL, etc.)
+3. fetchdts types
+4. Local modules
+
+```typescript
+import { IncomingMessage } from 'http'
+import { ApolloServer } from '@apollo/server'
+import { graphql } from 'gql.tada'
+import type { HTTPMethod, MimeType } from 'fetchdts'
+import { Context, createContext } from './context'
 ```
 
-### Build & Deploy
-```bash
-bun run build                 # Build production bundle
-bun run start                 # Start production server
-```
+## Testing Strategy
 
-## File Change Workflows
+### Type Safety Testing
+- Use TypeScript strict mode for compile-time error detection
+- Leverage fetchdts types for API contract testing
+- Test GraphQL operations with GraphQL Tada type inference
 
-### Adding New GraphQL Fields
+### Development Testing
+- Use GraphQL Playground for interactive testing
+- Test authentication flows with proper JWT tokens
+- Validate error handling and logging patterns
 
-1. **Update Prisma Schema** (if database changes needed):
-   ```bash
-   # Edit prisma/schema.prisma
-   bunx prisma migrate dev --name "descriptive-name"
-   ```
+## Environment Configuration
 
-2. **Update GraphQL Schema**:
-   ```typescript
-   // In src/schema.ts, add new field
-   builder.queryField('newField', (t) =>
-     t.prismaField({
-       type: 'YourType',
-       resolve: () => prisma.yourModel.findMany(),
-     })
-   );
-   ```
+### Development Environment
+- `NODE_ENV=development` for detailed error messages and stack traces
+- Enhanced logging with operation details
+- GraphQL Playground enabled
+- CORS configured for development
 
-3. **Add Permissions** (if needed):
-   ```typescript
-   // In src/permissions/index.ts
-   Query: {
-     newField: rules.isAuthenticatedUser,
-   }
-   ```
+### Production Environment
+- `NODE_ENV=production` for sanitized error responses
+- Structured logging without sensitive information
+- Proper security headers
+- Performance monitoring enabled
 
-### Adding New Database Models
+## Performance Considerations
 
-1. **Define in Prisma**:
-   ```prisma
-   model NewModel {
-     id        Int      @id @default(autoincrement())
-     name      String
-     createdAt DateTime @default(now())
-   }
-   ```
+### Bun Runtime Benefits
+- Faster JavaScript execution
+- Built-in TypeScript support
+- Optimized package management
+- Better memory usage
 
-2. **Generate & Migrate**:
-   ```bash
-   bunx prisma migrate dev --name "add-new-model"
-   ```
+### GraphQL Optimizations
+- Enable Apollo Server introspection caching
+- Use structured logging to avoid performance overhead
+- Implement proper error handling to prevent server crashes
 
-3. **Add to GraphQL Schema**:
-   ```typescript
-   builder.prismaObject('NewModel', {
-     fields: (t) => ({
-       id: t.exposeInt('id'),
-       name: t.exposeString('name'),
-       createdAt: t.expose('createdAt', { type: 'DateTime' }),
-     }),
-   });
-   ```
+## Security Best Practices
 
-## Testing Endpoints
+### Authentication Security
+- Use JWT tokens for stateless authentication
+- Implement proper token validation in context
+- Use HTTPS in production environments
+- Validate and sanitize all user inputs
 
-### Using curl
-```bash
-# Public endpoint
-curl -X POST http://localhost:3000/graphql \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ feed { id title } }"}'
+### Error Handling Security
+- Never expose internal error details in production
+- Log all security-related events
+- Implement rate limiting for authentication endpoints
+- Use secure HTTP headers
 
-# Authenticated endpoint
-curl -X POST http://localhost:3000/graphql \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ me { id name email } }"}'
-```
+## Debugging and Monitoring
 
-### Using GraphQL Playground
-- Visit `http://localhost:3000/graphql` in browser
-- Use introspection to explore schema
-- Set Authorization header for protected queries
+### Development Debugging
+- Use Consola structured logging for better debugging
+- Enable GraphQL Playground for query testing
+- Use TypeScript strict mode for early error detection
+- Leverage fetchdts types for better IntelliSense
 
-## Common Issues & Solutions
+### Production Monitoring
+- Implement comprehensive error logging
+- Monitor GraphQL operation performance
+- Track authentication success/failure rates
+- Use structured logging for better log parsing
 
-### Database Connection Errors
-```bash
-# Reset database
-rm prisma/dev.db
-bunx prisma migrate dev
-```
-
-### Type Generation Issues
-```bash
-# Clean and regenerate all types
-bun run generate:prisma
-bun run generate:gql
-```
-
-### Server Won't Start
-```bash
-# Check for port conflicts
-lsof -i :3000
-pkill -f "bun.*server"  # Kill existing processes
-```
-
-### Permission Errors
-- Check JWT token format in Authorization header
-- Verify token includes correct `userId` claim
-- Ensure user exists in database with correct ID
-
-## Project Structure Guidelines
-
-- **Single Schema File**: Keep all GraphQL definitions in [src/schema.ts](mdc:src/schema.ts)
-- **Prisma-First**: Define database schema first, then GraphQL
-- **Type Safety**: Always use generated types, avoid `any`
-- **Permissions**: Add permissions for new protected fields
-- **Testing**: Test both authenticated and public endpoints
+## Best Practices Summary
+1. **Type Safety First**: Always use fetchdts and GraphQL Tada types
+2. **Structured Logging**: Use Consola with structured objects
+3. **Error Handling**: Implement comprehensive error handling patterns
+4. **Security**: Validate inputs and sanitize error responses
+5. **Performance**: Leverage Bun runtime optimizations
+6. **Testing**: Use type-safe testing patterns with strong typing
+7. **Documentation**: Keep Cursor Rules updated with code changes

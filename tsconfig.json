@@ -22,6 +22,7 @@
     "types": ["bun"],
     "typeRoots": [
       "./node_modules/@types", 
+      "./.specstory/types",
       "./.pothos"
     ],
     "plugins": [
@@ -33,7 +34,6 @@
     ],
     "paths": {
       "@prisma/client": ["./.prisma/client"],
-      "@generated/nexus": ["./generated/nexus.ts"],
       "@generated/pothos": ["./generated/pothos.ts"]
     }
   },

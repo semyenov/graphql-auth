@@ -1,0 +1,121 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# GraphQL Authentication Patterns
+
+## Overview
+This project implements GraphQL authentication using GraphQL Tada for type-safe operations and Apollo Server for the GraphQL endpoint.
+
+## Authentication Mutations
+The following mutations are defined in [src/context.ts](mdc:src/context.ts):
+
+### Login Mutation
+```typescript
+export const LoginMutation = graphql(`
+  mutation Login($email: String!, $password: String!) {
+    login(email: $email, password: $password) {
+      token
+      user {
+        id
+        email
+        name
+      }
+    }
+  }
+`)
+```
+
+### Signup Mutation
+```typescript
+export const SignupMutation = graphql(`
+  mutation Signup($email: String!, $password: String!, $name: String) {
+    signup(email: $email, password: $password, name: $name) {
+      token
+      user {
+        id
+        email
+        name
+      }
+    }
+  }
+`)
+```
+
+### Create Draft Mutation
+```typescript
+export const CreateDraftMutation = graphql(`
+  mutation CreateDraft($data: PostCreateInput!) {
+    createDraft(data: $data) {
+      id
+      title
+      content
+      published
+      author {
+        id
+        name
+      }
+    }
+  }
+`)
+```
+
+## Type Safety with GraphQL Tada
+Use `ResultOf` and `VariablesOf` types for type-safe mutation handling:
+
+```typescript
+export type LoginResult = ResultOf<typeof LoginMutation>
+export type LoginVariables = VariablesOf<typeof LoginMutation>
+export type SignupResult = ResultOf<typeof SignupMutation>
+export type SignupVariables = VariablesOf<typeof SignupMutation>
+```
+
+## Type-Safe GraphQL Execution
+Use the `executeGraphQL` helper function for type-safe GraphQL operations:
+
+```typescript
+export async function executeGraphQL<TData = unknown, TVariables = Record<string, unknown>>(
+  query: string,
+  variables?: TVariables,
+  headers?: Record<string, string>
+): Promise<GraphQLResponse<TData>>
+```
+
+## Authentication Context Pattern
+The enhanced context in [src/context.ts](mdc:src/context.ts) provides:
+
+- Type-safe request handling with fetchdts integration
+- Structured headers and HTTP method typing
+- Authorization header support for JWT tokens
+- Content-type validation and typing
+
+## Data Models
+Core authentication data models:
+
+```typescript
+interface User {
+  id: number
+  email: string
+  name?: string
+  posts: Post[]
+}
+
+interface Post {
+  id: number
+  title: string
+  content?: string
+  published: boolean
+  author: User
+  createdAt: string
+  updatedAt: string
+  viewCount: number
+}
+```
+
+## Best Practices
+1. Always use GraphQL Tada for mutation definitions
+2. Export both `ResultOf` and `VariablesOf` types for each mutation
+3. Use the type-safe `executeGraphQL` helper for operations
+4. Leverage the enhanced context for authorization handling
+5. Structure mutations to return both tokens and user data for authentication flows

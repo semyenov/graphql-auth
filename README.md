@@ -3,7 +3,7 @@
 This example shows how to implement a **GraphQL server with TypeScript** with the following stack:
 
 - [**Apollo Server**](https://github.com/apollographql/apollo-server): HTTP server for GraphQL APIs
-- [**GraphQL Nexus**](https://nexusjs.org/docs/): GraphQL schema definition and resolver implementation
+- [**Pothos**](https://pothos-graphql.dev/): GraphQL schema definition and resolver implementation
 - [**GraphQL Shield**](https://github.com/maticzav/graphql-shield): Authorization/permission layer for GraphQL schemas
 - [**Prisma Client**](https://www.prisma.io/docs/concepts/components/prisma-client): Databases access (ORM)
 - [**Prisma Migrate**](https://www.prisma.io/docs/concepts/components/prisma-migrate): Database migrations
@@ -17,19 +17,66 @@ This example shows how to implement a **GraphQL server with TypeScript** with th
 - [Switch to another database (e.g. PostgreSQL, MySQL, SQL Server)](#switch-to-another-database-eg-postgresql-mysql-sql-server)
 - [Next steps](#next-steps)
 
+## Installation
+
+### Install Bun
+
+Bun is a fast all-in-one JavaScript runtime & toolkit. Install it for your operating system:
+
+#### macOS & Linux
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+**Terminal Output:**
+```
+bun was installed successfully to ~/.bun/bin/bun
+
+Added "~/.bun/bin" to $PATH in "~/.bashrc"
+
+To get started, run:
+  exec $SHELL
+  bun --help
+```
+
+#### Windows (WSL)
+
+For Windows users, we recommend using Windows Subsystem for Linux (WSL):
+
+1. Install WSL2 following [Microsoft's official guide](https://docs.microsoft.com/en-us/windows/wsl/install)
+2. Open your WSL terminal and run:
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+#### Verify Installation
+
+Confirm Bun is installed correctly:
+
+```bash
+bun --version
+```
+
+**Terminal Output:**
+```
+1.2.15
+```
+
 ## Getting started
 
 ### 1. Download example and navigate into the project directory
 
 Download this example:
 
-```
-npx try-prisma@latest --template orm/graphql-auth
+```bash
+bunx try-prisma@latest --template orm/graphql-auth
 ```
 
 Then, navigate into the project directory:
 
-```
+```bash
 cd graphql-auth
 ```
 
@@ -37,15 +84,15 @@ cd graphql-auth
 
 Clone this repository:
 
-```
+```bash
 git clone git@github.com:prisma/prisma-examples.git --depth=1
 ```
 
-Install npm dependencies:
+Install dependencies:
 
-```
+```bash
 cd prisma-examples/orm/graphql-auth
-npm install
+bun install
 ```
 
 </details>
@@ -56,24 +103,27 @@ This example uses a local SQLite database by default. If you want to use to [Pri
 
 1. Set up a new Prisma Postgres instance in the Prisma Data Platform [Console](https://console.prisma.io) and copy the database connection URL.
 2. Update the `datasource` block to use `postgresql` as the `provider` and paste the database connection URL as the value for `url`:
-    ```prisma
-    datasource db {
-      provider = "postgresql"
-      url      = "prisma+postgres://accelerate.prisma-data.net/?api_key=ey...."
-    }
-    ```
 
-    > **Note**: In production environments, we recommend that you set your connection URL via an [environment variable](https://www.prisma.io/docs/orm/more/development-environment/environment-variables/managing-env-files-and-setting-variables), e.g. using a `.env` file.
+   ```prisma
+   datasource db {
+     provider = "postgresql"
+     url      = "prisma+postgres://accelerate.prisma-data.net/?api_key=ey...."
+   }
+   ```
+
+   > **Note**: In production environments, we recommend that you set your connection URL via an [environment variable](https://www.prisma.io/docs/orm/more/development-environment/environment-variables/managing-env-files-and-setting-variables), e.g. using a `.env` file.
+
 3. Install the Prisma Accelerate extension:
-    ```
-    npm install @prisma/extension-accelerate
-    ```
+   ```bash
+   bun add @prisma/extension-accelerate
+   ```
 4. Add the Accelerate extension to the `PrismaClient` instance:
-    ```diff
-    + import { withAccelerate } from "@prisma/extension-accelerate"
 
-    + const prisma = new PrismaClient().$extends(withAccelerate())
-    ```
+   ```diff
+   + import { withAccelerate } from "@prisma/extension-accelerate"
+
+   + const prisma = new PrismaClient().$extends(withAccelerate())
+   ```
 
 That's it, your project is now configured to use Prisma Postgres!
 
@@ -81,32 +131,463 @@ That's it, your project is now configured to use Prisma Postgres!
 
 Run the following command to create your database. This also creates the `User` and `Post` tables that are defined in [`prisma/schema.prisma`](./prisma/schema.prisma):
 
-```
-npx prisma migrate dev --name init
+```bash
+bunx prisma migrate dev --name init
 ```
 
-When `npx prisma migrate dev` is executed against a newly created database, seeding is also triggered. The seed file in [`prisma/seed.ts`](./prisma/seed.ts) will be executed and your database will be populated with the sample data.
+When `bunx prisma migrate dev` is executed against a newly created database, seeding is also triggered. The seed file in [`prisma/seed.ts`](./prisma/seed.ts) will be executed and your database will be populated with the sample data.
 
 **If you switched to Prisma Postgres in the previous step**, you need to trigger seeding manually (because Prisma Postgres already created an empty database instance for you, so seeding isn't triggered):
 
+```bash
+bun run seed
 ```
-npx prisma db seed
-```
-
 
 ### 3. Start the GraphQL server
 
 Launch your GraphQL server with this command:
 
-```
-npm run dev
+```bash
+bun run dev
 ```
 
 Navigate to [http://localhost:4000](http://localhost:4000) in your browser to explore the API of your GraphQL server in a [GraphQL Playground](https://github.com/prisma/graphql-playground).
 
+## Quick Start Commands
+
+Here are the most common Bun commands you'll use while developing:
+
+### Install Dependencies
+
+```bash
+bun install
+```
+
+**Terminal Output:**
+```
+bun install v1.2.15 (df017990)
+
+Checked 223 installs across 216 packages (no changes) [101.00ms]
+```
+
+### Start Development Server
+
+```bash
+bun run dev
+```
+
+This starts the GraphQL server at [http://localhost:4000](http://localhost:4000).
+
+### Database Commands
+
+#### Reset Database & Re-seed
+
+```bash
+bun run db:reset
+```
+
+**Terminal Output:**
+```
+$ bunx prisma migrate reset --force
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": SQLite database "dev.db" at "file:./dev.db"
+
+Applying migration `20250606184121_init`
+
+Database reset successful
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20250606184121_init/
+    └─ migration.sql
+
+✔ Generated Prisma Client (v6.9.0) to ./node_modules/@prisma/client in 80ms
+✔ Generated Pothos integration to ./types/pothos.ts in 9ms
+
+Running seed command `bun run prisma/seed.ts` ...
+Start seeding ...
+Created user with id: 1
+Created user with id: 2
+Created user with id: 3
+Seeding finished.
+
+🌱  The seed command has been executed.
+```
+
+This command resets your database, applies all migrations, and automatically runs the seed script.
+
+#### Manual Database Seeding
+
+```bash
+bun run seed
+```
+
+#### Generate Prisma Client
+
+```bash
+bun run generate
+```
+
+**Terminal Output:**
+```
+$ bun run generate:prisma && bun run generate:gql
+$ prisma generate
+Prisma schema loaded from prisma/schema.prisma
+
+✔ Generated Prisma Client (v6.9.0) to ./node_modules/@prisma/client in 95ms
+✔ Generated Pothos integration to ./types/pothos.ts in 8ms
+
+$ bunx gql.tada generate-output
+✓ Introspection output was generated successfully
+```
+
+#### Create Database Migration
+
+```bash
+bunx prisma migrate dev --name migration-name
+```
+
+### Build for Production
+
+```bash
+bun run build
+```
+
+### Run Production Server
+
+```bash
+bun run start
+```
+
+### Other Useful Commands
+
+#### Run Demo Script
+
+```bash
+bun run demo
+```
+
+#### Clean Build Directory
+
+```bash
+bun run clean
+```
+
+## Installation Verification
+
+To verify that all Bun commands work correctly in a fresh environment, you can test the installation in a Docker container:
+
+### Using Docker (Optional)
+
+Create a simple Dockerfile to test the installation:
+
+```dockerfile
+FROM ubuntu:22.04
+
+# Install curl and basic tools
+RUN apt-get update && apt-get install -y curl unzip
+
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:$PATH"
+
+# Verify installation
+RUN bun --version
+```
+
+**Terminal Output for Fresh Installation:**
+```bash
+# Building the Docker image
+docker build -t bun-test .
+
+# The installation output in the container:
++ bun --version
+1.2.15
+```
+
+### Testing Commands in Fresh Project
+
+After cloning the repository in a fresh environment:
+
+```bash
+git clone <repository-url>
+cd graphql-auth
+bun install
+```
+
+**Expected Terminal Output:**
+```
+bun install v1.2.15 (df017990)
+
+Checked 223 installs across 216 packages (no changes) [65.00ms]
+```
+
+Then run the full setup:
+
+```bash
+bun run generate && echo "✓ Generate completed" && \
+bun run db:reset && echo "✓ Database reset completed"
+```
+
+**Expected Terminal Output:**
+```
+$ bun run generate:prisma && bun run generate:gql
+$ prisma generate
+Prisma schema loaded from prisma/schema.prisma
+
+✔ Generated Prisma Client (v6.9.0) to ./node_modules/@prisma/client in 85ms
+✔ Generated Pothos integration to ./types/pothos.ts in 8ms
+
+$ bunx gql.tada generate-output
+✓ Introspection output was generated successfully
+
+✓ Generate completed
+$ bunx prisma migrate reset --force
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": SQLite database "dev.db" at "file:./dev.db"
+
+Applying migration `20250606184121_init`
+
+Database reset successful
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20250606184121_init/
+    └─ migration.sql
+
+✔ Generated Prisma Client (v6.9.0) to ./node_modules/@prisma/client in 80ms
+✔ Generated Pothos integration to ./types/pothos.ts in 9ms
+
+Running seed command `bun run prisma/seed.ts` ...
+Start seeding ...
+Created user with id: 1
+Created user with id: 2
+Created user with id: 3
+Seeding finished.
+
+🌱  The seed command has been executed.
+
+✓ Database reset completed
+```
+
+## GraphQL Schema & Operations
+
+The GraphQL schema is automatically generated and maintained in [`_docs/schema.graphql`](./_docs/schema.graphql). You can regenerate it at any time using:
+
+```bash
+bun run gen:schema
+```
+
+### Schema Overview
+
+The API provides the following main types:
+
+#### **Queries**
+- `allUsers` - Retrieve all users
+- `me` - Get current authenticated user profile  
+- `feed` - Get published posts with filtering and pagination
+- `postById` - Get a specific post by ID
+- `draftsByUser` - Get unpublished posts by user
+
+#### **Mutations**
+- `signup` - Register a new user account
+- `login` - Authenticate and get JWT token
+- `createDraft` - Create a new unpublished post
+- `togglePublishPost` - Publish/unpublish a post
+- `incrementPostViewCount` - Track post views
+- `deletePost` - Remove a post
+
+#### **Types**
+- `User` - User account with id, name, email, posts
+- `Post` - Blog post with metadata, content, author relationship
+- `DateTime` - ISO 8601 timestamp scalar
+
+### Example Operations
+
+#### cURL Examples
+
+**Register a new user:**
+```bash
+curl -X POST http://localhost:4000/graphql \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "mutation { signup(name: \"Alice\", email: \"alice@example.com\", password: \"secret123\") }"
+  }'
+```
+
+**Login and get token:**
+```bash
+curl -X POST http://localhost:4000/graphql \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "mutation { login(email: \"alice@example.com\", password: \"secret123\") }"
+  }'
+```
+
+**Get current user (requires auth token):**
+```bash
+curl -X POST http://localhost:4000/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "query": "{ me { id name email } }"
+  }'
+```
+
+**Create a draft post:**
+```bash
+curl -X POST http://localhost:4000/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "query": "mutation { createDraft(data: { title: \"My New Post\", content: \"Hello World!\" }) { id title published } }"
+  }'
+```
+
+#### GraphQL Playground Examples
+
+**Query: Get published posts with author info**
+```graphql
+query GetFeed {
+  feed(take: 10, orderBy: { updatedAt: desc }) {
+    id
+    title
+    content
+    published
+    viewCount
+    createdAt
+    author {
+      id
+      name
+      email
+    }
+  }
+}
+```
+
+**Mutation: Create and publish a post**
+```graphql
+mutation CreateAndPublishPost {
+  # First create a draft
+  createDraft(data: {
+    title: "Getting Started with GraphQL"
+    content: "GraphQL is a powerful query language..."
+  }) {
+    id
+    title
+    published
+  }
+}
+
+# Then publish it (use the returned ID)
+mutation PublishPost {
+  togglePublishPost(id: 1) {
+    id
+    title
+    published
+    updatedAt
+  }
+}
+```
+
+**Query: Search posts**
+```graphql
+query SearchPosts($searchTerm: String!) {
+  feed(searchString: $searchTerm, take: 5) {
+    id
+    title
+    content
+    author {
+      name
+    }
+  }
+}
+
+# Query Variables:
+# {
+#   "searchTerm": "graphql"
+# }
+```
+
+### Input Types & Validation
+
+**PostCreateInput:**
+```graphql
+input PostCreateInput {
+  title: String!      # Required: Post title
+  content: String     # Optional: Post content/body
+}
+```
+
+**UserUniqueInput:**
+```graphql
+input UserUniqueInput {
+  id: Int            # Either ID or email required
+  email: String      # for user identification
+}
+```
+
+**PostOrderByUpdatedAtInput:**
+```graphql
+input PostOrderByUpdatedAtInput {
+  updatedAt: SortOrder!  # "asc" or "desc"
+}
+```
+
+### Authentication
+
+Protected operations require a valid JWT token in the Authorization header:
+
+```json
+{
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Protected Operations:**
+- `me` - Requires authentication
+- `createDraft` - Requires authentication
+- `togglePublishPost` - Requires post ownership
+- `deletePost` - Requires post ownership
+- `draftsByUser` - Requires authentication
+- `postById` - Requires authentication
+- `incrementPostViewCount` - Requires authentication
+
+### Error Handling
+
+**Common Error Responses:**
+
+```json
+{
+  "errors": [
+    {
+      "message": "Not Authorised!",
+      "locations": [{ "line": 2, "column": 3 }],
+      "path": ["me"]
+    }
+  ],
+  "data": null
+}
+```
+
+```json
+{
+  "errors": [
+    {
+      "message": "No user found for email: wrong@email.com",
+      "locations": [{ "line": 2, "column": 3 }],
+      "path": ["login"] 
+    }
+  ],
+  "data": null
+}
+```
+
 ## Using the GraphQL API
 
-The schema that specifies the API operations of your GraphQL server is defined in [`./schema.graphql`](./schema.graphql). Below are a number of operations that you can send to the API using the GraphQL Playground.
+The schema that specifies the API operations of your GraphQL server is defined in [`_docs/schema.graphql`](./_docs/schema.graphql). Below are a number of operations that you can send to the API using the GraphQL Playground.
 
 Feel free to adjust any operation by adding or removing fields. The GraphQL Playground helps you with its auto-completion and query validation features.
 
@@ -129,7 +610,6 @@ query {
 ```
 
 <details><summary><strong>See more API operations</strong></summary>
-
 
 ### Register a new user
 
@@ -243,9 +723,7 @@ mutation {
 
 ```graphql
 {
-  feed(
-    searchString: "prisma"
-  ) {
+  feed(searchString: "prisma") {
     id
     title
     content
@@ -260,7 +738,7 @@ You need to be logged in for this query to work, i.e. an authentication token th
 
 ```graphql
 {
-  postById(id: __POST_ID__ ) {
+  postById(id: __POST_ID__) {
     id
     title
     content
@@ -273,7 +751,7 @@ Note that you need to replace the `__POST_ID__` placeholder with an actual `id` 
 
 ```graphql
 {
-  postById(id: 5 ) {
+  postById(id: 5) {
     id
     title
     content
@@ -281,7 +759,6 @@ Note that you need to replace the `__POST_ID__` placeholder with an actual `id` 
   }
 }
 ```
-
 
 ### Delete a post
 
@@ -311,11 +788,7 @@ You need to be logged in for this query to work, i.e. an authentication token th
 
 ```graphql
 {
-  draftsByUser(
-    userUniqueInput: {
-      email: "mahmoud@prisma.io"
-    }
-  ) {
+  draftsByUser(userUniqueInput: { email: "mahmoud@prisma.io" }) {
     id
     title
     content
@@ -330,7 +803,6 @@ You need to be logged in for this query to work, i.e. an authentication token th
 ```
 
 </details>
-
 
 ### Authenticating GraphQL requests
 
@@ -371,7 +843,6 @@ The following [authorization rules](./src/permissions/index.ts) are defined for 
 | `togglePublishPost`      | Mutation       | `isPostOwner`         | Requires the authenticated user to be the author of the post to be published/unpublished |
 
 The `isAuthenticatedUser` rule requires you to send a valid authentication token. The `isPostOwner` rule additionaly requires the user to whom this authentication token belongs to be the author of the post on which the operation is applied.
-
 
 ## Evolving the app
 
@@ -419,8 +890,8 @@ model Post {
 
 Once you've updated your data model, you can execute the changes against your database with the following command:
 
-```
-npx prisma migrate dev --name add-profile
+```bash
+bunx prisma migrate dev --name add-profile
 ```
 
 This adds another migration to the `prisma/migrations` directory and creates the new `Profile` table in the database.
@@ -431,118 +902,72 @@ You can now use your `PrismaClient` instance to perform operations against the n
 
 #### 2.1. Add the `Profile` type to your GraphQL schema
 
-First, add a new GraphQL type via Nexus' `objectType` function:
+First, add a new GraphQL type using Pothos:
 
 ```diff
 // ./src/schema.ts
 
-+const Profile = objectType({
-+  name: 'Profile',
-+  definition(t) {
-+    t.nonNull.int('id')
-+    t.string('bio')
-+    t.field('user', {
-+      type: 'User',
-+      resolve: (parent, _, context) => {
-+        return context.prisma.profile
-+          .findUnique({
-+            where: { id: parent.id || undefined },
-+          })
-+          .user()
-+      },
-+    })
-+  },
-+})
++builder.prismaObject('Profile', {
++  fields: (t) => ({
++    id: t.exposeInt('id'),
++    bio: t.exposeString('bio', { nullable: true }),
++    user: t.relation('user'),
++  }),
++});
 
-const User = objectType({
-  name: 'User',
-  definition(t) {
-    t.nonNull.int('id');
-    t.string('name');
-    t.nonNull.string('email');
-    t.nonNull.list.nonNull.field('posts', {
-      type: 'Post',
-      resolve: (parent, _, context) => {
-        return context.prisma.user
-          .findUnique({
-            where: { id: parent.id || undefined },
-          })
-          .posts();
-      },
-+    t.field('profile', {
-+      type: 'Profile',
-+      resolve: (parent, _, context) => {
-+        return context.prisma.user
-+          .findUnique({
-+            where: { id: parent.id },
-+          })
-+          .profile();
-+      },
-+    });
-  },
+// Update the User object to include profile relation
+builder.prismaObject('User', {
+  fields: (t) => ({
+    id: t.exposeInt('id'),
+    name: t.exposeString('name', { nullable: true }),
+    email: t.exposeString('email'),
+    posts: t.relation('posts'),
++   profile: t.relation('profile', { nullable: true }),
+  }),
 });
 ```
 
-Don't forget to include the new type in the `types` array that's passed to `makeSchema`:
+With Pothos, types are automatically included when you define them with the builder, so no additional configuration is needed.
 
-```diff
-export const schema = makeSchema({
-  types: [
-    Query,
-    Mutation,
-    Post,
-    User,
-+   Profile,
-    UserUniqueInput,
-    UserCreateInput,
-    PostCreateInput,
-    PostOrderBy,
-    DateTime,
-  ],
-  // ... as before
-}
-```
-
-Note that in order to resolve any type errors, your development server needs to be running so that the Nexus types can be generated. If it's not running, you can start it with `npm run dev`.
+Note that in order to resolve any type errors, your development server needs to be running so that the Pothos types can be generated. If it's not running, you can start it with `bun run dev`.
 
 #### 2.2. Add a `createProfile` GraphQL mutation
 
 ```diff
 // ./src/schema.ts
 
-const Mutation = objectType({
-  name: 'Mutation',
-  definition(t) {
++// Define input type for user selection
++const UserUniqueInput = builder.inputType('UserUniqueInput', {
++  fields: (t) => ({
++    id: t.int({ required: false }),
++    email: t.string({ required: false }),
++  }),
++});
 
-    // other mutations
-
-+   t.field('addProfileForUser', {
-+     type: 'Profile',
-+     args: {
-+       userUniqueInput: nonNull(
-+         arg({
-+           type: 'UserUniqueInput',
-+         }),
-+       ),
-+       bio: stringArg()
-+     },
-+     resolve: async (_, args, context) => {
-+       return context.prisma.profile.create({
-+         data: {
-+           bio: args.bio,
-+           user: {
-+             connect: {
-+               id: args.userUniqueInput.id || undefined,
-+               email: args.userUniqueInput.email || undefined,
-+             }
-+           }
-+         }
-+       })
-+     }
-+   })
-
-  }
-})
++// Add the mutation
++builder.mutationField('addProfileForUser', (t) =>
++  t.prismaField({
++    type: 'Profile',
++    args: {
++      userUniqueInput: t.arg({ type: UserUniqueInput, required: true }),
++      bio: t.arg.string({ required: false }),
++    },
++    resolve: async (query, root, args, context) => {
++      return context.prisma.profile.create({
++        ...query,
++        data: {
++          bio: args.bio,
++          user: {
++            connect: {
++              id: args.userUniqueInput.id || undefined,
++              email: args.userUniqueInput.email || undefined,
++            }
++          }
++        }
++      })
++    }
++  })
++);
 ```
 
 Finally, you can test the new mutation like this:
@@ -550,9 +975,7 @@ Finally, you can test the new mutation like this:
 ```graphql
 mutation {
   addProfileForUser(
-    userUniqueInput: {
-      email: "mahmoud@prisma.io"
-    }
+    userUniqueInput: { email: "mahmoud@prisma.io" }
     bio: "I like turtles"
   ) {
     id
