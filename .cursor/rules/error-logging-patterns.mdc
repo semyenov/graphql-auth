@@ -1,5 +1,130 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Error Handling and Logging Patterns
+
+## Overview
+This project uses Consola for structured logging and implements comprehensive error handling patterns throughout the GraphQL server stack.
+
+## Server-Level Error Handling
+The Apollo Server configuration in [src/server.ts](mdc:src/server.ts) implements:
+
+### Enhanced Error Formatting
+```typescript
+formatError: (formattedError: GraphQLFormattedError, error: unknown): GraphQLFormattedError => {
+  // Structured error logging
+  consola.error('GraphQL Error:', formattedError)
+
+  // Enhanced error response with metadata
+  return {
+    ...formattedError,
+    extensions: {
+      ...formattedError.extensions,
+      code: formattedError.extensions?.code || 'INTERNAL_ERROR',
+      timestamp: new Date().toISOString(),
+      ...(process.env.NODE_ENV === 'development' && error instanceof GraphQLError && {
+        stacktrace: error.extensions?.stacktrace
+      })
+    }
+  }
+}
+```
+
+### Request/Response Logging Plugin
+Custom Apollo Server plugin for comprehensive request logging:
+
+```typescript
+{
+  async requestDidStart(): Promise<GraphQLRequestListener<Context>> {
+    return {
+      async willSendResponse(requestContext: GraphQLRequestContext<Context>): Promise<void> {
+        // Log successful requests with fetchdts types
+        const method = contextValue.method as HTTPMethod
+        const contentType = contextValue.contentType as MimeType
+        
+        consola.info(`${method} ${contextValue.req.url}`, {
+          contentType,
+          operationName: request.operationName,
+          variables: request.variables ? Object.keys(request.variables) : [],
+        })
+      },
+      async didEncounterErrors(requestContext: GraphQLRequestContext<Context>): Promise<void> {
+        // Structured error logging
+        consola.error(`GraphQL errors on ${contextValue.method} ${contextValue.req.url}:`, {
+          errors: errors.map((error: GraphQLError) => ({
+            message: error.message,
+            path: error.path,
+            locations: error.locations
+          }))
+        })
+      }
+    }
+  }
+}
+```
+
+## Logging Patterns with Consola
+Always use structured logging with Consola:
+
+### Success Logging
+```typescript
+consola.success(`🚀 GraphQL Server ready at: ${url}`)
+consola.info(`📊 GraphQL Playground: ${url}graphql`)
+consola.info(`🔍 GraphQL Introspection: ${url}graphql?query={__schema{types{name}}}`)
+```
+
+### Error Logging
+```typescript
+consola.error('Failed to start server:', error)
+consola.error('GraphQL Error:', formattedError)
+```
+
+### Structured Information Logging
+```typescript
+consola.info(`${method} ${contextValue.req.url}`, {
+  contentType,
+  operationName: request.operationName,
+  variables: request.variables ? Object.keys(request.variables) : [],
+})
+```
+
+## Graceful Shutdown Handling
+Implement proper shutdown handling for production environments:
+
+```typescript
+process.on('SIGINT', async () => {
+  consola.info('Received SIGINT, shutting down gracefully...')
+  await server.stop()
+  process.exit(0)
+})
+
+process.on('SIGTERM', async () => {
+  consola.info('Received SIGTERM, shutting down gracefully...')
+  await server.stop()
+  process.exit(0)
+})
+```
+
+## Development vs Production Error Handling
+- **Development**: Include stack traces and detailed error information
+- **Production**: Sanitize errors and provide minimal information to clients
+- **Always**: Log comprehensive error details server-side for debugging
+
+## Error Response Structure
+Standardized error responses include:
+- `message`: Human-readable error message
+- `locations`: GraphQL query locations where errors occurred
+- `path`: GraphQL field path where errors occurred
+- `extensions.code`: Error classification code
+- `extensions.timestamp`: ISO timestamp of error occurrence
+- `extensions.stacktrace`: (Development only) Full stack trace
+
+## Best Practices
+1. Use Consola with structured logging objects
+2. Always include timestamps in error responses
+3. Implement proper graceful shutdown handlers
+4. Use fetchdts types in logging for better type safety
+5. Separate development and production error handling
+6. Log both successful operations and errors for comprehensive monitoring

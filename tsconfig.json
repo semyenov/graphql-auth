@@ -2,7 +2,7 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": "./",
     "strict": true,
     "module": "ESNext",
     "target": "ESNext",
@@ -28,16 +28,18 @@
     "plugins": [
       {
         "name": "gql.tada/ts-plugin",
-        "schema": "./schema.graphql",
+        "schema": "./_docs/schema.graphql",
         "tadaOutputLocation": "./src/graphql-env.d.ts"
       }
     ],
     "paths": {
       "@prisma/client": ["./.prisma/client"],
-      "@generated/pothos": ["./generated/pothos.ts"]
+      "@generated/pothos": ["./generated/pothos.ts"],
+      "@": ["./src"]
     }
   },
   "include": [
     "src/**/*",
+    "test/**/*"
   ]
 }

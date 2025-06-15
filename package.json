@@ -2,6 +2,7 @@
   "name": "graphql-auth",
   "license": "MIT",
   "scripts": {
+    "postinstall": "patch-package",
     "dev": "bun run src/server",
     "start": "bun dist/server.js",
     "clean": "rm -rf dist",
@@ -12,7 +13,10 @@
     "gen:schema": "bun run src/generate-schema.ts",
     "demo": "bun run src/h3-demo.ts",
     "seed": "bun run prisma/seed.ts",
-    "db:reset": "bunx prisma migrate reset --force"
+    "db:reset": "bunx prisma migrate reset --force",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
   },
   "prettier": {
     "semi": false,
@@ -28,23 +32,30 @@
     "@prisma/extension-accelerate": "^2.0.1",
     "bcryptjs": "3.0.2",
     "consola": "^3.4.2",
-    "fetchdts": "^0.1.1",
+    "fetchdts": "^0.1.4",
     "gql.tada": "^1.8.10",
     "graphql": "16.11.0",
     "graphql-middleware": "6.1.35",
     "graphql-scalars": "1.24.2",
-    "graphql-shield": "7.6.5",
-    "h3": "^1.15.3",
-    "jsonwebtoken": "9.0.2",
+    "graphql-shield": "^7.6.5",
+    "h3": "^2.0.0",
+    "jsonwebtoken": "^9.0.2",
     "pathe": "^2.0.3"
   },
   "devDependencies": {
+    "@graphql-tools/mock": "^9.0.23",
+    "@graphql-tools/schema": "^10.0.23",
     "@types/bcryptjs": "3.0.0",
-    "@types/bun": "latest",
+    "@types/bun": "^1.2.16",
     "@types/jsonwebtoken": "9.0.9",
-    "@types/node": "22.15.29",
+    "@types/node": "^24.0.1",
+    "@vitest/coverage-v8": "^3.2.3",
+    "@vitest/ui": "^3.2.3",
+    "happy-dom": "^18.0.1",
+    "patch-package": "^8.0.0",
     "prisma": "6.9.0",
-    "typescript": "5.8.2"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.3"
   },
   "prisma": {
     "seed": "bun run prisma/seed.ts"

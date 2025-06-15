@@ -28,27 +28,13 @@ interface Post {
 
 export const LoginMutation = graphql(`
   mutation Login($email: String!, $password: String!) {
-    login(email: $email, password: $password) {
-      token
-      user {
-        id
-        email
-        name
-      }
-    }
+    login(email: $email, password: $password)
   }
 `)
 
 export const SignupMutation = graphql(`
   mutation Signup($email: String!, $password: String!, $name: String) {
-    signup(email: $email, password: $password, name: $name) {
-      token
-      user {
-        id
-        email
-        name
-      }
-    }
+    signup(email: $email, password: $password, name: $name)
   }
 `)
 
@@ -144,7 +130,7 @@ export const createContext: ContextFunction<[{ req: IncomingMessage }], Context>
     },
     headers,
     method: (req.method as HTTPMethod) || 'POST',
-    contentType: headers['content-type'] || 'application/json'
+    contentType: headers['content-type'] || 'application/json',
   }
 
   return context

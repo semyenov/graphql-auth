@@ -1,7 +1,8 @@
-import { verify } from 'jsonwebtoken'
+import { Secret, verify } from 'jsonwebtoken'
 import type { Context } from './context'
 
-export const APP_SECRET = 'appsecret321'
+export const APP_SECRET = process.env.APP_SECRET
+    ?? 'super-app-secret-string' satisfies Secret
 
 interface Token {
     userId: string
