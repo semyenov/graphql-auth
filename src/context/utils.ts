@@ -1,5 +1,5 @@
 import { verify } from 'jsonwebtoken'
-import type { Context } from './context'
+import type { Context } from './types.d'
 
 interface Token {
     userId: string
@@ -17,4 +17,4 @@ export function getUserId(context: Context): number | null {
     }
 
     return null
-}   
+}

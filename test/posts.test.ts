@@ -1,7 +1,60 @@
 import bcrypt from 'bcryptjs'
+import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
+import type {
+  CreateDraftVariables,
+  DeletePostVariables,
+  GetDraftsByUserVariables,
+  IncrementPostViewCountVariables
+} from '../src/gql'
+import {
+  CreateDraftMutation,
+  DeletePostMutation,
+  GetDraftsByUserQuery,
+  GetFeedQuery,
+  IncrementPostViewCountMutation
+} from '../src/gql'
 import { prisma } from './setup'
-import { createAuthContext, createMockContext, createTestServer, executeOperation } from './test-utils'
+import {
+  createAuthContext,
+  createMockContext,
+  createTestServer,
+  gqlHelpers
+} from './test-utils'
+
+// Type definitions for GraphQL responses
+interface Post {
+  id: number
+  title: string
+  content?: string
+  published: boolean
+  viewCount: number
+  author?: {
+    id: number
+    name?: string
+    email: string
+  }
+}
+
+interface GetFeedResponse {
+  feed: Post[]
+}
+
+interface GetDraftsByUserResponse {
+  draftsByUser: Post[]
+}
+
+interface CreateDraftResponse {
+  createDraft: Post
+}
+
+interface DeletePostResponse {
+  deletePost: Post
+}
+
+interface IncrementPostViewCountResponse {
+  incrementPostViewCount: Post
+}
 
 describe('Posts', () => {
   const server = createTestServer()
@@ -47,30 +100,15 @@ describe('Posts', () => {
         ],
       })
 
-      const feedQuery = `
-        query {
-          feed {
-            id
-            title
-            content
-            published
-            author {
-              id
-              name
-            }
-          }
-        }
-      `
+      const data = await gqlHelpers.expectSuccessfulQuery<GetFeedResponse>(
+        server,
+        print(GetFeedQuery),
+        {},
+        createMockContext()
+      )
 
-      const result = await executeOperation(server, feedQuery, {}, createMockContext())
-
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeUndefined()
-        const data = result.body.singleResult.data as any
-        expect(data?.feed).toHaveLength(2)
-        expect(data?.feed.every((post: any) => post.published)).toBe(true)
-      }
+      expect(data.feed).toHaveLength(2)
+      expect(data.feed.every((post: Post) => post.published)).toBe(true)
     })
 
     it('should fetch user drafts when authenticated', async () => {
@@ -92,98 +130,56 @@ describe('Posts', () => {
         ],
       })
 
-      const draftsQuery = `
-        query DraftsByUser($userUniqueInput: UserUniqueInput!) {
-          draftsByUser(userUniqueInput: $userUniqueInput) {
-            id
-            title
-            content
-            published
-          }
-        }
-      `
+      const variables: GetDraftsByUserVariables = {
+        userUniqueInput: { id: testUserId }
+      }
 
-      const result = await executeOperation(
+      const data = await gqlHelpers.expectSuccessfulQuery<GetDraftsByUserResponse, GetDraftsByUserVariables>(
         server,
-        draftsQuery,
-        { userUniqueInput: { id: testUserId } },
+        print(GetDraftsByUserQuery),
+        variables,
         createAuthContext(testUserId.toString())
       )
 
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeUndefined()
-        const data = result.body.singleResult.data as any
-        expect(data?.draftsByUser).toHaveLength(2)
-        expect(data?.draftsByUser.every((post: any) => !post.published)).toBe(true)
-      }
+      expect(data.draftsByUser).toHaveLength(2)
+      expect(data.draftsByUser.every((post: Post) => !post.published)).toBe(true)
     })
 
     it('should require authentication for drafts', async () => {
-      const draftsQuery = `
-        query DraftsByUser($userUniqueInput: UserUniqueInput!) {
-          draftsByUser(userUniqueInput: $userUniqueInput) {
-            id
-            title
-          }
-        }
-      `
-
-      const result = await executeOperation(
-        server,
-        draftsQuery,
-        { userUniqueInput: { id: testUserId } },
-        createMockContext() // No auth
-      )
-
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors![0]!.message).toContain('User is not authenticated')
+      const variables: GetDraftsByUserVariables = {
+        userUniqueInput: { id: testUserId }
       }
+
+      await gqlHelpers.expectGraphQLError<GetDraftsByUserResponse, GetDraftsByUserVariables>(
+        server,
+        print(GetDraftsByUserQuery),
+        variables,
+        createMockContext(), // No auth
+        'User is not authenticated'
+      )
     })
   })
 
   describe('Create posts', () => {
     it('should create a draft when authenticated', async () => {
-      const createDraftMutation = `
-        mutation CreateDraft($data: PostCreateInput!) {
-          createDraft(data: $data) {
-            id
-            title
-            content
-            published
-            author {
-              id
-              email
-            }
-          }
-        }
-      `
-
-      const variables = {
+      const variables: CreateDraftVariables = {
         data: {
           title: 'New Draft Post',
           content: 'This is a new draft',
         },
       }
 
-      const result = await executeOperation(
+      const data = await gqlHelpers.expectSuccessfulMutation<CreateDraftResponse, CreateDraftVariables>(
         server,
-        createDraftMutation,
+        print(CreateDraftMutation),
         variables,
         createAuthContext(testUserId.toString())
       )
 
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeUndefined()
-        const data = result.body.singleResult.data as any
-        expect(data?.createDraft).toBeDefined()
-        expect(data?.createDraft.title).toBe(variables.data.title)
-        expect(data?.createDraft.published).toBe(false)
-        expect(data?.createDraft.author.id).toBe(testUserId)
-      }
+      expect(data.createDraft).toBeDefined()
+      expect(data.createDraft.title).toBe(variables.data.title)
+      expect(data.createDraft.published).toBe(false)
+      expect(data.createDraft.author?.id).toBe(testUserId)
 
       // Verify in database
       const posts = await prisma.post.findMany({
@@ -194,34 +190,20 @@ describe('Posts', () => {
     })
 
     it('should require authentication to create drafts', async () => {
-      const createDraftMutation = `
-        mutation CreateDraft($data: PostCreateInput!) {
-          createDraft(data: $data) {
-            id
-            title
-          }
-        }
-      `
-
-      const variables = {
+      const variables: CreateDraftVariables = {
         data: {
           title: 'Unauthorized Draft',
           content: 'Should not be created',
         },
       }
 
-      const result = await executeOperation(
+      await gqlHelpers.expectGraphQLError<CreateDraftResponse, CreateDraftVariables>(
         server,
-        createDraftMutation,
+        print(CreateDraftMutation),
         variables,
-        createMockContext() // No auth
+        createMockContext(), // No auth
+        'User is not authenticated'
       )
-
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors![0]!.message).toContain('User is not authenticated')
-      }
     })
   })
 
@@ -237,28 +219,16 @@ describe('Posts', () => {
         },
       })
 
-      const deletePostMutation = `
-        mutation DeletePost($id: Int!) {
-          deletePost(id: $id) {
-            id
-            title
-          }
-        }
-      `
+      const variables: DeletePostVariables = { id: post.id }
 
-      const result = await executeOperation(
+      const data = await gqlHelpers.expectSuccessfulMutation<DeletePostResponse, DeletePostVariables>(
         server,
-        deletePostMutation,
-        { id: post.id },
+        print(DeletePostMutation),
+        variables,
         createAuthContext(testUserId.toString())
       )
 
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeUndefined()
-        const data = result.body.singleResult.data as any
-        expect(data?.deletePost.id).toBe(post.id)
-      }
+      expect(data.deletePost.id).toBe(post.id)
 
       // Verify deletion
       const deletedPost = await prisma.post.findUnique({
@@ -287,27 +257,15 @@ describe('Posts', () => {
         },
       })
 
-      const deletePostMutation = `
-        mutation DeletePost($id: Int!) {
-          deletePost(id: $id) {
-            id
-            title
-          }
-        }
-      `
+      const variables: DeletePostVariables = { id: post.id }
 
-      const result = await executeOperation(
+      await gqlHelpers.expectGraphQLError<DeletePostResponse, DeletePostVariables>(
         server,
-        deletePostMutation,
-        { id: post.id },
-        createAuthContext(testUserId.toString()) // Different user
+        print(DeletePostMutation),
+        variables,
+        createAuthContext(testUserId.toString()), // Different user
+        'User is not the owner of the post'
       )
-
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors![0]!.message).toContain('User is not the owner of the post')
-      }
 
       // Verify post still exists
       const existingPost = await prisma.post.findUnique({
@@ -330,44 +288,27 @@ describe('Posts', () => {
         },
       })
 
-      const incrementViewMutation = `
-        mutation IncrementPostViewCount($id: Int!) {
-          incrementPostViewCount(id: $id) {
-            id
-            viewCount
-          }
-        }
-      `
+      const variables: IncrementPostViewCountVariables = { id: post.id }
 
       // First increment
-      const result1 = await executeOperation(
+      const data1 = await gqlHelpers.expectSuccessfulMutation<IncrementPostViewCountResponse, IncrementPostViewCountVariables>(
         server,
-        incrementViewMutation,
-        { id: post.id },
+        print(IncrementPostViewCountMutation),
+        variables,
         createMockContext() // No auth required
       )
 
-      expect(result1.body.kind).toBe('single')
-      if (result1.body.kind === 'single') {
-        expect(result1.body.singleResult.errors).toBeUndefined()
-        const data = result1.body.singleResult.data as any
-        expect(data?.incrementPostViewCount.viewCount).toBe(1)
-      }
+      expect(data1.incrementPostViewCount.viewCount).toBe(1)
 
       // Second increment
-      const result2 = await executeOperation(
+      const data2 = await gqlHelpers.expectSuccessfulMutation<IncrementPostViewCountResponse, IncrementPostViewCountVariables>(
         server,
-        incrementViewMutation,
-        { id: post.id },
+        print(IncrementPostViewCountMutation),
+        variables,
         createMockContext()
       )
 
-      expect(result2.body.kind).toBe('single')
-      if (result2.body.kind === 'single') {
-        expect(result2.body.singleResult.errors).toBeUndefined()
-        const data = result2.body.singleResult.data as any
-        expect(data?.incrementPostViewCount.viewCount).toBe(2)
-      }
+      expect(data2.incrementPostViewCount.viewCount).toBe(2)
 
       // Verify in database
       const updatedPost = await prisma.post.findUnique({
@@ -377,27 +318,15 @@ describe('Posts', () => {
     })
 
     it('should fail for non-existent post', async () => {
-      const incrementViewMutation = `
-        mutation IncrementPostViewCount($id: Int!) {
-          incrementPostViewCount(id: $id) {
-            id
-            viewCount
-          }
-        }
-      `
+      const variables: IncrementPostViewCountVariables = { id: 999999 } // Non-existent ID
 
-      const result = await executeOperation(
+      await gqlHelpers.expectGraphQLError<IncrementPostViewCountResponse, IncrementPostViewCountVariables>(
         server,
-        incrementViewMutation,
-        { id: 999999 }, // Non-existent ID
-        createMockContext()
+        print(IncrementPostViewCountMutation),
+        variables,
+        createMockContext(),
+        'No record was found'
       )
-
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors![0]!.message).toContain('No record was found')
-      }
     })
   })
 })

@@ -49,6 +49,19 @@ bun run test:ui             # Run tests with Vitest UI
 bun run test:coverage       # Run tests with coverage report
 ```
 
+### Type Checking & Code Quality
+```bash
+bunx tsc --noEmit           # Type check all TypeScript files
+bunx prettier --check .     # Check code formatting
+bunx prettier --write .     # Format code with Prettier
+```
+
+### Other Commands
+```bash
+bun run graphql:examples    # Run GraphQL examples demonstrating typed queries
+bun run demo                # Run H3 demo server
+```
+
 ## Code Style
 
 The project uses Prettier with the following configuration:
@@ -56,13 +69,26 @@ The project uses Prettier with the following configuration:
 - Single quotes
 - Trailing commas
 
+The project uses TypeScript in strict mode with additional checks:
+- `strict: true` - Enables all strict type checking options
+- `noUnusedLocals`, `noUnusedParameters` - Prevents unused code
+- `noUncheckedIndexedAccess` - Ensures safe array/object access
+- `noImplicitOverride` - Requires explicit override keyword
+
+Note: TypeScript is used only for type checking. Bun handles the actual compilation and execution.
+
 ## Architecture Overview
 
 ### GraphQL Schema Definition
 The project uses **Pothos** (not Nexus as mentioned in README) for type-safe GraphQL schema construction:
 
-- `src/builder.ts` - Pothos builder with Prisma plugin configuration
-- `src/schema.ts` - All GraphQL type definitions and resolvers
+- `src/schema/builder.ts` - Pothos builder with Prisma plugin configuration
+- `src/schema/` - Modular GraphQL type definitions and resolvers
+  - `index.ts` - Main schema export
+  - `types/` - Object type definitions (User, Post)
+  - `queries/` - Query resolvers
+  - `mutations/` - Mutation resolvers
+  - `scalars.ts`, `enums.ts`, `inputs.ts` - Type definitions
 - `src/permissions/index.ts` - GraphQL Shield rules for authorization
 
 ### Key Patterns
@@ -81,12 +107,12 @@ The project uses **Pothos** (not Nexus as mentioned in README) for type-safe Gra
    # 1. Add model to prisma/schema.prisma
    # 2. Run migration
    bunx prisma migrate dev --name add-feature
-   # 3. Add GraphQL type in src/schema.ts using builder.prismaObject()
+   # 3. Add GraphQL type in src/schema/types/ using builder.prismaObject()
    ```
 
 2. **New GraphQL Field**:
    ```typescript
-   // In src/schema.ts
+   // In src/schema/queries/ or src/schema/mutations/
    builder.queryField('fieldName', (t) =>
      t.prismaField({
        type: 'ModelName',
@@ -102,15 +128,39 @@ The project uses **Pothos** (not Nexus as mentioned in README) for type-safe Gra
 ```
 src/
 ├── server.ts           # Apollo Server setup with H3
-├── schema.ts           # GraphQL schema definitions (Pothos)
-├── builder.ts          # Pothos builder configuration
-├── context.ts          # GraphQL context (auth extraction)
+├── schema/             # GraphQL schema definitions (Pothos)
+│   ├── index.ts        # Main schema export
+│   ├── builder.ts      # Pothos builder configuration
+│   ├── scalars.ts      # Custom scalar types
+│   ├── enums.ts        # GraphQL enums
+│   ├── inputs.ts       # Input type definitions
+│   ├── types/          # Object type definitions
+│   │   ├── user.ts     # User type definition
+│   │   └── post.ts     # Post type definition
+│   ├── queries/        # Query resolvers
+│   │   ├── users.ts    # User queries
+│   │   └── posts.ts    # Post queries
+│   └── mutations/      # Mutation resolvers
+│       ├── auth.ts     # Authentication mutations
+│       └── posts.ts    # Post mutations
+├── context/            # GraphQL context management
+│   ├── index.ts        # Context export
+│   ├── auth.ts         # Authentication logic
+│   ├── creation.ts     # Context creation
+│   ├── validation.ts   # Input validation
+│   ├── utils.ts        # JWT utilities
+│   └── types.d.ts      # Context type definitions
+├── gql/                # GraphQL client utilities (GraphQL Tada)
+│   ├── client.ts       # GraphQL client setup
+│   ├── fragments.ts    # Reusable fragments
+│   ├── queries.ts      # Typed queries
+│   ├── mutations.ts    # Typed mutations
+│   └── types.d.ts      # Generated types
 ├── prisma.ts           # Prisma client instance
-├── utils.ts            # JWT utilities
 ├── generate-schema.ts  # Schema generation script
 └── permissions/        # GraphQL Shield authorization
     ├── index.ts        # Permission middleware
-    └── rules.ts        # Auth rule definitions
+    └── README.md       # Permission documentation
 
 prisma/
 ├── schema.prisma       # Database models
@@ -301,9 +351,10 @@ export const permissions = shield({
 1. Update Prisma schema if needed
 2. Run `bunx prisma migrate dev --name feature-name`
 3. Run `bun run generate` to update all types
-4. Add GraphQL types/resolvers in `src/schema.ts`
-5. Add permissions in `src/permissions/index.ts`
-6. Test with GraphQL Playground
+4. Add GraphQL types in `src/schema/types/`
+5. Add resolvers in `src/schema/queries/` or `src/schema/mutations/`
+6. Add permissions in `src/permissions/index.ts`
+7. Test with GraphQL Playground
 
 ### Testing Authentication
 ```bash
@@ -359,6 +410,18 @@ describe('Feature', () => {
 - `createTestServer()` - Creates Apollo Server instance for testing
 - `executeOperation()` - Executes GraphQL operations against test server
 - `generateTestToken(userId)` - Generates test JWT tokens
+
+### Running Single Tests
+```bash
+# Run a single test file
+bun test test/auth.test.ts
+
+# Run tests matching a pattern
+bun test -t "should create a new user"
+
+# Run tests in a specific describe block
+bun test -t "Authentication"
+```
 
 ### Test Database
 - Tests use a separate SQLite database (`test.db`)

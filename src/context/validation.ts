@@ -1,10 +1,5 @@
 import type {
     Context,
-    CreateDraftContext,
-    GetMeContext,
-    GetPostByIdContext,
-    LoginContext,
-    SignupContext
 } from './types.d'
 
 // Context validation helpers
@@ -31,24 +26,3 @@ export function validateContext<TVariables = Record<string, unknown>>(context: C
         errors,
     }
 }
-
-// Type guards for specific operation contexts
-export function isLoginContext(context: Context): context is LoginContext {
-    return context.operationName === 'Login'
-}
-
-export function isSignupContext(context: Context): context is SignupContext {
-    return context.operationName === 'Signup'
-}
-
-export function isCreateDraftContext(context: Context): context is CreateDraftContext {
-    return context.operationName === 'CreateDraft'
-}
-
-export function isGetMeContext(context: Context): context is GetMeContext {
-    return context.operationName === 'GetMe'
-}
-
-export function isGetPostByIdContext(context: Context): context is GetPostByIdContext {
-    return context.operationName === 'GetPostById'
-} 

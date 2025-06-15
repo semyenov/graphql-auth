@@ -1,7 +1,10 @@
 import bcrypt from 'bcryptjs'
+import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
+import type { LoginVariables, SignupVariables } from '../src/gql'
+import { LoginMutation, SignupMutation } from '../src/gql'
 import { prisma } from './setup'
-import { createMockContext, createTestServer, executeOperation, testData } from './test-utils'
+import { createMockContext, createTestServer, gqlHelpers, testData } from './test-utils'
 
 interface AuthMutationResponse {
   signup?: string
@@ -17,36 +20,20 @@ describe('Authentication', () => {
 
   describe('signup', () => {
     it('should create a new user with valid data', async () => {
-      const signupMutation = `
-        mutation Signup($email: String!, $password: String!, $name: String) {
-          signup(email: $email, password: $password, name: $name)
-        }
-      `
-
-      const variables = testData.user({
+      const variables: SignupVariables = testData.user({
         password: 'securePassword123',
       })
 
-      const result = await executeOperation(
+      // Using the new helper for cleaner test code
+      const data = await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse, SignupVariables>(
         server,
-        signupMutation,
+        print(SignupMutation),
         variables,
         createMockContext()
       )
 
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        // Check for errors first
-        if (result.body.singleResult.errors) {
-          console.error('Signup errors:', result.body.singleResult.errors)
-          throw new Error('Signup failed: ' + result.body.singleResult.errors[0]!.message)
-        }
-
-        expect(result.body.singleResult.data).toBeDefined()
-        const data = result.body.singleResult.data as AuthMutationResponse
-        expect(data?.signup).toBeDefined()
-        expect(data?.signup).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/)
-      }
+      expect(data.signup).toBeDefined()
+      expect(data.signup).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/)
 
       // Verify user was created in database
       const user = await prisma.user.findUnique({
@@ -63,33 +50,22 @@ describe('Authentication', () => {
         email: 'existing@example.com',
       })
 
-      const signupMutation = `
-        mutation Signup($email: String!, $password: String!, $name: String) {
-          signup(email: $email, password: $password, name: $name)
-        }
-      `
-
-      const variables = {
+      const variables: SignupVariables = {
         email: 'existing@example.com',
         password: 'newPassword123',
         name: 'Another User',
       }
 
-      const result = await executeOperation(
+      // Using the new helper to expect and verify errors
+      const errors = await gqlHelpers.expectGraphQLError<AuthMutationResponse, SignupVariables>(
         server,
-        signupMutation,
+        print(SignupMutation),
         variables,
-        createMockContext()
+        createMockContext(),
+        'Unique constraint failed'
       )
 
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors![0]!.message).toContain('Unique constraint failed')
-        expect(result.body.singleResult.errors![0]!.message).toContain('email')
-        const data = result.body.singleResult.data as AuthMutationResponse
-        expect(data?.signup).toBeNull()
-      }
+      expect(errors.some(error => error.includes('email'))).toBe(true)
     })
   })
 
@@ -102,31 +78,20 @@ describe('Authentication', () => {
         password,
       })
 
-      const loginMutation = `
-        mutation Login($email: String!, $password: String!) {
-          login(email: $email, password: $password)
-        }
-      `
-
-      const variables = {
+      const variables: LoginVariables = {
         email: 'testuser@example.com',
         password,
       }
 
-      const result = await executeOperation(
+      // Using the new helper for cleaner success case
+      const data = await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse, LoginVariables>(
         server,
-        loginMutation,
+        print(LoginMutation),
         variables,
         createMockContext()
       )
 
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeUndefined()
-        expect(result.body.singleResult.data).toBeDefined()
-        const data = result.body.singleResult.data as AuthMutationResponse
-        expect(data?.login).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/)
-      }
+      expect(data.login).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/)
     })
 
     it('should fail with invalid password', async () => {
@@ -139,55 +104,35 @@ describe('Authentication', () => {
         },
       })
 
-      const loginMutation = `
-        mutation Login($email: String!, $password: String!) {
-          login(email: $email, password: $password)
-        }
-      `
-
-      const variables = {
+      const variables: LoginVariables = {
         email: 'testuser2@example.com',
         password: 'wrongPassword',
       }
 
-      const result = await executeOperation(
+      // Using the new helper to expect specific error
+      await gqlHelpers.expectGraphQLError<AuthMutationResponse, LoginVariables>(
         server,
-        loginMutation,
+        print(LoginMutation),
         variables,
-        createMockContext()
+        createMockContext(),
+        'Invalid password'
       )
-
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors![0]!.message).toContain('Invalid password')
-      }
     })
 
     it('should fail with non-existent user', async () => {
-      const loginMutation = `
-        mutation Login($email: String!, $password: String!) {
-          login(email: $email, password: $password)
-        }
-      `
-
-      const variables = {
+      const variables: LoginVariables = {
         email: 'nonexistent@example.com',
         password: 'anyPassword',
       }
 
-      const result = await executeOperation(
+      // Using the new helper to expect specific error
+      await gqlHelpers.expectGraphQLError<AuthMutationResponse, LoginVariables>(
         server,
-        loginMutation,
+        print(LoginMutation),
         variables,
-        createMockContext()
+        createMockContext(),
+        'No user found'
       )
-
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors![0]!.message).toContain('No user found')
-      }
     })
   })
 })

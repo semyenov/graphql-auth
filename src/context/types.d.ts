@@ -1,14 +1,6 @@
 import { BaseContext } from '@apollo/server'
-import type { Endpoint, HTTPMethod, TypedFetchResponseBody } from 'fetchdts'
+import type { Endpoint, HTTPMethod } from 'fetchdts'
 import { IncomingMessage } from 'http'
-import type {
-    CreateDraftVariables,
-    GetDraftsByUserVariables,
-    GetFeedVariables,
-    GetPostByIdVariables,
-    LoginVariables,
-    SignupVariables
-} from '../gql/types'
 
 // =============================================================================
 // GRAPHQL TYPES
@@ -118,72 +110,3 @@ export interface Context<TVariables = Record<string, unknown>, TOperationName = 
     userId?: number
     user?: User
 }
-
-// =============================================================================
-// OPERATION-SPECIFIC CONTEXT TYPES
-// =============================================================================
-
-// Note: Operation variable types are now defined in ../gql/types.ts
-// and re-exported from ../gql/index.ts for consistency with gql.tada generated types
-
-// Specific context types for different operations
-export interface LoginContext<TOperationName = 'Login'> extends Context<LoginVariables, TOperationName> {
-    operationName: TOperationName
-}
-
-export interface SignupContext<TOperationName = 'Signup'> extends Context<SignupVariables, TOperationName> {
-    operationName: TOperationName
-}
-
-export interface CreateDraftContext<TOperationName = 'CreateDraft'> extends Context<CreateDraftVariables, TOperationName> {
-    operationName: TOperationName
-}
-
-export interface GetMeContext<TOperationName = 'GetMe'> extends Context<never, TOperationName> {
-    operationName: TOperationName
-}
-
-export interface GetPostByIdContext<TOperationName = 'GetPostById'> extends Context<GetPostByIdVariables, TOperationName> {
-    operationName: TOperationName
-}
-
-export interface GetFeedContext<TOperationName = 'GetFeed'> extends Context<GetFeedVariables, TOperationName> {
-    operationName: TOperationName
-}
-
-export interface GetDraftsByUserContext<TOperationName = 'GetDraftsByUser'> extends Context<GetDraftsByUserVariables, TOperationName> {
-    operationName: TOperationName
-}
-
-export type OperationName =
-    | 'Login'
-    | 'Signup'
-    | 'CreateDraft'
-    | 'GetMe'
-    | 'GetPostById'
-    | 'GetFeed'
-    | 'GetDraftsByUser'
-    | 'GetAllUsers'
-    | 'DeletePost'
-    | 'TogglePublishPost'
-    | 'IncrementPostViewCount'
-
-// Union type for all possible contexts
-export type TypedContext<TOperationName extends OperationName = OperationName> =
-    | LoginContext<TOperationName>
-    | SignupContext<TOperationName>
-    | CreateDraftContext<TOperationName>
-    | GetMeContext<TOperationName>
-    | GetPostByIdContext<TOperationName>
-    | GetFeedContext<TOperationName>
-    | GetDraftsByUserContext<TOperationName>
-    | Context<Record<string, unknown>, TOperationName>
-
-// =============================================================================
-// UTILITY TYPES
-// =============================================================================
-
-// Helper type for GraphQL endpoint response
-export type GraphQLEndpointResponse<T> = TypedFetchResponseBody<GraphQLAPISchema, '/graphql', 'POST'> & {
-    data?: T
-} 

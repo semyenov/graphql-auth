@@ -8,7 +8,8 @@ import { startStandaloneServer } from '@apollo/server/standalone'
 import consola from 'consola'
 import type { HTTPMethod, MimeType } from 'fetchdts'
 import { GraphQLError, type GraphQLFormattedError } from 'graphql'
-import { Context, createContext } from './context'
+import { createContext } from './context/creation'
+import type { Context } from './context/types.d'
 import { schema } from './schema'
 
 // Enhanced Apollo Server with better typing

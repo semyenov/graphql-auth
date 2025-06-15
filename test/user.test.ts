@@ -1,7 +1,35 @@
 import bcrypt from 'bcryptjs'
+import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
+import type { TogglePublishPostVariables } from '../src/gql'
+import { GetMeQuery, TogglePublishPostMutation } from '../src/gql'
 import { prisma } from './setup'
-import { createAuthContext, createMockContext, createTestServer, executeOperation } from './test-utils'
+import { createAuthContext, createMockContext, createTestServer, gqlHelpers } from './test-utils'
+
+// Type definitions for GraphQL responses
+interface User {
+  id: number
+  email: string
+  name?: string
+  posts?: Post[]
+}
+
+interface Post {
+  id: number
+  title: string
+  content?: string
+  published: boolean
+  viewCount: number
+  author?: User
+}
+
+interface GetMeResponse {
+  me: User
+}
+
+interface TogglePublishPostResponse {
+  togglePublishPost: Post
+}
 
 describe('User queries', () => {
   const server = createTestServer()
@@ -23,58 +51,27 @@ describe('User queries', () => {
 
   describe('me query', () => {
     it('should return current user when authenticated', async () => {
-      const meQuery = `
-        query {
-          me {
-            id
-            email
-            name
-          }
-        }
-      `
-
-      const result = await executeOperation(
+      const data = await gqlHelpers.expectSuccessfulQuery<GetMeResponse>(
         server,
-        meQuery,
+        print(GetMeQuery),
         {},
         createAuthContext(testUserId.toString())
       )
 
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeUndefined()
-        const data = result.body.singleResult.data as any
-        expect(data?.me).toBeDefined()
-        expect(data?.me.id).toBe(testUserId)
-        expect(data?.me.email).toBe(testUserEmail)
-        expect(data?.me.name).toBe('Me Test User')
-      }
+      expect(data.me).toBeDefined()
+      expect(data.me.id).toBe(testUserId)
+      expect(data.me.email).toBe(testUserEmail)
+      expect(data.me.name).toBe('Me Test User')
     })
 
     it('should return null when not authenticated', async () => {
-      const meQuery = `
-        query {
-          me {
-            id
-            email
-            name
-          }
-        }
-      `
-
-      const result = await executeOperation(
+      await gqlHelpers.expectGraphQLError<GetMeResponse>(
         server,
-        meQuery,
+        print(GetMeQuery),
         {},
-        createMockContext() // No auth
+        createMockContext(), // No auth
+        'User is not authenticated'
       )
-
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        // The me query should be protected by permissions
-        expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors![0]!.message).toContain('User is not authenticated')
-      }
     })
   })
 
@@ -90,45 +87,27 @@ describe('User queries', () => {
         },
       })
 
-      const togglePublishMutation = `
-        mutation TogglePublishPost($id: Int!) {
-          togglePublishPost(id: $id) {
-            id
-            title
-            published
-          }
-        }
-      `
+      const variables: TogglePublishPostVariables = { id: post.id }
 
       // First toggle - should publish
-      const result1 = await executeOperation(
+      const data1 = await gqlHelpers.expectSuccessfulMutation<TogglePublishPostResponse, TogglePublishPostVariables>(
         server,
-        togglePublishMutation,
-        { id: post.id },
+        print(TogglePublishPostMutation),
+        variables,
         createAuthContext(testUserId.toString())
       )
 
-      expect(result1.body.kind).toBe('single')
-      if (result1.body.kind === 'single') {
-        expect(result1.body.singleResult.errors).toBeUndefined()
-        const data = result1.body.singleResult.data as any
-        expect(data?.togglePublishPost.published).toBe(true)
-      }
+      expect(data1.togglePublishPost.published).toBe(true)
 
       // Second toggle - should unpublish
-      const result2 = await executeOperation(
+      const data2 = await gqlHelpers.expectSuccessfulMutation<TogglePublishPostResponse, TogglePublishPostVariables>(
         server,
-        togglePublishMutation,
-        { id: post.id },
+        print(TogglePublishPostMutation),
+        variables,
         createAuthContext(testUserId.toString())
       )
 
-      expect(result2.body.kind).toBe('single')
-      if (result2.body.kind === 'single') {
-        expect(result2.body.singleResult.errors).toBeUndefined()
-        const data = result2.body.singleResult.data as any
-        expect(data?.togglePublishPost.published).toBe(false)
-      }
+      expect(data2.togglePublishPost.published).toBe(false)
 
       // Verify in database
       const updatedPost = await prisma.post.findUnique({
@@ -157,27 +136,15 @@ describe('User queries', () => {
         },
       })
 
-      const togglePublishMutation = `
-        mutation TogglePublishPost($id: Int!) {
-          togglePublishPost(id: $id) {
-            id
-            published
-          }
-        }
-      `
+      const variables: TogglePublishPostVariables = { id: post.id }
 
-      const result = await executeOperation(
+      await gqlHelpers.expectGraphQLError<TogglePublishPostResponse, TogglePublishPostVariables>(
         server,
-        togglePublishMutation,
-        { id: post.id },
-        createAuthContext(testUserId.toString()) // Different user
+        print(TogglePublishPostMutation),
+        variables,
+        createAuthContext(testUserId.toString()), // Different user
+        'User is not the owner of the post'
       )
-
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors![0]!.message).toContain('User is not the owner of the post')
-      }
 
       // Verify post wasn't changed
       const unchangedPost = await prisma.post.findUnique({
@@ -187,27 +154,15 @@ describe('User queries', () => {
     })
 
     it('should fail for non-existent post', async () => {
-      const togglePublishMutation = `
-        mutation TogglePublishPost($id: Int!) {
-          togglePublishPost(id: $id) {
-            id
-            published
-          }
-        }
-      `
+      const variables: TogglePublishPostVariables = { id: 999999 } // Non-existent ID
 
-      const result = await executeOperation(
+      await gqlHelpers.expectGraphQLError<TogglePublishPostResponse, TogglePublishPostVariables>(
         server,
-        togglePublishMutation,
-        { id: 999999 }, // Non-existent ID
-        createAuthContext(testUserId.toString())
+        print(TogglePublishPostMutation),
+        variables,
+        createAuthContext(testUserId.toString()),
+        'Post not found'
       )
-
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors![0]!.message).toContain('Post not found')
-      }
     })
   })
 })

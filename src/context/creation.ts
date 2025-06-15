@@ -1,7 +1,7 @@
 import { ContextFunction } from '@apollo/server'
-import type { HTTPMethod } from 'fetchdts'
-import { getUserId } from '../utils'
+import type { HTTPMethod, MimeType } from 'fetchdts'
 import type { Context, GraphQLIncomingMessage, RequestMetadata, SecurityContext } from './types.d'
+import { getUserId } from './utils'
 
 // Create enhanced context with proper error handling and type safety
 export const createContext: ContextFunction<[{ req: GraphQLIncomingMessage }], Context> = async ({ req }) => {
@@ -16,7 +16,7 @@ export const createContext: ContextFunction<[{ req: GraphQLIncomingMessage }], C
     // Extract method and URL with defaults
     const method = (req.method as HTTPMethod) || 'POST'
     const url = req.url || '/graphql'
-    const contentType = headers['content-type'] || 'application/json'
+    const contentType = (headers['content-type'] as MimeType) ?? 'application/json'
 
     // Create request metadata
     const metadata: RequestMetadata = {

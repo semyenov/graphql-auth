@@ -1,5 +1,10 @@
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import type {
+    PostInfoFragment,
+    PostWithAuthorFragment,
+    UserInfoFragment
+} from './fragments'
+import type {
     CreateDraftMutation,
     DeletePostMutation,
     IncrementPostViewCountMutation,
@@ -18,6 +23,11 @@ import type {
 // =============================================================================
 // TYPE EXPORTS (gql.tada generated types)
 // =============================================================================
+
+// Fragment Types
+export type UserInfo = ResultOf<typeof UserInfoFragment>
+export type PostInfo = ResultOf<typeof PostInfoFragment>
+export type PostWithAuthor = ResultOf<typeof PostWithAuthorFragment>
 
 // Query Types
 export type GetMeResult = ResultOf<typeof GetMeQuery>
