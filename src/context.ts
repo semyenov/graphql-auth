@@ -1,8 +1,14 @@
-import { ContextFunction } from '@apollo/server'
+import { BaseContext, ContextFunction } from '@apollo/server'
 import { graphql, type ResultOf, type VariablesOf } from 'gql.tada'
 import { IncomingMessage } from 'http'
+import type { introspection_types } from './graphql-env.d'
 import type { RequestMetadata, SecurityContext, User } from './types'
 import { getUserId } from './utils'
+
+// Enhanced request interface to properly type the parsed body
+interface GraphQLIncomingMessage extends IncomingMessage {
+  body?: GraphQLRequestBody
+}
 
 // HTTP method types
 export type HTTPMethod =
@@ -19,6 +25,29 @@ export type MimeType =
   | 'text/plain'
   | 'text/html'
   | string
+
+// GraphQL Schema Types from introspection (for reference)
+export type GraphQLPost = introspection_types['Post']
+export type GraphQLUser = introspection_types['User']
+export type GraphQLMutation = introspection_types['Mutation']
+export type GraphQLQuery = introspection_types['Query']
+
+// Actual TypeScript interfaces for GraphQL inputs/outputs
+export interface PostCreateInput {
+  title: string
+  content?: string | null
+}
+
+export interface PostOrderByUpdatedAtInput {
+  updatedAt: 'asc' | 'desc'
+}
+
+export interface UserUniqueInput {
+  id?: number | null
+  email?: string | null
+}
+
+export type SortOrder = 'asc' | 'desc'
 
 // Enhanced GraphQL operations with proper type safety
 export const LoginMutation = graphql(`
@@ -65,8 +94,18 @@ export const GetMeQuery = graphql(`
 `)
 
 export const GetPostsQuery = graphql(`
-  query GetPosts($input: FeedInput) {
-    feed(input: $input) {
+  query GetPosts(
+    $orderBy: PostOrderByUpdatedAtInput!
+    $searchString: String
+    $skip: Int
+    $take: Int
+  ) {
+    feed(
+      orderBy: $orderBy,
+      searchString: $searchString,
+      skip: $skip,
+      take: $take
+    ) {
       id
       title
       content
@@ -93,9 +132,9 @@ export type GetPostsResult = ResultOf<typeof GetPostsQuery>
 export type GetPostsVariables = VariablesOf<typeof GetPostsQuery>
 
 // GraphQL request body type with proper validation
-interface GraphQLRequestBody {
+export interface GraphQLRequestBody<TVariables = Record<string, unknown>> {
   query: string
-  variables?: Record<string, unknown>
+  variables?: TVariables
   operationName?: string
 }
 
@@ -115,12 +154,14 @@ export interface GraphQLResponse<T = unknown> {
 }
 
 // Enhanced context interface with comprehensive typing
-export interface Context {
+export interface Context<TVariables = Record<string, unknown>> extends BaseContext {
+  operationName?: string
+  variables?: TVariables
   req: {
     url: string
     method: HTTPMethod
     headers: Record<string, string>
-    body?: GraphQLRequestBody
+    body?: GraphQLRequestBody<TVariables>
   }
   headers: Record<string, string>
   method: HTTPMethod
@@ -131,18 +172,45 @@ export interface Context {
   user?: User
 }
 
+// Specific context types for different operations
+export interface LoginContext extends Context<LoginVariables> {
+  operationName: 'Login'
+}
+
+export interface SignupContext extends Context<SignupVariables> {
+  operationName: 'Signup'
+}
+
+export interface CreateDraftContext extends Context<CreateDraftVariables> {
+  operationName: 'CreateDraft'
+}
+
+export interface GetMeContext extends Context<never> {
+  operationName: 'GetMe'
+}
+
+export interface GetPostsContext extends Context<GetPostsVariables> {
+  operationName: 'GetPosts'
+}
+
+// Union type for all possible contexts
+export type TypedContext =
+  | LoginContext
+  | SignupContext
+  | CreateDraftContext
+  | GetMeContext
+  | GetPostsContext
+  | Context<Record<string, unknown>>
+
 // Create enhanced context with proper error handling and type safety
-export const createContext: ContextFunction<
-  [{ req: IncomingMessage }],
-  Context
-> = async ({ req }) => {
-  // Convert IncomingMessage headers to record with proper typing
-  const headers: Record<string, string> = {}
-  Object.entries(req.headers).forEach(([key, value]) => {
-    if (value) {
-      headers[key] = Array.isArray(value) ? value.join(', ') : String(value)
-    }
-  })
+export const createContext: ContextFunction<[{ req: GraphQLIncomingMessage }], Context> = async ({ req }) => {
+  // Access the properly typed request body
+  const body = req.body;
+
+  const operationName = body?.operationName;
+  const variables = body?.variables;
+
+  const headers = Object.fromEntries(Object.entries(req.headers).map(([key, value]) => [key, Array.isArray(value) ? value.join(', ') : String(value)]));
 
   // Extract method and URL with defaults
   const method = (req.method as HTTPMethod) || 'POST'
@@ -165,7 +233,7 @@ export const createContext: ContextFunction<
       url,
       method,
       headers,
-      body: (req as any).body as GraphQLRequestBody | undefined,
+      body: req.body,
     },
     headers,
     method,
@@ -191,6 +259,8 @@ export const createContext: ContextFunction<
     security,
     userId: userId || undefined,
     user: undefined, // Will be populated by resolvers if needed
+    operationName,
+    variables,
   }
 
   return context
@@ -198,17 +268,17 @@ export const createContext: ContextFunction<
 
 // Type-safe GraphQL execution with enhanced error handling
 export async function executeGraphQL<
+  TVariables extends Record<string, unknown> = Record<string, unknown>,
   TData = unknown,
-  TVariables = Record<string, unknown>,
 >(
   query: string,
   variables?: TVariables,
   headers?: Record<string, string>,
 ): Promise<GraphQLResponse<TData>> {
   try {
-    const requestBody: GraphQLRequestBody = {
+    const requestBody: GraphQLRequestBody<TVariables> = {
       query,
-      variables: variables as Record<string, unknown>,
+      variables,
     }
 
     const response = await fetch('/graphql', {
@@ -259,28 +329,31 @@ export function createTypedRequest(
   }
 }
 
-// Enhanced context helpers
-export function isAuthenticated(context: Context): boolean {
+// Enhanced context helpers with better typing
+export function isAuthenticated<TVariables = Record<string, unknown>>(context: Context<TVariables>): boolean {
   return context.security.isAuthenticated
 }
 
-export function requireAuthentication(context: Context): number {
+export function requireAuthentication<TVariables = Record<string, unknown>>(context: Context<TVariables>): number {
   if (!context.security.isAuthenticated || !context.userId) {
     throw new Error('Authentication required')
   }
   return context.userId
 }
 
-export function hasPermission(context: Context, permission: string): boolean {
+export function hasPermission<TVariables = Record<string, unknown>>(context: Context<TVariables>, permission: string): boolean {
   return context.security.permissions?.includes(permission) || false
 }
 
-export function hasRole(context: Context, role: string): boolean {
+export function hasRole<TVariables = Record<string, unknown>>(
+  context: Context<TVariables>,
+  role: string,
+): boolean {
   return context.security.roles?.includes(role) || false
 }
 
 // Context validation helpers
-export function validateContext(context: Context): {
+export function validateContext<TVariables = Record<string, unknown>>(context: Context<TVariables>): {
   isValid: boolean
   errors: string[]
 } {
@@ -301,5 +374,47 @@ export function validateContext(context: Context): {
   return {
     isValid: errors.length === 0,
     errors,
+  }
+}
+
+// Type guards for specific operation contexts
+export function isLoginContext(context: Context): context is LoginContext {
+  return context.operationName === 'Login'
+}
+
+export function isSignupContext(context: Context): context is SignupContext {
+  return context.operationName === 'Signup'
+}
+
+export function isCreateDraftContext(context: Context): context is CreateDraftContext {
+  return context.operationName === 'CreateDraft'
+}
+
+export function isGetMeContext(context: Context): context is GetMeContext {
+  return context.operationName === 'GetMe'
+}
+
+export function isGetPostsContext(context: Context): context is GetPostsContext {
+  return context.operationName === 'GetPosts'
+}
+
+// Helper functions for working with GraphQL schema types
+export function createPostInput(title: string, content?: string): PostCreateInput {
+  return {
+    title,
+    content: content || null,
+  }
+}
+
+export function createPostOrderBy(direction: SortOrder = 'desc'): PostOrderByUpdatedAtInput {
+  return {
+    updatedAt: direction,
+  }
+}
+
+export function createUserUniqueInput(identifier: { id?: number; email?: string }): UserUniqueInput {
+  return {
+    id: identifier.id ?? null,
+    email: identifier.email ?? null,
   }
 }

@@ -30,6 +30,7 @@ curl -fsSL https://bun.sh/install | bash
 ```
 
 **Terminal Output:**
+
 ```
 bun was installed successfully to ~/.bun/bin/bun
 
@@ -60,6 +61,7 @@ bun --version
 ```
 
 **Terminal Output:**
+
 ```
 1.2.15
 ```
@@ -164,6 +166,7 @@ bun install
 ```
 
 **Terminal Output:**
+
 ```
 bun install v1.2.15 (df017990)
 
@@ -187,6 +190,7 @@ bun run db:reset
 ```
 
 **Terminal Output:**
+
 ```
 $ bunx prisma migrate reset --force
 Prisma schema loaded from prisma/schema.prisma
@@ -230,6 +234,7 @@ bun run generate
 ```
 
 **Terminal Output:**
+
 ```
 $ bun run generate:prisma && bun run generate:gql
 $ prisma generate
@@ -297,6 +302,7 @@ RUN bun --version
 ```
 
 **Terminal Output for Fresh Installation:**
+
 ```bash
 # Building the Docker image
 docker build -t bun-test .
@@ -317,6 +323,7 @@ bun install
 ```
 
 **Expected Terminal Output:**
+
 ```
 bun install v1.2.15 (df017990)
 
@@ -331,6 +338,7 @@ bun run db:reset && echo "✓ Database reset completed"
 ```
 
 **Expected Terminal Output:**
+
 ```
 $ bun run generate:prisma && bun run generate:gql
 $ prisma generate
@@ -385,13 +393,15 @@ bun run gen:schema
 The API provides the following main types:
 
 #### **Queries**
+
 - `allUsers` - Retrieve all users
-- `me` - Get current authenticated user profile  
+- `me` - Get current authenticated user profile
 - `feed` - Get published posts with filtering and pagination
 - `postById` - Get a specific post by ID
 - `draftsByUser` - Get unpublished posts by user
 
 #### **Mutations**
+
 - `signup` - Register a new user account
 - `login` - Authenticate and get JWT token
 - `createDraft` - Create a new unpublished post
@@ -400,6 +410,7 @@ The API provides the following main types:
 - `deletePost` - Remove a post
 
 #### **Types**
+
 - `User` - User account with id, name, email, posts
 - `Post` - Blog post with metadata, content, author relationship
 - `DateTime` - ISO 8601 timestamp scalar
@@ -409,6 +420,7 @@ The API provides the following main types:
 #### cURL Examples
 
 **Register a new user:**
+
 ```bash
 curl -X POST http://localhost:4000/graphql \
   -H "Content-Type: application/json" \
@@ -418,6 +430,7 @@ curl -X POST http://localhost:4000/graphql \
 ```
 
 **Login and get token:**
+
 ```bash
 curl -X POST http://localhost:4000/graphql \
   -H "Content-Type: application/json" \
@@ -427,6 +440,7 @@ curl -X POST http://localhost:4000/graphql \
 ```
 
 **Get current user (requires auth token):**
+
 ```bash
 curl -X POST http://localhost:4000/graphql \
   -H "Content-Type: application/json" \
@@ -437,6 +451,7 @@ curl -X POST http://localhost:4000/graphql \
 ```
 
 **Create a draft post:**
+
 ```bash
 curl -X POST http://localhost:4000/graphql \
   -H "Content-Type: application/json" \
@@ -449,6 +464,7 @@ curl -X POST http://localhost:4000/graphql \
 #### GraphQL Playground Examples
 
 **Query: Get published posts with author info**
+
 ```graphql
 query GetFeed {
   feed(take: 10, orderBy: { updatedAt: desc }) {
@@ -468,13 +484,16 @@ query GetFeed {
 ```
 
 **Mutation: Create and publish a post**
+
 ```graphql
 mutation CreateAndPublishPost {
   # First create a draft
-  createDraft(data: {
-    title: "Getting Started with GraphQL"
-    content: "GraphQL is a powerful query language..."
-  }) {
+  createDraft(
+    data: {
+      title: "Getting Started with GraphQL"
+      content: "GraphQL is a powerful query language..."
+    }
+  ) {
     id
     title
     published
@@ -493,6 +512,7 @@ mutation PublishPost {
 ```
 
 **Query: Search posts**
+
 ```graphql
 query SearchPosts($searchTerm: String!) {
   feed(searchString: $searchTerm, take: 5) {
@@ -514,25 +534,28 @@ query SearchPosts($searchTerm: String!) {
 ### Input Types & Validation
 
 **PostCreateInput:**
+
 ```graphql
 input PostCreateInput {
-  title: String!      # Required: Post title
-  content: String     # Optional: Post content/body
+  title: String! # Required: Post title
+  content: String # Optional: Post content/body
 }
 ```
 
 **UserUniqueInput:**
+
 ```graphql
 input UserUniqueInput {
-  id: Int            # Either ID or email required
-  email: String      # for user identification
+  id: Int # Either ID or email required
+  email: String # for user identification
 }
 ```
 
 **PostOrderByUpdatedAtInput:**
+
 ```graphql
 input PostOrderByUpdatedAtInput {
-  updatedAt: SortOrder!  # "asc" or "desc"
+  updatedAt: SortOrder! # "asc" or "desc"
 }
 ```
 
@@ -547,6 +570,7 @@ Protected operations require a valid JWT token in the Authorization header:
 ```
 
 **Protected Operations:**
+
 - `me` - Requires authentication
 - `createDraft` - Requires authentication
 - `togglePublishPost` - Requires post ownership
@@ -578,7 +602,7 @@ Protected operations require a valid JWT token in the Authorization header:
     {
       "message": "No user found for email: wrong@email.com",
       "locations": [{ "line": 2, "column": 3 }],
-      "path": ["login"] 
+      "path": ["login"]
     }
   ],
   "data": null

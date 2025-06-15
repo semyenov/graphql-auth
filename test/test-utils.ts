@@ -1,8 +1,10 @@
+// Import test environment first to ensure environment variables are set
+import './test-env'
+
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
-import type { HTTPMethod } from 'fetchdts'
 import jwt from 'jsonwebtoken'
-import { Context } from '../src/context'
-import { APP_SECRET } from '../src/utils'
+import { Context, HTTPMethod } from '../src/context'
+import { env } from '../src/environment'
 
 // Import the already built schema with permissions
 import { schema } from '../src/schema'
@@ -19,6 +21,21 @@ export function createMockContext(overrides?: Partial<Context>): Context {
     headers: {},
     method: 'POST' as HTTPMethod,
     contentType: 'application/json',
+    metadata: {
+      ip: 'test-ip',
+      userAgent: 'test-agent',
+      operationName: undefined,
+      query: undefined,
+      variables: undefined,
+      startTime: Date.now(),
+    },
+    security: {
+      isAuthenticated: false,
+      userId: undefined,
+      userEmail: undefined,
+      roles: [],
+      permissions: [],
+    },
   }
 
   return {
@@ -30,6 +47,8 @@ export function createMockContext(overrides?: Partial<Context>): Context {
 // Create authenticated context
 export function createAuthContext(userId: string): Context {
   const token = generateTestToken(userId)
+  const userIdNum = parseInt(userId, 10)
+
   return createMockContext({
     headers: {
       authorization: `Bearer ${token}`,
@@ -42,6 +61,14 @@ export function createAuthContext(userId: string): Context {
       },
       body: undefined,
     },
+    security: {
+      isAuthenticated: true,
+      userId: userIdNum,
+      userEmail: undefined,
+      roles: [],
+      permissions: [],
+    },
+    userId: userIdNum,
   })
 }
 
@@ -55,7 +82,16 @@ export function createTestServer() {
 
 // Generate test JWT token
 export function generateTestToken(userId: string): string {
-  return jwt.sign({ userId }, APP_SECRET)
+  const payload = {
+    userId,
+    email: `test-user-${userId}@example.com`, // Add email to match production format
+  }
+
+  return jwt.sign(payload, env.APP_SECRET, {
+    expiresIn: '1h', // Shorter expiry for tests
+    issuer: 'graphql-auth', // Must match production
+    audience: 'graphql-api', // Must match production
+  })
 }
 
 // GraphQL query helper
