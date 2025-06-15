@@ -4,7 +4,11 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { LoginVariables, SignupVariables } from '../src/gql'
 import { LoginMutation, SignupMutation } from '../src/gql'
 import { prisma } from './setup'
-import { createMockContext, createTestServer, gqlHelpers, testData } from './test-utils'
+import {
+  createMockContext,
+  createTestServer,
+  gqlHelpers,
+} from './test-utils'
 
 interface AuthMutationResponse {
   signup?: string
@@ -20,9 +24,11 @@ describe('Authentication', () => {
 
   describe('signup', () => {
     it('should create a new user with valid data', async () => {
-      const variables: SignupVariables = testData.user({
+      const variables: SignupVariables = {
+        email: 'test@example.com',
         password: 'securePassword123',
-      })
+        name: 'Test User',
+      }
 
       // Using the new helper for cleaner test code
       const data = await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse, SignupVariables>(
@@ -46,8 +52,12 @@ describe('Authentication', () => {
 
     it('should fail with duplicate email', async () => {
       // Create existing user
-      const existingUser = await testData.createUser({
-        email: 'existing@example.com',
+      await prisma.user.create({
+        data: {
+          email: 'existing@example.com',
+          password: await bcrypt.hash('securePassword123', 10),
+          name: 'Existing User',
+        },
       })
 
       const variables: SignupVariables = {
@@ -73,13 +83,17 @@ describe('Authentication', () => {
     it('should login with valid credentials', async () => {
       // Create user
       const password = 'myPassword123'
-      const user = await testData.createUser({
-        email: 'testuser@example.com',
-        password,
+      const email = 'testuser@example.com'
+      await prisma.user.create({
+        data: {
+          email,
+          password: await bcrypt.hash(password, 10),
+          name: 'Test User',
+        },
       })
 
       const variables: LoginVariables = {
-        email: 'testuser@example.com',
+        email,
         password,
       }
 
@@ -96,16 +110,17 @@ describe('Authentication', () => {
 
     it('should fail with invalid password', async () => {
       // Create user
+      const email = 'testuser2@example.com'
       await prisma.user.create({
         data: {
-          email: 'testuser2@example.com',
+          email,
           password: await bcrypt.hash('correctPassword', 10),
           name: 'Test User 2',
         },
       })
 
       const variables: LoginVariables = {
-        email: 'testuser2@example.com',
+        email,
         password: 'wrongPassword',
       }
 

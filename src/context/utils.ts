@@ -1,5 +1,7 @@
+import { verify } from 'jsonwebtoken'
+import { env } from '../environment'
 import type { HTTPMethod } from '../gql/types'
-import type { RequestMetadata, SecurityContext } from '../types'
+import type { JWTPayload, RequestMetadata, SecurityContext } from '../types'
 import { DEFAULT_VALUES, HEADER_KEYS } from './constants'
 import type { Context, GraphQLIncomingMessage } from './types'
 
@@ -160,11 +162,46 @@ export function isValidRequest(req: GraphQLIncomingMessage): boolean {
 }
 
 /**
- * Extracts the user ID from the GraphQL context
+ * Extracts the user ID from the JWT token in the Authorization header
  * 
  * @param context - The GraphQL context
  * @returns The user ID if authenticated, null otherwise
  */
 export function getUserId(context: Context): number | null {
-  return context.security?.userId || null
+  try {
+    // Extract Authorization header
+    const authHeader = context.headers[HEADER_KEYS.AUTHORIZATION]
+
+    if (!authHeader) {
+      return null
+    }
+
+    // Check for Bearer token format
+    const parts = authHeader.split(' ')
+    if (parts.length !== 2 || parts[0] !== 'Bearer') {
+      return null
+    }
+
+    const token = parts[1]
+    if (!token) {
+      return null
+    }
+
+    // Verify and decode the JWT token
+    const decoded = verify(token, env.APP_SECRET) as JWTPayload
+
+    // Extract userId from payload
+    if (decoded && typeof decoded === 'object' && 'userId' in decoded) {
+      const userId = typeof decoded.userId === 'string'
+        ? parseInt(decoded.userId, 10)
+        : decoded.userId
+
+      return typeof userId === 'number' && userId > 0 ? userId : null
+    }
+
+    return null
+  } catch (error) {
+    // JWT verification failed - invalid token, expired, etc.
+    return null
+  }
 } 

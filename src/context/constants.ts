@@ -39,6 +39,7 @@ export const HEADER_KEYS = {
     X_REAL_IP: 'x-real-ip',
     USER_AGENT: 'user-agent',
     CONTENT_TYPE: 'content-type',
+    AUTHORIZATION: 'authorization',
 } as const
 
 // Security roles and permissions (if needed for future use)

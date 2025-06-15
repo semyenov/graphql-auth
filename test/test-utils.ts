@@ -16,13 +16,10 @@ import './test-env'
  * 
  * AVAILABLE PATTERNS:
  * 1. gqlHelpers - Apollo Server testing with GraphQL operations
- * 2. testData - Factory functions for creating test data
- * 3. Context helpers - createMockContext, createAuthContext
+ * 2. Context helpers - createMockContext, createAuthContext
  * 
- * RECOMMENDED USAGE:
+ * RECOMMENDED USAGE: 
  * - Use gqlHelpers for comprehensive server-side testing
- * - Use testData factories for consistent test data creation
- * - See test/graphql-architecture-example.test.ts for complete examples
  * - See test/auth.test.ts for proper testing patterns
  */
 
@@ -162,81 +159,6 @@ export function getGraphQLErrors<T>(response: GraphQLResponse<T>): string[] {
   }
 
   return response.body.singleResult.errors?.map(e => e.message) || []
-}
-
-// Test data factories
-let userCounter = 0
-let postCounter = 0
-
-export const testData: {
-  user: (overrides?: Partial<{ email: string; name: string; password: string }>) => { email: string; name: string; password: string }
-  post: (overrides?: Partial<{ title: string; content: string; published: boolean; viewCount: number }>) => { title: string; content: string; published: boolean; viewCount: number }
-  createUser: (overrides?: Partial<{ email: string; name: string; password: string }>) => Promise<any>
-  createPost: (authorId: number, overrides?: Partial<{ title: string; content: string; published: boolean; viewCount: number }>) => Promise<any>
-  createAuthenticatedUser: (overrides?: Partial<{ email: string; name: string; password: string }>) => Promise<{ user: any; context: Context }>
-  resetCounters: () => void
-} = {
-  user: (overrides?: Partial<{ email: string; name: string; password: string }>) => {
-    userCounter++
-    return {
-      email: `test-user-${userCounter}-${Date.now()}@example.com`,
-      name: `Test User ${userCounter}`,
-      password: 'password123',
-      ...overrides,
-    }
-  },
-
-  post: (overrides?: Partial<{ title: string; content: string; published: boolean; viewCount: number }>) => {
-    postCounter++
-    return {
-      title: `Test Post ${postCounter}`,
-      content: `Test content for post ${postCounter}`,
-      published: false,
-      viewCount: 0,
-      ...overrides,
-    }
-  },
-
-  // Helper to create a user in the database
-  async createUser(overrides?: Parameters<typeof testData.user>[0]) {
-    const bcrypt = await import('bcryptjs')
-    const { prisma } = await import('./setup')
-    const userData = testData.user(overrides)
-    const hashedPassword = await bcrypt.hash(userData.password, 10)
-
-    return prisma.user.create({
-      data: {
-        ...userData,
-        password: hashedPassword,
-      },
-    })
-  },
-
-  // Helper to create a post in the database
-  async createPost(authorId: number, overrides?: Parameters<typeof testData.post>[0]) {
-    const { prisma } = await import('./setup')
-    const postData = testData.post(overrides)
-
-    return prisma.post.create({
-      data: {
-        ...postData,
-        authorId,
-      },
-    })
-  },
-
-  // Helper to create an authenticated user and return context
-  async createAuthenticatedUser(overrides?: Parameters<typeof testData.user>[0]) {
-    const user = await this.createUser(overrides)
-    const context = createAuthContext(user.id.toString())
-    return { user, context }
-  },
-
-  // Reset counters (useful for test isolation)
-  resetCounters() {
-    userCounter = 0
-    postCounter = 0
-  },
 }
 
 // Type-safe GraphQL operation helpers

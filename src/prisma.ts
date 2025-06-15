@@ -38,5 +38,14 @@ function setPrismaClient(prismaInstance: PrismaClient) {
     globalPrisma = prismaInstance;
 }
 
-export const prisma = getPrismaClient();
+// Export a getter that always returns the current instance
+// This ensures that when setPrismaClient is called in tests,
+// all code that imports prisma will get the updated instance
+export const prisma = new Proxy({} as PrismaClient, {
+    get(_target, prop) {
+        const currentPrisma = getPrismaClient();
+        return (currentPrisma as any)[prop];
+    }
+});
+
 export { setPrismaClient };

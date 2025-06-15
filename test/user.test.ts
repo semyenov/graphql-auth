@@ -4,7 +4,12 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { TogglePublishPostVariables } from '../src/gql'
 import { GetMeQuery, TogglePublishPostMutation } from '../src/gql'
 import { prisma } from './setup'
-import { createAuthContext, createMockContext, createTestServer, gqlHelpers } from './test-utils'
+import {
+  createAuthContext,
+  createMockContext,
+  createTestServer,
+  gqlHelpers,
+} from './test-utils'
 
 // Type definitions for GraphQL responses
 interface User {

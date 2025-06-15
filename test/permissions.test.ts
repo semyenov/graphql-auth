@@ -2,7 +2,12 @@ import bcrypt from 'bcryptjs'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { PermissionUtils } from '../src/permissions'
 import { prisma } from './setup'
-import { createAuthContext, createMockContext, createTestServer, executeOperation } from './test-utils'
+import {
+    createAuthContext,
+    createMockContext,
+    createTestServer,
+    executeOperation,
+} from './test-utils'
 
 describe('Enhanced Permissions System', () => {
     const server = createTestServer()
