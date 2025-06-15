@@ -1,5 +1,5 @@
 import { IRules, rule, shield } from 'graphql-shield'
-import { Context, GraphQLAPISchema } from '../context'
+import { Context, GraphQLEndpointResponse } from '../context'
 import { prisma } from '../prisma'
 import { getUserId } from '../utils'
 
@@ -29,7 +29,7 @@ const rules = {
   }),
 } satisfies IRules
 
-export const permissions = shield<GraphQLAPISchema, Context, any>({
+export const permissions = shield<GraphQLEndpointResponse<any>, Context, any>({
   Query: {
     me: rules.isAuthenticatedUser,
     draftsByUser: rules.isAuthenticatedUser,

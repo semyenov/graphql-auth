@@ -1,5 +1,8 @@
 import { print } from 'graphql'
-import type { GraphQLError, GraphQLResponse } from './context'
+import type {
+  GraphQLError,
+  GraphQLResponse
+} from './context'
 
 // =============================================================================
 // ADVANCED QUERY UTILITIES
@@ -333,7 +336,7 @@ export class QueryValidator {
     query: string,
   ): 'query' | 'mutation' | 'subscription' | null {
     const match = query.match(/^\s*(query|mutation|subscription)/i)
-    return match ? (match[1].toLowerCase() as any) : null
+    return match ? (match[1]?.toLowerCase() as any) : null
   }
 }
 

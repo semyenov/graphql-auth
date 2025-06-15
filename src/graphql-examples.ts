@@ -2,27 +2,22 @@ import { readFragment } from 'gql.tada'
 import { print } from 'graphql'
 import {
   GetFeedQuery,
-  // Queries
   GetMeQuery,
   GetPostByIdQuery,
-  // Client & Utilities
   GraphQLClient,
-  PostWithAuthorFragment,
-  // Fragments
-  UserFragment,
+  PostInfoFragment,
+  UserInfoFragment,
   devUtils,
   executeGraphQL,
   mutateCreateDraft,
   mutateLogin,
   queryFeed,
-  // Convenience functions
   queryMe,
   type GetFeedResult,
   type GetFeedVariables,
-  // Types
   type GetMeResult,
   type LoginVariables,
-} from './context'
+} from './gql'
 
 import {
   GraphQLCache,
@@ -55,7 +50,7 @@ export async function exampleSimpleQuery() {
     const user = result.data?.me
     if (user) {
       // Use readFragment to access fragment fields safely
-      const userInfo = readFragment(UserFragment, user)
+      const userInfo = readFragment(UserInfoFragment, user)
       console.log('Current user:', userInfo)
     }
   } catch (error) {
@@ -114,7 +109,7 @@ export async function exampleMutation() {
 
       const user = userResult.data?.me
       if (user) {
-        const userInfo = readFragment(UserFragment, user)
+        const userInfo = readFragment(UserInfoFragment, user)
         console.log('User info:', userInfo)
       }
     }
@@ -143,7 +138,7 @@ export async function exampleGraphQLClient() {
 
     const user = result.data?.me
     if (user) {
-      const userInfo = readFragment(UserFragment, user)
+      const userInfo = readFragment(UserInfoFragment, user)
       console.log('Client result:', userInfo)
     }
   } catch (error) {
@@ -159,10 +154,10 @@ export async function exampleFragments() {
 
   // Print fragment for inspection
   console.log('User Fragment:')
-  console.log(print(UserFragment))
+  console.log(print(UserInfoFragment))
 
   console.log('Post with Author Fragment:')
-  console.log(print(PostWithAuthorFragment))
+  console.log(print(PostInfoFragment))
 
   // Use fragment-based query
   const result = await executeGraphQL<GetFeedResult, GetFeedVariables>(
@@ -251,7 +246,7 @@ export async function exampleCaching() {
 
     const user = result.data.me
     if (user) {
-      const userInfo = readFragment(UserFragment, user)
+      const userInfo = readFragment(UserInfoFragment, user)
       console.log('Result cached:', userInfo.email)
     }
   }
@@ -259,7 +254,7 @@ export async function exampleCaching() {
   // Next call will use cache
   cachedResult = cache.get<GetMeResult>(queryString)
   if (cachedResult?.me) {
-    const userInfo = readFragment(UserFragment, cachedResult.me)
+    const userInfo = readFragment(UserInfoFragment, cachedResult.me)
     console.log('Cached result:', userInfo.email)
   }
 }
@@ -280,7 +275,7 @@ export async function exampleDevTools() {
   console.log('Query analysis:', analysis)
 
   // Timed operation
-  const timedResult = await devTools.logOperation('GetFeed', async () => {
+  await devTools.logOperation('GetFeed', async () => {
     return await queryFeed({ take: 5 })
   })
 
@@ -367,7 +362,7 @@ export async function exampleCompleteWorkflow() {
     const userResult = await queryMe(authHeaders)
     const user = userResult.data?.me
     if (user) {
-      const userInfo = readFragment(UserFragment, user)
+      const userInfo = readFragment(UserInfoFragment, user)
       console.log('Logged in as:', userInfo.email)
     }
 

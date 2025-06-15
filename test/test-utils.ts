@@ -2,7 +2,6 @@ import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import type { HTTPMethod } from 'fetchdts'
 import jwt from 'jsonwebtoken'
 import { Context } from '../src/context'
-import { APP_SECRET } from '../src/utils'
 
 // Import the already built schema with permissions
 import { schema } from '../src/schema'
@@ -16,10 +15,24 @@ export function createMockContext(overrides?: Partial<Context>): Context {
       headers: {},
       body: undefined,
     },
-    headers: {},
+    headers: {
+      'content-type': 'application/json',
+    },
     method: 'POST' as HTTPMethod,
     contentType: 'application/json',
-  }
+    metadata: {
+      ip: '127.0.0.1',
+      userAgent: 'test-user-agent',
+      startTime: Date.now(),
+    },
+    security: {
+      isAuthenticated: false,
+      userId: undefined,
+      userEmail: undefined,
+      roles: [],
+      permissions: [],
+    },
+  } as Context
 
   return {
     ...defaultContext,
@@ -55,7 +68,7 @@ export function createTestServer() {
 
 // Generate test JWT token
 export function generateTestToken(userId: string): string {
-  return jwt.sign({ userId }, APP_SECRET)
+  return jwt.sign({ userId }, process.env.APP_SECRET || '')
 }
 
 // GraphQL query helper

@@ -1,5 +1,4 @@
-/* eslint-disable */
-import type { Prisma, User, Post } from "/workspace/node_modules/@prisma/client/index.js";
+import type { Post, Prisma, User } from "@prisma/client";
 export default interface PrismaTypes {
     User: {
         Name: "User";

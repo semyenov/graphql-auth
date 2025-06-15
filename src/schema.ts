@@ -5,7 +5,7 @@ import { sign } from 'jsonwebtoken';
 import { builder } from './builder';
 import { permissions } from './permissions';
 import { prisma } from './prisma';
-import { APP_SECRET, getUserId } from './utils';
+import { getUserId } from './utils';
 
 // Add DateTime scalar
 builder.scalarType('DateTime', {
@@ -191,7 +191,7 @@ builder.mutationField('signup', (t) =>
                     password: hashedPassword,
                 },
             });
-            return sign({ userId: user.id }, APP_SECRET);
+            return sign({ userId: user.id }, process.env.APP_SECRET || '');
         },
     })
 );
@@ -214,7 +214,7 @@ builder.mutationField('login', (t) =>
             if (!passwordValid) {
                 throw new Error('Invalid password');
             }
-            return sign({ userId: user.id }, APP_SECRET);
+            return sign({ userId: user.id }, process.env.APP_SECRET || '');
         },
     })
 );
