@@ -1,4 +1,4 @@
-import type { introspection_types } from '../graphql-env.d'
+import type { introspection_types } from '../graphql-env'
 
 // HTTP method types
 export type HTTPMethod =
@@ -9,6 +9,8 @@ export type HTTPMethod =
     | 'PATCH'
     | 'HEAD'
     | 'OPTIONS'
+    | 'CONNECT'
+    | 'TRACE'
 
 export type MimeType =
     | 'application/json'

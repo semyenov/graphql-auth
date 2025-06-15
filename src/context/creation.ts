@@ -1,5 +1,5 @@
 import { ContextFunction } from '@apollo/server'
-import { getUserId } from '../utils'
+import { IncomingMessage, ServerResponse } from 'http'
 import type { Context, GraphQLIncomingMessage } from './types'
 import {
     createRequestMetadata,
@@ -8,6 +8,7 @@ import {
     determineHttpMethod,
     extractContentType,
     extractHeaders,
+    getUserId,
     isValidRequest
 } from './utils'
 
@@ -38,15 +39,18 @@ import {
  * });
  * ```
  */
-export const createContext: ContextFunction<[{ req: GraphQLIncomingMessage }], Context> = async ({ req }) => {
+export const createContext: ContextFunction<[{ req: IncomingMessage; res: ServerResponse }], Context> = async ({ req }) => {
+    // Cast to our extended type for body access
+    const graphqlReq = req as GraphQLIncomingMessage
+
     // Validate incoming request structure
-    if (!isValidRequest(req)) {
+    if (!isValidRequest(graphqlReq)) {
         throw new Error('Invalid request structure provided to context creation')
     }
 
     try {
         // Extract and normalize request components
-        const requestComponents = extractRequestComponents(req)
+        const requestComponents = extractRequestComponents(graphqlReq)
 
         // Create authentication context
         const authContext = await createAuthenticationContext(requestComponents)

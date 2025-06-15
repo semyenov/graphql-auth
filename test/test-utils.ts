@@ -3,8 +3,8 @@ import './test-env'
 
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import jwt from 'jsonwebtoken'
-import { Context, HTTPMethod } from '../src/context'
-import { env } from '../src/environment'
+import type { Context } from '../src/context/types'
+import type { HTTPMethod } from '../src/graphql/types'
 
 // Import the already built schema with permissions
 import { schema } from '../src/schema'
@@ -18,15 +18,14 @@ export function createMockContext(overrides?: Partial<Context>): Context {
       headers: {},
       body: undefined,
     },
-    headers: {},
+    headers: {
+      'content-type': 'application/json',
+    },
     method: 'POST' as HTTPMethod,
     contentType: 'application/json',
     metadata: {
-      ip: 'test-ip',
-      userAgent: 'test-agent',
-      operationName: undefined,
-      query: undefined,
-      variables: undefined,
+      ip: '127.0.0.1',
+      userAgent: 'test-user-agent',
       startTime: Date.now(),
     },
     security: {
@@ -36,7 +35,7 @@ export function createMockContext(overrides?: Partial<Context>): Context {
       roles: [],
       permissions: [],
     },
-  }
+  } as Context
 
   return {
     ...defaultContext,
@@ -61,14 +60,14 @@ export function createAuthContext(userId: string): Context {
       },
       body: undefined,
     },
+    userId: userIdNum, // Add the top-level userId property
     security: {
       isAuthenticated: true,
       userId: userIdNum,
-      userEmail: undefined,
+      userEmail: undefined, // Would typically be filled by auth middleware
       roles: [],
       permissions: [],
     },
-    userId: userIdNum,
   })
 }
 
@@ -82,38 +81,61 @@ export function createTestServer() {
 
 // Generate test JWT token
 export function generateTestToken(userId: string): string {
-  const payload = {
-    userId,
-    email: `test-user-${userId}@example.com`, // Add email to match production format
-  }
-
-  return jwt.sign(payload, env.APP_SECRET, {
-    expiresIn: '1h', // Shorter expiry for tests
-    issuer: 'graphql-auth', // Must match production
-    audience: 'graphql-api', // Must match production
-  })
+  return jwt.sign({ userId }, process.env.APP_SECRET || 'test-secret')
 }
 
 export type VariableValues = { [name: string]: unknown }
 
-// GraphQL query helper
-export async function executeOperation<TData = unknown, TVariables extends VariableValues = VariableValues>(
+// GraphQL query helper with improved error handling
+export async function executeOperation<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
   server: ApolloServer<Context>,
   query: string,
-  variables?: any,
+  variables?: TVariables,
   context?: Context,
 ): Promise<GraphQLResponse<TData>> {
-  const response = await server.executeOperation<TData, TVariables>(
-    {
-      query,
-      variables,
-    },
-    {
-      contextValue: context || createMockContext(),
-    },
-  )
+  const response = await server.executeOperation<TData, TVariables>({
+    query,
+    variables,
+  }, {
+    contextValue: context || createMockContext()
+  })
 
   return response
+}
+
+// Helper to extract data from GraphQL response with error checking
+export function extractGraphQLData<T>(response: GraphQLResponse<T>): T {
+  if (response.body.kind !== 'single') {
+    throw new Error('Expected single GraphQL response')
+  }
+
+  const { singleResult } = response.body
+
+  if (singleResult.errors && singleResult.errors.length > 0) {
+    throw new Error(`GraphQL Error: ${singleResult.errors.map(e => e.message).join(', ')}`)
+  }
+
+  if (!singleResult.data) {
+    throw new Error('No data returned from GraphQL operation')
+  }
+
+  return singleResult.data
+}
+
+// Helper to check if GraphQL response has errors
+export function hasGraphQLErrors<T>(response: GraphQLResponse<T>): boolean {
+  return response.body.kind === 'single' &&
+    !!response.body.singleResult.errors &&
+    response.body.singleResult.errors.length > 0
+}
+
+// Helper to get GraphQL errors from response
+export function getGraphQLErrors<T>(response: GraphQLResponse<T>): string[] {
+  if (response.body.kind !== 'single') {
+    return []
+  }
+
+  return response.body.singleResult.errors?.map(e => e.message) || []
 }
 
 // Test data factories
@@ -188,5 +210,56 @@ export const testData: {
   resetCounters() {
     userCounter = 0
     postCounter = 0
+  },
+}
+
+// Type-safe GraphQL operation helpers
+export const gqlHelpers = {
+  // Execute a query and expect success
+  async expectSuccessfulQuery<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
+    server: ApolloServer<Context>,
+    query: string,
+    variables?: TVariables,
+    context?: Context,
+  ): Promise<TData> {
+    const response = await executeOperation<TData, TVariables>(server, query, variables, context)
+    return extractGraphQLData(response)
+  },
+
+  // Execute a mutation and expect success
+  async expectSuccessfulMutation<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
+    server: ApolloServer<Context>,
+    mutation: string,
+    variables?: TVariables,
+    context?: Context,
+  ): Promise<TData> {
+    const response = await executeOperation<TData, TVariables>(server, mutation, variables, context)
+    return extractGraphQLData(response)
+  },
+
+  // Execute an operation and expect it to fail with specific error
+  async expectGraphQLError<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
+    server: ApolloServer<Context>,
+    operation: string,
+    variables?: TVariables,
+    context?: Context,
+    expectedErrorSubstring?: string,
+  ): Promise<string[]> {
+    const response = await executeOperation<TData, TVariables>(server, operation, variables, context)
+
+    if (!hasGraphQLErrors(response)) {
+      throw new Error('Expected GraphQL operation to fail, but it succeeded')
+    }
+
+    const errors = getGraphQLErrors(response)
+
+    if (expectedErrorSubstring) {
+      const hasExpectedError = errors.some(error => error.includes(expectedErrorSubstring))
+      if (!hasExpectedError) {
+        throw new Error(`Expected error containing "${expectedErrorSubstring}", but got: ${errors.join(', ')}`)
+      }
+    }
+
+    return errors
   },
 }

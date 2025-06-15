@@ -1,17 +1,14 @@
 import { IRules, rule, shield } from 'graphql-shield'
 import {
   Context,
-  GraphQLMutation,
-  GraphQLQuery,
   hasPermission,
   hasRole,
   isAuthenticated,
   isCreateDraftContext,
   requireAuthentication,
-  TypedContext
 } from '../context'
+import { getUserId } from '../context/utils'
 import { prisma } from '../prisma'
-import { getUserId } from '../utils'
 
 type PermissionUtilsType = {
   canAccessUserData: (context: Context, targetUserId: number) => boolean
@@ -139,7 +136,7 @@ const rules = {
 } satisfies IRules
 
 // Enhanced permissions schema with comprehensive coverage
-export const permissions = shield<GraphQLQuery & GraphQLMutation, Context, TypedContext>({
+export const permissions = shield({
   Query: {
     // User-related queries
     me: rules.isAuthenticatedUser,

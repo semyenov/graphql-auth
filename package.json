@@ -16,7 +16,8 @@
     "db:reset": "bunx prisma migrate reset --force",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "graphql:examples": "bun run -e 'import(\"./src/graphql-examples.ts\").then(m => m.runAllExamples())'"
   },
   "prettier": {
     "semi": false,

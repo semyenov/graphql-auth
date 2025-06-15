@@ -168,6 +168,6 @@ export interface SecurityContext {
   isAuthenticated: boolean
   userId?: number
   userEmail?: string
-  roles?: string[]
-  permissions?: string[]
+  roles: string[]
+  permissions: string[]
 }
