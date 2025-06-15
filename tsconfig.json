@@ -20,16 +20,15 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "types": ["bun"],
-    "typeRoots": [
-      "./node_modules/@types", 
-      "./.specstory/types",
-      "./.pothos"
-    ],
+    "typeRoots": ["./node_modules/@types", "./.specstory/types", "./.pothos"],
     "plugins": [
       {
         "name": "gql.tada/ts-plugin",
         "schema": "./_docs/schema.graphql",
-        "tadaOutputLocation": "./src/graphql-env.d.ts"
+        "tadaOutputLocation": "./src/graphql-env.d.ts",
+        "scalars": {
+          "DateTime": "string"
+        }
       }
     ],
     "paths": {
@@ -38,8 +37,5 @@
       "@": ["./src"]
     }
   },
-  "include": [
-    "src/**/*",
-    "test/**/*"
-  ]
+  "include": ["src/**/*", "test/**/*"]
 }
