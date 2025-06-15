@@ -6,7 +6,7 @@
     "strict": true,
     "module": "ESNext",
     "target": "ESNext",
-    "lib": ["ESNext"],
+    "lib": ["ESNext", "DOM"],
     "moduleResolution": "bundler",
     "allowJs": true,
     "skipLibCheck": true,
@@ -19,12 +19,8 @@
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "types": ["bun"],
-    "typeRoots": [
-      "./node_modules/@types", 
-      "./.specstory/types",
-      "./.pothos"
-    ],
+    "types": ["bun", "node"],
+    "typeRoots": ["./node_modules/@types", "./.specstory/types", "./.pothos"],
     "plugins": [
       {
         "name": "gql.tada/ts-plugin",
@@ -37,7 +33,5 @@
       "@generated/pothos": ["./generated/pothos.ts"]
     }
   },
-  "include": [
-    "src/**/*",
-  ]
+  "include": ["src/**/*"]
 }

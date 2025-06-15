@@ -24,7 +24,7 @@
     "@pothos/core": "^4.6.2",
     "@pothos/plugin-prisma": "^4.8.2",
     "@pothos/plugin-relay": "^4.4.2",
-    "@prisma/client": "6.9.0",
+    "@prisma/client": "^6.9.0",
     "@prisma/extension-accelerate": "^2.0.1",
     "bcryptjs": "3.0.2",
     "consola": "^3.4.2",
@@ -36,14 +36,15 @@
     "graphql-shield": "7.6.5",
     "h3": "^1.15.3",
     "jsonwebtoken": "9.0.2",
-    "pathe": "^2.0.3"
+    "pathe": "^2.0.3",
+    "zod": "^3.25.64"
   },
   "devDependencies": {
     "@types/bcryptjs": "3.0.0",
     "@types/bun": "latest",
     "@types/jsonwebtoken": "9.0.9",
-    "@types/node": "22.15.29",
-    "prisma": "6.9.0",
+    "@types/node": "^22.15.29",
+    "prisma": "^6.9.0",
     "typescript": "5.8.2"
   },
   "prisma": {

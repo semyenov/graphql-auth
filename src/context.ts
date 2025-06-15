@@ -1,31 +1,26 @@
 import { ContextFunction } from '@apollo/server'
-import type {
-  Endpoint,
-  HTTPMethod,
-  TypedFetchResponseBody
-} from 'fetchdts'
 import { graphql, type ResultOf, type VariablesOf } from 'gql.tada'
 import { IncomingMessage } from 'http'
+import type { RequestMetadata, SecurityContext, User } from './types'
+import { getUserId } from './utils'
 
-// Define types for GraphQL operations
-interface User {
-  id: number
-  email: string
-  name?: string
-  posts: Post[]
-}
+// HTTP method types
+export type HTTPMethod =
+  | 'GET'
+  | 'POST'
+  | 'PUT'
+  | 'DELETE'
+  | 'PATCH'
+  | 'HEAD'
+  | 'OPTIONS'
+export type MimeType =
+  | 'application/json'
+  | 'application/xml'
+  | 'text/plain'
+  | 'text/html'
+  | string
 
-interface Post {
-  id: number
-  title: string
-  content?: string
-  published: boolean
-  author: User
-  createdAt: string
-  updatedAt: string
-  viewCount: number
-}
-
+// Enhanced GraphQL operations with proper type safety
 export const LoginMutation = graphql(`
   mutation Login($email: String!, $password: String!) {
     login(email: $email, password: $password) {
@@ -67,6 +62,39 @@ export const CreateDraftMutation = graphql(`
   }
 `)
 
+export const GetMeQuery = graphql(`
+  query GetMe {
+    me {
+      id
+      email
+      name
+      posts {
+        id
+        title
+        published
+        createdAt
+      }
+    }
+  }
+`)
+
+export const GetPostsQuery = graphql(`
+  query GetPosts($input: FeedInput) {
+    feed(input: $input) {
+      id
+      title
+      content
+      published
+      viewCount
+      createdAt
+      author {
+        id
+        name
+      }
+    }
+  }
+`)
+
 // Type aliases for easy access to query types
 export type LoginResult = ResultOf<typeof LoginMutation>
 export type LoginVariables = VariablesOf<typeof LoginMutation>
@@ -74,44 +102,33 @@ export type SignupResult = ResultOf<typeof SignupMutation>
 export type SignupVariables = VariablesOf<typeof SignupMutation>
 export type CreateDraftResult = ResultOf<typeof CreateDraftMutation>
 export type CreateDraftVariables = VariablesOf<typeof CreateDraftMutation>
+export type GetMeResult = ResultOf<typeof GetMeQuery>
+export type GetPostsResult = ResultOf<typeof GetPostsQuery>
+export type GetPostsVariables = VariablesOf<typeof GetPostsQuery>
 
-// GraphQL request body type
+// GraphQL request body type with proper validation
 interface GraphQLRequestBody {
   query: string
   variables?: Record<string, unknown>
   operationName?: string
 }
 
-// GraphQL response type
+// Enhanced GraphQL response type
 export interface GraphQLResponse<T = unknown> {
   data?: T
   errors?: Array<{
     message: string
     locations?: Array<{ line: number; column: number }>
     path?: Array<string | number>
+    extensions?: {
+      code?: string
+      field?: string
+      timestamp?: string
+    }
   }>
 }
 
-// Enhanced API Schema for fetchdts with proper endpoint typing
-export interface GraphQLAPISchema {
-  '/graphql': {
-    [Endpoint]: {
-      POST: {
-        body: GraphQLRequestBody
-        headers: {
-          'content-type': 'application/json'
-          authorization?: string
-        }
-        response: GraphQLResponse
-        responseHeaders: {
-          'content-type': 'application/json'
-        }
-      }
-    }
-  }
-}
-
-// Enhanced context interface with proper typing
+// Enhanced context interface with comprehensive typing
 export interface Context {
   req: {
     url: string
@@ -121,12 +138,19 @@ export interface Context {
   }
   headers: Record<string, string>
   method: HTTPMethod
-  contentType: string
+  contentType: MimeType | string
+  metadata: RequestMetadata
+  security: SecurityContext
+  userId?: number
+  user?: User
 }
 
-// Update the context function to handle Apollo Server's context with better typing
-export const createContext: ContextFunction<[{ req: IncomingMessage }], Context> = async ({ req }) => {
-  // Convert IncomingMessage headers to record
+// Create enhanced context with proper error handling and type safety
+export const createContext: ContextFunction<
+  [{ req: IncomingMessage }],
+  Context
+> = async ({ req }) => {
+  // Convert IncomingMessage headers to record with proper typing
   const headers: Record<string, string> = {}
   Object.entries(req.headers).forEach(([key, value]) => {
     if (value) {
@@ -134,56 +158,110 @@ export const createContext: ContextFunction<[{ req: IncomingMessage }], Context>
     }
   })
 
-  // Create context with proper typing
-  const context: Context = {
+  // Extract method and URL with defaults
+  const method = (req.method as HTTPMethod) || 'POST'
+  const url = req.url || '/graphql'
+  const contentType = headers['content-type'] || 'application/json'
+
+  // Create request metadata
+  const metadata: RequestMetadata = {
+    ip: headers['x-forwarded-for'] || headers['x-real-ip'] || 'unknown',
+    userAgent: headers['user-agent'] || 'unknown',
+    operationName: undefined, // Will be set later from GraphQL request
+    query: undefined, // Will be set later from GraphQL request
+    variables: undefined, // Will be set later from GraphQL request
+    startTime: Date.now(),
+  }
+
+  // Create basic context structure
+  const basicContext = {
     req: {
-      url: req.url || '/graphql',
-      method: (req.method as HTTPMethod) || 'POST',
+      url,
+      method,
       headers,
-      body: (req as any).body
+      body: (req as any).body as GraphQLRequestBody | undefined,
     },
     headers,
-    method: (req.method as HTTPMethod) || 'POST',
-    contentType: headers['content-type'] || 'application/json'
+    method,
+    contentType,
+    metadata,
+  }
+
+  // Get user ID and create security context
+  const userId = getUserId(basicContext as Context)
+  const isAuthenticated = Boolean(userId)
+
+  const security: SecurityContext = {
+    isAuthenticated,
+    userId: userId || undefined,
+    userEmail: undefined, // Will be populated if needed
+    roles: [], // Will be populated based on user data
+    permissions: [], // Will be populated based on user roles
+  }
+
+  // Create final enhanced context
+  const context: Context = {
+    ...basicContext,
+    security,
+    userId: userId || undefined,
+    user: undefined, // Will be populated by resolvers if needed
   }
 
   return context
 }
 
-// Type-safe GraphQL execution with fetchdts integration
-export async function executeGraphQL<TData = unknown, TVariables = Record<string, unknown>>(
+// Type-safe GraphQL execution with enhanced error handling
+export async function executeGraphQL<
+  TData = unknown,
+  TVariables = Record<string, unknown>,
+>(
   query: string,
   variables?: TVariables,
-  headers?: Record<string, string>
+  headers?: Record<string, string>,
 ): Promise<GraphQLResponse<TData>> {
-  const requestBody = JSON.stringify({
-    query,
-    variables,
-  })
+  try {
+    const requestBody: GraphQLRequestBody = {
+      query,
+      variables: variables as Record<string, unknown>,
+    }
 
-  const response = await fetch('/graphql', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
-    body: requestBody,
-  })
+    const response = await fetch('/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers,
+      },
+      body: JSON.stringify(requestBody),
+    })
 
-  return response.json() as Promise<GraphQLResponse<TData>>
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const result = (await response.json()) as GraphQLResponse<TData>
+    return result
+  } catch (error) {
+    // Return a properly formatted GraphQL error response
+    return {
+      errors: [
+        {
+          message:
+            error instanceof Error ? error.message : 'Unknown error occurred',
+          extensions: {
+            code: 'NETWORK_ERROR',
+            timestamp: new Date().toISOString(),
+          },
+        },
+      ],
+    }
+  }
 }
 
-// Helper type for GraphQL endpoint response
-export type GraphQLEndpointResponse<T> = TypedFetchResponseBody<GraphQLAPISchema, '/graphql', 'POST'> & {
-  data?: T
-}
-
-// Type-safe request helper using fetchdts types
-export function createTypedRequest<T extends keyof GraphQLAPISchema>(
-  endpoint: T,
+// Type-safe request helper
+export function createTypedRequest(
   method: HTTPMethod,
   body?: GraphQLRequestBody,
-  headers?: Record<string, string>
+  headers?: Record<string, string>,
 ): RequestInit {
   return {
     method,
@@ -192,5 +270,50 @@ export function createTypedRequest<T extends keyof GraphQLAPISchema>(
       ...headers,
     },
     body: body ? JSON.stringify(body) : undefined,
+  }
+}
+
+// Enhanced context helpers
+export function isAuthenticated(context: Context): boolean {
+  return context.security.isAuthenticated
+}
+
+export function requireAuthentication(context: Context): number {
+  if (!context.security.isAuthenticated || !context.userId) {
+    throw new Error('Authentication required')
+  }
+  return context.userId
+}
+
+export function hasPermission(context: Context, permission: string): boolean {
+  return context.security.permissions?.includes(permission) || false
+}
+
+export function hasRole(context: Context, role: string): boolean {
+  return context.security.roles?.includes(role) || false
+}
+
+// Context validation helpers
+export function validateContext(context: Context): {
+  isValid: boolean
+  errors: string[]
+} {
+  const errors: string[] = []
+
+  if (!context.method) {
+    errors.push('HTTP method is required')
+  }
+
+  if (!context.contentType) {
+    errors.push('Content-Type header is required')
+  }
+
+  if (context.method === 'POST' && !context.req.body) {
+    errors.push('Request body is required for POST requests')
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
   }
 }
