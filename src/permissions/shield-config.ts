@@ -19,9 +19,7 @@ export const permissions = shield({
     post: rules.isAuthenticatedUser,
     drafts: rules.isUserOwner,
 
-    // Node queries (Relay)
-    node: rules.isPublic,
-    nodes: rules.isPublic,
+    // Node queries disabled in builder config
   },
 
   Mutation: {
@@ -31,6 +29,7 @@ export const permissions = shield({
 
     // Post mutations
     createDraft: rules.canCreateDraft,
+    updatePost: rules.isPostOwner,
     deletePost: rules.isPostOwner,
     togglePublishPost: rules.isPostOwner,
     incrementPostViewCount: rules.isPublic,

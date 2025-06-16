@@ -48,9 +48,16 @@ export const builder = new SchemaBuilder<{
     plugins: [PrismaPlugin, RelayPlugin],
     prisma: {
         client: prisma,
+        // Enable field-level selection optimization and descriptions
         exposeDescriptions: true,
         filterConnectionTotalCount: true,
+        // Validation handled by Pothos automatically
+        // Performance optimizations
+        selectModePreference: 'include', // Prefer include over select for better type safety
+        // Error handling for unused queries in development
         onUnusedQuery: isProduction ? null : 'warn',
+        // Enable additional debugging information in development  
+        // dmmf: handled automatically by Pothos
     },
     relay: {
         // Use the same ID encoding as our test utilities
@@ -60,5 +67,11 @@ export const builder = new SchemaBuilder<{
             const { type, id } = decodeGlobalId(globalID)
             return { typename: type, id }
         },
+        // Modern Relay options for better performance and developer experience
+        clientMutationId: 'omit', // Omit clientMutationId field from mutations (Relay modern style)
+        cursorType: 'String', // Use String for cursor type instead of opaque cursor
+        nodeQueryOptions: false, // Disable automatic node query field generation
+        nodesQueryOptions: false, // Disable automatic nodes query field generation
+        // PageInfo fields are included by default in Relay implementation
     },
 });

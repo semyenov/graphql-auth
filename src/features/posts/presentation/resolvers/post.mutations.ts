@@ -45,6 +45,67 @@ builder.mutationField('createDraft', (t) =>
 )
 
 /**
+ * Update post mutation (enhanced)
+ */
+builder.mutationField('updatePost', (t) =>
+  t.prismaField({
+    type: 'Post',
+    description: 'Update an existing post with enhanced validation',
+    args: {
+      id: t.arg.id({
+        required: true,
+        description: 'The global ID of the post to update',
+      }),
+      title: t.arg.string({
+        description: 'New title for the post',
+      }),
+      content: t.arg.string({
+        description: 'New content for the post',
+      }),
+      published: t.arg.boolean({
+        description: 'New published status for the post',
+      }),
+    },
+    resolve: async (query, _parent, args, context) => {
+      try {
+        const userId = requireAuthentication(context)
+        const postId = parseGlobalId(args.id.toString(), 'Post')
+
+        if (!args.title && !args.content && args.published === undefined) {
+          throw new Error('At least one field must be provided for update')
+        }
+
+        const existingPost = await prisma.post.findUnique({
+          where: { id: postId },
+          select: { id: true, authorId: true },
+        })
+
+        if (!existingPost) {
+          throw new NotFoundError('Post', args.id.toString())
+        }
+
+        if (existingPost.authorId !== userId) {
+          throw new Error('You can only update your own posts')
+        }
+
+        const updateData: any = {}
+        if (args.title !== undefined) updateData.title = args.title
+        if (args.content !== undefined) updateData.content = args.content
+        if (args.published !== undefined) updateData.published = args.published
+
+        return prisma.post.update({
+          ...query,
+          where: { id: postId },
+          data: updateData,
+        })
+      } catch (error) {
+        throw normalizeError(error)
+      }
+    },
+  })
+)
+
+/**
  * Delete post mutation
  */
 builder.mutationField('deletePost', (t) =>
