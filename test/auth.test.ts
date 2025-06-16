@@ -72,7 +72,7 @@ describe('Authentication', () => {
         print(SignupMutation),
         variables,
         createMockContext(),
-        'Unique constraint failed'
+        'A user with this email already exists'
       )
 
       expect(errors.some(error => error.includes('email'))).toBe(true)
@@ -130,7 +130,7 @@ describe('Authentication', () => {
         print(LoginMutation),
         variables,
         createMockContext(),
-        'Invalid password'
+        'Invalid email or password'
       )
     })
 
@@ -146,7 +146,7 @@ describe('Authentication', () => {
         print(LoginMutation),
         variables,
         createMockContext(),
-        'No user found'
+        'Invalid email or password'
       )
     })
   })

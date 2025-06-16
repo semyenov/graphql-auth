@@ -88,7 +88,7 @@ export function createAuthContext(userId: string): Context {
       isAuthenticated: true,
       userId: userIdNum,
       userEmail: undefined, // Would typically be filled by auth middleware
-      roles: [],
+      roles: ['user'], // Default role for authenticated users
       permissions: [],
     },
   })
@@ -104,7 +104,7 @@ export function createTestServer() {
 
 // Generate test JWT token
 export function generateTestToken(userId: string): string {
-  return jwt.sign({ userId }, env.APP_SECRET)
+  return jwt.sign({ userId: parseInt(userId, 10) }, env.APP_SECRET)
 }
 
 export type VariableValues = { [name: string]: unknown }

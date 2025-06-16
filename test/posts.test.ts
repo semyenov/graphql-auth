@@ -155,7 +155,7 @@ describe('Posts', () => {
         print(GetDraftsByUserQuery),
         variables,
         createMockContext(), // No auth
-        'Authentication is required to access this resource'
+        'Authentication required'
       )
     })
   })
@@ -264,7 +264,7 @@ describe('Posts', () => {
         print(DeletePostMutation),
         variables,
         createAuthContext(testUserId.toString()), // Different user
-        'User is not the owner of the post'
+        'You can only modify your own posts'
       )
 
       // Verify post still exists
@@ -292,7 +292,7 @@ describe('Posts', () => {
         print(DeletePostMutation),
         variables,
         createMockContext(), // No authentication
-        'Authentication is required to access this resource'
+        'Authentication required'
       )
 
       // Verify post still exists
@@ -353,7 +353,7 @@ describe('Posts', () => {
         print(IncrementPostViewCountMutation),
         variables,
         createMockContext(),
-        'No record was found'
+        'Post with identifier \'999999\' not found'
       )
     })
   })

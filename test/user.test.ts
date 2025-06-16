@@ -148,7 +148,7 @@ describe('User queries', () => {
         print(TogglePublishPostMutation),
         variables,
         createAuthContext(testUserId.toString()), // Different user
-        'User is not the owner of the post'
+        'You can only modify your own posts'
       )
 
       // Verify post wasn't changed
@@ -166,7 +166,7 @@ describe('User queries', () => {
         print(TogglePublishPostMutation),
         variables,
         createAuthContext(testUserId.toString()),
-        'Post not found'
+        'Post with identifier \'999999\' not found'
       )
     })
   })

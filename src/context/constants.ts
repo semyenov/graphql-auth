@@ -2,10 +2,8 @@
  * Context-related constants to avoid magic values throughout the codebase
  */
 
-// HTTP Methods that are allowed for GraphQL operations
 export const ALLOWED_HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'] as const
 
-// Default values for context creation
 export const DEFAULT_VALUES = {
     HTTP_METHOD: 'POST',
     GRAPHQL_ENDPOINT: '/graphql',
@@ -14,8 +12,7 @@ export const DEFAULT_VALUES = {
     USER_AGENT: 'unknown',
 } as const
 
-// Error messages for better consistency
-export const ERROR_MESSAGES = {
+export const CONTEXT_ERROR_MESSAGES = {
     AUTHENTICATION_REQUIRED: 'Authentication is required to access this resource',
     INVALID_USER_ID: 'Invalid or missing user ID in authentication context',
     HTTP_METHOD_REQUIRED: 'HTTP method is required',
@@ -24,7 +21,6 @@ export const ERROR_MESSAGES = {
     INVALID_OPERATION_NAME: 'Invalid or unsupported operation name',
 } as const
 
-// GraphQL operation names for type safety
 export const OPERATION_NAMES = {
     LOGIN: 'Login',
     SIGNUP: 'Signup',
@@ -33,7 +29,6 @@ export const OPERATION_NAMES = {
     GET_POSTS: 'GetPosts',
 } as const
 
-// Header keys for consistent access
 export const HEADER_KEYS = {
     X_FORWARDED_FOR: 'x-forwarded-for',
     X_REAL_IP: 'x-real-ip',
@@ -42,7 +37,6 @@ export const HEADER_KEYS = {
     AUTHORIZATION: 'authorization',
 } as const
 
-// Security roles and permissions (if needed for future use)
 export const SECURITY_ROLES = {
     ADMIN: 'admin',
     USER: 'user',

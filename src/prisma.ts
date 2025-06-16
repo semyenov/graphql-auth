@@ -1,51 +1,92 @@
-import { PrismaClient } from '@prisma/client';
-import { PrismaClientOptions } from '@prisma/client/runtime/library';
-import { env } from './environment';
+import { PrismaClient } from '@prisma/client'
+import { DATABASE } from './constants'
+import { env } from './environment'
 
-// Global variable to hold the prisma instance
+/**
+ * Type alias for PrismaClient to improve readability
+ */
 export type PrismaClientType = PrismaClient
-let globalPrisma: PrismaClientType | null = null;
 
-// Factory function to create prisma client
-function createPrismaClient() {
-    const prismaOptions = {
-        log: ['warn', 'error'],
+/**
+ * Global variable to hold the prisma instance
+ */
+let globalPrisma: PrismaClientType | null = null
+
+/**
+ * Factory function to create a configured Prisma client
+ */
+function createPrismaClient(): PrismaClientType {
+    return new PrismaClient({
+        log: DATABASE.LOG_LEVELS as any,
         transactionOptions: {
-            timeout: 10000,
+            timeout: DATABASE.TRANSACTION_TIMEOUT_MS as any,
         },
         datasources: {
             db: {
                 url: env.DATABASE_URL,
             },
         },
-    } satisfies PrismaClientOptions
-
-    return new PrismaClient(prismaOptions);
+    })
 }
 
-// Function to get or create prisma instance
-function getPrismaClient() {
+/**
+ * Get or create the global Prisma instance
+ * Implements singleton pattern for connection pooling
+ */
+function getPrismaClient(): PrismaClientType {
     if (globalPrisma) {
-        return globalPrisma;
+        return globalPrisma
     }
 
-    globalPrisma = createPrismaClient();
-    return globalPrisma;
+    globalPrisma = createPrismaClient()
+    return globalPrisma
 }
 
-// Function to set prisma instance (used by tests)
-function setPrismaClient(prismaInstance: PrismaClient) {
-    globalPrisma = prismaInstance;
+/**
+ * Set a custom Prisma instance (primarily used for testing)
+ * @param prismaInstance - The Prisma client instance to use globally
+ */
+export function setTestPrismaClient(prismaInstance: PrismaClientType): void {
+    globalPrisma = prismaInstance
 }
 
-// Export a getter that always returns the current instance
-// This ensures that when setPrismaClient is called in tests,
-// all code that imports prisma will get the updated instance
-export const prisma = new Proxy({} as PrismaClient, {
-    get(_target, prop) {
-        const currentPrisma = getPrismaClient();
-        return (currentPrisma as any)[prop];
+/**
+ * Prisma client proxy that always returns the current instance
+ * This pattern allows dynamic switching of the Prisma instance at runtime,
+ * which is essential for test isolation. The proxy intercepts all property
+ * access and delegates to the current Prisma instance.
+ */
+export const prisma = new Proxy({} as PrismaClientType, {
+    get<K extends keyof PrismaClientType>(
+        _target: PrismaClientType,
+        prop: K,
+    ): PrismaClientType[K] {
+        const currentPrisma = getPrismaClient()
+        return currentPrisma[prop]
+    },
+
+    has<K extends keyof PrismaClientType>(
+        _target: PrismaClientType,
+        prop: K,
+    ): boolean {
+        const currentPrisma = getPrismaClient()
+        return prop in currentPrisma
+    },
+})
+
+/**
+ * Gracefully disconnect Prisma client
+ * Should be called on application shutdown
+ */
+export async function disconnectPrisma(): Promise<void> {
+    if (globalPrisma) {
+        await globalPrisma.$disconnect()
+        globalPrisma = null
     }
-});
+}
 
-export { setPrismaClient };
+/**
+ * Export the old name for backward compatibility
+ * @deprecated Use setTestPrismaClient instead
+ */
+export const setPrismaClient = setTestPrismaClient

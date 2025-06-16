@@ -6,7 +6,7 @@
     "dev": "bun run src/server",
     "start": "bun dist/server.js",
     "clean": "rm -rf dist",
-    "build": "bun run clean && bun run generate && bun build src/server.ts --outdir dist",
+    "build": "bun run clean && bun run generate && bun build src/server.ts --outdir dist --target bun",
     "generate": "bun run generate:prisma && bun run generate:gql",
     "generate:prisma": "prisma generate",
     "generate:gql": "bunx gql.tada generate-output",

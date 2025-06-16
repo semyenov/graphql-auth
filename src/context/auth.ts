@@ -1,5 +1,6 @@
-import { ERROR_MESSAGES } from './constants'
-import type { Context } from './types'
+import { ERROR_MESSAGES } from '../constants'
+import type { Context } from '../context/types'
+import { AuthenticationError } from '../errors'
 
 /**
  * Authentication and authorization utilities for GraphQL context
@@ -45,11 +46,11 @@ export function requireAuthentication<TVariables = Record<string, unknown>>(
     context: Context<TVariables>
 ): number {
     if (!isAuthenticated(context)) {
-        throw new Error(ERROR_MESSAGES.AUTHENTICATION_REQUIRED)
+        throw new AuthenticationError(ERROR_MESSAGES.AUTHENTICATION_REQUIRED)
     }
 
     if (typeof context.userId !== 'number' || context.userId <= 0) {
-        throw new Error(ERROR_MESSAGES.INVALID_USER_ID)
+        throw new AuthenticationError(ERROR_MESSAGES.INVALID_CREDENTIALS)
     }
 
     return context.userId

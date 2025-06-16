@@ -1,4 +1,4 @@
-import { ERROR_MESSAGES, OPERATION_NAMES } from './constants'
+import { CONTEXT_CONTEXT_ERROR_MESSAGES, OPERATION_NAMES } from './constants'
 import type {
     Context,
     CreateDraftContext,
@@ -54,17 +54,17 @@ export function validateContext<TVariables = Record<string, unknown>>(
 
     // Validate HTTP method
     if (!context.method) {
-        errors.push(ERROR_MESSAGES.HTTP_METHOD_REQUIRED)
+        errors.push(CONTEXT_ERROR_MESSAGES.HTTP_METHOD_REQUIRED)
     }
 
     // Validate content type
     if (!context.contentType) {
-        errors.push(ERROR_MESSAGES.CONTENT_TYPE_REQUIRED)
+        errors.push(CONTEXT_ERROR_MESSAGES.CONTENT_TYPE_REQUIRED)
     }
 
     // Validate request body for POST requests
     if (context.method === 'POST' && !context.req.body) {
-        errors.push(ERROR_MESSAGES.REQUEST_BODY_REQUIRED)
+        errors.push(CONTEXT_ERROR_MESSAGES.REQUEST_BODY_REQUIRED)
     }
 
     // Validate security context structure
@@ -96,11 +96,11 @@ export function validateAuthentication<TVariables = Record<string, unknown>>(
     const errors: string[] = []
 
     if (!context.security.isAuthenticated) {
-        errors.push(ERROR_MESSAGES.AUTHENTICATION_REQUIRED)
+        errors.push(CONTEXT_ERROR_MESSAGES.AUTHENTICATION_REQUIRED)
     }
 
     if (context.security.isAuthenticated && !context.userId) {
-        errors.push(ERROR_MESSAGES.INVALID_USER_ID)
+        errors.push(CONTEXT_ERROR_MESSAGES.INVALID_USER_ID)
     }
 
     return createValidationResult(errors)
@@ -183,7 +183,7 @@ export function validateOperationContext<TVariables = Record<string, unknown>>(
 
     // Validate operation name
     if (!isValidOperationName(context.operationName)) {
-        errors.push(ERROR_MESSAGES.INVALID_OPERATION_NAME)
+        errors.push(CONTEXT_ERROR_MESSAGES.INVALID_OPERATION_NAME)
     }
 
     // Validate authentication for operations that require it

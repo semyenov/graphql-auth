@@ -113,6 +113,7 @@ export interface EnvironmentConfig {
   DATABASE_URL: string
   CORS_ORIGIN?: string
   LOG_LEVEL?: 'debug' | 'info' | 'warn' | 'error'
+  JWT_SECRET?: string
 }
 
 // Context Enhancement Types

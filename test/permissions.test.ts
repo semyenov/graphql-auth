@@ -283,7 +283,7 @@ describe('Enhanced Permissions System', () => {
             expect(result.body.kind).toBe('single')
             if (result.body.kind === 'single') {
                 expect(result.body.singleResult.errors).toBeDefined()
-                expect(result.body.singleResult.errors![0]!.message).toContain('User is not the owner of the post')
+                expect(result.body.singleResult.errors![0]!.message).toContain('You can only modify your own posts')
             }
 
             // Verify post still exists
@@ -313,7 +313,7 @@ describe('Enhanced Permissions System', () => {
             expect(result.body.kind).toBe('single')
             if (result.body.kind === 'single') {
                 expect(result.body.singleResult.errors).toBeDefined()
-                expect(result.body.singleResult.errors![0]!.message).toContain('Post not found')
+                expect(result.body.singleResult.errors![0]!.message).toContain('Post with identifier \'999999\' not found')
             }
         })
     })
@@ -360,7 +360,7 @@ describe('Enhanced Permissions System', () => {
             if (result.body.kind === 'single') {
                 // Should get an error about invalid credentials, not authentication required
                 expect(result.body.singleResult.errors).toBeDefined()
-                expect(result.body.singleResult.errors![0]!.message).toContain('No user found')
+                expect(result.body.singleResult.errors![0]!.message).toContain('Invalid email or password')
             }
         })
     })
