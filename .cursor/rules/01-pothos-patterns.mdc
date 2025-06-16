@@ -1,0 +1,260 @@
+---
+description: Pothos GraphQL schema builder patterns and best practices
+globs: ["src/schema/**/*.ts", "src/builder.ts"]
+alwaysApply: false
+---
+# Pothos GraphQL Schema Patterns
+
+## Builder Configuration
+The Pothos builder is configured in `src/schema/builder.ts`:
+```typescript
+export const builder = new SchemaBuilder<{
+  PrismaTypes: PrismaTypes
+  Context: Context
+  Scalars: {
+    ID: { Input: string; Output: string }
+    DateTime: { Input: Date; Output: Date }
+  }
+}>({
+  plugins: [PrismaPlugin, RelayPlugin],
+  relay: {
+    clientMutationId: 'omit',
+    cursorType: 'ID',
+  },
+  prisma: {
+    client: prisma,
+    filterConnectionTotalCount: true,
+  },
+})
+```
+
+## Object Type Patterns
+
+### Basic Prisma Object
+```typescript
+// src/schema/types/user.ts
+builder.prismaNode('User', {
+  id: { field: 'id' },
+  fields: (t) => ({
+    // Fields are auto-exposed from Prisma
+    // Only add computed fields here
+  }),
+})
+```
+
+### Object with Custom Fields
+```typescript
+builder.prismaNode('Post', {
+  id: { field: 'id' },
+  fields: (t) => ({
+    // Auto-exposed: title, content, published, etc.
+    // Custom computed field:
+    excerpt: t.string({
+      resolve: (post) => post.content?.substring(0, 100) || '',
+    }),
+  }),
+})
+```
+
+## Query Patterns
+
+### Simple List Query
+```typescript
+builder.queryField('allUsers', (t) =>
+  t.prismaField({
+    type: ['User'],
+    resolve: (query, root, args, ctx) => {
+      return ctx.prisma.user.findMany({
+        ...query, // ALWAYS spread query
+      })
+    },
+  })
+)
+```
+
+### Relay Connection Query
+```typescript
+builder.queryField('feed', (t) =>
+  t.prismaConnection({
+    type: 'Post',
+    cursor: 'id',
+    args: {
+      searchString: t.arg.string(),
+    },
+    resolve: (query, root, args, ctx) => {
+      return ctx.prisma.post.findMany({
+        ...query, // CRITICAL: Spread for cursor pagination
+        where: {
+          published: true,
+          ...(args.searchString && {
+            OR: [
+              { title: { contains: args.searchString } },
+              { content: { contains: args.searchString } },
+            ],
+          }),
+        },
+        orderBy: { updatedAt: 'desc' },
+      })
+    },
+  })
+)
+```
+
+### Query with Global ID
+```typescript
+builder.queryField('post', (t) =>
+  t.prismaField({
+    type: 'Post',
+    nullable: true,
+    args: {
+      id: t.arg.id({ required: true }),
+    },
+    resolve: async (query, root, args, ctx) => {
+      const { id } = parseGlobalID(args.id, 'Post')
+      return ctx.prisma.post.findUnique({
+        ...query,
+        where: { id },
+      })
+    },
+  })
+)
+```
+
+## Mutation Patterns
+
+### Create Mutation
+```typescript
+builder.mutationField('createDraft', (t) =>
+  t.prismaField({
+    type: 'Post',
+    args: {
+      data: t.arg({ type: PostCreateInput, required: true }),
+    },
+    resolve: async (query, parent, args, ctx) => {
+      const userId = requireAuthentication(ctx)
+      return createDraftPost(args.data.title, args.data.content, userId, query)
+    },
+  })
+)
+```
+
+### Update Mutation with Global ID
+```typescript
+builder.mutationField('togglePublishPost', (t) =>
+  t.prismaField({
+    type: 'Post',
+    args: {
+      id: t.arg.id({ required: true }),
+    },
+    resolve: async (query, parent, args, ctx) => {
+      const { postId, currentStatus } = await validatePostAccess(args.id, ctx, true)
+      return togglePostPublication(postId, currentStatus, query)
+    },
+  })
+)
+```
+
+### Delete Mutation
+```typescript
+builder.mutationField('deletePost', (t) =>
+  t.prismaField({
+    type: 'Post',
+    args: {
+      id: t.arg.id({ required: true }),
+    },
+    resolve: async (query, parent, args, ctx) => {
+      const { postId } = await validatePostAccess(args.id, ctx, true)
+      return deletePostById(postId, query)
+    },
+  })
+)
+```
+
+## Input Type Patterns
+
+### Basic Input
+```typescript
+const PostCreateInput = builder.inputType('PostCreateInput', {
+  fields: (t) => ({
+    title: t.string({ required: true }),
+    content: t.string(),
+  }),
+})
+```
+
+### Input with Validation
+```typescript
+const UserUpdateInput = builder.inputType('UserUpdateInput', {
+  fields: (t) => ({
+    email: t.string({
+      validate: {
+        email: true,
+      },
+    }),
+    name: t.string({
+      validate: {
+        minLength: 2,
+        maxLength: 50,
+      },
+    }),
+  }),
+})
+```
+
+## Enum Patterns
+```typescript
+const SortOrder = builder.enumType('SortOrder', {
+  values: ['asc', 'desc'] as const,
+})
+```
+
+## Common Mistakes to Avoid
+
+### ❌ Forgetting to spread query
+```typescript
+// WRONG - Breaks Prisma optimizations
+resolve: (query, root, args, ctx) => {
+  return ctx.prisma.post.findMany({
+    where: { published: true },
+  })
+}
+```
+
+### ✅ Always spread query
+```typescript
+// CORRECT
+resolve: (query, root, args, ctx) => {
+  return ctx.prisma.post.findMany({
+    ...query, // Include Pothos optimizations
+    where: { published: true },
+  })
+}
+```
+
+### ❌ Manual relation resolvers
+```typescript
+// WRONG - Manually resolving relations
+fields: (t) => ({
+  posts: t.field({
+    type: ['Post'],
+    resolve: (user) => prisma.post.findMany({ where: { authorId: user.id } }),
+  }),
+})
+```
+
+### ✅ Use t.relation()
+```typescript
+// CORRECT - Let Pothos handle it
+fields: (t) => ({
+  posts: t.relation('posts'),
+})
+```
+
+## Best Practices
+
+1. **Always use prismaNode for Prisma models** - Automatically implements Node interface
+2. **Use prismaConnection for paginated queries** - Handles cursor pagination
+3. **Extract resolver logic to utility functions** - Keep resolvers thin
+4. **Use global IDs for all entity references** - Consistent with Relay spec
+5. **Validate inputs early** - Use Pothos validation or Zod schemas
+6. **Handle errors consistently** - Use the error hierarchy

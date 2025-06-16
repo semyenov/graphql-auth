@@ -1,0 +1,151 @@
+---
+description: Main cursor rules for GraphQL Auth project. Read this first!
+globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.graphql"]
+alwaysApply: true
+---
+# GraphQL Auth Project - Main Development Rules
+
+## Project Overview
+This is a GraphQL authentication server built with:
+- **Runtime**: Bun (fast JavaScript/TypeScript runtime)
+- **GraphQL Server**: Apollo Server 4 with H3 HTTP framework
+- **Schema Builder**: Pothos with Prisma and Relay plugins
+- **Database**: Prisma ORM with SQLite
+- **Authentication**: JWT tokens with bcryptjs
+- **Authorization**: GraphQL Shield middleware
+- **Type Safety**: GraphQL Tada for compile-time GraphQL typing
+- **Testing**: Vitest with comprehensive test utilities
+
+## Critical Development Rules
+
+### 1. ALWAYS Use Typed GraphQL Operations
+```typescript
+// ✅ CORRECT - Use typed operations from src/gql/
+import { print } from 'graphql'
+import { LoginMutation } from '../src/gql/relay-mutations'
+await executeOperation(server, print(LoginMutation), variables, context)
+
+// ❌ WRONG - Never use inline GraphQL strings
+await executeOperation(server, 'mutation { login(...) }', variables, context)
+```
+
+### 2. Relay Global IDs Pattern
+All entity IDs are base64-encoded as "Type:id":
+```typescript
+// In resolvers - decode global IDs
+import { parseGlobalID } from '../schema/utils'
+const { id: numericId } = parseGlobalID(args.id, 'Post')
+
+// In tests - encode/decode IDs
+import { toPostId, extractNumericId } from './test/relay-utils'
+const globalId = toPostId(1) // "UG9zdDox"
+const numericId = extractNumericId(globalId) // 1
+```
+
+### 3. Error Handling Pattern
+Always use the error hierarchy:
+```typescript
+import { normalizeError, AuthenticationError, NotFoundError } from '../errors'
+
+try {
+  // Your code
+} catch (error) {
+  throw normalizeError(error) // Converts to proper BaseError
+}
+```
+
+### 4. Pothos Schema Pattern
+```typescript
+// ALWAYS spread query for Prisma optimizations
+builder.queryField('posts', (t) =>
+  t.prismaConnection({
+    type: 'Post',
+    cursor: 'id',
+    resolve: (query, root, args, ctx) => {
+      return ctx.prisma.post.findMany({
+        ...query, // ← CRITICAL: Always spread query
+        where: { published: true },
+      })
+    },
+  })
+)
+```
+
+### 5. Permission Rules Pattern
+Rules should return errors, not throw:
+```typescript
+export const isPostOwner = rule({ cache: 'strict' })(
+  async (parent, args, context) => {
+    try {
+      // Validation logic
+      return true
+    } catch (error) {
+      return handleRuleError(error) // Returns error properly
+    }
+  }
+)
+```
+
+## Quick Command Reference
+```bash
+# Development
+bun run dev                             # Start dev server (port 4000)
+bun run test                            # Run all tests
+bun test test/auth.test.ts              # Run specific test file
+bun run test -t "test name"             # Run tests matching pattern
+
+# Database
+bunx prisma migrate dev --name feature  # Create migration
+bun run generate                        # Fix type errors (Prisma + GraphQL)
+bun run db:reset                        # Reset database
+bunx prisma studio                      # Database GUI
+
+# Code Quality
+bunx tsc --noEmit                       # Type check
+bunx prettier --write .                 # Format code
+```
+
+## Project Structure
+```
+src/
+├── schema/                 # GraphQL schema (Pothos)
+│   ├── builder.ts         # Pothos builder config
+│   ├── types/             # Object types (prismaNode)
+│   ├── queries/           # Query resolvers (prismaConnection)
+│   ├── mutations/         # Mutation resolvers
+│   └── utils.ts           # Global ID encoding/decoding
+├── permissions/           # Authorization (GraphQL Shield)
+│   ├── rules.ts          # Permission rules
+│   ├── rule-utils.ts     # Rule utilities
+│   └── shield-config.ts  # Schema mapping
+├── context/              # Request context
+│   ├── auth.ts          # Auth guards
+│   ├── creation.ts      # Context creation
+│   └── types.ts         # Context types
+├── errors/              # Error handling
+│   └── index.ts         # Error hierarchy
+├── gql/                 # GraphQL Tada operations
+│   ├── queries.ts       # Typed queries
+│   ├── mutations.ts     # Typed mutations
+│   └── relay-*.ts       # Relay-style operations
+└── test/                # Testing utilities
+    ├── test-utils.ts    # Core helpers
+    ├── relay-utils.ts   # ID conversion
+    └── test-fixtures.ts # Test scenarios
+```
+
+## Common Pitfalls to Avoid
+
+1. **Never forget to spread query in Pothos resolvers**
+2. **Always use typed GraphQL operations from src/gql/**
+3. **Use global IDs for all entity references**
+4. **Handle errors with normalizeError()**
+5. **Test both success and error cases**
+6. **Use utility functions instead of inline logic**
+
+## See Also
+- [01-pothos-patterns.mdc](./01-pothos-patterns.mdc) - Pothos schema patterns
+- [02-testing-patterns.mdc](./02-testing-patterns.mdc) - Testing best practices
+- [03-error-handling.mdc](./03-error-handling.mdc) - Error handling guide
+- [04-authentication.mdc](./04-authentication.mdc) - Auth & permissions
+- [05-graphql-tada.mdc](./05-graphql-tada.mdc) - GraphQL Tada usage

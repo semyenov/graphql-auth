@@ -1,0 +1,85 @@
+# Cursor Rules Directory
+
+This directory contains development rules and patterns for the GraphQL Auth project. These rules help maintain consistency and provide guidance when working with the codebase.
+
+## Rule Files
+
+### 00-main.mdc (Always Applied)
+The primary rule file that contains:
+- Project overview and tech stack
+- Critical development rules
+- Quick command reference
+- Common pitfalls to avoid
+- Project structure overview
+
+**Always applied** to TypeScript, JavaScript, and GraphQL files.
+
+### 01-pothos-patterns.mdc
+Pothos GraphQL schema builder patterns:
+- Builder configuration
+- Object type patterns
+- Query and mutation patterns
+- Input type patterns
+- Best practices and common mistakes
+
+Applied to files in `src/schema/` and `src/builder.ts`.
+
+### 02-testing-patterns.mdc
+Comprehensive testing guide:
+- Typed GraphQL operations in tests
+- Test utilities and helpers
+- Performance and snapshot testing
+- E2E test flows
+- Common test mistakes
+
+Applied to all test files.
+
+### 03-error-handling.mdc
+Error handling patterns:
+- Error hierarchy and classes
+- Error normalization patterns
+- Resolver error handling
+- Permission rule error handling
+- Testing error cases
+
+Applied to all TypeScript files.
+
+### 04-authentication.mdc
+Authentication and authorization guide:
+- Authentication flow (signup/login)
+- JWT token handling
+- Context system
+- GraphQL Shield rules
+- Security best practices
+
+Applied to context and permission files.
+
+### 05-graphql-tada.mdc
+GraphQL Tada usage patterns:
+- Defining typed operations
+- Type extraction
+- Relay patterns
+- Client usage
+- Best practices
+
+Applied to GraphQL and client files.
+
+## Usage
+
+These rules are automatically applied by Cursor based on the `globs` patterns defined in each file. The main rule file (00-main.mdc) is always applied to provide essential context.
+
+## Rule Priority
+
+1. **00-main.mdc** - Always applied, provides foundational knowledge
+2. **Specific pattern files** - Applied based on file patterns
+3. Rules are cumulative - multiple rules can apply to the same file
+
+## Key Principles
+
+All rules emphasize:
+- Type safety with GraphQL Tada
+- Consistent error handling
+- Proper authentication patterns
+- Comprehensive testing
+- Relay global ID usage
+- Clean code patterns

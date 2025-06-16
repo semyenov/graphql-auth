@@ -1,0 +1,308 @@
+---
+description: Error handling patterns and best practices
+globs: ["src/errors/**/*.ts", "src/**/*.ts"]
+alwaysApply: false
+---
+# Error Handling Guide
+
+## Error Hierarchy
+
+The project uses a hierarchical error system defined in `src/errors/index.ts`:
+
+```typescript
+BaseError (400)
+├── ValidationError (400) - Input validation failures
+├── AuthenticationError (401) - Not logged in
+├── AuthorizationError (403) - Insufficient permissions
+├── NotFoundError (404) - Resource not found
+├── ConflictError (409) - Duplicate resources
+└── RateLimitError (429) - Too many requests
+```
+
+## Error Classes
+
+### BaseError
+```typescript
+export class BaseError extends Error {
+  code: string
+  statusCode: number
+  
+  constructor(message: string, code: string, statusCode: number) {
+    super(message)
+    this.code = code
+    this.statusCode = statusCode
+  }
+}
+```
+
+### Specific Error Types
+
+```typescript
+// Authentication required
+throw new AuthenticationError()
+// Message: "You must be logged in to perform this action. Please authenticate and try again."
+
+// Authorization failed
+throw new AuthorizationError("You can only modify posts that you have created")
+
+// Resource not found
+throw new NotFoundError('Post', 'UG9zdDox')
+// Message: "Post with identifier 'UG9zdDox' not found. Please check the ID and try again."
+
+// Validation error
+throw new ValidationError('email', 'Invalid email format')
+// Message: "Validation failed for field 'email': Invalid email format"
+
+// Conflict error
+throw new ConflictError('email', 'user@example.com')
+// Message: "An account with this email address already exists. Please use a different email or sign in."
+
+// Rate limit error
+throw new RateLimitError(60)
+// Message: "Too many requests. Please try again in 60 seconds."
+```
+
+## Error Normalization
+
+Always use `normalizeError` to convert unknown errors:
+
+```typescript
+import { normalizeError } from '../errors'
+
+try {
+  // Your code
+} catch (error) {
+  throw normalizeError(error)
+}
+```
+
+### What normalizeError does:
+1. Returns BaseError instances as-is
+2. Converts Prisma errors to appropriate BaseError types
+3. Wraps unknown errors in BaseError with original message
+4. Preserves error context and stack traces
+
+## Error Handling Patterns
+
+### In Resolvers
+```typescript
+builder.mutationField('createPost', (t) =>
+  t.prismaField({
+    type: 'Post',
+    args: { /* ... */ },
+    resolve: async (query, parent, args, ctx) => {
+      try {
+        // Validate authentication
+        const userId = requireAuthentication(ctx)
+        
+        // Validate input
+        if (!args.title?.trim()) {
+          throw new ValidationError('title', 'Title is required')
+        }
+        
+        // Create post
+        return await ctx.prisma.post.create({
+          ...query,
+          data: { /* ... */ },
+        })
+      } catch (error) {
+        throw normalizeError(error)
+      }
+    },
+  })
+)
+```
+
+### In Utility Functions
+```typescript
+export async function validatePostAccess(
+  globalId: string,
+  context: Context,
+  checkOwnership = false
+): Promise<{ postId: number; currentStatus?: boolean }> {
+  try {
+    // Parse global ID
+    const { id: postId } = parseGlobalID(globalId, 'Post')
+    
+    // Fetch post
+    const post = await context.prisma.post.findUnique({
+      where: { id: postId },
+      select: { authorId: true, published: true },
+    })
+    
+    if (!post) {
+      throw new NotFoundError('Post', globalId)
+    }
+    
+    // Check ownership if required
+    if (checkOwnership) {
+      const userId = requireAuthentication(context)
+      if (post.authorId !== userId) {
+        throw new AuthorizationError(ERROR_MESSAGES.NOT_POST_OWNER)
+      }
+    }
+    
+    return { postId, currentStatus: post.published }
+  } catch (error) {
+    throw normalizeError(error)
+  }
+}
+```
+
+### In Permission Rules
+```typescript
+export const isPostOwner = rule({ cache: 'strict' })(
+  async (parent, args, context) => {
+    try {
+      // Validate resource ID
+      validateResourceId(args.id, 'post')
+      
+      // Check authentication
+      const userId = requireAuthentication(context)
+      
+      // Parse global ID
+      const postId = await parseAndValidateGlobalId(args.id, 'Post')
+      
+      // Check ownership
+      const ownership = await checkPostOwnership(postId, userId)
+      
+      if (!ownership.resourceExists) {
+        throw new NotFoundError('Post', args.id)
+      }
+      
+      if (!ownership.isOwner) {
+        throw new AuthorizationError(ERROR_MESSAGES.NOT_POST_OWNER)
+      }
+      
+      return true
+    } catch (error) {
+      return handleRuleError(error)
+    }
+  }
+)
+```
+
+## Prisma Error Handling
+
+The error system automatically handles Prisma errors:
+
+```typescript
+// P2002: Unique constraint violation
+try {
+  await prisma.user.create({ data: { email: 'existing@example.com' } })
+} catch (error) {
+  throw normalizeError(error)
+  // Becomes: ConflictError("An account with this email address already exists...")
+}
+
+// P2025: Record not found
+try {
+  await prisma.post.delete({ where: { id: 999 } })
+} catch (error) {
+  throw normalizeError(error)
+  // Becomes: NotFoundError("Record not found")
+}
+```
+
+## Error Messages
+
+Use predefined messages from `constants`:
+
+```typescript
+export const ERROR_MESSAGES = {
+  // Authentication
+  NOT_AUTHENTICATED: 'You must be logged in to perform this action. Please authenticate and try again.',
+  INVALID_TOKEN: 'Invalid or expired authentication token. Please log in again.',
+  
+  // Authorization
+  NOT_AUTHORIZED: 'You do not have permission to perform this action.',
+  NOT_POST_OWNER: 'You can only modify posts that you have created.',
+  
+  // User errors
+  USER_NOT_FOUND: 'User not found. Please check the user ID or email and try again.',
+  EMAIL_ALREADY_EXISTS: 'An account with this email address already exists. Please use a different email or sign in.',
+  
+  // Post errors
+  POST_NOT_FOUND: 'Post not found. Please check the post ID and try again.',
+  
+  // Validation
+  INVALID_EMAIL: 'Please provide a valid email address.',
+  INVALID_PASSWORD: 'Password must be at least 6 characters long.',
+  INVALID_CREDENTIALS: 'Invalid email or password. Please check your credentials and try again.',
+}
+```
+
+## Testing Error Cases
+
+```typescript
+// Test authentication errors
+await gqlHelpers.expectGraphQLError(
+  server,
+  print(CreateDraftMutation),
+  { data: { title: 'Test' } },
+  createMockContext(), // No auth
+  'You must be logged in'
+)
+
+// Test authorization errors
+await gqlHelpers.expectGraphQLError(
+  server,
+  print(DeletePostMutation),
+  { id: toPostId(otherUserPost.id) },
+  createAuthContext(currentUser.id.toString()),
+  'only modify posts that you have created'
+)
+
+// Test not found errors
+await gqlHelpers.expectGraphQLError(
+  server,
+  print(GetPostQuery),
+  { id: toPostId(999999) },
+  createAuthContext('1'),
+  'Post with identifier'
+)
+```
+
+## Best Practices
+
+1. **Always use normalizeError() in catch blocks**
+2. **Throw specific error types, not generic Error**
+3. **Include helpful context in error messages**
+4. **Use predefined error messages for consistency**
+5. **Test error paths as thoroughly as success paths**
+6. **Let errors bubble up to resolvers**
+7. **Don't swallow errors silently**
+
+## Common Mistakes
+
+### ❌ Throwing generic errors
+```typescript
+// WRONG
+throw new Error('Not found')
+```
+
+### ✅ Use specific error types
+```typescript
+// CORRECT
+throw new NotFoundError('Post', globalId)
+```
+
+### ❌ Not normalizing errors
+```typescript
+// WRONG
+try {
+  // code
+} catch (error) {
+  throw error
+}
+```
+
+### ✅ Always normalize
+```typescript
+// CORRECT
+try {
+  // code
+} catch (error) {
+  throw normalizeError(error)
+}
+```

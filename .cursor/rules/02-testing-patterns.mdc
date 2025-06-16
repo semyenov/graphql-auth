@@ -1,0 +1,360 @@
+---
+description: Testing patterns and best practices for GraphQL Auth
+globs: ["test/**/*.ts", "**/*.test.ts", "**/*.spec.ts"]
+alwaysApply: false
+---
+# Testing Patterns
+
+## Core Testing Principles
+
+### 1. Always Use Typed GraphQL Operations
+```typescript
+// ✅ CORRECT
+import { print } from 'graphql'
+import { LoginMutation } from '../src/gql/relay-mutations'
+import { GetFeedQuery } from '../src/gql/relay-queries'
+
+const result = await executeOperation(
+  server,
+  print(LoginMutation),
+  variables,
+  context
+)
+
+// ❌ WRONG - Never use inline strings
+const result = await executeOperation(
+  server,
+  'mutation { login(email: "...", password: "...") { token } }',
+  variables,
+  context
+)
+```
+
+### 2. Test Context Creation
+```typescript
+import { createMockContext, createAuthContext } from './test-utils'
+
+// Unauthenticated context
+const context = createMockContext()
+
+// Authenticated context with user ID
+const authContext = createAuthContext('1')
+
+// Authenticated with specific token
+const tokenContext = createAuthContext('1', 'custom-jwt-token')
+```
+
+### 3. Global ID Conversion
+```typescript
+import { toPostId, toUserId, extractNumericId } from './relay-utils'
+
+// Convert numeric IDs to global IDs
+const globalPostId = toPostId(1)        // "UG9zdDox"
+const globalUserId = toUserId(42)       // "VXNlcjo0Mg=="
+
+// Extract numeric ID from global ID
+const numericId = extractNumericId(globalPostId) // 1
+```
+
+## Test Utilities
+
+### GraphQL Helpers
+```typescript
+import { gqlHelpers } from './test-utils'
+
+// Test successful operations
+const data = await gqlHelpers.expectSuccessfulQuery(
+  server,
+  print(GetFeedQuery),
+  { first: 10 },
+  context
+)
+
+const result = await gqlHelpers.expectSuccessfulMutation(
+  server,
+  print(CreateDraftMutation),
+  { data: { title: 'Test', content: 'Content' } },
+  authContext
+)
+
+// Test error cases
+await gqlHelpers.expectGraphQLError(
+  server,
+  print(DeletePostMutation),
+  { id: toPostId(999) },
+  authContext,
+  'Post with identifier' // Expected error substring
+)
+```
+
+### Test Data Factories
+```typescript
+import { createTestUser, createTestPost, createUserWithPosts } from './test-data'
+
+// Create individual entities
+const user = await createTestUser({
+  email: 'test@example.com',
+  password: 'secure123',
+  name: 'Test User',
+})
+
+const post = await createTestPost({
+  authorId: user.id,
+  title: 'Test Post',
+  published: true,
+})
+
+// Create complex scenarios
+const { user, posts } = await createUserWithPosts({
+  postCount: 5,
+  publishedPosts: 2,
+})
+```
+
+### Complex Test Fixtures
+```typescript
+import { createBlogScenario, createPermissionScenario } from './test-fixtures'
+
+// Blog scenario with multiple users and posts
+const blog = await createBlogScenario()
+// Provides: blog.authors, blog.posts, blog.readers
+
+// Permission testing scenario
+const perms = await createPermissionScenario()
+// Provides: perms.admin, perms.moderator, perms.regularUser, perms.posts
+```
+
+## Test Patterns
+
+### Authentication Tests
+```typescript
+describe('Authentication', () => {
+  it('should create a new user', async () => {
+    const variables = {
+      email: 'new@example.com',
+      password: 'securePassword123',
+      name: 'New User',
+    }
+
+    const data = await gqlHelpers.expectSuccessfulMutation(
+      server,
+      print(SignupMutation),
+      variables,
+      createMockContext()
+    )
+
+    expect(data.signup).toBeDefined()
+    expect(data.signup).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+/)
+
+    // Verify in database
+    const user = await prisma.user.findUnique({
+      where: { email: variables.email },
+    })
+    expect(user).toBeDefined()
+  })
+
+  it('should handle duplicate email', async () => {
+    await createTestUser({ email: 'existing@example.com' })
+
+    await gqlHelpers.expectGraphQLError(
+      server,
+      print(SignupMutation),
+      { email: 'existing@example.com', password: 'password' },
+      createMockContext(),
+      'email address already exists'
+    )
+  })
+})
+```
+
+### Permission Tests
+```typescript
+describe('Permissions', () => {
+  it('should enforce post ownership', async () => {
+    const owner = await createTestUser()
+    const other = await createTestUser()
+    const post = await createTestPost({ authorId: owner.id })
+
+    // Owner can delete
+    await gqlHelpers.expectSuccessfulMutation(
+      server,
+      print(DeletePostMutation),
+      { id: toPostId(post.id) },
+      createAuthContext(owner.id.toString())
+    )
+
+    // Other user cannot
+    await gqlHelpers.expectGraphQLError(
+      server,
+      print(DeletePostMutation),
+      { id: toPostId(post.id) },
+      createAuthContext(other.id.toString()),
+      'only modify posts that you have created'
+    )
+  })
+})
+```
+
+### Relay Pagination Tests
+```typescript
+describe('Relay Pagination', () => {
+  it('should paginate feed correctly', async () => {
+    // Create test posts
+    for (let i = 0; i < 10; i++) {
+      await createTestPost({
+        authorId: testUser.id,
+        title: `Post ${i}`,
+        published: true,
+      })
+    }
+
+    // First page
+    const firstPage = await gqlHelpers.expectSuccessfulQuery(
+      server,
+      print(GetFeedQuery),
+      { first: 5 },
+      createMockContext()
+    )
+
+    expect(firstPage.feed.edges).toHaveLength(5)
+    expect(firstPage.feed.pageInfo.hasNextPage).toBe(true)
+
+    // Next page using cursor
+    const secondPage = await gqlHelpers.expectSuccessfulQuery(
+      server,
+      print(GetFeedQuery),
+      { 
+        first: 5, 
+        after: firstPage.feed.pageInfo.endCursor 
+      },
+      createMockContext()
+    )
+
+    expect(secondPage.feed.edges).toHaveLength(5)
+  })
+})
+```
+
+## Performance Testing
+```typescript
+import { benchmark, assertPerformance } from './performance-utils'
+
+it('should meet performance requirements', async () => {
+  const report = await benchmark(
+    server,
+    print(GetFeedQuery),
+    { first: 20 },
+    context,
+    { iterations: 100, warmup: 10 }
+  )
+
+  assertPerformance(report, {
+    maxAverageTime: 50,      // 50ms average
+    maxP95Time: 100,         // 100ms 95th percentile
+    maxMemory: 10 * 1024 * 1024  // 10MB
+  })
+})
+```
+
+## Snapshot Testing
+```typescript
+import { GraphQLSnapshotTester, commonNormalizers } from './snapshot-utils'
+
+const snapshotTester = new GraphQLSnapshotTester()
+
+it('should maintain consistent API response', async () => {
+  const response = await executeOperation(
+    server,
+    print(GetFeedQuery),
+    { first: 5 },
+    context
+  )
+
+  const result = await snapshotTester.testSnapshot(response, {
+    name: 'feed-query-response',
+    normalizers: [
+      commonNormalizers.timestamps,
+      commonNormalizers.ids,
+      commonNormalizers.cursors,
+    ],
+    redactFields: ['email'],
+  })
+
+  expect(result.passed).toBe(true)
+})
+```
+
+## E2E Test Flows
+```typescript
+import { E2ETestFlow } from './integration-utils'
+
+it('should complete user journey', async () => {
+  const flow = new E2ETestFlow(testContext)
+
+  await flow
+    .mutation('signup', SignupMutation, {
+      email: 'e2e@example.com',
+      password: 'password123',
+      name: 'E2E User',
+    })
+    .mutation('login', LoginMutation, {
+      email: 'e2e@example.com',
+      password: 'password123',
+    })
+    .step('create-auth', async (results) => {
+      const login = results.get('login')
+      return createAuthContext('1', login.data.login)
+    })
+    .mutation('create-post', CreateDraftMutation, {
+      data: { title: 'E2E Post', content: 'Content' },
+    }, null) // Uses auth from previous step
+    .query('verify-draft', GetDraftsQuery, { first: 10 }, null)
+    .assert('post-created', (results) => {
+      const drafts = results.get('verify-draft')
+      expect(drafts.data.drafts.edges).toHaveLength(1)
+    })
+    .execute()
+})
+```
+
+## Common Test Mistakes
+
+### ❌ Using different ID in context vs test data
+```typescript
+// WRONG - User ID 1 but testing with user ID 2's data
+const context = createAuthContext('1')
+const post = await createTestPost({ authorId: 2 })
+```
+
+### ✅ Keep IDs consistent
+```typescript
+// CORRECT
+const user = await createTestUser()
+const context = createAuthContext(user.id.toString())
+const post = await createTestPost({ authorId: user.id })
+```
+
+### ❌ Not cleaning up between tests
+```typescript
+// WRONG - No cleanup
+it('test 1', async () => { /* ... */ })
+it('test 2', async () => { /* ... */ }) // May fail due to dirty state
+```
+
+### ✅ Database is auto-cleaned
+```typescript
+// CORRECT - setup.ts handles cleanup automatically
+beforeEach(async () => {
+  // Database is clean here
+})
+```
+
+## Best Practices
+
+1. **Test both success and error paths**
+2. **Use typed operations from src/gql/**
+3. **Verify database state after mutations**
+4. **Test with different authentication contexts**
+5. **Use test fixtures for complex scenarios**
+6. **Include performance tests for critical paths**
+7. **Snapshot test API responses for stability**
