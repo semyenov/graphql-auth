@@ -13,306 +13,154 @@ bun test test/auth.test.ts              # Run specific test file
 
 # Database
 bunx prisma migrate dev --name feature  # Create migration
-bun run generate                        # Generate all types
+bun run generate                        # Generate all types (fixes type errors)
 bun run db:reset                        # Reset database
 
-# Common Issues
-bun run generate                        # Fix type errors
-bunx prisma studio                      # View database
-```
-
-## Tech Stack
-
-- **Runtime**: Bun (JavaScript/TypeScript runtime)
-- **Package Manager**: Bun.sh
-- **GraphQL Server**: Apollo Server 4 with Pothos schema builder
-- **Database**: Prisma ORM with SQLite (dev.db)
-- **Authentication**: JWT tokens with bcryptjs
-- **Authorization**: GraphQL Shield middleware
-- **HTTP Framework**: H3
-- **Type Safety**:
-  - GraphQL Tada for compile-time GraphQL typing
-  - Pothos with Relay plugin for schema definition
-- **Testing**: Vitest with happy-dom
-
-## Essential Commands
-
-### Development
-
-```bash
-bun run dev                  # Start development server on port 4000
-bun run build               # Build for production
-bun run start               # Start production server
-```
-
-### Database Management
-
-```bash
-bunx prisma migrate dev --name <name>  # Create/apply database migrations
-bunx prisma generate                   # Generate Prisma client
-bunx prisma studio                     # Open database GUI
-bun run seed                          # Seed database with sample data
-bun run db:reset                      # Reset database (delete and recreate)
-```
-
-### Code Generation
-
-```bash
-bun run generate            # Generate all types (Prisma + GraphQL)
-bun run generate:prisma     # Generate Prisma client only
-bun run generate:gql        # Generate GraphQL types only
-bun run gen:schema          # Generate GraphQL schema file
-```
-
-### Testing
-
-```bash
-bun run test                # Run tests with Vitest
-bun run test:ui             # Run tests with Vitest UI
-bun run test:coverage       # Run tests with coverage report
-bun test test/auth.test.ts  # Run specific test file
-bun run test -t "pattern"   # Run tests matching pattern
-```
-
-### Type Checking & Code Quality
-
-```bash
-bunx tsc --noEmit           # Type check all TypeScript files
-bunx prettier --check .     # Check code formatting
-bunx prettier --write .     # Format code with Prettier
+# Code Quality
+bunx tsc --noEmit                       # Type check
+bunx prettier --write .                 # Format code
 ```
 
 ## Architecture Overview
 
 ### GraphQL Schema (Pothos + Relay)
 
-The project uses **Pothos** with Relay plugin for type-safe GraphQL schema construction:
+The project uses **Pothos** with Relay plugin for type-safe schema construction:
 
-- **Builder Configuration**: `src/schema/builder.ts` configures Pothos with Prisma and Relay plugins
-- **Schema Organization**:
-  - `src/schema/index.ts` - Main schema export
-  - `src/schema/utils.ts` - Global ID encoding/decoding utilities
-  - `src/schema/types/` - Object type definitions using `prismaNode`
-  - `src/schema/queries/` - Query resolvers with `prismaConnection` for pagination
-  - `src/schema/mutations/` - Mutation resolvers accepting global IDs
-  - `src/schema/scalars.ts`, `enums.ts`, `inputs.ts` - Type definitions
+```
+src/schema/
+├── builder.ts          # Pothos builder with Prisma + Relay plugins
+├── index.ts           # Main schema export
+├── utils.ts           # Global ID encoding/decoding
+├── types/             # Object types using prismaNode
+├── queries/           # Query resolvers with prismaConnection
+├── mutations/         # Mutation resolvers with utility functions
+│   ├── auth.ts       # Authentication mutations
+│   ├── auth-utils.ts # Extracted auth logic (password hashing, user creation)
+│   ├── posts.ts      # Post CRUD mutations
+│   └── utils.ts      # Post operation utilities
+├── scalars.ts        # Custom scalars (DateTime)
+├── enums.ts          # GraphQL enums
+└── inputs.ts         # Input type definitions
+```
 
 ### Authorization System
 
-- **GraphQL Shield**: `src/permissions/` implements middleware-based authorization
-  - `index.ts` - Exports permission middleware
-  - `rules.ts` - Permission rules (handles global IDs)
-  - `shield-config.ts` - Maps rules to schema operations
+GraphQL Shield middleware with modular rule system:
+
+```
+src/permissions/
+├── index.ts           # Shield middleware export
+├── rules.ts          # Permission rules using rule-utils
+├── rule-utils.ts     # Extracted rule logic (ownership checks, validation)
+├── shield-config.ts  # Maps rules to schema operations
+└── utils.ts          # Permission utilities
+```
 
 ### Context System
 
-Enhanced type-safe context management in `src/context/`:
-- `auth.ts` - Authentication guards (`isAuthenticated`, `requireAuthentication`)
-- `creation.ts` - Context creation with comprehensive error handling
-- `validation.ts` - Context validation utilities
-- `utils.ts` - JWT and request utilities
-- `constants.ts` - Centralized constants (no magic strings)
-- `types.ts` - Operation-specific context types for type safety
+Type-safe context with enhanced authentication:
+
+```
+src/context/
+├── index.ts          # Context exports
+├── auth.ts           # Authentication guards (isAuthenticated, requireAuthentication)
+├── creation.ts       # Context creation with error handling
+├── validation.ts     # Context validation utilities
+├── utils.ts          # JWT and request utilities
+├── constants.ts      # Centralized constants
+└── types.ts          # Operation-specific context types
+```
 
 ### Error Handling
 
-Custom error class hierarchy in `src/errors/`:
-```typescript
-BaseError (400)
-├── AuthenticationError (401) - Authentication required
-├── AuthorizationError (403) - Insufficient permissions  
-├── ValidationError (400) - Input validation failed
-├── NotFoundError (404) - Resource not found
-├── ConflictError (409) - Conflicts with existing data
-└── RateLimitError (429) - Rate limit exceeded
+Hierarchical error system with descriptive messages:
+
+```
+src/errors/
+├── index.ts          # Error class definitions
+├── README.md         # Usage examples
+├── usage-guide.md    # Comprehensive guide
+└── examples.ts       # Real-world examples
 ```
 
-## Key Architecture Patterns
+Error hierarchy:
+- `BaseError` (400) - Base class with code and statusCode
+- `AuthenticationError` (401) - "You must be logged in to perform this action"
+- `AuthorizationError` (403) - "You can only modify posts that you have created"
+- `ValidationError` (400) - Field-specific validation errors
+- `NotFoundError` (404) - "Post with identifier 'X' not found"
+- `ConflictError` (409) - "An account with this email already exists"
+- `RateLimitError` (429) - Rate limiting with retry information
 
-1. **Prisma-First Development**: Database models drive GraphQL schema
-2. **JWT Authentication**: Bearer tokens in Authorization header
-3. **Global ID System**: All entities use base64-encoded IDs ("Type:id")
-4. **Relay Pagination**: Cursor-based pagination with connections
-5. **Error Normalization**: `normalizeError()` converts all errors to BaseError
-6. **Permission Rules**: Return errors instead of throwing in GraphQL Shield
+## Key Architectural Patterns
 
-## Relay Implementation Details
+### 1. Relay Implementation
 
-### Object Types
+All entities use global IDs (base64-encoded "Type:id"):
+
 ```typescript
-// Use prismaNode for Relay compliance
+// Object types auto-implement Node interface
 builder.prismaNode('Post', {
-  id: { field: 'id' }, // Auto-implements Node interface
-  // Fields are auto-exposed from Prisma
+  id: { field: 'id' },
+  // Fields auto-exposed from Prisma
 })
-```
 
-### Query Connections
-```typescript
-// Use prismaConnection for pagination
+// Queries use cursor-based pagination
 builder.queryField('feed', (t) =>
   t.prismaConnection({
     type: 'Post',
     cursor: 'id',
     resolve: (query, root, args, ctx) => {
       return ctx.prisma.post.findMany({
-        ...query, // IMPORTANT: Always spread query
+        ...query, // ALWAYS spread query
         where: { published: true },
       })
     },
-    totalCount: () => prisma.post.count({ where: { published: true } }),
-  }),
+  })
 )
-```
 
-### Mutations with Global IDs
-```typescript
+// Mutations accept global IDs
 builder.mutationField('deletePost', (t) =>
   t.prismaField({
-    type: 'Post',
-    args: {
-      id: t.arg.id({ required: true }), // Accepts global ID
-    },
+    args: { id: t.arg.id({ required: true }) },
     resolve: async (query, parent, args, ctx) => {
-      const { id: postId } = parseGlobalID(args.id, 'Post')
-      // Use numeric postId with Prisma
+      const { postId } = await validatePostAccess(args.id, ctx)
+      return deletePostById(postId, query)
     },
-  }),
-)
-```
-
-## Adding New Features
-
-### 1. New Database Model
-
-```bash
-# Add model to prisma/schema.prisma
-# Run migration
-bunx prisma migrate dev --name add-feature
-# Generate types
-bun run generate
-```
-
-### 2. New GraphQL Type
-
-```typescript
-// In src/schema/types/feature.ts
-builder.prismaNode('Feature', {
-  id: { field: 'id' },
-  // Add only computed fields here
-  fields: (t) => ({
-    computedField: t.string({
-      resolve: (parent) => computeValue(parent),
-    }),
-  }),
-})
-```
-
-### 3. New Query with Pagination
-
-```typescript
-// In src/schema/queries/features.ts
-builder.queryField('features', (t) =>
-  t.prismaConnection({
-    type: 'Feature',
-    cursor: 'id',
-    resolve: (query, root, args, ctx) => {
-      return ctx.prisma.feature.findMany({
-        ...query,
-        where: buildWhereClause(args),
-      })
-    },
-  }),
-)
-```
-
-### 4. Protected Mutation
-
-```typescript
-// In src/schema/mutations/features.ts
-builder.mutationField('createFeature', (t) =>
-  t.prismaField({
-    type: 'Feature',
-    args: {
-      data: t.arg({ type: FeatureCreateInput, required: true }),
-    },
-    resolve: async (query, parent, args, ctx) => {
-      const userId = requireAuthentication(ctx)
-      return ctx.prisma.feature.create({
-        ...query,
-        data: { ...args.data, userId },
-      })
-    },
-  }),
-)
-
-// In src/permissions/shield-config.ts
-Mutation: {
-  createFeature: isAuthenticatedUser,
-}
-```
-
-## Testing Patterns
-
-### Test Setup
-- Uses Vitest with isolated SQLite databases per test file
-- Automatic cleanup between tests
-- JWT tokens generated for authenticated tests
-
-### Key Test Utilities
-```typescript
-import { 
-  createTestServer,
-  executeOperation,
-  createAuthContext,
-  toPostId,
-  toUserId,
-  extractNumericId 
-} from './test-utils'
-```
-
-### Writing Tests
-```typescript
-describe('Feature', () => {
-  const server = createTestServer()
-  
-  it('should handle relay IDs', async () => {
-    const globalId = toPostId(1) // Convert to global ID
-    const result = await executeOperation(
-      server,
-      `mutation { deletePost(id: "${globalId}") { id } }`,
-      {},
-      createAuthContext('1')
-    )
-    // Assertions...
   })
-})
+)
 ```
 
-## Global ID Handling
+### 2. Clean Code Patterns
 
-### In Resolvers
+Extracted utility functions for single responsibility:
+
 ```typescript
-import { parseGlobalID } from './src/schema/utils'
+// Authentication utilities (src/schema/mutations/auth-utils.ts)
+- checkUserExists(email)
+- hashPassword(password)
+- createUser(data)
+- authenticateUser(email, password)
 
-// Decode global ID to numeric ID
-const { id: postId } = parseGlobalID(args.id, 'Post')
+// Post operation utilities (src/schema/mutations/utils.ts)
+- validatePostAccess(globalId, context, checkOwnership)
+- createDraftPost(title, content, userId, query)
+- togglePostPublication(postId, currentStatus, query)
+- deletePostById(postId, query)
+
+// Permission rule utilities (src/permissions/rule-utils.ts)
+- validateResourceId(id, resourceType)
+- checkPostOwnership(postId, userId)
+- createAuthenticationCheck(context)
+- createRoleCheck(context, role)
+- handleRuleError(error)
 ```
 
-### In Tests
-```typescript
-import { toPostId, toUserId, extractNumericId } from './test/relay-utils'
+### 3. Error Handling Pattern
 
-// Encode numeric ID to global ID
-const globalId = toPostId(1) // "UG9zdDox"
+Always use `normalizeError` in catch blocks:
 
-// Extract numeric ID from result
-const numericId = extractNumericId(result.data.post.id)
-```
-
-## Common Patterns
-
-### Error Handling in Mutations
 ```typescript
 try {
   // Validate input
@@ -322,44 +170,143 @@ try {
   const userId = requireAuthentication(context)
   
   // Perform operation
-  return await prisma.model.create({ data })
+  return await operation(data)
 } catch (error) {
-  throw normalizeError(error) // Always normalize
+  throw normalizeError(error) // Converts to BaseError
 }
 ```
 
-### Permission Rules
+### 4. Permission Rules Pattern
+
+Rules return errors instead of throwing:
+
 ```typescript
-// Return errors, don't throw
-export const isOwner = rule()(async (parent, args, ctx) => {
-  if (!ctx.userId) {
-    return new AuthenticationError()
+export const isPostOwner = rule({ cache: 'strict' })(
+  async (parent, args, context) => {
+    try {
+      validateResourceId(args.id, 'post')
+      const userId = requireAuthentication(context)
+      const postId = await parseAndValidateGlobalId(args.id, 'Post')
+      
+      const ownership = await checkPostOwnership(postId, userId)
+      if (!ownership.resourceExists) {
+        throw new NotFoundError('Post', args.id)
+      }
+      if (!ownership.isOwner) {
+        throw new AuthorizationError(ERROR_MESSAGES.NOT_POST_OWNER)
+      }
+      
+      return true
+    } catch (error) {
+      return handleRuleError(error)
+    }
   }
-  // Check ownership...
-  return true
-})
+)
 ```
 
-### Context Type Guards
+## Testing Strategy
+
+### Test Utilities
+
 ```typescript
-// Use type-safe context checks
-if (isAuthenticated(context)) {
-  // TypeScript knows context.userId is number
-  const userId = context.userId
-}
+// Global ID conversion
+toPostId(1)              // 1 → "UG9zdDox"
+toUserId(1)              // 1 → "VXNlcjox"
+extractNumericId(globalId) // "UG9zdDox" → 1
+
+// Context creation
+createAuthContext(userId)  // Authenticated context with JWT
+createMockContext()        // Unauthenticated context
+
+// GraphQL execution
+executeOperation(server, query, variables, context)
+expectSuccessfulQuery(server, query, variables, context)
+expectGraphQLError(server, query, variables, context, errorSubstring)
 ```
 
-## Development Workflow
+### Test Database
 
-1. **Schema Changes**: Update `prisma/schema.prisma` → migrate → generate
-2. **GraphQL Changes**: Update schema files → test with playground
-3. **Permission Changes**: Update rules → update shield config
-4. **Testing**: Write tests with Relay IDs → run `bun test`
+- Isolated SQLite database per test file
+- Automatic cleanup between tests
+- No manual cleanup needed
+
+## Common Development Tasks
+
+### Adding a New Feature
+
+1. **Database Model**:
+   ```bash
+   # Update prisma/schema.prisma
+   bunx prisma migrate dev --name add-feature
+   bun run generate
+   ```
+
+2. **GraphQL Type**:
+   ```typescript
+   // src/schema/types/feature.ts
+   builder.prismaNode('Feature', {
+     id: { field: 'id' },
+     fields: (t) => ({
+       // Only computed fields here
+     }),
+   })
+   ```
+
+3. **Query with Pagination**:
+   ```typescript
+   // src/schema/queries/features.ts
+   builder.queryField('features', (t) =>
+     t.prismaConnection({
+       type: 'Feature',
+       cursor: 'id',
+       resolve: (query, root, args, ctx) => {
+         return ctx.prisma.feature.findMany({
+           ...query,
+           where: { /* filters */ },
+         })
+       },
+     })
+   )
+   ```
+
+4. **Protected Mutation**:
+   ```typescript
+   // src/schema/mutations/features.ts
+   builder.mutationField('createFeature', (t) =>
+     t.prismaField({
+       type: 'Feature',
+       args: { /* input */ },
+       resolve: async (query, parent, args, ctx) => {
+         const userId = requireAuthentication(ctx)
+         // Use utility functions for operations
+       },
+     })
+   )
+   
+   // src/permissions/shield-config.ts
+   Mutation: {
+     createFeature: isAuthenticatedUser,
+   }
+   ```
+
+### Working with Global IDs
+
+```typescript
+// In resolvers
+import { parseGlobalID } from '../schema/utils'
+const { id: numericId } = parseGlobalID(args.id, 'Post')
+
+// In tests
+import { toPostId, extractNumericId } from './test/relay-utils'
+const globalId = toPostId(1)
+const numericId = extractNumericId(result.data.post.id)
+```
 
 ## Debugging Tips
 
+- **Type errors**: Run `bun run generate`
 - **GraphQL Playground**: http://localhost:4000
-- **Database GUI**: `bunx prisma studio`
-- **Type Errors**: Run `bun run generate`
-- **Global ID Issues**: Check base64 encoding format "Type:id"
-- **Permission Errors**: Verify JWT token and rule configuration
+- **Database viewer**: `bunx prisma studio`
+- **Global ID format**: Base64("Type:id") e.g., "UG9zdDox" = "Post:1"
+- **Permission errors**: Check JWT token and shield-config.ts mappings
+- **Test failures**: Check error message changes in constants/index.ts

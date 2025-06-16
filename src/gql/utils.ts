@@ -3,11 +3,7 @@ import type {
     GraphQLOperationMeta,
     GraphQLRequestBody,
     GraphQLResponse,
-    HTTPMethod,
-    PostCreateInput,
-    PostOrderByUpdatedAtInput,
-    SortOrder,
-    UserUniqueInput
+    HTTPMethod
 } from './types.d'
 
 // =============================================================================
@@ -111,28 +107,3 @@ export function createTypedRequest(
         body: body ? JSON.stringify(body) : undefined,
     }
 }
-
-// =============================================================================
-// SCHEMA INPUT HELPERS
-// =============================================================================
-
-// Helper functions for working with GraphQL schema types
-export function createPostInput(title: string, content?: string): PostCreateInput {
-    return {
-        title,
-        content: content || null,
-    }
-}
-
-export function createPostOrderBy(direction: SortOrder = 'desc'): PostOrderByUpdatedAtInput {
-    return {
-        updatedAt: direction,
-    }
-}
-
-export function createUserUniqueInput(identifier: { id?: number; email?: string }): UserUniqueInput {
-    return {
-        id: identifier.id ?? null,
-        email: identifier.email ?? null,
-    }
-} 
