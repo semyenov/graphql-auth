@@ -65,7 +65,6 @@ describe('User queries', () => {
           createAuthContext(testUserId.toString())
         )
 
-        console.log('Me query response:', JSON.stringify(data, null, 2))
         expect(data.me).toBeDefined()
         if (data.me) {
           expect(extractNumericId(data.me.id)).toBe(testUserId)

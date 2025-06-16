@@ -213,7 +213,7 @@ export async function getPostResolver(
  * Example: Handle Prisma not found errors
  */
 export async function deletePostResolver(
-    parent: unknown,
+    _parent: unknown,
     args: { id: number }
 ) {
     try {
@@ -238,8 +238,8 @@ export async function deletePostResolver(
  * Example: Handle duplicate entries
  */
 export async function createUserResolver(
-    parent: unknown,
-    args: { email: string; name: string }
+    _parent: unknown,
+    args: { email: string; name: string, password: string }
 ) {
     try {
         return await prisma.user.create({
@@ -260,28 +260,6 @@ export async function createUserResolver(
     }
 }
 
-/**
- * Example: Check before creating
- */
-export async function inviteUserResolver(
-    parent: unknown,
-    args: { email: string; teamId: number }
-) {
-    // Check if already invited
-    const existingInvite = await prisma.invitation.findFirst({
-        where: {
-            email: args.email,
-            teamId: args.teamId,
-            status: 'pending',
-        },
-    })
-
-    if (existingInvite) {
-        throw new ConflictError('User has already been invited to this team')
-    }
-
-    // Create invitation...
-}
 
 // =============================================================================
 // Rate Limit Examples
@@ -293,7 +271,7 @@ export async function inviteUserResolver(
 const loginAttempts = new Map<string, { count: number; resetAt: number }>()
 
 export async function rateLimitedLoginResolver(
-    parent: unknown,
+    _parent: unknown,
     args: { email: string; password: string }
 ) {
     const now = Date.now()
@@ -326,8 +304,8 @@ export async function rateLimitedLoginResolver(
  * Example: Comprehensive error handling
  */
 export async function complexOperationResolver(
-    parent: unknown,
-    args: { id: number; data: any },
+    _parent: unknown,
+    args: { id: number; data: unknown },
     context: { userId?: number }
 ) {
     try {
@@ -370,7 +348,7 @@ export async function complexOperationResolver(
 import { rule } from 'graphql-shield'
 
 export const isAuthenticated = rule({ cache: 'contextual' })(
-    async (parent, args, context) => {
+    async (_parent, _args, context) => {
         if (!context.userId) {
             // Return error instead of throwing in rules
             return new AuthenticationError()
@@ -380,18 +358,18 @@ export const isAuthenticated = rule({ cache: 'contextual' })(
 )
 
 export const isResourceOwner = rule({ cache: 'strict' })(
-    async (parent, args: { id: number }, context) => {
+    async (_parent, args: { id: string }, context: { userId?: number }) => {
         if (!context.userId) {
             return new AuthenticationError()
         }
 
         const resource = await prisma.post.findUnique({
-            where: { id: args.id },
+            where: { id: parseInt(args.id, 10) },
             select: { authorId: true },
         })
 
         if (!resource) {
-            return new NotFoundError('Post', args.id)
+            return new NotFoundError('Post', args.id.toString())
         }
 
         if (resource.authorId !== context.userId) {
