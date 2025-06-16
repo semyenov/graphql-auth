@@ -20,6 +20,10 @@ import './mutations/posts';
 import './queries/posts';
 import './queries/users';
 
+// Import feature-based mutations
+import '../features/auth/presentation/resolvers/auth.mutations';
+import '../features/posts/presentation/resolvers/post.mutations';
+
 // Build the schema
 const pothosSchema = builder.toSchema();
 

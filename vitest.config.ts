@@ -20,6 +20,10 @@ export default defineConfig({
         'types/',
       ],
     },
+    // Run tests sequentially to avoid database conflicts
+    sequence: {
+      concurrent: false,
+    },
     // Use threads instead of forks for in-memory SQLite with cache=shared
     pool: 'threads',
     poolOptions: {
