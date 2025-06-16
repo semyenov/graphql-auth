@@ -3,7 +3,7 @@ import { builder } from '../builder';
 
 // Define Post object type using Relay Node pattern
 // prismaNode automatically exposes ALL fields including relations
-builder.prismaNode('Post', {
+export const PostNode = builder.prismaNode('Post', {
     // Map Prisma's numeric id to Relay's global ID
     id: { field: 'id' },
     fields: (t) => ({
@@ -64,4 +64,5 @@ builder.prismaNode('Post', {
             },
         }),
     }),
-}) 
+})
+

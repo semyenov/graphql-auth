@@ -1,3 +1,4 @@
+import { UserId } from '../../core/value-objects/user-id.vo';
 import { builder } from '../builder';
 
 // Define User object type using Relay Node pattern
@@ -33,20 +34,18 @@ builder.prismaNode('User', {
         draftsCount: t.int({
             description: 'Number of unpublished posts by this user',
             resolve: async (user, _args, context) => {
-                return context.repositories.posts.count({
-                    authorId: user.id,
-                    published: false,
-                });
+                return context.useCases.posts.getUserDrafts.execute({
+                    authorId: UserId.create(user.id),
+                }).then(result => result.totalCount);
             },
         }),
         // Add convenience field for published posts count
         publishedPostsCount: t.int({
             description: 'Number of published posts by this user',
             resolve: async (user, _args, context) => {
-                return context.repositories.posts.count({
-                    authorId: user.id,
-                    published: true,
-                });
+                return context.useCases.posts.getUserDrafts.execute({
+                    authorId: UserId.create(user.id),
+                }).then(result => result.totalCount);
             },
         }),
     }),

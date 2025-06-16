@@ -25,7 +25,6 @@ import { GetCurrentUserUseCase } from '../application/use-cases/users/get-curren
 import { GetUserByIdUseCase } from '../application/use-cases/users/get-user-by-id.use-case'
 import { SearchUsersUseCase } from '../application/use-cases/users/search-users.use-case'
 
-
 export interface EnhancedContext extends Context {
   // Add prisma client for Pothos resolvers
   prisma: PrismaClient
@@ -61,29 +60,34 @@ export function enhanceContext(baseContext: Context): EnhancedContext {
     configureContainer()
   }
 
-  // Create enhanced context
-  return {
-    ...baseContext,
-    prisma: DatabaseClient.getClient(),
-    useCases: {
-      auth: {
-        login: tsyringeContainer.resolve(LoginUseCase),
-        signup: tsyringeContainer.resolve(SignupUseCase),
+  try {
+    // Create enhanced context
+    return {
+      ...baseContext,
+      prisma: DatabaseClient.getClient(),
+      useCases: {
+        auth: {
+          login: tsyringeContainer.resolve(LoginUseCase),
+          signup: tsyringeContainer.resolve(SignupUseCase),
+        },
+        posts: {
+          create: tsyringeContainer.resolve(CreatePostUseCase),
+          update: tsyringeContainer.resolve(UpdatePostUseCase),
+          delete: tsyringeContainer.resolve(DeletePostUseCase),
+          get: tsyringeContainer.resolve(GetPostUseCase),
+          incrementViewCount: tsyringeContainer.resolve(IncrementViewCountUseCase),
+          getFeed: tsyringeContainer.resolve(GetFeedUseCase),
+          getUserDrafts: tsyringeContainer.resolve(GetUserDraftsUseCase),
+        },
+        users: {
+          getCurrentUser: tsyringeContainer.resolve(GetCurrentUserUseCase),
+          searchUsers: tsyringeContainer.resolve(SearchUsersUseCase),
+          getUserById: tsyringeContainer.resolve(GetUserByIdUseCase),
+        },
       },
-      posts: {
-        create: tsyringeContainer.resolve(CreatePostUseCase),
-        update: tsyringeContainer.resolve(UpdatePostUseCase),
-        delete: tsyringeContainer.resolve(DeletePostUseCase),
-        get: tsyringeContainer.resolve(GetPostUseCase),
-        incrementViewCount: tsyringeContainer.resolve(IncrementViewCountUseCase),
-        getFeed: tsyringeContainer.resolve(GetFeedUseCase),
-        getUserDrafts: tsyringeContainer.resolve(GetUserDraftsUseCase),
-      },
-      users: {
-        getCurrentUser: tsyringeContainer.resolve(GetCurrentUserUseCase),
-        searchUsers: tsyringeContainer.resolve(SearchUsersUseCase),
-        getUserById: tsyringeContainer.resolve(GetUserByIdUseCase),
-      },
-    },
+    }
+  } catch (error) {
+    console.error('Error enhancing context:', error)
+    throw error
   }
 }

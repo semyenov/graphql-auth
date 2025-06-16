@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { AUTH, SERVER } from './constants'
+import { AUTH_CONFIG, DATABASE_CONFIG, ENVIRONMENTS, SERVER_CONFIG } from './constants/config'
 import type { EnvironmentConfig } from './types.d'
 
 /**
@@ -8,16 +8,16 @@ import type { EnvironmentConfig } from './types.d'
  */
 const EnvironmentSchema = z.object({
   NODE_ENV: z
-    .enum(['development', 'production', 'test'])
+    .enum(ENVIRONMENTS)
     .default('development'),
   PORT: z
     .string()
     .regex(/^\d+$/, 'PORT must be a number')
     .transform((val: string) => parseInt(val, 10))
-    .default(String(SERVER.DEFAULT_PORT)),
-  HOST: z.string().default(SERVER.DEFAULT_HOST),
-  APP_SECRET: z.string().min(AUTH.MIN_PASSWORD_LENGTH,
-    `APP_SECRET must be at least ${AUTH.MIN_PASSWORD_LENGTH} characters`),
+    .default(String(SERVER_CONFIG.DEFAULT_PORT)),
+  HOST: z.string().default(SERVER_CONFIG.DEFAULT_HOST),
+  APP_SECRET: z.string().min(AUTH_CONFIG.MIN_PASSWORD_LENGTH,
+    `APP_SECRET must be at least ${AUTH_CONFIG.MIN_PASSWORD_LENGTH} characters`),
   DATABASE_URL: z.string().url('DATABASE_URL must be a valid URL'),
   CORS_ORIGIN: z.string().optional(),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
@@ -32,10 +32,10 @@ function parseEnvironment(): EnvironmentConfig {
   try {
     const env = {
       NODE_ENV: process.env.NODE_ENV,
-      PORT: process.env.PORT || String(SERVER.DEFAULT_PORT),
-      HOST: process.env.HOST || SERVER.DEFAULT_HOST,
+      PORT: process.env.PORT || String(SERVER_CONFIG.DEFAULT_PORT),
+      HOST: process.env.HOST || SERVER_CONFIG.DEFAULT_HOST,
       APP_SECRET: process.env.APP_SECRET || 'appsecret321',
-      DATABASE_URL: process.env.DATABASE_URL || 'file:./dev.db',
+      DATABASE_URL: process.env.DATABASE_URL || DATABASE_CONFIG.DEFAULT_URL,
       CORS_ORIGIN: process.env.CORS_ORIGIN,
       LOG_LEVEL: process.env.LOG_LEVEL || 'info',
       JWT_SECRET: process.env.JWT_SECRET || process.env.APP_SECRET,

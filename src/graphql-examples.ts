@@ -1,23 +1,6 @@
 import { readFragment } from 'gql.tada'
 import { print } from 'graphql'
-import {
-  GetFeedQuery,
-  GetMeQuery,
-  GetPostQuery,
-  GraphQLClient,
-  PostInfoFragment,
-  UserInfoFragment,
-  devUtils,
-  executeGraphQL,
-  mutateCreateDraft,
-  mutateLogin,
-  queryFeed,
-  queryMe,
-  type GetFeedResult,
-  type GetFeedVariables,
-  type GetMeResult,
-  type LoginVariables,
-} from './gql'
+import * as gql from './gql'
 
 import {
   GraphQLCache,
@@ -40,7 +23,7 @@ export async function exampleSimpleQuery() {
 
   try {
     // Using convenience function
-    const result = await queryMe()
+    const result = await gql.queryMe()
 
     if (result.errors) {
       console.error('GraphQL Errors:', result.errors)
@@ -50,7 +33,7 @@ export async function exampleSimpleQuery() {
     const user = result.data?.me
     if (user) {
       // Use readFragment to access fragment fields safely
-      const userInfo = readFragment(UserInfoFragment, user)
+      const userInfo = readFragment(gql.UserInfoFragment, user)
       console.log('Current user:', userInfo)
     }
   } catch (error) {
@@ -64,14 +47,14 @@ export async function exampleSimpleQuery() {
 export async function exampleQueryWithVariables() {
   console.log('🔍 Query with Variables Example')
 
-  const variables: GetFeedVariables = {
+  const variables: gql.GetFeedVariables = {
     first: 10,
     after: '0',
     searchString: 'GraphQL',
   }
 
   try {
-    const result = await queryFeed(variables)
+    const result = await gql.queryFeed(variables)
 
     const posts = result.data?.feed
     if (posts && posts.edges && posts.edges.length > 0) {
@@ -89,26 +72,26 @@ export async function exampleQueryWithVariables() {
 export async function exampleMutation() {
   console.log('✏️ Mutation Example')
 
-  const loginData: LoginVariables = {
+  const loginData: gql.LoginVariables = {
     email: 'user@example.com',
     password: 'securePassword123',
   }
 
   try {
-    const result = await mutateLogin(loginData)
+    const result = await gql.mutateLogin(loginData)
 
     const token = result.data
     if (token) {
       console.log('Login successful, token received')
 
       // Use the token for subsequent requests
-      const userResult = await queryMe({
+      const userResult = await gql.queryMe({
         authorization: `Bearer ${token}`,
       })
 
       const user = userResult.data?.me
       if (user) {
-        const userInfo = readFragment(UserInfoFragment, user)
+        const userInfo = readFragment(gql.UserInfoFragment, user)
         console.log('User info:', userInfo)
       }
     }
@@ -127,17 +110,17 @@ export async function exampleMutation() {
 export async function exampleGraphQLClient() {
   console.log('🚀 GraphQL Client Example')
 
-  const client = new GraphQLClient('/graphql', {
+  const client = new gql.GraphQLClient('/graphql', {
     authorization: 'Bearer your-token-here',
   })
 
   try {
     // Execute query with client
-    const result = await client.query<GetMeResult>(print(GetMeQuery))
+    const result = await client.query<gql.GetMeResult>(print(gql.GetMeQuery))
 
     const user = result.data?.me
     if (user) {
-      const userInfo = readFragment(UserInfoFragment, user)
+      const userInfo = readFragment(gql.UserInfoFragment, user)
       console.log('Client result:', userInfo)
     }
   } catch (error) {
@@ -153,14 +136,14 @@ export async function exampleFragments() {
 
   // Print fragment for inspection
   console.log('User Fragment:')
-  console.log(print(UserInfoFragment))
+  console.log(print(gql.UserInfoFragment))
 
   console.log('Post with Author Fragment:')
-  console.log(print(PostInfoFragment))
+  console.log(print(gql.PostInfoFragment))
 
   // Use fragment-based query
-  const result = await executeGraphQL<GetFeedVariables, GetFeedResult>(
-    print(GetFeedQuery),
+  const result = await gql.executeGraphQL<gql.GetFeedVariables, gql.GetFeedResult>(
+    print(gql.GetFeedQuery),
     { first: 5 },
   )
 
@@ -188,7 +171,7 @@ export async function exampleQueryBuilder() {
 
   // Execute the dynamic query
   try {
-    const result = await executeGraphQL(dynamicQuery, { userId: 1 })
+    const result = await gql.executeGraphQL(dynamicQuery, { userId: 1 })
     console.log('Dynamic query result:', result.data)
   } catch (error) {
     console.error('Dynamic query failed:', error)
@@ -202,7 +185,7 @@ export async function exampleResponseTransformation() {
   console.log('🔄 Response Transformation Example')
 
   try {
-    const result = await queryFeed({ first: 3 })
+    const result = await gql.queryFeed({ first: 3 })
 
     // Transform response to count posts
     const postsCount = result.data?.feed?.edges?.length || 0
@@ -227,17 +210,17 @@ export async function exampleCaching() {
   console.log('💾 Caching Example')
 
   const cache = new GraphQLCache()
-  const queryString = print(GetMeQuery)
+  const queryString = print(gql.GetMeQuery)
 
   // Check cache first
-  let cachedResult = cache.get<GetMeResult>(queryString)
+  let cachedResult = cache.get<gql.GetMeResult>(queryString)
   if (cachedResult) {
     console.log('Cache hit for user')
     return
   }
 
   // Execute query
-  const result = await queryMe()
+  const result = await gql.queryMe()
 
   if (result.data) {
     // Cache the result for 2 minutes
@@ -245,15 +228,15 @@ export async function exampleCaching() {
 
     const user = result.data.me
     if (user) {
-      const userInfo = readFragment(UserInfoFragment, user)
+      const userInfo = readFragment(gql.UserInfoFragment, user)
       console.log('Result cached:', userInfo.email)
     }
   }
 
   // Next call will use cache
-  cachedResult = cache.get<GetMeResult>(queryString)
+  cachedResult = cache.get<gql.GetMeResult>(queryString)
   if (cachedResult?.me) {
-    const userInfo = readFragment(UserInfoFragment, cachedResult.me)
+    const userInfo = readFragment(gql.UserInfoFragment, cachedResult.me)
     console.log('Cached result:', userInfo.email)
   }
 }
@@ -265,17 +248,17 @@ export async function exampleDevTools() {
   console.log('🛠️ Development Tools Example')
 
   // Pretty print query
-  const prettyQuery = devTools.prettyPrint(GetFeedQuery)
+  const prettyQuery = devTools.prettyPrint(gql.GetFeedQuery)
   console.log('Pretty printed query:')
   console.log(prettyQuery)
 
   // Analyze query
-  const analysis = devTools.analyzeQuery(print(GetFeedQuery))
+  const analysis = devTools.analyzeQuery(print(gql.GetFeedQuery))
   console.log('Query analysis:', analysis)
 
   // Timed operation
   await devTools.logOperation('GetFeed', async () => {
-    return await queryFeed({ first: 5 })
+    return await gql.queryFeed({ first: 5 })
   })
 
   console.log('Query completed with timing')
@@ -289,7 +272,7 @@ export async function exampleErrorHandling() {
 
   try {
     // Intentionally cause an error with invalid variables
-    const result = await executeGraphQL(print(GetPostQuery), { id: 'Post:1' })
+    const result = await gql.executeGraphQL(print(gql.GetPostQuery), { id: 'Post:1' })
 
     if (result.errors && result.errors.length > 0) {
       console.log('GraphQL errors detected:')
@@ -303,7 +286,7 @@ export async function exampleErrorHandling() {
 
     // Use dev utils to validate response
     try {
-      const validatedData = devUtils.validateResponse(result)
+      const validatedData = gql.devUtils.validateResponse(result)
       console.log('Validated data:', validatedData)
     } catch (validationError) {
       console.log('Validation failed:', validationError)
@@ -345,7 +328,7 @@ export async function exampleCompleteWorkflow() {
 
   try {
     // 1. Login
-    const loginResult = await mutateLogin({
+    const loginResult = await gql.mutateLogin({
       email: 'demo@example.com',
       password: 'demoPassword',
     })
@@ -358,15 +341,15 @@ export async function exampleCompleteWorkflow() {
     const authHeaders = { authorization: `Bearer ${token}` }
 
     // 2. Get current user
-    const userResult = await queryMe(authHeaders)
+    const userResult = await gql.queryMe(authHeaders)
     const user = userResult.data?.me
     if (user) {
-      const userInfo = readFragment(UserInfoFragment, user)
+      const userInfo = readFragment(gql.UserInfoFragment, user)
       console.log('Logged in as:', userInfo.email)
     }
 
     // 3. Create a draft post
-    const createResult = await mutateCreateDraft(
+    const createResult = await gql.mutateCreateDraft(
       {
         data: {
           title: 'My New Post',
@@ -381,7 +364,7 @@ export async function exampleCompleteWorkflow() {
       console.log('Created post successfully')
 
       // 4. Get updated feed
-      const feedResult = await queryFeed({ first: 5 }, authHeaders)
+      const feedResult = await gql.queryFeed({ first: 5 }, authHeaders)
       console.log(`Feed now has ${feedResult.data?.feed?.edges?.length} posts`)
     }
   } catch (error) {

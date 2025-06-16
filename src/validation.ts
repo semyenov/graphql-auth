@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { CONTEXT_ERROR_CODES, CONTEXT_ERROR_MESSAGES, ContextErrorCode, ContextErrorMessage } from './context/constants'
+import { CONTEXT_ERROR_CODES, CONTEXT_ERROR_MESSAGES, ContextErrorCode, ContextErrorMessage } from './constants/context'
+import { VALIDATION_LIMITS, VALIDATION_MESSAGES, VALIDATION_PATTERNS } from './constants/validation'
 import type { AppError, Result, ValidationError } from './types.d'
 
 // Create a custom app error
@@ -35,74 +36,74 @@ export function createValidationError(
 export const signupSchema = z.object({
   email: z
     .string()
-    .email('Invalid email format')
-    .min(1, 'Email is required')
-    .max(255, 'Email must be less than 255 characters'),
+    .email(VALIDATION_MESSAGES.EMAIL_INVALID)
+    .min(VALIDATION_LIMITS.EMAIL_MIN_LENGTH, VALIDATION_MESSAGES.EMAIL_REQUIRED)
+    .max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH, VALIDATION_MESSAGES.EMAIL_TOO_LONG),
   password: z
     .string()
-    .min(8, 'Password must be at least 8 characters')
-    .max(128, 'Password must be less than 128 characters')
+    .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH, VALIDATION_MESSAGES.PASSWORD_TOO_SHORT)
+    .max(VALIDATION_LIMITS.PASSWORD_MAX_LENGTH, VALIDATION_MESSAGES.PASSWORD_TOO_LONG)
     .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+      VALIDATION_PATTERNS.STRONG_PASSWORD,
+      VALIDATION_MESSAGES.PASSWORD_WEAK,
     ),
   name: z
     .string()
-    .min(2, 'Name must be at least 2 characters')
-    .max(100, 'Name must be less than 100 characters')
+    .min(VALIDATION_LIMITS.NAME_MIN_LENGTH, VALIDATION_MESSAGES.NAME_TOO_SHORT)
+    .max(VALIDATION_LIMITS.NAME_MAX_LENGTH, VALIDATION_MESSAGES.NAME_TOO_LONG)
     .optional(),
 })
 
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email format').min(1, 'Email is required'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email(VALIDATION_MESSAGES.EMAIL_INVALID).min(1, VALIDATION_MESSAGES.EMAIL_REQUIRED),
+  password: z.string().min(1, VALIDATION_MESSAGES.PASSWORD_REQUIRED),
 })
 
 export const postCreateSchema = z.object({
   title: z
     .string()
-    .min(1, 'Title is required')
-    .max(255, 'Title must be less than 255 characters')
+    .min(VALIDATION_LIMITS.TITLE_MIN_LENGTH, VALIDATION_MESSAGES.TITLE_REQUIRED)
+    .max(VALIDATION_LIMITS.TITLE_MAX_LENGTH, VALIDATION_MESSAGES.TITLE_TOO_LONG)
     .trim(),
   content: z
     .string()
-    .max(10000, 'Content must be less than 10,000 characters')
+    .max(VALIDATION_LIMITS.CONTENT_MAX_LENGTH, VALIDATION_MESSAGES.CONTENT_TOO_LONG)
     .optional(),
 })
 
 export const postUpdateSchema = z.object({
   title: z
     .string()
-    .min(1, 'Title is required')
-    .max(255, 'Title must be less than 255 characters')
+    .min(VALIDATION_LIMITS.TITLE_MIN_LENGTH, VALIDATION_MESSAGES.TITLE_REQUIRED)
+    .max(VALIDATION_LIMITS.TITLE_MAX_LENGTH, VALIDATION_MESSAGES.TITLE_TOO_LONG)
     .trim()
     .optional(),
   content: z
     .string()
-    .max(10000, 'Content must be less than 10,000 characters')
+    .max(VALIDATION_LIMITS.CONTENT_MAX_LENGTH, VALIDATION_MESSAGES.CONTENT_TOO_LONG)
     .optional(),
   published: z.boolean().optional(),
 })
 
 // ID validation schemas
 export const idSchema = z.object({
-  id: z.number().int('ID must be an integer').positive('ID must be positive'),
+  id: z.number().int(VALIDATION_MESSAGES.ID_INVALID).positive(VALIDATION_MESSAGES.ID_NEGATIVE),
 })
 
 export const userUniqueSchema = z
   .object({
     id: z
       .number()
-      .int('ID must be an integer')
-      .positive('ID must be positive')
+      .int(VALIDATION_MESSAGES.ID_INVALID)
+      .positive(VALIDATION_MESSAGES.ID_NEGATIVE)
       .optional(),
-    email: z.string().email('Invalid email format').optional(),
+    email: z.string().email(VALIDATION_MESSAGES.EMAIL_INVALID).optional(),
   })
   .refine(
     (data: { id?: number; email?: string }) =>
       data.id !== undefined || data.email !== undefined,
     {
-      message: 'Either id or email must be provided',
+      message: VALIDATION_MESSAGES.EITHER_ID_OR_EMAIL,
       path: ['id'],
     },
   )
@@ -111,33 +112,33 @@ export const userUniqueSchema = z
 export const paginationSchema = z.object({
   skip: z
     .number()
-    .int('Skip must be an integer')
-    .min(0, 'Skip must be non-negative')
+    .int(VALIDATION_MESSAGES.ID_INVALID)
+    .min(VALIDATION_LIMITS.SKIP_MIN, VALIDATION_MESSAGES.SKIP_NEGATIVE)
     .optional(),
   take: z
     .number()
-    .int('Take must be an integer')
-    .min(1, 'Take must be at least 1')
-    .max(100, 'Take must be at most 100')
+    .int(VALIDATION_MESSAGES.ID_INVALID)
+    .min(VALIDATION_LIMITS.TAKE_MIN, VALIDATION_MESSAGES.TAKE_TOO_SMALL)
+    .max(VALIDATION_LIMITS.TAKE_MAX, VALIDATION_MESSAGES.TAKE_TOO_LARGE)
     .optional(),
 })
 
 export const feedInputSchema = z.object({
   searchString: z
     .string()
-    .min(1, 'Search string must not be empty')
-    .max(255, 'Search string must be less than 255 characters')
+    .min(VALIDATION_LIMITS.SEARCH_MIN_LENGTH, VALIDATION_MESSAGES.SEARCH_EMPTY)
+    .max(VALIDATION_LIMITS.SEARCH_MAX_LENGTH, VALIDATION_MESSAGES.SEARCH_TOO_LONG)
     .optional(),
   skip: z
     .number()
-    .int('Skip must be an integer')
-    .min(0, 'Skip must be non-negative')
+    .int(VALIDATION_MESSAGES.ID_INVALID)
+    .min(VALIDATION_LIMITS.SKIP_MIN, VALIDATION_MESSAGES.SKIP_NEGATIVE)
     .optional(),
   take: z
     .number()
-    .int('Take must be an integer')
-    .min(1, 'Take must be at least 1')
-    .max(100, 'Take must be at most 100')
+    .int(VALIDATION_MESSAGES.ID_INVALID)
+    .min(VALIDATION_LIMITS.TAKE_MIN, VALIDATION_MESSAGES.TAKE_TOO_SMALL)
+    .max(VALIDATION_LIMITS.TAKE_MAX, VALIDATION_MESSAGES.TAKE_TOO_LARGE)
     .optional(),
   orderBy: z
     .object({

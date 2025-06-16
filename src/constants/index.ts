@@ -2,38 +2,48 @@
  * Centralized constants for the application
  */
 
+// Re-export all constant modules
+export * from './config'
+export * from './context'
+export * from './graphql'
+export * from './validation'
+
+// Legacy exports for backward compatibility
+import { AUTH_CONFIG, DATABASE_CONFIG, RATE_LIMIT_CONFIG, SERVER_CONFIG } from './config'
+import { VALIDATION_LIMITS } from './validation'
+
 /**
- * Authentication configuration
+ * Authentication configuration (legacy)
  */
 export const AUTH = {
-  BCRYPT_ROUNDS: 10,
-  TOKEN_EXPIRY: '7d',
-  TOKEN_ALGORITHM: 'HS256' as const,
-  MIN_PASSWORD_LENGTH: 8,
-  MAX_PASSWORD_LENGTH: 128,
+  BCRYPT_ROUNDS: AUTH_CONFIG.DEFAULT_BCRYPT_ROUNDS,
+  TOKEN_EXPIRY: AUTH_CONFIG.DEFAULT_JWT_EXPIRES_IN,
+  TOKEN_ALGORITHM: AUTH_CONFIG.TOKEN_ALGORITHM,
+  MIN_PASSWORD_LENGTH: AUTH_CONFIG.MIN_PASSWORD_LENGTH,
+  MAX_PASSWORD_LENGTH: AUTH_CONFIG.MAX_PASSWORD_LENGTH,
   EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
 } as const
 
 /**
- * Database configuration
+ * Database configuration (legacy)
  */
 export const DATABASE = {
-  TRANSACTION_TIMEOUT_MS: 10000,
+  TRANSACTION_TIMEOUT_MS: DATABASE_CONFIG.TRANSACTION_TIMEOUT_MS,
   DEFAULT_TAKE_LIMIT: 50,
   MAX_TAKE_LIMIT: 100,
   LOG_LEVELS: ['warn', 'error'] as const,
 } as const
 
 /**
- * Server configuration
+ * Server configuration (legacy)
  */
 export const SERVER = {
-  DEFAULT_PORT: 4000,
-  DEFAULT_HOST: 'localhost',
-  CORS_CREDENTIALS: true,
-  INTROSPECTION_ENABLED: true,
-  HEALTH_CHECK_PATH: '/health',
-  GRAPHQL_PATH: '/',
+  DEFAULT_PORT: SERVER_CONFIG.DEFAULT_PORT,
+  DEFAULT_HOST: SERVER_CONFIG.DEFAULT_HOST,
+  CORS_CREDENTIALS: SERVER_CONFIG.CORS_CREDENTIALS,
+  INTROSPECTION_ENABLED: SERVER_CONFIG.INTROSPECTION_ENABLED,
+  HEALTH_CHECK_PATH: SERVER_CONFIG.HEALTH_CHECK_PATH,
+  GRAPHQL_PATH: SERVER_CONFIG.GRAPHQL_PATH,
 } as const
 
 /**
@@ -46,26 +56,21 @@ export const ROLE_HIERARCHY = {
 } as const
 
 /**
- * Rate limiting configuration
+ * Rate limiting configuration (legacy)
  */
 export const RATE_LIMIT = {
-  WINDOW_MS: 15 * 60 * 1000, // 15 minutes
-  MAX_REQUESTS: {
-    DEFAULT: 100,
-    AUTH: 5, // Stricter for auth endpoints
-    QUERY: 50,
-    MUTATION: 20,
-  },
+  WINDOW_MS: RATE_LIMIT_CONFIG.WINDOW_MS,
+  MAX_REQUESTS: RATE_LIMIT_CONFIG.MAX_REQUESTS,
 } as const
 
 /**
- * Validation configuration
+ * Validation configuration (legacy)
  */
 export const VALIDATION = {
-  MAX_TITLE_LENGTH: 255,
-  MAX_CONTENT_LENGTH: 10000,
-  MAX_NAME_LENGTH: 100,
-  MAX_EMAIL_LENGTH: 255,
+  MAX_TITLE_LENGTH: VALIDATION_LIMITS.TITLE_MAX_LENGTH,
+  MAX_CONTENT_LENGTH: VALIDATION_LIMITS.CONTENT_MAX_LENGTH,
+  MAX_NAME_LENGTH: VALIDATION_LIMITS.NAME_MAX_LENGTH,
+  MAX_EMAIL_LENGTH: VALIDATION_LIMITS.EMAIL_MAX_LENGTH,
 } as const
 
 /**
@@ -82,12 +87,12 @@ export const ERROR_MESSAGES = {
 
   // Validation
   INVALID_EMAIL: 'Please provide a valid email address (e.g., user@example.com)',
-  PASSWORD_TOO_SHORT: `Password must be at least ${AUTH.MIN_PASSWORD_LENGTH} characters long for security`,
-  PASSWORD_TOO_LONG: `Password cannot exceed ${AUTH.MAX_PASSWORD_LENGTH} characters`,
+  PASSWORD_TOO_SHORT: `Password must be at least ${AUTH_CONFIG.MIN_PASSWORD_LENGTH} characters long for security`,
+  PASSWORD_TOO_LONG: `Password cannot exceed ${AUTH_CONFIG.MAX_PASSWORD_LENGTH} characters`,
   TITLE_REQUIRED: 'Post title is required and cannot be empty',
-  TITLE_TOO_LONG: `Post title must not exceed ${VALIDATION.MAX_TITLE_LENGTH} characters`,
-  CONTENT_TOO_LONG: `Post content must not exceed ${VALIDATION.MAX_CONTENT_LENGTH} characters`,
-  NAME_TOO_LONG: `Name must not exceed ${VALIDATION.MAX_NAME_LENGTH} characters`,
+  TITLE_TOO_LONG: `Post title must not exceed ${VALIDATION_LIMITS.TITLE_MAX_LENGTH} characters`,
+  CONTENT_TOO_LONG: `Post content must not exceed ${VALIDATION_LIMITS.CONTENT_MAX_LENGTH} characters`,
+  NAME_TOO_LONG: `Name must not exceed ${VALIDATION_LIMITS.NAME_MAX_LENGTH} characters`,
 
   // Authorization
   INSUFFICIENT_PERMISSIONS: 'You do not have the required permissions to perform this operation',

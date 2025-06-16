@@ -4,26 +4,25 @@
  * Ensures email addresses are valid and provides email-specific behavior.
  */
 
+import { VALIDATION_LIMITS, VALIDATION_MESSAGES, VALIDATION_PATTERNS } from '../../constants/validation'
 import { ValueObjectValidationError } from '../errors/domain.errors'
 
 export class Email {
-  private static readonly EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
   private constructor(private readonly _value: string) {}
 
   static create(value: string): Email {
     if (!value || value.trim().length === 0) {
-      throw new ValueObjectValidationError('Email cannot be empty')
+      throw new ValueObjectValidationError(VALIDATION_MESSAGES.EMAIL_REQUIRED)
     }
 
     const normalizedEmail = value.trim().toLowerCase()
 
-    if (!this.EMAIL_REGEX.test(normalizedEmail)) {
-      throw new ValueObjectValidationError('Invalid email format')
+    if (!VALIDATION_PATTERNS.EMAIL.test(normalizedEmail)) {
+      throw new ValueObjectValidationError(VALIDATION_MESSAGES.EMAIL_INVALID)
     }
 
-    if (normalizedEmail.length > 255) {
-      throw new ValueObjectValidationError('Email cannot exceed 255 characters')
+    if (normalizedEmail.length > VALIDATION_LIMITS.EMAIL_MAX_LENGTH) {
+      throw new ValueObjectValidationError(VALIDATION_MESSAGES.EMAIL_TOO_LONG)
     }
 
     return new Email(normalizedEmail)

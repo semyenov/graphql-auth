@@ -4,6 +4,7 @@
  * Represents a blog post in our domain model.
  */
 
+import { VALIDATION_LIMITS, VALIDATION_MESSAGES } from '../../constants/validation'
 import { EntityValidationError } from '../errors/domain.errors'
 import { PostId } from '../value-objects/post-id.vo'
 import { UserId } from '../value-objects/user-id.vo'
@@ -29,11 +30,15 @@ export class Post {
     authorId: UserId | null
   }): Post {
     if (!props.title || props.title.trim().length === 0) {
-      throw new EntityValidationError('Post title cannot be empty')
+      throw new EntityValidationError(VALIDATION_MESSAGES.TITLE_REQUIRED)
     }
 
-    if (props.title.length > 255) {
-      throw new EntityValidationError('Post title cannot exceed 255 characters')
+    if (props.title.length > VALIDATION_LIMITS.TITLE_MAX_LENGTH) {
+      throw new EntityValidationError(VALIDATION_MESSAGES.TITLE_TOO_LONG)
+    }
+
+    if (props.content && props.content.length > VALIDATION_LIMITS.CONTENT_MAX_LENGTH) {
+      throw new EntityValidationError(VALIDATION_MESSAGES.CONTENT_TOO_LONG)
     }
 
     return new Post({
@@ -90,15 +95,18 @@ export class Post {
   update(props: { title?: string; content?: string | null }): void {
     if (props.title !== undefined) {
       if (!props.title || props.title.trim().length === 0) {
-        throw new EntityValidationError('Post title cannot be empty')
+        throw new EntityValidationError(VALIDATION_MESSAGES.TITLE_REQUIRED)
       }
-      if (props.title.length > 255) {
-        throw new EntityValidationError('Post title cannot exceed 255 characters')
+      if (props.title.length > VALIDATION_LIMITS.TITLE_MAX_LENGTH) {
+        throw new EntityValidationError(VALIDATION_MESSAGES.TITLE_TOO_LONG)
       }
       this.props.title = props.title.trim()
     }
 
     if (props.content !== undefined) {
+      if (props.content && props.content.length > VALIDATION_LIMITS.CONTENT_MAX_LENGTH) {
+        throw new EntityValidationError(VALIDATION_MESSAGES.CONTENT_TOO_LONG)
+      }
       this.props.content = props.content
     }
 
