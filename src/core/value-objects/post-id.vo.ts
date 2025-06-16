@@ -7,7 +7,7 @@
 import { ValueObjectValidationError } from '../errors/domain.errors'
 
 export class PostId {
-  private constructor(private readonly _value: number) {}
+  private constructor(private readonly _value: number) { }
 
   static create(value: number): PostId {
     if (!Number.isInteger(value) || value <= 0) {

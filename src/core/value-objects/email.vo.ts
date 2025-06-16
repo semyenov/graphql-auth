@@ -8,7 +8,7 @@ import { VALIDATION_LIMITS, VALIDATION_MESSAGES, VALIDATION_PATTERNS } from '../
 import { ValueObjectValidationError } from '../errors/domain.errors'
 
 export class Email {
-  private constructor(private readonly _value: string) {}
+  private constructor(private readonly _value: string) { }
 
   static create(value: string): Email {
     if (!value || value.trim().length === 0) {

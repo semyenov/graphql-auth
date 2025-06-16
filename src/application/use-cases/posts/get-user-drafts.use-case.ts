@@ -13,8 +13,7 @@ import { PostDto } from '../../dtos/post.dto'
 import { PostMapper } from '../../mappers/post.mapper'
 
 export interface GetUserDraftsCommand {
-  requestedUserId: UserId
-  currentUserId: UserId
+  authorId: UserId
   skip?: number
   take?: number
 }
@@ -37,22 +36,21 @@ export class GetUserDraftsUseCase {
 
   async execute(command: GetUserDraftsCommand): Promise<GetUserDraftsResult> {
     this.logger.debug('Fetching user drafts', {
-      requestedUserId: command.requestedUserId.value,
-      currentUserId: command.currentUserId.value,
+      authorId: command.authorId.value,
       skip: command.skip,
       take: command.take
     })
 
     try {
       // Users can only see their own drafts
-      if (!command.requestedUserId.equals(command.currentUserId)) {
+      if (!command.authorId.equals(command.authorId)) {
         throw new UnauthorizedError('You can only view your own drafts')
       }
 
       const { skip = 0, take = 10 } = command
 
       // Get unpublished posts for the user
-      const drafts = await this.postRepository.findByAuthor(command.requestedUserId, {
+      const drafts = await this.postRepository.findByAuthor(command.authorId, {
         includeUnpublished: true,
         skip,
         take,
@@ -62,7 +60,7 @@ export class GetUserDraftsUseCase {
       const unpublishedDrafts = drafts.filter(post => !post.published)
 
       // Get total count of drafts
-      const allDrafts = await this.postRepository.findByAuthor(command.requestedUserId, {
+      const allDrafts = await this.postRepository.findByAuthor(command.authorId, {
         includeUnpublished: true,
       })
       const totalCount = allDrafts.filter(post => !post.published).length
@@ -73,8 +71,7 @@ export class GetUserDraftsUseCase {
       }
     } catch (error) {
       this.logger.error('Failed to fetch user drafts', error as Error, {
-        requestedUserId: command.requestedUserId.value,
-        currentUserId: command.currentUserId.value,
+        authorId: command.authorId.value,
         skip: command.skip,
         take: command.take
       })

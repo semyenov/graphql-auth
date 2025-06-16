@@ -41,7 +41,10 @@ export class SearchUsersUseCase {
 
     // Search in both email and name
     const users = await this.userRepository.findMany({
-      searchTerm: trimmedTerm,
+      filter: {
+        emailContains: trimmedTerm,
+        nameContains: trimmedTerm,
+      },
       skip,
       take,
       orderBy,

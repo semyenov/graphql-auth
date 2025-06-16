@@ -148,7 +148,7 @@ export function normalizeError(error: unknown): BaseError {
     if (error.name === 'UnauthorizedPostAccessError') {
       return new AuthorizationError(error.message)
     }
-    
+
     if (error.name === 'PostNotFoundError') {
       return new NotFoundError('Post', error.message)
     }

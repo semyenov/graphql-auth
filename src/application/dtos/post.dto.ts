@@ -15,7 +15,7 @@ export interface PostDto {
 
 export interface PostWithAuthorDto extends PostDto {
   author: {
-    id: string
+    id: number
     email: string
     name: string | null
   }
@@ -24,7 +24,7 @@ export interface PostWithAuthorDto extends PostDto {
 export interface CreatePostDto {
   title: string
   content: string | null
-  authorId: string
+  authorId: number
 }
 
 export interface UpdatePostDto {

@@ -5,9 +5,9 @@
  * It's independent of any infrastructure concerns.
  */
 
+import { EntityValidationError } from '../errors/domain.errors'
 import { Email } from '../value-objects/email.vo'
 import { UserId } from '../value-objects/user-id.vo'
-import { EntityValidationError } from '../errors/domain.errors'
 
 export interface UserProps {
   id: UserId
@@ -19,7 +19,7 @@ export interface UserProps {
 }
 
 export class User {
-  private constructor(private readonly props: UserProps) {}
+  private constructor(private readonly props: UserProps) { }
 
   // Factory method for creating a new user
   static create(props: {
@@ -90,14 +90,7 @@ export class User {
   }
 
   // Convert to plain object for persistence
-  toPersistence(): {
-    id: number
-    email: string
-    name: string | null
-    password: string
-    createdAt?: Date
-    updatedAt?: Date
-  } {
+  toPersistence() {
     return {
       id: this.props.id.value,
       email: this.props.email.value,

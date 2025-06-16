@@ -48,7 +48,7 @@ export class GetPostUseCase {
     return {
       ...PostMapper.toDto(post),
       author: {
-        id: author.id.value.toString(),
+        id: author.id.value,
         email: author.email.value,
         name: author.name,
       },

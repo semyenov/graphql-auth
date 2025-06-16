@@ -119,7 +119,7 @@ describe('Authentication', () => {
         data: {
           email,
           password: await bcrypt.hash(correctPassword, 10),
-          name: 'Test User 2',
+          name: 'Test User',
         },
       })
 

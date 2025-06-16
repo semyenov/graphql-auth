@@ -104,9 +104,10 @@ export class PrismaPostRepository implements IPostRepository {
       includeUnpublished?: boolean
       skip?: number
       take?: number
+      orderBy?: PostOrderBy
     }
   ): Promise<Post[]> {
-    const { includeUnpublished = false, skip = 0, take = 10 } = options || {}
+    const { includeUnpublished = false, skip = 0, take = 10, orderBy } = options || {}
 
     const data = await this.prisma.post.findMany({
       where: {
@@ -115,7 +116,7 @@ export class PrismaPostRepository implements IPostRepository {
       },
       skip,
       take,
-      orderBy: { createdAt: 'desc' },
+      orderBy,
     })
 
     return data.map(PostMapper.toDomain)
@@ -182,17 +183,19 @@ export class PrismaPostRepository implements IPostRepository {
     return result.count
   }
 
-  private buildWhereClause(filter?: PostFilter): Prisma.PostWhereInput {
+  private buildWhereClause(filter?: PostFilter): PostFilter {
     if (!filter) return {}
 
-    const where: Prisma.PostWhereInput = {}
+    const where: PostFilter = {
+      ...filter,
+    }
 
     if (filter.published !== undefined) {
       where.published = filter.published
     }
 
     if (filter.authorId) {
-      where.authorId = filter.authorId.value
+      where.authorId = filter.authorId
     }
 
     if (filter.titleContains || filter.contentContains) {

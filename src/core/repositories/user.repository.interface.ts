@@ -10,6 +10,13 @@ import { User } from '../entities/user.entity'
 import { Email } from '../value-objects/email.vo'
 import { UserId } from '../value-objects/user-id.vo'
 
+export type UserFilter = Prisma.UserWhereInput & {
+  emailContains?: string
+  nameContains?: string
+}
+
+export type UserOrderBy = Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[]
+
 export interface IUserRepository {
   // Basic CRUD operations
   findById(id: UserId): Promise<User | null>
@@ -20,21 +27,19 @@ export interface IUserRepository {
 
   // Query operations
   findMany(criteria: {
-    searchTerm?: string
+    filter?: UserFilter
     skip?: number
     take?: number
-    orderBy?: Prisma.UserOrderByWithRelationInput
+    orderBy?: UserOrderBy
   }): Promise<User[]>
 
-  count(criteria?: {
-    emailContains?: string
-    nameContains?: string
-  }): Promise<number>
+  count(filter?: UserFilter): Promise<number>
 
   // Business-specific queries
   existsByEmail(email: Email): Promise<boolean>
-  search(searchTerm: string, options?: {
+  search(filter?: UserFilter, options?: {
     skip?: number
     take?: number
+    orderBy?: UserOrderBy
   }): Promise<User[]>
 }

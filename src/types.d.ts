@@ -1,5 +1,6 @@
 import type { Post as PrismaPost, User as PrismaUser } from '@prisma/client'
 import type { GraphQLError } from 'graphql'
+import type { Environment } from './constants/config'
 import type { ContextErrorCode, ContextErrorMessage } from './context/constants'
 
 // Domain Types
@@ -96,7 +97,7 @@ export type Result<T, E = AppError> =
 
 // Environment Types
 export interface EnvironmentConfig {
-  NODE_ENV: 'development' | 'production' | 'test'
+  NODE_ENV: Environment
   PORT: number
   HOST: string
   APP_SECRET: string

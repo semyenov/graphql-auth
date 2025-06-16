@@ -10,18 +10,18 @@ import { ITokenService, TokenPayload } from '../../core/services/token.service.i
 import { UserId } from '../../core/value-objects/user-id.vo'
 import type { AuthConfig } from './jwt-auth.service'
 
-@injectable()
+@injectable({
+  token: 'ITokenService',
+})
 export class JwtTokenService implements ITokenService {
   constructor(
-    @inject('AuthConfig') private config: AuthConfig
+    @inject('AuthConfig') private config: AuthConfig,
   ) { }
 
   async generateToken(payload: TokenPayload): Promise<string> {
     return jwt.sign(payload, this.config.jwtSecret, {
       expiresIn: this.config.jwtExpiresIn,
       algorithm: 'HS256',
-      issuer: 'blog-api',
-      audience: 'blog-api',
     })
   }
 

@@ -5,14 +5,14 @@
  */
 
 import { User } from '../../core/entities/user.entity'
-import { UserId } from '../../core/value-objects/user-id.vo'
 import { Email } from '../../core/value-objects/email.vo'
+import { UserId } from '../../core/value-objects/user-id.vo'
 import { UserDto } from '../dtos/user.dto'
 
 export class UserMapper {
   static toDto(user: User): UserDto {
     return {
-      id: user.id.value.toString(),
+      id: user.id.value,
       email: user.email.value,
       name: user.name,
       createdAt: user.createdAt,

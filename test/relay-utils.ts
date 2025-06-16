@@ -60,9 +60,9 @@ export function toPostId(id: number): string {
  */
 export function extractNumericId(globalId: string): number {
   const { id } = fromGlobalId(globalId)
-  const numericId = parseInt(id, 10)
+  const numericId = Number.parseInt(id, 10)
 
-  if (isNaN(numericId)) {
+  if (Number.isNaN(numericId)) {
     throw new Error(`Invalid numeric ID in global ID: ${globalId}`)
   }
 

@@ -199,8 +199,8 @@ export function isAuthenticated(context: { userId?: number | null }): boolean {
 export function safeParseInt(value: unknown, defaultValue = 0): number {
   if (typeof value === 'number') return Math.floor(value)
   if (typeof value === 'string') {
-    const parsed = parseInt(value, 10)
-    return isNaN(parsed) ? defaultValue : parsed
+    const parsed = Number.parseInt(value, 10)
+    return Number.isNaN(parsed) ? defaultValue : parsed
   }
   return defaultValue
 }

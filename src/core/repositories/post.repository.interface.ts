@@ -4,22 +4,17 @@
  * Defines the contract for post data access.
  */
 
+import { Prisma } from '@prisma/client'
 import { Post } from '../entities/post.entity'
 import { PostId } from '../value-objects/post-id.vo'
 import { UserId } from '../value-objects/user-id.vo'
 
-export interface PostFilter {
-  published?: boolean
+export type PostOrderBy = Prisma.PostOrderByWithRelationInput | Prisma.PostOrderByWithRelationInput[]
+export type PostOrderDirection = Prisma.SortOrder
+export type PostFilter = Prisma.PostWhereInput & {
   authorId?: UserId
   titleContains?: string
   contentContains?: string
-}
-
-export interface PostOrderBy {
-  createdAt?: 'asc' | 'desc'
-  updatedAt?: 'asc' | 'desc'
-  title?: 'asc' | 'desc'
-  viewCount?: 'asc' | 'desc'
 }
 
 export interface IPostRepository {

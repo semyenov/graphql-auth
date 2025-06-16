@@ -4,7 +4,24 @@
  * Centralized configuration management with environment variable validation.
  */
 
+import ms, { StringValue } from 'ms'
 import { z } from 'zod'
+
+const envJwtExpiresIn = z.union([
+  z.string().default('7d'),
+  z.number().default(7 * 24 * 60 * 60 * 1000)
+])
+  .transform(value => {
+    if (typeof value === 'string') {
+      const parsed = ms(value as StringValue)
+      if (Number.isNaN(parsed)) {
+        throw new Error(`Invalid JWT_EXPIRES_IN value: ${value}`)
+      }
+      return parsed
+    }
+    return value
+  })
+  .pipe(z.number())
 
 // Environment schema validation
 const envSchema = z.object({
@@ -12,7 +29,7 @@ const envSchema = z.object({
   PORT: z.string().transform(Number).default('4000'),
   DATABASE_URL: z.string().url(),
   JWT_SECRET: z.string().min(32),
-  JWT_EXPIRES_IN: z.string().default('7d'),
+  JWT_EXPIRES_IN: envJwtExpiresIn,
   BCRYPT_ROUNDS: z.string().transform(Number).default('10'),
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
 })
@@ -25,7 +42,7 @@ export interface DatabaseConfig {
 
 export interface AuthConfig {
   jwtSecret: string
-  jwtExpiresIn: string
+  jwtExpiresIn: number
   bcryptRounds: number
 }
 

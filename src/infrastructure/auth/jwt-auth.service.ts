@@ -6,13 +6,14 @@
 
 import bcrypt from 'bcryptjs'
 import jwt, { JwtPayload, Secret } from 'jsonwebtoken'
+import type { StringValue } from 'ms'
 import { inject, injectable } from 'tsyringe'
 import { IAuthService } from '../../core/services/auth.service.interface'
 import { UserId } from '../../core/value-objects/user-id.vo'
 
 export interface AuthConfig {
   jwtSecret: Secret
-  jwtExpiresIn: string
+  jwtExpiresIn: number | StringValue
   bcryptRounds: number
 }
 

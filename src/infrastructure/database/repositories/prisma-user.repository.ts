@@ -8,7 +8,7 @@ import { Prisma, PrismaClient } from '@prisma/client'
 import { inject, injectable } from 'tsyringe'
 import { UserMapper } from '../../../application/mappers/user.mapper'
 import { User } from '../../../core/entities/user.entity'
-import { IUserRepository } from '../../../core/repositories/user.repository.interface'
+import { IUserRepository, UserFilter, UserOrderBy } from '../../../core/repositories/user.repository.interface'
 import { Email } from '../../../core/value-objects/email.vo'
 import { UserId } from '../../../core/value-objects/user-id.vo'
 
@@ -128,21 +128,31 @@ export class PrismaUserRepository implements IUserRepository {
     return count > 0
   }
 
-  async search(searchTerm: string, options?: {
+  async search(filter?: UserFilter, options?: {
     skip?: number
     take?: number
+    orderBy?: UserOrderBy
   }): Promise<User[]> {
-    const { skip = 0, take = 10 } = options || {}
+    const { skip = 0, take = 10, orderBy } = options || {}
+    const where: UserFilter = {
+      ...filter,
+    }
+
+    if (where.emailContains || where.nameContains) {
+      where.OR = []
+      if (where.emailContains) {
+        where.OR.push({ email: { contains: where.emailContains } })
+      }
+      if (where.nameContains) {
+        where.OR.push({ name: { contains: where.nameContains } })
+      }
+    }
 
     const data = await this.prisma.user.findMany({
-      where: {
-        OR: [
-          { email: { contains: searchTerm } },
-          { name: { contains: searchTerm } },
-        ],
-      },
+      where,
       skip,
       take,
+      orderBy,
     })
 
     return data.map(UserMapper.toDomain)
