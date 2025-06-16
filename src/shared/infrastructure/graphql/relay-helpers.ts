@@ -32,16 +32,16 @@ export function parseGlobalId(
   expectedType: string
 ): number {
   const decoded = fromGlobalId(globalId)
-  
+
   if (decoded.type !== expectedType) {
     throw new Error(`Expected ${expectedType} ID but got ${decoded.type}`)
   }
-  
+
   const id = parseInt(decoded.id, 10)
   if (isNaN(id) || id <= 0) {
     throw new Error(`Invalid ${expectedType} ID`)
   }
-  
+
   return id
 }
 

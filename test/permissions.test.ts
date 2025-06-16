@@ -57,7 +57,7 @@ describe('Enhanced Permissions System', () => {
         })
 
         it('should validate operations correctly', () => {
-            const authenticatedContext = createAuthContext(testUserId.toString())
+            const authenticatedContext = createAuthContext(UserId.create(testUserId))
             const unauthenticatedContext = createMockContext()
 
             // Test authenticated operations

@@ -214,7 +214,7 @@ export const gqlHelpers = {
     if (expectedErrorSubstring) {
       const hasExpectedError = errors.some(error => error.includes(expectedErrorSubstring))
       if (!hasExpectedError) {
-        throw new Error(`Expected error containing "${expectedErrorSubstring}", but got: ${errors.join(', ')}`)
+        throw new Error(`Expected error containing "${expectedErrorSubstring}", but got: "${errors.join(', ')}"`)
       }
     }
 

@@ -84,6 +84,7 @@ describe('Authentication', () => {
       // Create user
       const password = 'myPassword123'
       const email = 'testuser@example.com'
+
       await prisma.user.create({
         data: {
           email,
@@ -111,17 +112,20 @@ describe('Authentication', () => {
     it('should fail with invalid password', async () => {
       // Create user
       const email = 'testuser2@example.com'
+      const correctPassword = 'correctPassword'
+      const wrongPassword = 'wrongPassword'
+
       await prisma.user.create({
         data: {
           email,
-          password: await bcrypt.hash('correctPassword', 10),
+          password: await bcrypt.hash(correctPassword, 10),
           name: 'Test User 2',
         },
       })
 
       const variables: LoginVariables = {
         email,
-        password: 'wrongPassword',
+        password: wrongPassword,
       }
 
       // Using the new helper to expect specific error
@@ -135,9 +139,12 @@ describe('Authentication', () => {
     })
 
     it('should fail with non-existent user', async () => {
+      const email = 'nonexistent@example.com'
+      const password = 'anyPassword'
+
       const variables: LoginVariables = {
-        email: 'nonexistent@example.com',
-        password: 'anyPassword',
+        email,
+        password,
       }
 
       // Using the new helper to expect specific error
