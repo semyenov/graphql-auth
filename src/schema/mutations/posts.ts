@@ -1,10 +1,16 @@
-import { getUserId } from '../../context/utils'
-import { AuthenticationError, NotFoundError, normalizeError } from '../../errors'
-import { prisma } from '../../prisma'
+import { requireAuthentication } from '../../context/auth'
+import { NotFoundError, normalizeError } from '../../errors'
 import { createPostSchema, validateInput } from '../../utils/validation'
 import { builder } from '../builder'
 import { PostCreateInput } from '../inputs'
 import { parseGlobalID } from '../utils'
+import {
+    createDraftPost,
+    deletePostById,
+    incrementPostViews,
+    togglePostPublication,
+    validatePostAccess,
+} from './utils'
 
 /**
  * Create a new draft post  
@@ -23,25 +29,19 @@ builder.mutationField('createDraft', (t) =>
         },
         resolve: async (query, _parent, args, context) => {
             try {
-                // Check authentication
-                const userId = getUserId(context)
-                if (!userId) {
-                    throw new AuthenticationError()
-                }
+                // Ensure user is authenticated
+                const userId = requireAuthentication(context)
 
-                // Validate input
+                // Validate and sanitize input
                 const validatedData = validateInput(createPostSchema, args.data)
 
-                // Create the post
-                return await prisma.post.create({
-                    ...query,
-                    data: {
-                        title: validatedData.title,
-                        content: validatedData.content,
-                        authorId: userId,
-                        published: false, // Always create as draft
-                    },
-                })
+                // Create the draft post
+                return await createDraftPost(
+                    validatedData.title,
+                    validatedData.content,
+                    userId,
+                    query
+                )
             } catch (error) {
                 throw normalizeError(error)
             }
@@ -65,34 +65,19 @@ builder.mutationField('togglePublishPost', (t) =>
         },
         resolve: async (query, _parent, args, context) => {
             try {
-                // Check authentication
-                const userId = getUserId(context)
-                if (!userId) {
-                    throw new AuthenticationError()
-                }
+                // Validate post access and ownership
+                const { post, postId } = await validatePostAccess(
+                    args.id.toString(),
+                    context,
+                    true // Check ownership
+                )
 
-                // Decode the global ID
-                const { id: postId } = parseGlobalID(args.id.toString(), 'Post')
-
-                // Find the post and check ownership
-                const post = await prisma.post.findUnique({
-                    where: { id: postId },
-                    select: {
-                        published: true,
-                        authorId: true,
-                    },
-                })
-
-                if (!post) {
-                    throw new NotFoundError('Post', args.id.toString())
-                }
-
-                // Update the post
-                return await prisma.post.update({
-                    ...query,
-                    where: { id: postId },
-                    data: { published: !post.published },
-                })
+                // Toggle the publication status
+                return await togglePostPublication(
+                    postId,
+                    post.published ?? false,
+                    query
+                )
             } catch (error) {
                 throw normalizeError(error)
             }
@@ -116,21 +101,13 @@ builder.mutationField('incrementPostViewCount', (t) =>
         },
         resolve: async (query, _parent, args) => {
             try {
-                // Decode the global ID
+                // Parse the global ID
                 const { id: postId } = parseGlobalID(args.id.toString(), 'Post')
 
-                // Update view count atomically
-                return await prisma.post.update({
-                    ...query,
-                    where: { id: postId },
-                    data: {
-                        viewCount: {
-                            increment: 1,
-                        },
-                    },
-                })
+                // Increment view count
+                return await incrementPostViews(postId, query)
             } catch (error) {
-                // Handle case where post doesn't exist
+                // Handle Prisma P2025 error (record not found)
                 if (error instanceof Error && 'code' in error && error.code === 'P2025') {
                     throw new NotFoundError('Post', args.id.toString())
                 }
@@ -156,22 +133,17 @@ builder.mutationField('deletePost', (t) =>
         },
         resolve: async (query, _parent, args, context) => {
             try {
-                // Check authentication
-                const userId = getUserId(context)
-                if (!userId) {
-                    throw new AuthenticationError()
-                }
+                // Validate post access and ownership
+                const { postId } = await validatePostAccess(
+                    args.id.toString(),
+                    context,
+                    true // Check ownership
+                )
 
-                // Decode the global ID
-                const { id: postId } = parseGlobalID(args.id.toString(), 'Post')
-
-                // Delete the post (will fail if it doesn't exist)
-                return await prisma.post.delete({
-                    ...query,
-                    where: { id: postId },
-                })
+                // Delete the post
+                return await deletePostById(postId, query)
             } catch (error) {
-                // Handle case where post doesn't exist
+                // Handle Prisma P2025 error (record not found)
                 if (error instanceof Error && 'code' in error && error.code === 'P2025') {
                     throw new NotFoundError('Post', args.id.toString())
                 }

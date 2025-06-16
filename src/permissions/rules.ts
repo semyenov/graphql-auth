@@ -1,25 +1,23 @@
 import { rule } from 'graphql-shield'
 import { ERROR_MESSAGES } from '../constants'
+import { Context, requireAuthentication } from '../context'
+import { AuthorizationError, NotFoundError } from '../errors'
 import {
-  Context,
-  hasPermission,
-  hasRole,
-  isAuthenticated,
-  requireAuthentication,
-} from '../context'
-import { AuthenticationError, AuthorizationError, NotFoundError, ValidationError } from '../errors'
-import { prisma } from '../prisma'
+  checkPostOwnership,
+  createAuthenticationCheck,
+  createPermissionCheck,
+  createRoleCheck,
+  handleRuleError,
+  parseAndValidateGlobalId,
+  validateResourceId,
+} from './rule-utils'
 
 /**
  * Basic authentication rule
  * Ensures the user is authenticated
  */
 export const isAuthenticatedUser = rule({ cache: 'contextual' })(
-  (_parent, _args, context: Context) => {
-    return isAuthenticated(context)
-      ? true
-      : new AuthenticationError()
-  }
+  (_parent, _args, context: Context) => createAuthenticationCheck(context)
 )
 
 /**
@@ -29,32 +27,29 @@ export const isAuthenticatedUser = rule({ cache: 'contextual' })(
 export const isPostOwner = rule({ cache: 'strict' })(
   async (_parent, args: { id: string }, context: Context) => {
     try {
-      if (!args.id || typeof args.id !== 'string') {
-        throw new ValidationError(['Valid post ID is required'])
-      }
+      // Validate the post ID
+      validateResourceId(args.id, 'post')
 
+      // Ensure user is authenticated
       const userId = requireAuthentication(context)
       
-      // Parse the global ID to get numeric ID
-      const { parseGlobalID } = await import('../schema/utils')
-      const { id: postId } = parseGlobalID(args.id, 'Post')
+      // Parse the global ID
+      const postId = await parseAndValidateGlobalId(args.id, 'Post')
 
-      const post = await prisma.post.findUnique({
-        where: { id: postId },
-        select: { authorId: true, title: true }
-      })
+      // Check ownership
+      const ownership = await checkPostOwnership(postId, userId)
 
-      if (!post) {
+      if (!ownership.resourceExists) {
         throw new NotFoundError('Post', args.id)
       }
 
-      if (post.authorId !== userId) {
+      if (!ownership.isOwner) {
         throw new AuthorizationError(ERROR_MESSAGES.NOT_POST_OWNER)
       }
 
       return true
     } catch (error) {
-      return error instanceof Error ? error : new AuthorizationError('Authorization failed')
+      return handleRuleError(error)
     }
   }
 )
@@ -74,7 +69,7 @@ export const isUserOwner = rule({ cache: 'strict' })(
 
       return true
     } catch (error) {
-      return error instanceof Error ? error : new AuthorizationError('Authorization failed')
+      return handleRuleError(error)
     }
   }
 )
@@ -84,17 +79,7 @@ export const isUserOwner = rule({ cache: 'strict' })(
  * Ensures the user has admin privileges
  */
 export const isAdmin = rule({ cache: 'contextual' })(
-  (_parent, _args, context: Context) => {
-    if (!isAuthenticated(context)) {
-      return new AuthenticationError()
-    }
-
-    if (!hasRole(context, 'admin')) {
-      return new AuthorizationError('Admin privileges required')
-    }
-
-    return true
-  }
+  (_parent, _args, context: Context) => createRoleCheck(context, 'admin')
 )
 
 /**
@@ -103,15 +88,14 @@ export const isAdmin = rule({ cache: 'contextual' })(
  */
 export const isModerator = rule({ cache: 'contextual' })(
   (_parent, _args, context: Context) => {
-    if (!isAuthenticated(context)) {
-      return new AuthenticationError()
-    }
-
-    if (!hasRole(context, 'moderator') && !hasRole(context, 'admin')) {
-      return new AuthorizationError('Moderator privileges required')
-    }
-
-    return true
+    // Check for either moderator or admin role
+    const moderatorCheck = createRoleCheck(context, 'moderator', 'Moderator privileges required')
+    if (moderatorCheck === true) return true
+    
+    const adminCheck = createRoleCheck(context, 'admin', 'Moderator privileges required')
+    if (adminCheck === true) return true
+    
+    return moderatorCheck // Return the first error
   }
 )
 
@@ -139,17 +123,8 @@ export const rateLimitSensitiveOperations = rule({ cache: 'no_cache' })(
  * Ensures the user has permission to create posts
  */
 export const hasCreatePostPermission = rule({ cache: 'contextual' })(
-  (_parent, _args, context: Context) => {
-    if (!isAuthenticated(context)) {
-      return new AuthenticationError()
-    }
-
-    if (!hasPermission(context, 'write:posts')) {
-      return new AuthorizationError('Permission denied: cannot create posts')
-    }
-
-    return true
-  }
+  (_parent, _args, context: Context) => 
+    createPermissionCheck(context, 'write:posts', 'Permission denied: cannot create posts')
 )
 
 /**
@@ -157,13 +132,7 @@ export const hasCreatePostPermission = rule({ cache: 'contextual' })(
  * Ensures the user can create draft posts
  */
 export const canCreateDraft = rule({ cache: 'contextual' })(
-  (_parent, _args, context: Context) => {
-    if (!isAuthenticated(context)) {
-      return new AuthenticationError()
-    }
-
-    return true
-  }
+  (_parent, _args, context: Context) => createAuthenticationCheck(context)
 )
 
 /**

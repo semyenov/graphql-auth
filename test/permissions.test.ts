@@ -294,7 +294,7 @@ describe('Enhanced Permissions System', () => {
             expect(result.body.kind).toBe('single')
             if (result.body.kind === 'single') {
                 expect(result.body.singleResult.errors).toBeDefined()
-                expect(result.body.singleResult.errors![0]!.message).toContain('You can only modify your own posts')
+                expect(result.body.singleResult.errors![0]!.message).toContain('You can only modify posts that you have created')
             }
 
             // Verify post still exists

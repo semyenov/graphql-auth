@@ -156,7 +156,7 @@ describe('User queries', () => {
         print(TogglePublishPostMutation),
         variables,
         createAuthContext(testUserId.toString()), // Different user
-        'You can only modify your own posts'
+        'You can only modify posts that you have created'
       )
 
       // Verify post wasn't changed

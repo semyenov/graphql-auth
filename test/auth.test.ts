@@ -72,7 +72,7 @@ describe('Authentication', () => {
         print(SignupMutation),
         variables,
         createMockContext(),
-        'A user with this email already exists'
+        'An account with this email address already exists. Please use a different email or sign in.'
       )
 
       expect(errors.some(error => error.includes('email'))).toBe(true)

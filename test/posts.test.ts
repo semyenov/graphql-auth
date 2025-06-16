@@ -169,7 +169,7 @@ describe('Posts', () => {
         print(GetDraftsQuery),
         variables,
         createMockContext(), // No auth
-        'Authentication required'
+        'You must be logged in to perform this action. Please authenticate and try again.'
       )
     })
   })
@@ -278,7 +278,7 @@ describe('Posts', () => {
         print(DeletePostMutation),
         variables,
         createAuthContext(testUserId.toString()), // Different user
-        'You can only modify your own posts'
+        'You can only modify posts that you have created'
       )
 
       // Verify post still exists
@@ -306,7 +306,7 @@ describe('Posts', () => {
         print(DeletePostMutation),
         variables,
         createMockContext(), // No authentication
-        'Authentication required'
+        'You must be logged in to perform this action. Please authenticate and try again.'
       )
 
       // Verify post still exists

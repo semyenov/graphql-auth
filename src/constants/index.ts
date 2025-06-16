@@ -73,26 +73,26 @@ export const VALIDATION = {
  */
 export const ERROR_MESSAGES = {
   // Authentication
-  INVALID_CREDENTIALS: 'Invalid email or password',
-  USER_NOT_FOUND: 'User not found',
-  EMAIL_ALREADY_EXISTS: 'A user with this email already exists',
-  AUTHENTICATION_REQUIRED: 'Authentication required',
-  INVALID_TOKEN: 'Invalid authentication token',
-  TOKEN_EXPIRED: 'Authentication token has expired',
+  INVALID_CREDENTIALS: 'Invalid email or password. Please check your credentials and try again.',
+  USER_NOT_FOUND: 'No user found with the provided identifier',
+  EMAIL_ALREADY_EXISTS: 'An account with this email address already exists. Please use a different email or sign in.',
+  AUTHENTICATION_REQUIRED: 'You must be logged in to perform this action. Please authenticate and try again.',
+  INVALID_TOKEN: 'The provided authentication token is invalid or malformed. Please sign in again.',
+  TOKEN_EXPIRED: 'Your authentication token has expired. Please sign in again to continue.',
 
   // Validation
-  INVALID_EMAIL: 'Invalid email address',
-  PASSWORD_TOO_SHORT: `Password must be at least ${AUTH.MIN_PASSWORD_LENGTH} characters`,
-  PASSWORD_TOO_LONG: `Password must not exceed ${AUTH.MAX_PASSWORD_LENGTH} characters`,
-  TITLE_REQUIRED: 'Title is required',
-  TITLE_TOO_LONG: `Title must not exceed ${VALIDATION.MAX_TITLE_LENGTH} characters`,
-  CONTENT_TOO_LONG: `Content must not exceed ${VALIDATION.MAX_CONTENT_LENGTH} characters`,
+  INVALID_EMAIL: 'Please provide a valid email address (e.g., user@example.com)',
+  PASSWORD_TOO_SHORT: `Password must be at least ${AUTH.MIN_PASSWORD_LENGTH} characters long for security`,
+  PASSWORD_TOO_LONG: `Password cannot exceed ${AUTH.MAX_PASSWORD_LENGTH} characters`,
+  TITLE_REQUIRED: 'Post title is required and cannot be empty',
+  TITLE_TOO_LONG: `Post title must not exceed ${VALIDATION.MAX_TITLE_LENGTH} characters`,
+  CONTENT_TOO_LONG: `Post content must not exceed ${VALIDATION.MAX_CONTENT_LENGTH} characters`,
   NAME_TOO_LONG: `Name must not exceed ${VALIDATION.MAX_NAME_LENGTH} characters`,
 
   // Authorization
-  INSUFFICIENT_PERMISSIONS: 'Insufficient permissions for this operation',
-  POST_NOT_FOUND: 'Post not found',
-  NOT_POST_OWNER: 'You can only modify your own posts',
+  INSUFFICIENT_PERMISSIONS: 'You do not have the required permissions to perform this operation',
+  POST_NOT_FOUND: 'The requested post could not be found. It may have been deleted or the ID is incorrect.',
+  NOT_POST_OWNER: 'You can only modify posts that you have created',
 
   // Generic
   INTERNAL_ERROR: 'An internal error occurred',

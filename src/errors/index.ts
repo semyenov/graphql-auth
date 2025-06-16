@@ -4,8 +4,20 @@
 
 /**
  * Base error class for all application errors
+ * 
+ * @example
+ * ```typescript
+ * throw new BaseError('Something went wrong', 'INTERNAL_ERROR', 500)
+ * ```
  */
 export class BaseError extends Error {
+  /**
+   * Creates a new BaseError instance
+   * 
+   * @param message - Human-readable error message
+   * @param code - Machine-readable error code (e.g., 'UNAUTHENTICATED')
+   * @param statusCode - HTTP status code (defaults to 400)
+   */
   constructor(
     message: string,
     public readonly code: string,
@@ -16,6 +28,11 @@ export class BaseError extends Error {
     Error.captureStackTrace(this, this.constructor)
   }
 
+  /**
+   * Serializes the error to a JSON-friendly format
+   * 
+   * @returns Object with error details
+   */
   toJSON() {
     return {
       name: this.name,
