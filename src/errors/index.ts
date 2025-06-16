@@ -144,6 +144,15 @@ export function normalizeError(error: unknown): BaseError {
   }
 
   if (error instanceof Error) {
+    // Check for domain-specific errors
+    if (error.name === 'UnauthorizedPostAccessError') {
+      return new AuthorizationError(error.message)
+    }
+    
+    if (error.name === 'PostNotFoundError') {
+      return new NotFoundError('Post', error.message)
+    }
+
     // Check for Prisma errors
     if (hasErrorCode(error)) {
       switch (error.code) {

@@ -1,7 +1,7 @@
 
 import { prisma } from '../../prisma'
+import { parseGlobalId } from '../../shared/infrastructure/graphql/relay-helpers'
 import { builder } from '../builder'
-import { parseGlobalID } from '../utils'
 
 // Post by ID query - now accepts a global ID
 builder.queryField('post', (t) =>
@@ -13,7 +13,7 @@ builder.queryField('post', (t) =>
         },
         resolve: async (query, _parent, args) => {
             // Decode the global ID to get the numeric ID
-            const { id: postId } = parseGlobalID(args.id.toString(), 'Post')
+            const postId = parseGlobalId(args.id.toString(), 'Post')
 
             return prisma.post.findUnique({
                 ...query,
@@ -80,7 +80,7 @@ builder.queryField('drafts', (t) =>
             }
 
             // Decode the global ID
-            const { id: requestedUserId } = parseGlobalID(args.userId.toString(), 'User')
+            const requestedUserId = parseGlobalId(args.userId.toString(), 'User')
 
             // Users can only see their own drafts
             if (ctx.userId !== requestedUserId) {

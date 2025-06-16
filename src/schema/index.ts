@@ -15,8 +15,6 @@ import './scalars';
 import './types/post';
 import './types/user';
 
-import './mutations/auth';
-import './mutations/posts';
 import './queries/posts';
 import './queries/users';
 

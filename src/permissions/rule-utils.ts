@@ -66,9 +66,8 @@ export async function parseAndValidateGlobalId(
   globalId: string,
   expectedType: string
 ): Promise<number> {
-  const { parseGlobalID: importedParseGlobalID } = await import('../schema/utils')
-  const { id } = importedParseGlobalID(globalId, expectedType)
-  return id
+  const { parseGlobalId } = await import('../shared/infrastructure/graphql/relay-helpers')
+  return parseGlobalId(globalId, expectedType)
 }
 
 /**

@@ -44,3 +44,13 @@ export function parseGlobalId(
   
   return id
 }
+
+/**
+ * Alias for toGlobalId for backward compatibility with Pothos builder
+ */
+export const encodeGlobalId = toGlobalId
+
+/**
+ * Alias for fromGlobalId for backward compatibility with Pothos builder
+ */
+export const decodeGlobalId = fromGlobalId

@@ -39,5 +39,5 @@ export const permissions = shield({
   allowExternalErrors: true,
   debug: isDevelopment,
   fallbackRule: rules.isPublic,
-  fallbackError: new AuthorizationError('Access denied'),
+  fallbackError: new AuthorizationError('Authorization failed'),
 })

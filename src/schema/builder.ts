@@ -5,8 +5,7 @@ import RelayPlugin from '@pothos/plugin-relay';
 import type { Context } from '../context';
 import { isProduction } from '../environment';
 import { prisma } from '../prisma';
-import { decodeGlobalId, encodeGlobalId } from './utils';
-
+import { decodeGlobalId, encodeGlobalId } from '../shared/infrastructure/graphql/relay-helpers';
 /**
  * SchemaBuilder configuration for Pothos with Prisma and Relay plugins
  * 
@@ -56,7 +55,10 @@ export const builder = new SchemaBuilder<{
     relay: {
         // Use the same ID encoding as our test utilities
         // This ensures consistency between tests and production
-        encodeGlobalID: encodeGlobalId,
-        decodeGlobalID: decodeGlobalId,
+        encodeGlobalID: (typename, id) => encodeGlobalId(typename, id as string | number),
+        decodeGlobalID: (globalID) => {
+            const { type, id } = decodeGlobalId(globalID)
+            return { typename: type, id }
+        },
     },
 });

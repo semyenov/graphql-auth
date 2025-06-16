@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client'
 import { getUserId } from '../../context/utils'
 import { prisma } from '../../prisma'
 import { builder } from '../builder'
-import { parseGlobalID } from '../utils'
+import { parseGlobalId } from '../../shared/infrastructure/graphql/relay-helpers'
 
 // Users query with cursor-based pagination
 builder.queryField('users', (t) =>
@@ -43,7 +43,7 @@ builder.queryField('user', (t) =>
             id: t.arg.id({ required: true }),
         },
         resolve: async (query, _parent, args) => {
-            const { id: userId } = parseGlobalID(args.id.toString(), 'User')
+            const userId = parseGlobalId(args.id.toString(), 'User')
 
             return prisma.user.findUnique({
                 ...query,
