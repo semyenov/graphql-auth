@@ -9,8 +9,9 @@ import { UnauthorizedError } from '../../../../core/errors/domain.errors'
 import type { IUserRepository } from '../../../../core/repositories/user.repository.interface'
 import type { ILogger } from '../../../../core/services/logger.interface'
 import { Email } from '../../../../core/value-objects/email.vo'
-import { AuthTokensDto } from '../../../../application/dtos/user.dto'
-import { UserMapper } from '../../../../application/mappers/user.mapper'
+// Temporarily removed - to be replaced with direct resolvers
+// import { AuthTokensDto } from '../../../../application/dtos/user.dto'
+// import { UserMapper } from '../../../../application/mappers/user.mapper'
 import { TokenService } from '../../infrastructure/services/token.service'
 import type { IPasswordService } from '../../../../core/services/password.service.interface'
 
@@ -32,7 +33,7 @@ export class LoginWithTokensUseCase {
         this.logger = logger.child({ useCase: 'LoginWithTokensUseCase' })
     }
 
-    async execute(command: LoginWithTokensCommand): Promise<AuthTokensDto> {
+    async execute(command: LoginWithTokensCommand): Promise<{ accessToken: string; refreshToken: string; user: any }> {
         this.logger.info('Login attempt', { email: command.email })
 
         try {
@@ -65,10 +66,17 @@ export class LoginWithTokensUseCase {
             this.logger.info('Login successful', { email: command.email, userId: user.id.value })
 
             // Return response
+            // Temporarily returning simple object instead of using UserMapper
             return {
                 accessToken: tokens.accessToken,
                 refreshToken: tokens.refreshToken,
-                user: UserMapper.toDto(user)
+                user: {
+                    id: user.id.value,
+                    email: user.email.value,
+                    name: user.name,
+                    createdAt: user.createdAt,
+                    updatedAt: user.updatedAt
+                }
             }
         } catch (error) {
             this.logger.error('Login error', error as Error, { email: command.email })

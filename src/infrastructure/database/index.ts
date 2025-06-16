@@ -4,16 +4,6 @@ export type { Database } from './client'
 
 // Export repositories
 export {
-  BaseRepository,
-  PostRepository,
-  UserRepository
-} from './repositories'
-
-// Export repository types
-export type {
-  PostCreateData,
-  PostUpdateData,
-  PostWithAuthor, UserCreateData,
-  UserPublic, UserWithPassword
+  BaseRepository
 } from './repositories'
 

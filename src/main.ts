@@ -12,7 +12,7 @@ import 'reflect-metadata'
 // Import configuration and DI
 import { getConfigInstance } from './infrastructure/config/configuration'
 import { configureContainer } from './infrastructure/config/container'
-import { createGraphQLContext } from './infrastructure/graphql/context/graphql-context'
+import { createContext } from './context/creation'
 
 // Import schema
 import { schema } from './schema'
@@ -54,7 +54,7 @@ async function bootstrap() {
 
     // Apply GraphQL middleware
     httpServer.on('request', async (req) => {
-      const context = await createGraphQLContext(req)
+      const context = await createContext({ req })
 
       return apolloServer.executeHTTPGraphQLRequest({
         httpGraphQLRequest: {
@@ -88,7 +88,7 @@ async function bootstrap() {
             body: await readBody(req),
             search: getQuery(req),
           },
-          context: async () => createGraphQLContext(req as unknown as IncomingMessage),
+          context: async () => createContext({ req: req as unknown as IncomingMessage }),
         })
       }
 

@@ -6,7 +6,6 @@
 
 import { Prisma, PrismaClient } from '@prisma/client'
 import { inject, injectable } from 'tsyringe'
-import { UserMapper } from '../../../application/mappers/user.mapper'
 import { User } from '../../../core/entities/user.entity'
 import { IUserRepository, UserFilter, UserOrderBy } from '../../../core/repositories/user.repository.interface'
 import { Email } from '../../../core/value-objects/email.vo'
@@ -22,14 +21,36 @@ export class PrismaUserRepository implements IUserRepository {
     const data = await this.prisma.user.findUnique({
       where: { id: id.value },
     })
-    return data ? UserMapper.toDomain(data) : null
+    
+    if (!data) return null
+    
+    // Map database fields to entity properties
+    return User.fromPersistence({
+      id: UserId.from(data.id),
+      email: Email.create(data.email),
+      name: data.name,
+      passwordHash: data.password, // Map 'password' field to 'passwordHash'
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    })
   }
 
   async findByEmail(email: Email): Promise<User | null> {
     const data = await this.prisma.user.findUnique({
       where: { email: email.value },
     })
-    return data ? UserMapper.toDomain(data) : null
+    
+    if (!data) return null
+    
+    // Map database fields to entity properties
+    return User.fromPersistence({
+      id: UserId.from(data.id),
+      email: Email.create(data.email),
+      name: data.name,
+      passwordHash: data.password, // Map 'password' field to 'passwordHash'
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    })
   }
 
   async findByIds(ids: UserId[]): Promise<User[]> {
@@ -38,7 +59,15 @@ export class PrismaUserRepository implements IUserRepository {
         id: { in: ids.map(id => id.value) },
       },
     })
-    return data.map(UserMapper.toDomain)
+    
+    return data.map(user => User.fromPersistence({
+      id: UserId.from(user.id),
+      email: Email.create(user.email),
+      name: user.name,
+      passwordHash: user.password, // Map 'password' field to 'passwordHash'
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    }))
   }
 
   async save(user: User): Promise<User> {
@@ -54,7 +83,14 @@ export class PrismaUserRepository implements IUserRepository {
           password: data.password,
         },
       })
-      return UserMapper.toDomain(saved)
+      return User.fromPersistence({
+        id: UserId.from(saved.id),
+        email: Email.create(saved.email),
+        name: saved.name,
+        passwordHash: saved.password,
+        createdAt: saved.createdAt,
+        updatedAt: saved.updatedAt,
+      })
     }
 
     // For existing users, update
@@ -67,14 +103,31 @@ export class PrismaUserRepository implements IUserRepository {
       },
     })
 
-    return UserMapper.toDomain(saved)
+    return User.fromPersistence({
+      id: UserId.from(saved.id),
+      email: Email.create(saved.email),
+      name: saved.name,
+      passwordHash: saved.password,
+      createdAt: saved.createdAt,
+      updatedAt: saved.updatedAt,
+    })
   }
 
   async delete(id: UserId): Promise<User | null> {
     const data = await this.prisma.user.delete({
       where: { id: id.value },
     })
-    return data ? UserMapper.toDomain(data) : null
+    
+    if (!data) return null
+    
+    return User.fromPersistence({
+      id: UserId.from(data.id),
+      email: Email.create(data.email),
+      name: data.name,
+      passwordHash: data.password,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    })
   }
 
   async findMany(criteria: {
@@ -101,7 +154,14 @@ export class PrismaUserRepository implements IUserRepository {
       },
     })
 
-    return data.map(UserMapper.toDomain)
+    return data.map(user => User.fromPersistence({
+      id: UserId.from(user.id),
+      email: Email.create(user.email),
+      name: user.name,
+      passwordHash: user.password,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    }))
   }
 
   async count(criteria?: {
@@ -155,6 +215,13 @@ export class PrismaUserRepository implements IUserRepository {
       orderBy,
     })
 
-    return data.map(UserMapper.toDomain)
+    return data.map(user => User.fromPersistence({
+      id: UserId.from(user.id),
+      email: Email.create(user.email),
+      name: user.name,
+      passwordHash: user.password,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    }))
   }
 }
