@@ -63,11 +63,21 @@ export const isPostOwner = rule({ cache: 'strict' })(
  * Ensures users can only access their own data
  */
 export const isUserOwner = rule({ cache: 'strict' })(
-  (_parent, args: { userUniqueInput?: { id?: number; email?: string } }, context: EnhancedContext) => {
+  async (_parent, args: { userUniqueInput?: { id?: number; email?: string }; userId?: string }, context: EnhancedContext) => {
     try {
-      const userId = requireAuthentication(context)
+      const currentUserId = requireAuthentication(context)
 
-      if (args.userUniqueInput?.id && args.userUniqueInput.id !== parseInt(userId.toString())) {
+      // Handle drafts query with userId parameter
+      if (args.userId) {
+        const requestedUserId = await parseAndValidateGlobalId(args.userId, 'User')
+        if (requestedUserId !== currentUserId.value) {
+          throw new AuthorizationError('You can only access your own drafts')
+        }
+        return true
+      }
+
+      // Handle other queries with userUniqueInput
+      if (args.userUniqueInput?.id && args.userUniqueInput.id !== parseInt(currentUserId.toString())) {
         throw new AuthorizationError('Access denied: cannot access other user\'s data')
       }
 

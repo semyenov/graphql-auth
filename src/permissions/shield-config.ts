@@ -17,7 +17,7 @@ export const permissions = shield({
     // Post-related queries
     feed: rules.isPublic,
     post: rules.isPublic, // Authorization handled by use case
-    drafts: rules.isUserOwner,
+    drafts: rules.isAuthenticatedUser, // User ownership checked in resolver
 
     // Node queries disabled in builder config
   },

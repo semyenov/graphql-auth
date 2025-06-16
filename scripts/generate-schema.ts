@@ -12,7 +12,7 @@ try {
 }
 
 // Generate SDL schema
-const sdl = printSchema(schema);
+const sdl = printSchema(schema());
 
 // Save to _docs/schema.graphql
 const schemaPath = path.join(docsDir, 'schema.graphql');

@@ -1,4 +1,10 @@
-// import { builder } from '../builder'
+/**
+ * Node GraphQL Resolvers
+ *
+ * Handles Relay Node interface queries for fetching objects by global ID.
+ */
+
+// import { builder } from '../../../schema/builder'
 
 // // Node query for fetching any object by global ID
 // builder.queryField('node', (t) =>

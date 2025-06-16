@@ -6,8 +6,9 @@
 
 import type { EnhancedContext } from '../../../context/enhanced-context'
 import { builder } from '../../../schema/builder'
-import { UserSearchInput } from '../../../schema/inputs'
+import { UserOrderByInput, UserSearchInput, UserWhereInput } from '../../../schema/inputs'
 import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
+import { transformOrderBy, transformUserWhereInput } from '../../../schema/utils/filter-transform'
 import { normalizeGraphQLError } from '../errors/graphql-error-handler'
 
 builder.queryField('me', (t) =>
@@ -53,6 +54,49 @@ builder.queryField('user', (t) =>
         })
       } catch (error) {
         throw normalizeGraphQLError(error)
+      }
+    },
+  })
+)
+
+// Get all users query with filtering and ordering
+builder.queryField('users', (t) =>
+  t.prismaConnection({
+    type: 'User',
+    cursor: 'id',
+    description: 'Get all users with advanced filtering and pagination',
+    args: {
+      where: t.arg({
+        type: UserWhereInput,
+        description: 'Filtering options for users',
+      }),
+      orderBy: t.arg({
+        type: [UserOrderByInput],
+        defaultValue: [{ id: 'asc' }],
+        description: 'Ordering options (default: by ID ascending)',
+      }),
+    },
+    resolve: async (query, _parent, args, ctx: EnhancedContext) => {
+      try {
+        // Apply filtering
+        const where = transformUserWhereInput(args.where) || {}
+        const orderBy = transformOrderBy(args.orderBy) || { id: 'asc' }
+
+        return ctx.prisma.user.findMany({
+          ...query,
+          where,
+          orderBy,
+        })
+      } catch (error) {
+        throw normalizeGraphQLError(error)
+      }
+    },
+    totalCount: async (_parent, args, ctx: EnhancedContext) => {
+      try {
+        const where = transformUserWhereInput(args.where) || {}
+        return ctx.prisma.user.count({ where })
+      } catch (error) {
+        return 0
       }
     },
   })

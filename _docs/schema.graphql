@@ -1,53 +1,159 @@
+input BooleanFilter {
+  """
+  Exact boolean match
+  """
+  equals: Boolean
+
+  """
+  Boolean does not equal this value
+  """
+  not: Boolean
+}
+
 scalar DID
 
 scalar DateTime
 
+input DateTimeFilter {
+  """
+  Exact date match
+  """
+  equals: DateTime
+
+  """
+  Date after this value
+  """
+  gt: DateTime
+
+  """
+  Date on or after this value
+  """
+  gte: DateTime
+
+  """
+  Date before this value
+  """
+  lt: DateTime
+
+  """
+  Date on or before this value
+  """
+  lte: DateTime
+}
+
+input IntFilter {
+  """
+  Exact number match
+  """
+  equals: Int
+
+  """
+  Greater than this value
+  """
+  gt: Int
+
+  """
+  Greater than or equal to this value
+  """
+  gte: Int
+
+  """
+  Value is in this list
+  """
+  in: [Int!]
+
+  """
+  Less than this value
+  """
+  lt: Int
+
+  """
+  Less than or equal to this value
+  """
+  lte: Int
+
+  """
+  Value is not in this list
+  """
+  notIn: [Int!]
+}
+
 scalar JSON
 
 type Mutation {
-  """Create a new draft post for the authenticated user"""
+  """
+  Create a new draft post
+  """
   createDraft(
-    """Post data including title and optional content"""
+    """
+    Post data including title and optional content
+    """
     data: PostCreateInput!
   ): Post
 
-  """Delete a post permanently"""
+  """
+  Delete a post
+  """
   deletePost(
-    """The global ID of the post to delete"""
+    """
+    The global ID of the post to delete
+    """
     id: ID!
   ): Post
 
-  """Increment the view count of a post"""
+  """
+  Increment the view count of a post
+  """
   incrementPostViewCount(
-    """The global ID of the post to increment view count"""
+    """
+    The global ID of the post to increment view count
+    """
     id: ID!
   ): Post
 
-  """Authenticate user and return JWT token"""
-  login(
-    """Email address of the account"""
-    email: String!
+  """
+  Authenticate and receive a token
+  """
+  login(email: String!, password: String!): String
 
-    """Account password"""
-    password: String!
-  ): String
+  """
+  Create a new user account
+  """
+  signup(email: String!, name: String, password: String!): String
 
-  """Create a new user account and return JWT token"""
-  signup(
-    """Unique email address for the account"""
-    email: String!
-
-    """Optional display name for the user"""
-    name: String
-
-    """Password for the account (min 8 characters)"""
-    password: String!
-  ): String
-
-  """Toggle the publication status of a post"""
+  """
+  Toggle the publication status of a post
+  """
   togglePublishPost(
-    """The global ID of the post to toggle"""
+    """
+    The global ID of the post to toggle
+    """
     id: ID!
+  ): Post
+
+  """
+  Update an existing post
+  """
+  updatePost(
+    """
+    New content for the post
+    """
+    content: String
+
+    """
+    The global ID of the post to update
+    """
+    id: ID!
+
+    """
+    New published status for the post
+    """
+    published: Boolean
+
+    """
+    New title for the post
+    """
+    title: String
   ): Post
 }
 
@@ -65,39 +171,250 @@ type PageInfo {
 }
 
 type Post implements Node {
+  """
+  The user who created this post
+  """
   author: User
+
+  """
+  The content/body of the post
+  """
   content: String
+
+  """
+  When the post was first created
+  """
   createdAt: DateTime
+
+  """
+  A short excerpt from the post content (first 150 characters)
+  """
+  excerpt: String
   id: ID!
+
+  """
+  Whether the current user is the owner of this post
+  """
+  isOwner: Boolean
+
+  """
+  Whether the post is published and visible to the public
+  """
   published: Boolean
+
+  """
+  Estimated reading time in minutes (assuming 200 words per minute)
+  """
+  readingTimeMinutes: Int
+
+  """
+  The title of the post
+  """
   title: String
+
+  """
+  When the post was last modified
+  """
   updatedAt: DateTime
+
+  """
+  Number of times this post has been viewed
+  """
   viewCount: Int
+
+  """
+  Approximate word count of the post content
+  """
+  wordCount: Int
 }
 
 input PostCreateInput {
+  """
+  The content/body of the post
+  """
   content: String
+
+  """
+  The title of the post
+  """
   title: String!
+}
+
+input PostOrderByInput {
+  """
+  Order by creation date
+  """
+  createdAt: SortOrder
+
+  """
+  Order by post ID
+  """
+  id: SortOrder
+
+  """
+  Order by published status
+  """
+  published: SortOrder
+
+  """
+  Order by post title
+  """
+  title: SortOrder
+
+  """
+  Order by last update date
+  """
+  updatedAt: SortOrder
+
+  """
+  Order by view count
+  """
+  viewCount: SortOrder
 }
 
 input PostOrderByUpdatedAtInput {
   updatedAt: SortOrder!
 }
 
+input PostUpdateInput {
+  """
+  New content for the post
+  """
+  content: String
+
+  """
+  New published status for the post
+  """
+  published: Boolean
+
+  """
+  New title for the post
+  """
+  title: String
+}
+
+input PostWhereInput {
+  """
+  Filter posts by author ID
+  """
+  authorId: IntFilter
+
+  """
+  Filter posts by content
+  """
+  content: StringFilter
+
+  """
+  Filter posts by creation date
+  """
+  createdAt: DateTimeFilter
+
+  """
+  Filter posts by published status
+  """
+  published: BooleanFilter
+
+  """
+  Filter posts by title
+  """
+  title: StringFilter
+
+  """
+  Filter posts by last update date
+  """
+  updatedAt: DateTimeFilter
+
+  """
+  Filter posts by view count
+  """
+  viewCount: IntFilter
+}
+
 type Query {
-  drafts(after: String, before: String, first: Int, last: Int, userId: ID!): QueryDraftsConnection
-  feed(after: String, before: String, first: Int, last: Int, searchString: String): QueryFeedConnection
+  """
+  Get drafts for a specific user
+  """
+  drafts(
+    after: String
+    before: String
+    first: Int
+    last: Int
+
+    """
+    The ID of the user whose drafts to retrieve
+    """
+    userId: ID!
+  ): QueryDraftsConnection
+
+  """
+  Get published posts with filtering and pagination
+  """
+  feed(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    orderBy: [PostOrderByInput!]
+
+    """
+    Search in title and content
+    """
+    searchString: String
+    where: PostWhereInput
+  ): QueryFeedConnection
+
+  """
+  Get the currently authenticated user
+  """
   me: User
-  node(id: ID!): Node
-  nodes(ids: [ID!]!): [Node]!
-  post(id: ID!): Post
+  post(
+    """
+    Global ID of the post to retrieve
+    """
+    id: ID!
+  ): Post
+
+  """
+  Search for users by name or email
+  """
+  searchUsers(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    search: UserSearchInput
+  ): QuerySearchUsersConnection
+
+  """
+  Get a user by their ID
+  """
   user(id: ID!): User
-  users(after: String, before: String, first: Int, last: Int): QueryUsersConnection
+
+  """
+  Get all users with advanced filtering and pagination
+  """
+  users(
+    after: String
+    before: String
+    first: Int
+    last: Int
+
+    """
+    Ordering options (default: by ID ascending)
+    """
+    orderBy: [UserOrderByInput!] = [{ id: asc }]
+
+    """
+    Filtering options for users
+    """
+    where: UserWhereInput
+  ): QueryUsersConnection
 }
 
 type QueryDraftsConnection {
   edges: [QueryDraftsConnectionEdge]
   pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type QueryDraftsConnectionEdge {
@@ -116,6 +433,17 @@ type QueryFeedConnectionEdge {
   node: Post
 }
 
+type QuerySearchUsersConnection {
+  edges: [QuerySearchUsersConnectionEdge]
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type QuerySearchUsersConnectionEdge {
+  cursor: String!
+  node: User
+}
+
 type QueryUsersConnection {
   edges: [QueryUsersConnectionEdge]
   pageInfo: PageInfo!
@@ -132,16 +460,116 @@ enum SortOrder {
   desc
 }
 
+input StringFilter {
+  """
+  String contains this value (case-insensitive)
+  """
+  contains: String
+
+  """
+  String ends with this value
+  """
+  endsWith: String
+
+  """
+  Exact string match
+  """
+  equals: String
+
+  """
+  String does not equal this value
+  """
+  not: String
+
+  """
+  String starts with this value
+  """
+  startsWith: String
+}
+
 scalar UUID
 
 type User implements Node {
+  """
+  Number of unpublished posts by this user
+  """
+  draftsCount: Int
   email: String
   id: ID!
   name: String
-  posts: [Post!]
+  posts(
+    after: String
+    before: String
+    first: Int
+    last: Int
+
+    """
+    Filter posts by published status
+    """
+    published: Boolean
+  ): UserPostsConnection
+
+  """
+  Number of published posts by this user
+  """
+  publishedPostsCount: Int
+}
+
+input UserOrderByInput {
+  """
+  Order by user email
+  """
+  email: SortOrder
+
+  """
+  Order by user ID
+  """
+  id: SortOrder = asc
+
+  """
+  Order by user name
+  """
+  name: SortOrder
+}
+
+type UserPostsConnection {
+  edges: [UserPostsConnectionEdge]
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type UserPostsConnectionEdge {
+  cursor: String!
+  node: Post
+}
+
+input UserSearchInput {
+  """
+  Search query
+  """
+  query: String
 }
 
 input UserUniqueInput {
+  """
+  User email address
+  """
   email: String
+
+  """
+  User ID
+  """
   id: Int
+}
+
+input UserWhereInput {
+  """
+  Filter users by email
+  """
+  email: StringFilter
+
+  """
+  Filter users by name
+  """
+  name: StringFilter
 }

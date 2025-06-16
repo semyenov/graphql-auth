@@ -7,10 +7,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 # Development
 bun run dev                             # Start dev server (port 4000)
-bun run test                            # Run all tests
+bun run test                            # Run all tests (watch mode)
 bun run test --run                      # Run tests once (CI mode)
 bun test test/auth.test.ts              # Run specific test file
-bun run test -t "test name"             # Run specific test by name
+bun run test -t "should create user"    # Run test by pattern
 bun run test:ui                         # Run tests with UI
 bun run test:coverage                   # Run tests with coverage
 
@@ -19,6 +19,7 @@ bunx prisma migrate dev --name feature  # Create migration
 bun run generate                        # Generate all types (Prisma + GraphQL)
 bun run db:reset                        # Reset database with seed data
 bunx prisma studio                      # Open database GUI
+bun run seed                            # Run seed script manually
 
 # Build & Production
 bun run build                          # Build for production
@@ -28,6 +29,8 @@ bun run clean                          # Clean build directory
 # Code Quality
 bunx tsc --noEmit                      # Type check all files
 bunx prettier --write .                # Format code
+bun run gen:schema                     # Generate GraphQL schema file
+bun run env:verify                     # Verify environment variables
 ```
 
 ## Architecture Overview
@@ -40,7 +43,7 @@ bunx prettier --write .                # Format code
 - **Authorization**: GraphQL Shield middleware
 - **Dependency Injection**: TSyringe with interface-based architecture
 - **Type Safety**: GraphQL Tada for compile-time GraphQL typing
-- **Testing**: Vitest with comprehensive test utilities
+- **Testing**: Vitest with single-threaded execution for SQLite
 
 ### Clean Architecture with DDD
 
@@ -49,18 +52,18 @@ The codebase follows **Clean Architecture** principles with Domain-Driven Design
 ```
 src/
 ├── core/                           # Domain Layer (pure business logic)
-│   ├── entities/                   # User, Post entities with business rules
-│   ├── value-objects/              # Email, UserId, PostId value objects
-│   ├── repositories/               # Repository interfaces (ports)
-│   ├── services/                   # Domain service interfaces
-│   └── errors/                     # Domain-specific errors
+│   ├── entities/                   # User, Post entities
+│   ├── value-objects/              # Email, UserId, PostId immutable objects
+│   ├── repositories/               # Repository interfaces (IUserRepository, IPostRepository)
+│   ├── services/                   # Domain service interfaces (IAuthService, IPasswordService)
+│   └── errors/                     # Domain-specific errors (EntityNotFoundError, etc.)
 │
 ├── application/                    # Application Layer (use cases)
 │   ├── use-cases/                  # Business operations
 │   │   ├── auth/                   # LoginUseCase, SignupUseCase
-│   │   ├── posts/                  # CreatePostUseCase, UpdatePostUseCase, etc.
+│   │   ├── posts/                  # CreatePostUseCase, UpdatePostUseCase, DeletePostUseCase
 │   │   └── users/                  # GetCurrentUserUseCase, SearchUsersUseCase
-│   ├── dtos/                       # Data Transfer Objects
+│   ├── dtos/                       # Data Transfer Objects (UserDto, PostDto)
 │   └── mappers/                    # Entity ↔ DTO conversion
 │
 ├── infrastructure/                 # Infrastructure Layer
@@ -68,26 +71,33 @@ src/
 │   │   ├── client.ts               # DatabaseClient singleton
 │   │   └── repositories/           # PrismaUserRepository, PrismaPostRepository
 │   ├── auth/                       # JWT implementation
+│   │   ├── jwt-auth.service.ts    # IAuthService implementation
+│   │   ├── jwt-token.service.ts   # ITokenService implementation
+│   │   └── bcrypt-password.service.ts # IPasswordService implementation
 │   ├── graphql/                    # GraphQL infrastructure
-│   │   └── resolvers/              # Clean architecture resolvers
-│   └── config/                     # Configuration
-│       ├── container.ts            # TSyringe DI container setup
-│       └── configuration.ts        # Environment config with Zod validation
+│   │   └── resolvers/              # GraphQL resolvers (auth, posts, users)
+│   ├── config/                     # Configuration
+│   │   ├── container.ts            # TSyringe DI container setup
+│   │   └── configuration.ts        # Environment config with Zod validation
+│   └── logging/                    # Logger implementations
 │
 ├── schema/                         # GraphQL Schema (Pothos)
 │   ├── builder.ts                  # Pothos builder with Prisma & Relay plugins
-│   ├── types/                      # GraphQL type definitions
-│   ├── queries/                    # Query definitions
-│   └── inputs.ts                   # Input types with advanced filtering
+│   ├── types/                      # GraphQL type definitions (user.ts, post.ts)
+│   ├── inputs.ts                   # Input types with advanced filtering
+│   ├── scalars.ts                  # Custom scalars (DateTime, DID, UUID)
+│   ├── enums.ts                    # GraphQL enums (SortOrder)
+│   └── utils/                      # Filter transformation utilities
 │
 ├── context/                        # GraphQL Context
-│   ├── enhanced-context.ts         # Bridges legacy and clean architecture
+│   ├── enhanced-context.ts         # Provides useCases and prisma to resolvers
 │   ├── creation.ts                 # Context creation with auth handling
 │   └── auth.ts                     # Authentication guards
 │
 ├── permissions/                    # GraphQL Shield Authorization
-│   ├── rules-clean.ts              # Permission rules
-│   └── shield-config.ts            # Rule → operation mapping
+│   ├── rules-clean.ts              # Permission rules (isAuthenticatedUser, isPostOwner)
+│   ├── shield-config.ts            # Rule → operation mapping
+│   └── rule-utils-clean.ts         # Rule helper functions
 │
 ├── gql/                            # Generated GraphQL operations (Tada)
 │   ├── relay-mutations.ts          # Relay-style mutations
@@ -102,65 +112,98 @@ src/
 
 ### Critical Integration Points
 
-1. **Dependency Injection Container** (`src/infrastructure/config/container.ts`):
+1. **Enhanced Context Bridge** (`src/context/enhanced-context.ts`):
    ```typescript
-   // IMPORTANT: Uses shared Prisma instance from src/prisma.ts
-   container.registerInstance<PrismaClient>('PrismaClient', prisma)
+   interface EnhancedContext extends Context {
+     prisma: PrismaClient         // For Pothos resolvers
+     useCases: {                  // For clean architecture
+       auth: { login, signup }
+       posts: { create, update, delete, get, getFeed }
+       users: { getCurrentUser, searchUsers }
+     }
+   }
    ```
 
-2. **Enhanced Context** (`src/context/enhanced-context.ts`):
-   - Provides `ctx.prisma` for Pothos resolvers
-   - Provides `ctx.useCases` for clean architecture patterns
-   - Handles authentication with `ctx.userId` (UserId value object)
+2. **Dependency Injection Container** (`src/infrastructure/config/container.ts`):
+   - Registers all interfaces with their implementations
+   - Uses shared Prisma instance from `src/prisma.ts` for test compatibility
+   - Must call `configureContainer()` before resolving dependencies
 
-3. **ID Type Conversions**:
-   - DTOs return string IDs: `"1"`, `"2"` (for client compatibility)
-   - Prisma expects numeric IDs: `1`, `2`
-   - **Always use `parseInt(dto.id, 10)` when passing DTO IDs to Prisma**
+3. **Value Objects vs DTOs**:
+   - **Value Objects**: Immutable, validated domain objects (UserId, Email, PostId)
+   - **DTOs**: Plain objects for data transfer with string IDs for client compatibility
+   - **Conversion**: Always `parseInt(dto.id, 10)` when passing to Prisma
 
-## Relay Implementation
+## Relay Specification Implementation
 
-### Global ID Format
-- Base64 encoded: `Base64("Type:id")` 
-- Example: `"UG9zdDox"` = `"Post:1"`
-
-### Critical Query Pattern
+### Global ID System
 ```typescript
-// ALWAYS spread query for Pothos optimizations
+// Format: Base64("Type:id")
+"UG9zdDox" = Base64("Post:1") = Post with ID 1
+"VXNlcjoy" = Base64("User:2") = User with ID 2
+```
+
+### ID Conversion Patterns
+```typescript
+// In resolvers - use shared helpers
+import { parseGlobalId, encodeGlobalId } from '../../shared/infrastructure/graphql/relay-helpers'
+const numericId = parseGlobalId(args.id.toString(), 'Post')  // "UG9zdDox" → 1
+const globalId = encodeGlobalId('Post', 1)  // 1 → "UG9zdDox"
+
+// In tests - use test utilities
+import { toPostId, toUserId, extractNumericId } from './test/relay-utils'
+const globalId = toPostId(1)  // 1 → "UG9zdDox"
+const numericId = extractNumericId(globalId)  // "UG9zdDox" → 1
+```
+
+### Pothos Relay Pattern
+```typescript
+// CRITICAL: Always spread query for field selection optimization
 return ctx.prisma.post.findMany({
-  ...query,  // <-- Critical for performance
-  where: { id: { in: postIds } },
+  ...query,  // <-- This enables Pothos to optimize field selection
+  where: { published: true },
 })
 ```
 
-### ID Conversion Helpers
-```typescript
-// In resolvers
-import { parseGlobalId } from '../../shared/infrastructure/graphql/relay-helpers'
-const numericId = parseGlobalId(args.id.toString(), 'Post')
+## GraphQL Operations
 
-// In tests
-import { toPostId, extractNumericId } from './test/relay-utils'
-const globalId = toPostId(1)  // 1 → "UG9zdDox"
-```
+All GraphQL operations are implemented in clean architecture resolvers:
+
+### Queries
+- `me` - Get current authenticated user
+- `user(id)` - Get user by ID
+- `users(where, orderBy)` - Get all users with filtering
+- `searchUsers(search)` - Search users by name/email
+- `post(id)` - Get post by ID  
+- `feed(searchString, where, orderBy)` - Get published posts
+- `drafts(userId?)` - Get user's drafts (defaults to current user)
+
+### Mutations
+- `signup(email, password, name)` - Create account
+- `login(email, password)` - Authenticate
+- `createDraft(data)` - Create draft post
+- `updatePost(id, title?, content?, published?)` - Update post
+- `deletePost(id)` - Delete post
+- `togglePublishPost(id)` - Toggle publication status
+- `incrementPostViewCount(id)` - Increment view count
 
 ## Testing Architecture
 
-### Test Database Configuration
-- Single shared SQLite database: `file:./test-db.db`
-- Automatic cleanup between tests
-- **Run tests with `--run` flag to avoid watch mode issues**
+### Test Configuration (vitest.config.ts)
+- **Single-threaded execution**: Required for SQLite with shared cache
+- **Sequential test runs**: Prevents database conflicts
+- **Shared test database**: `file:./test-db.db` with automatic cleanup
 
-### Test Patterns
+### Test Context Patterns
 ```typescript
-// Create authenticated context with value object
+// Create contexts with value objects, not raw IDs
 const userId = UserId.create(1)
-const context = createAuthContext(userId)
+const context = createAuthContext(userId)  // Authenticated
+const context = createMockContext()        // Unauthenticated
 
-// Execute typed GraphQL operations
+// Use typed GraphQL operations from src/gql/
 import { print } from 'graphql'
 import { LoginMutation } from '../src/gql/relay-mutations'
-
 const data = await gqlHelpers.expectSuccessfulMutation(
   server,
   print(LoginMutation),
@@ -169,51 +212,96 @@ const data = await gqlHelpers.expectSuccessfulMutation(
 )
 ```
 
-## Error Handling
+## Error Handling Architecture
 
 ### Domain Error Hierarchy
-- `BaseError` (400) - Base class
-- `AuthenticationError` (401) - "You must be logged in..."
-- `AuthorizationError` (403) - "You can only modify posts..."
-- `ValidationError` (400) - Field-specific errors
-- `NotFoundError` (404) - "Post with identifier 'X' not found"
-- `ConflictError` (409) - "An account with this email already exists"
+```
+BaseError (abstract)
+├── EntityNotFoundError → 404
+├── UnauthorizedError → 401
+├── ForbiddenError → 403
+├── BusinessRuleViolationError → 400
+└── ValidationError → 400
+```
 
-### Error Pattern
+### Error Normalization Flow
 ```typescript
+Domain Error → normalizeError() → GraphQL Error → formatError() → Client
+```
+
+### Permission Error Pattern
+```typescript
+// In GraphQL Shield rules - never throw, always return
 try {
-  // operation
+  // validation logic
+  return true
 } catch (error) {
-  throw normalizeError(error)  // Converts to BaseError
+  return handleRuleError(error)  // Converts to proper GraphQL error
 }
 ```
 
-## Permission System
+## GraphQL Shield Permission System
 
-### GraphQL Shield Rules
+### Permission Configuration (`src/permissions/shield-config.ts`)
 ```typescript
-export const isPostOwner = rule({ cache: 'strict' })(
-  async (parent, args, context: EnhancedContext) => {
-    try {
-      const userId = requireAuthentication(context)
-      const postId = parseGlobalId(args.id, 'Post')
-      
-      const post = await context.prisma.post.findUnique({
-        where: { id: postId }
-      })
-      
-      if (!post) throw new NotFoundError('Post', args.id)
-      if (post.authorId !== userId.value) {
-        throw new AuthorizationError(ERROR_MESSAGES.NOT_POST_OWNER)
-      }
-      
-      return true
-    } catch (error) {
-      return handleRuleError(error)  // Never throw directly
-    }
-  }
-)
+Query: {
+  me: isAuthenticatedUser,
+  users: isAdmin,
+  user: isPublic,
+  feed: isPublic,
+  post: isPublic,
+  drafts: isAuthenticatedUser,
+}
+Mutation: {
+  login: isPublic,
+  signup: rateLimitSensitiveOperations,
+  createDraft: canCreateDraft,
+  updatePost: isPostOwner,
+  deletePost: isPostOwner,
+  togglePublishPost: isPostOwner,
+  incrementPostViewCount: isPublic,
+}
 ```
+
+### Rule Caching Strategies
+- `'strict'`: Cache per parent/args/context (most performant)
+- `'contextual'`: Cache per context
+- `'no_cache'`: No caching (for dynamic rules)
+
+## Advanced Filtering System
+
+### Filter Input Types
+- `StringFilter`: equals, contains, startsWith, endsWith, not
+- `IntFilter`: equals, not, lt, lte, gt, gte
+- `BooleanFilter`: equals, not
+- `DateTimeFilter`: equals, not, lt, lte, gt, gte
+- Logical operators: AND, OR, NOT for complex queries
+
+### Filter Transformation
+```typescript
+// GraphQL input → Prisma where clause
+import { transformPostWhereInput } from '../utils/filter-transform'
+const where = transformPostWhereInput(args.where) || { published: true }
+```
+
+## Environment Configuration
+
+### Required Environment Variables
+```bash
+DATABASE_URL="file:./dev.db"              # SQLite database path
+JWT_SECRET="min-32-characters-required"   # JWT signing secret
+JWT_EXPIRES_IN="7d"                       # Token expiration (string format!)
+APP_SECRET="legacy-secret"                # Legacy auth secret
+NODE_ENV="development"                    # development|production|test
+PORT="4000"                               # Server port
+BCRYPT_ROUNDS="10"                        # Password hashing rounds
+LOG_LEVEL="info"                          # error|warn|info|debug
+```
+
+### Configuration Validation
+- Uses Zod for runtime validation
+- Validates on startup via `src/infrastructure/config/configuration.ts`
+- Run `bun run env:verify` to check configuration
 
 ## Common Development Patterns
 
@@ -247,40 +335,69 @@ const userId = UserId.create(1)  // Ensures positive integer
 userId.value  // 1
 ```
 
-## Environment Variables
-
-Required in `.env`:
-```bash
-DATABASE_URL="file:./dev.db"
-JWT_SECRET="your-32-character-minimum-secret"  # Min 32 chars
-JWT_EXPIRES_IN="7d"                            # String format
-NODE_ENV="development"
-PORT="4000"
-BCRYPT_ROUNDS="10"
-LOG_LEVEL="info"
-```
-
 ## Common Pitfalls & Solutions
 
-1. **ID Type Mismatch**: 
-   - Problem: DTOs use string IDs, Prisma uses numeric
-   - Solution: Always `parseInt(dto.id, 10)`
+1. **DTO ID String vs Prisma Numeric**:
+   ```typescript
+   // ❌ Wrong - Prisma expects number
+   where: { id: postDto.id }
+   
+   // ✅ Correct - Convert string to number
+   where: { id: parseInt(postDto.id, 10) }
+   ```
 
-2. **Missing Query Spread**:
-   - Problem: Pothos field selection doesn't work
-   - Solution: Always spread `...query` in Prisma calls
+2. **Missing Pothos Query Spread**:
+   ```typescript
+   // ❌ Wrong - No field selection optimization
+   return ctx.prisma.post.findMany({ where })
+   
+   // ✅ Correct - Enables field selection
+   return ctx.prisma.post.findMany({ ...query, where })
+   ```
 
-3. **Context Type Confusion**:
-   - Problem: Wrong context type in resolvers
-   - Solution: Use `EnhancedContext`, not base `Context`
+3. **Direct Repository Access in Resolvers**:
+   ```typescript
+   // ❌ Wrong - Bypasses business logic
+   const user = await ctx.prisma.user.findUnique(...)
+   
+   // ✅ Correct - Use use cases
+   const userDto = await ctx.useCases.users.getCurrentUser.execute(...)
+   ```
 
-4. **Permission Errors**:
-   - Problem: Rules throwing instead of returning errors
-   - Solution: Use `handleRuleError()` in catch blocks
+4. **Value Object Creation**:
+   ```typescript
+   // ❌ Wrong - No validation
+   const userId = { value: 1 }
+   
+   // ✅ Correct - Validated value object
+   const userId = UserId.create(1)
+   ```
 
-5. **JWT Configuration**:
-   - Problem: JWT library expects string for expiresIn
-   - Solution: Ensure JWT_EXPIRES_IN is string format
+5. **Test Database Conflicts**:
+   ```bash
+   # ❌ Wrong - Parallel tests conflict
+   bun run test
+   
+   # ✅ Correct - Sequential execution
+   bun run test --run
+   ```
+
+## Performance Considerations
+
+1. **Prisma Query Optimization**:
+   - Use `select` for field selection
+   - Leverage `include` for eager loading
+   - Avoid N+1 queries with proper includes
+
+2. **GraphQL Relay Connections**:
+   - `totalCount` can be expensive on large datasets
+   - Use cursor-based pagination for scalability
+   - Enable `filterConnectionTotalCount` in Pothos
+
+3. **Caching Strategy**:
+   - GraphQL Shield rules are cached based on strategy
+   - DatabaseClient uses singleton pattern
+   - Consider implementing DataLoader for batch loading
 
 ## API Endpoints
 

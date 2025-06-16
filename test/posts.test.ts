@@ -213,7 +213,7 @@ describe('Posts', () => {
         query,
         variables,
         createMockContext(), // No auth
-        'You must be logged in to perform this action. Please authenticate and try again.'
+        'Authentication required'
       )
     })
   })

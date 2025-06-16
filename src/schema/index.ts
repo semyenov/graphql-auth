@@ -7,7 +7,7 @@ builder.queryType({});
 builder.mutationType({});
 
 // Import all schema components to register them with the builder
-// Order matters: scalars/enums → types → inputs → queries/mutations
+// Order matters: scalars/enums → types → inputs → clean architecture resolvers
 import './enums';
 import './scalars';
 
@@ -18,11 +18,7 @@ import './types/post';
 // Import inputs after types
 import './inputs';
 
-// Import queries/mutations last
-import './queries/posts-clean';
-import './queries/users-clean';
-
-// Import clean architecture resolvers
+// Import clean architecture resolvers only
 import '../infrastructure/graphql/resolvers/auth.resolver';
 import '../infrastructure/graphql/resolvers/posts.resolver';
 import '../infrastructure/graphql/resolvers/users.resolver';

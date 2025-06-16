@@ -13,7 +13,7 @@ const EnvironmentSchema = z.object({
   PORT: z
     .string()
     .regex(/^\d+$/, 'PORT must be a number')
-    .transform((val: string) => parseInt(val, 10))
+    .transform((val: string) => Number.parseInt(val, 10))
     .default(String(SERVER_CONFIG.DEFAULT_PORT)),
   HOST: z.string().default(SERVER_CONFIG.DEFAULT_HOST),
   APP_SECRET: z.string().min(AUTH_CONFIG.MIN_PASSWORD_LENGTH,

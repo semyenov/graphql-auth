@@ -213,6 +213,45 @@ builder.mutationField('incrementPostViewCount', (t) =>
   })
 )
 
+// Get post by ID query
+builder.queryField('post', (t) =>
+  t.prismaField({
+    type: 'Post',
+    nullable: true,
+    args: {
+      id: t.arg.id({
+        required: true,
+        description: 'Global ID of the post to retrieve',
+      }),
+    },
+    resolve: async (query, _parent, args, ctx: EnhancedContext) => {
+      try {
+        // Decode the global ID to get the numeric ID
+        const postId = parseGlobalId(args.id.toString(), 'Post')
+
+        // Use the get post use case
+        const postDto = await ctx.useCases.posts.get.execute({
+          postId: PostId.create(postId),
+          userId: ctx.userId || undefined,
+        })
+
+        if (!postDto) return null
+
+        // Fetch the full post data with Prisma query optimization
+        // Use the prisma client directly with the query parameter
+        // Convert string ID to number for Prisma
+        return ctx.prisma.post.findUnique({
+          ...query,
+          where: { id: postDto.id },
+        })
+      } catch (error) {
+        // Post not found or not accessible
+        return null
+      }
+    },
+  })
+)
+
 // Feed query
 builder.queryField('feed', (t) =>
   t.prismaConnection({
@@ -286,18 +325,32 @@ builder.queryField('drafts', (t) =>
   t.prismaConnection({
     type: 'Post',
     cursor: 'id',
-    description: 'Get drafts for the authenticated user',
-    resolve: async (query, _root, _args, context: EnhancedContext) => {
+    description: 'Get drafts for a specific user or the current user',
+    args: {
+      userId: t.arg.id({
+        required: false,
+        description: 'The ID of the user whose drafts to retrieve (defaults to current user)'
+      }),
+    },
+    resolve: async (query, _root, args, context: EnhancedContext) => {
       try {
         if (!context.userId) {
           throw new Error('You must be logged in to view drafts')
+        }
+
+        // Use provided userId or default to current user
+        let userNumericId: number
+        if (args.userId) {
+          userNumericId = parseGlobalId(args.userId.toString(), 'User')
+        } else {
+          userNumericId = context.userId.value
         }
 
         // Return drafts directly from Prisma
         return context.prisma.post.findMany({
           ...query,
           where: {
-            authorId: context.userId.value,
+            authorId: userNumericId,
             published: false
           },
           orderBy: { updatedAt: 'desc' },
@@ -306,15 +359,23 @@ builder.queryField('drafts', (t) =>
         throw normalizeGraphQLError(error)
       }
     },
-    totalCount: async (_parent, _args, context: EnhancedContext) => {
+    totalCount: async (_parent, args, context: EnhancedContext) => {
       try {
         if (!context.userId) {
           return 0
         }
 
+        // Use provided userId or default to current user
+        let userNumericId: number
+        if (args.userId) {
+          userNumericId = parseGlobalId(args.userId.toString(), 'User')
+        } else {
+          userNumericId = context.userId.value
+        }
+
         return context.prisma.post.count({
           where: {
-            authorId: context.userId.value,
+            authorId: userNumericId,
             published: false
           },
         })
