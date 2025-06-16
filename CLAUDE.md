@@ -10,18 +10,36 @@ bun run dev                             # Start dev server (port 4000)
 bun run test                            # Run all tests
 bun run test -t "test name"             # Run specific test
 bun test test/auth.test.ts              # Run specific test file
+bun run test:ui                         # Run tests with UI
+bun run test:coverage                   # Run tests with coverage
 
 # Database
 bunx prisma migrate dev --name feature  # Create migration
-bun run generate                        # Generate all types (fixes type errors)
-bun run db:reset                        # Reset database
+bun run generate                        # Generate all types (Prisma + GraphQL)
+bun run db:reset                        # Reset database with seed data
+bunx prisma studio                      # Open database GUI
+
+# Build & Production
+bun run build                          # Build for production
+bun run start                          # Start production server
+bun run clean                          # Clean build directory
 
 # Code Quality
-bunx tsc --noEmit                       # Type check
-bunx prettier --write .                 # Format code
+bunx tsc --noEmit                      # Type check all files
+bunx prettier --write .                # Format code
 ```
 
 ## Architecture Overview
+
+### Tech Stack
+- **Runtime**: Bun (fast JavaScript/TypeScript runtime)
+- **GraphQL Server**: Apollo Server 4 with H3 HTTP framework
+- **Schema Builder**: Pothos with Prisma and Relay plugins
+- **Database**: Prisma ORM with SQLite (dev.db)
+- **Authentication**: JWT tokens with bcryptjs
+- **Authorization**: GraphQL Shield middleware
+- **Type Safety**: GraphQL Tada for compile-time GraphQL typing
+- **Testing**: Vitest with comprehensive test utilities
 
 ### GraphQL Schema (Pothos + Relay)
 
@@ -93,6 +111,25 @@ Error hierarchy:
 - `ConflictError` (409) - "An account with this email already exists"
 - `RateLimitError` (429) - Rate limiting with retry information
 
+### Testing Infrastructure
+
+Comprehensive testing utilities:
+
+```
+test/
+├── auth.test.ts            # Authentication tests
+├── permissions.test.ts     # Permission system tests
+├── posts.test.ts          # Post CRUD tests
+├── user.test.ts           # User-related tests
+├── test-utils.ts          # Core testing utilities
+├── test-fixtures.ts       # Complex test scenarios
+├── performance-utils.ts   # Performance testing tools
+├── snapshot-utils.ts      # Snapshot testing utilities
+├── subscription-utils.ts  # Subscription testing helpers
+├── integration-utils.ts   # E2E test flow builder
+└── relay-utils.ts         # Global ID conversion utilities
+```
+
 ## Key Architectural Patterns
 
 ### 1. Relay Implementation
@@ -113,7 +150,7 @@ builder.queryField('feed', (t) =>
     cursor: 'id',
     resolve: (query, root, args, ctx) => {
       return ctx.prisma.post.findMany({
-        ...query, // ALWAYS spread query
+        ...query, // ALWAYS spread query for Prisma optimizations
         where: { published: true },
       })
     },
@@ -206,6 +243,23 @@ export const isPostOwner = rule({ cache: 'strict' })(
 
 ## Testing Strategy
 
+### Typed GraphQL Operations
+
+All tests use typed queries from `src/gql/`:
+
+```typescript
+import { print } from 'graphql'
+import { LoginMutation, SignupMutation } from '../src/gql/relay-mutations'
+import { GetFeedQuery, GetMeQuery } from '../src/gql/relay-queries'
+
+const data = await gqlHelpers.expectSuccessfulMutation(
+  server,
+  print(LoginMutation),
+  variables,
+  context
+)
+```
+
 ### Test Utilities
 
 ```typescript
@@ -222,6 +276,16 @@ createMockContext()        // Unauthenticated context
 executeOperation(server, query, variables, context)
 expectSuccessfulQuery(server, query, variables, context)
 expectGraphQLError(server, query, variables, context, errorSubstring)
+
+// Performance testing
+await benchmark(server, operation, variables, context, { iterations: 100 })
+assertPerformance(report, { maxP95Time: 100 })
+
+// Snapshot testing
+await snapshotTester.testSnapshot(response, {
+  name: 'feed-query',
+  normalizers: [commonNormalizers.timestamps]
+})
 ```
 
 ### Test Database
@@ -302,6 +366,27 @@ const globalId = toPostId(1)
 const numericId = extractNumericId(result.data.post.id)
 ```
 
+## GraphQL Client Integration
+
+### GraphQL Tada Configuration
+
+The project uses GraphQL Tada for type-safe GraphQL operations:
+
+```typescript
+// src/gql/ directory contains:
+- client.ts         # GraphQL client setup
+- fragments.ts      # Reusable fragments
+- queries.ts        # Typed queries
+- mutations.ts      # Typed mutations
+- relay-queries.ts  # Relay-style queries
+- relay-mutations.ts # Relay-style mutations
+```
+
+## API Endpoints
+
+- **GraphQL Playground**: http://localhost:4000
+- **GraphQL Endpoint**: POST http://localhost:4000/graphql
+
 ## Debugging Tips
 
 - **Type errors**: Run `bun run generate`
@@ -310,3 +395,4 @@ const numericId = extractNumericId(result.data.post.id)
 - **Global ID format**: Base64("Type:id") e.g., "UG9zdDox" = "Post:1"
 - **Permission errors**: Check JWT token and shield-config.ts mappings
 - **Test failures**: Check error message changes in constants/index.ts
+- **Relay connections**: Always spread `query` in resolver functions
