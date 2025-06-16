@@ -12,7 +12,7 @@ export * from './mutations'
 export * from './fragments'
 
 // Re-export all types
-export * from './types'
+export * from './types.d'
 
 // Re-export client and execution functions
 export * from './client'

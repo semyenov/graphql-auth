@@ -19,7 +19,21 @@ export const CONTEXT_ERROR_MESSAGES = {
     CONTENT_TYPE_REQUIRED: 'Content-Type header is required',
     REQUEST_BODY_REQUIRED: 'Request body is required for POST requests',
     INVALID_OPERATION_NAME: 'Invalid or unsupported operation name',
+    VALIDATION_ERROR: 'Validation error',
 } as const
+
+export const CONTEXT_ERROR_CODES = {
+    AUTHENTICATION_REQUIRED: 'AUTHENTICATION_REQUIRED',
+    INVALID_USER_ID: 'INVALID_USER_ID',
+    HTTP_METHOD_REQUIRED: 'HTTP_METHOD_REQUIRED',
+    CONTENT_TYPE_REQUIRED: 'CONTENT_TYPE_REQUIRED',
+    REQUEST_BODY_REQUIRED: 'REQUEST_BODY_REQUIRED',
+    INVALID_OPERATION_NAME: 'INVALID_OPERATION_NAME',
+    VALIDATION_ERROR: 'VALIDATION_ERROR',
+} as const
+
+export type ContextErrorCode = keyof typeof CONTEXT_ERROR_CODES
+export type ContextErrorMessage = keyof typeof CONTEXT_ERROR_MESSAGES
 
 export const OPERATION_NAMES = {
     LOGIN: 'Login',

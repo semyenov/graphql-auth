@@ -7,7 +7,7 @@ import { PostCreateInput } from '../inputs'
 import { parseGlobalID } from '../utils'
 
 /**
- * Create a new draft post
+ * Create a new draft post  
  * Posts are created as drafts by default and must be explicitly published
  */
 builder.mutationField('createDraft', (t) =>
@@ -72,7 +72,7 @@ builder.mutationField('togglePublishPost', (t) =>
                 }
 
                 // Decode the global ID
-                const { id: postId } = parseGlobalID(args.id, 'Post')
+                const { id: postId } = parseGlobalID(args.id.toString(), 'Post')
 
                 // Find the post and check ownership
                 const post = await prisma.post.findUnique({
@@ -84,7 +84,7 @@ builder.mutationField('togglePublishPost', (t) =>
                 })
 
                 if (!post) {
-                    throw new NotFoundError('Post', args.id)
+                    throw new NotFoundError('Post', args.id.toString())
                 }
 
                 // Update the post
@@ -117,7 +117,7 @@ builder.mutationField('incrementPostViewCount', (t) =>
         resolve: async (query, _parent, args) => {
             try {
                 // Decode the global ID
-                const { id: postId } = parseGlobalID(args.id, 'Post')
+                const { id: postId } = parseGlobalID(args.id.toString(), 'Post')
 
                 // Update view count atomically
                 return await prisma.post.update({
@@ -132,7 +132,7 @@ builder.mutationField('incrementPostViewCount', (t) =>
             } catch (error) {
                 // Handle case where post doesn't exist
                 if (error instanceof Error && 'code' in error && error.code === 'P2025') {
-                    throw new NotFoundError('Post', args.id)
+                    throw new NotFoundError('Post', args.id.toString())
                 }
                 throw normalizeError(error)
             }
@@ -163,7 +163,7 @@ builder.mutationField('deletePost', (t) =>
                 }
 
                 // Decode the global ID
-                const { id: postId } = parseGlobalID(args.id, 'Post')
+                const { id: postId } = parseGlobalID(args.id.toString(), 'Post')
 
                 // Delete the post (will fail if it doesn't exist)
                 return await prisma.post.delete({
@@ -173,7 +173,7 @@ builder.mutationField('deletePost', (t) =>
             } catch (error) {
                 // Handle case where post doesn't exist
                 if (error instanceof Error && 'code' in error && error.code === 'P2025') {
-                    throw new NotFoundError('Post', args.id)
+                    throw new NotFoundError('Post', args.id.toString())
                 }
                 throw normalizeError(error)
             }

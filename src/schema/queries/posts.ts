@@ -13,7 +13,7 @@ builder.queryField('post', (t) =>
         },
         resolve: async (query, _parent, args) => {
             // Decode the global ID to get the numeric ID
-            const { id: postId } = parseGlobalID(args.id, 'Post')
+            const { id: postId } = parseGlobalID(args.id.toString(), 'Post')
 
             return prisma.post.findUnique({
                 ...query,
@@ -80,7 +80,7 @@ builder.queryField('drafts', (t) =>
             }
 
             // Decode the global ID
-            const { id: requestedUserId } = parseGlobalID(args.userId, 'User')
+            const { id: requestedUserId } = parseGlobalID(args.userId.toString(), 'User')
 
             // Users can only see their own drafts
             if (ctx.userId !== requestedUserId) {

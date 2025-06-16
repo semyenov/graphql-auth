@@ -1,5 +1,6 @@
 import type { Post as PrismaPost, User as PrismaUser } from '@prisma/client'
 import type { GraphQLError } from 'graphql'
+import type { ContextErrorCode, ContextErrorMessage } from './context/constants'
 
 // Domain Types
 export interface User extends Omit<PrismaUser, 'password'> {
@@ -75,26 +76,15 @@ export interface FeedInput {
   orderBy?: PostOrderByInput
 }
 
-// Error Types - Export as const enum so it can be used as both type and value
-export const enum ErrorCode {
-  AUTHENTICATION_ERROR = 'AUTHENTICATION_ERROR',
-  AUTHORIZATION_ERROR = 'AUTHORIZATION_ERROR',
-  VALIDATION_ERROR = 'VALIDATION_ERROR',
-  NOT_FOUND = 'NOT_FOUND',
-  INTERNAL_ERROR = 'INTERNAL_ERROR',
-  DUPLICATE_ERROR = 'DUPLICATE_ERROR',
-  NETWORK_ERROR = 'NETWORK_ERROR',
-}
-
 export interface AppError {
-  code: ErrorCode
-  message: string
+  code: ContextErrorCode
+  message: ContextErrorMessage
   field?: string
   details?: Record<string, unknown>
 }
 
 export interface ValidationError extends AppError {
-  code: ErrorCode.VALIDATION_ERROR
+  code: ContextErrorCode
   field: string
   value?: unknown
 }

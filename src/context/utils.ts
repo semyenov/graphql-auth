@@ -1,8 +1,8 @@
-import type { HTTPMethod } from '../gql/types'
-import type { RequestMetadata, SecurityContext } from '../types'
+import type { HTTPMethod } from '../gql/types.d'
+import { RequestMetadata, SecurityContext } from '../types.d'
 import { getUserIdFromAuthHeader } from '../utils/jwt'
 import { DEFAULT_VALUES, HEADER_KEYS } from './constants'
-import type { Context, GraphQLIncomingMessage } from './types'
+import type { Context, GraphQLIncomingMessage } from './types.d'
 
 /**
  * Context creation utilities

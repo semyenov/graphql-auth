@@ -25,9 +25,9 @@ import './test-env'
 
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import jwt from 'jsonwebtoken'
-import type { Context } from '../src/context/types'
+import type { Context } from '../src/context/types.d'
 import { env } from '../src/environment'
-import type { HTTPMethod } from '../src/gql/types'
+import type { HTTPMethod } from '../src/gql/types.d'
 
 // Import the already built schema with permissions
 import { schema } from '../src/schema'

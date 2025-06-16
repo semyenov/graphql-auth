@@ -8,7 +8,7 @@ import type {
     PostOrderByUpdatedAtInput,
     SortOrder,
     UserUniqueInput
-} from './types'
+} from './types.d'
 
 // =============================================================================
 // DEVELOPMENT UTILITIES

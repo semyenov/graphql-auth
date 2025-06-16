@@ -1,6 +1,6 @@
 import { ContextFunction } from '@apollo/server'
 import { IncomingMessage, ServerResponse } from 'http'
-import type { Context, GraphQLIncomingMessage } from './types'
+import type { Context, GraphQLIncomingMessage } from './types.d'
 import {
     createRequestMetadata,
     createRequestObject,

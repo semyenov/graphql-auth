@@ -5,7 +5,7 @@ import type {
     GraphQLRequestBody,
     MimeType
 } from '../gql/types'
-import type { RequestMetadata, SecurityContext, User } from '../types'
+import type { RequestMetadata, SecurityContext, User } from '../types.d'
 
 /**
  * GraphQL Context Type Definitions

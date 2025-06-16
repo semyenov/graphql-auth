@@ -10,7 +10,7 @@ import {
   GetDraftsQuery,
   GetFeedQuery
 } from '../src/gql/relay-queries'
-import { CreateDraftVariables, DeletePostVariables, IncrementPostViewCountVariables } from '../src/gql/types'
+import { CreateDraftVariables, DeletePostVariables, IncrementPostViewCountVariables } from '../src/gql/types.d'
 import { extractNumericId, toPostId, toUserId } from './relay-utils'
 import { prisma } from './setup'
 import {

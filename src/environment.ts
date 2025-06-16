@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import type { EnvironmentConfig } from './types'
-import { SERVER, AUTH } from './constants'
+import { AUTH, SERVER } from './constants'
+import type { EnvironmentConfig } from './types.d'
 
 /**
  * Environment schema for validation
@@ -16,7 +16,7 @@ const EnvironmentSchema = z.object({
     .transform((val: string) => parseInt(val, 10))
     .default(String(SERVER.DEFAULT_PORT)),
   HOST: z.string().default(SERVER.DEFAULT_HOST),
-  APP_SECRET: z.string().min(AUTH.MIN_PASSWORD_LENGTH, 
+  APP_SECRET: z.string().min(AUTH.MIN_PASSWORD_LENGTH,
     `APP_SECRET must be at least ${AUTH.MIN_PASSWORD_LENGTH} characters`),
   DATABASE_URL: z.string().url('DATABASE_URL must be a valid URL'),
   CORS_ORIGIN: z.string().optional(),

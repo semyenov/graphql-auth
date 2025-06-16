@@ -17,7 +17,7 @@ builder.queryField('users', (t) =>
     })
 )
 
-// Current user query
+// Current user query   
 builder.queryField('me', (t) =>
     t.prismaField({
         type: 'User',
@@ -43,7 +43,7 @@ builder.queryField('user', (t) =>
             id: t.arg.id({ required: true }),
         },
         resolve: async (query, _parent, args) => {
-            const { id: userId } = parseGlobalID(args.id, 'User')
+            const { id: userId } = parseGlobalID(args.id.toString(), 'User')
 
             return prisma.user.findUnique({
                 ...query,

@@ -1,7 +1,7 @@
 import { print } from 'graphql'
 import type {
     GraphQLResponse
-} from '../context/types'
+} from '../context/types.d'
 import {
     CreateDraftMutation,
     DeletePostMutation,
@@ -15,7 +15,6 @@ import {
     GetDraftsByUserQuery,
     GetFeedQuery,
     GetMeQuery,
-    GetPostByIdQuery
 } from './queries'
 import type {
     CreateDraftResult,
@@ -28,8 +27,6 @@ import type {
     GetFeedResult,
     GetFeedVariables,
     GetMeResult,
-    GetPostByIdResult,
-    GetPostByIdVariables,
     IncrementPostViewCountResult,
     IncrementPostViewCountVariables,
     LoginResult,
@@ -38,8 +35,8 @@ import type {
     SignupVariables,
     TogglePublishPostResult,
     TogglePublishPostVariables
-} from './types'
-import { GraphQLRequestBody } from './types'
+} from './types.d'
+import { GraphQLRequestBody } from './types.d'
 import { executeGraphQL } from './utils'
 
 // =============================================================================
@@ -123,9 +120,6 @@ export const queryMe = (headers?: Record<string, string>) =>
 
 export const queryAllUsers = (headers?: Record<string, string>) =>
     executeGraphQL<Record<string, unknown>, GetAllUsersResult>(print(GetAllUsersQuery), undefined, headers)
-
-export const queryPostById = (variables: GetPostByIdVariables, headers?: Record<string, string>) =>
-    executeGraphQL<GetPostByIdVariables, GetPostByIdResult>(print(GetPostByIdQuery), variables, headers)
 
 export const queryFeed = (variables?: GetFeedVariables, headers?: Record<string, string>) =>
     executeGraphQL<GetFeedVariables, GetFeedResult>(print(GetFeedQuery), variables, headers)

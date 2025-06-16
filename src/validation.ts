@@ -1,33 +1,33 @@
 import { z } from 'zod'
-import type { AppError, Result, ValidationError } from './types'
-import { ErrorCode } from './types'
+import { CONTEXT_ERROR_CODES, CONTEXT_ERROR_MESSAGES, ContextErrorCode, ContextErrorMessage } from './context/constants'
+import type { AppError, Result, ValidationError } from './types.d'
 
 // Create a custom app error
 export function createAppError(
-  code: ErrorCode,
-  message: string,
-  field?: string,
-  details?: Record<string, unknown>,
+  code: ContextErrorCode,
+  message: ContextErrorMessage,
+  field: string,
+  details: Record<string, unknown>,
 ): AppError {
   return {
-    code,
-    message,
-    field,
-    details,
+    code: code,
+    message: message,
+    field: field,
+    details: details,
   }
 }
 
 // Create a validation error
 export function createValidationError(
   field: string,
-  message: string,
+  message: ContextErrorMessage,
   value?: unknown,
 ): ValidationError {
   return {
-    code: ErrorCode.VALIDATION_ERROR,
-    field,
-    message,
-    value,
+    code: CONTEXT_ERROR_CODES.VALIDATION_ERROR as ContextErrorCode,
+    field: field,
+    message: message,
+    value: value,
   }
 }
 
@@ -162,7 +162,7 @@ export function validateInput<T>(
         (err: z.ZodIssue) =>
           createValidationError(
             err.path.join('.'),
-            err.message,
+            err.message as ContextErrorMessage,
             err.code === 'invalid_type' ? input : undefined,
           ),
       )
@@ -171,7 +171,7 @@ export function validateInput<T>(
 
     return {
       success: false,
-      error: [createValidationError('unknown', 'Validation failed')],
+      error: [createValidationError('unknown', CONTEXT_ERROR_MESSAGES.VALIDATION_ERROR as ContextErrorMessage)],
     }
   }
 }
@@ -186,11 +186,12 @@ export async function validateInputAsync<T>(
 
 // Type guards
 export function isValidationError(error: AppError): error is ValidationError {
-  return error.code === ErrorCode.VALIDATION_ERROR && 'field' in error
+  return error.code === CONTEXT_ERROR_CODES.VALIDATION_ERROR as ContextErrorCode && 'field' in error
 }
 
+// Authentication type guard
 export function isAuthenticated(context: { userId?: number | null }): boolean {
-  return typeof context.userId === 'number' && context.userId > 0
+  return typeof context.userId === 'number' && context.userId !== null && context.userId > 0
 }
 
 // Safe parsing utilities

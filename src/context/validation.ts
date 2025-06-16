@@ -1,7 +1,5 @@
 import { CONTEXT_ERROR_MESSAGES, OPERATION_NAMES } from './constants'
-import type {
-    Context,
-} from './types'
+import type { Context } from './types.d'
 
 /**
  * Context validation utilities and type guards

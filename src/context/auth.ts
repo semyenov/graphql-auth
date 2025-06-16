@@ -1,5 +1,5 @@
 import { ERROR_MESSAGES } from '../constants'
-import type { Context } from '../context/types'
+import type { Context } from '../context/types.d'
 import { AuthenticationError } from '../errors'
 
 /**
