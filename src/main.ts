@@ -4,21 +4,18 @@
  * Bootstraps the application with clean architecture.
  */
 
-import 'reflect-metadata'
-import { ApolloServer } from '@apollo/server'
-import { createH3App } from 'h3'
-import { createServer } from 'http'
+import { ApolloServer, HeaderMap } from '@apollo/server'
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
-import { applyWSSHandler } from '@graphql-ws/ws/lib/use/ws'
-import { WebSocketServer } from 'ws'
+import { createServer, IncomingMessage } from 'http'
+import 'reflect-metadata'
 
 // Import configuration and DI
-import { configureContainer } from './infrastructure/config/container'
 import { getConfigInstance } from './infrastructure/config/configuration'
+import { configureContainer } from './infrastructure/config/container'
 import { createGraphQLContext } from './infrastructure/graphql/context/graphql-context'
 
 // Import schema
-import { schema } from './infrastructure/graphql/schema'
+import { schema } from './schema'
 
 async function bootstrap() {
   try {
@@ -33,14 +30,7 @@ async function bootstrap() {
     console.log(`📝 Environment: ${config.server.environment}`)
 
     // Create HTTP server
-    const app = createH3App()
-    const httpServer = createServer(app)
-
-    // Create WebSocket server
-    const wsServer = new WebSocketServer({
-      server: httpServer,
-      path: '/graphql',
-    })
+    const httpServer = createServer()
 
     // Create Apollo Server
     const apolloServer = new ApolloServer({
@@ -63,13 +53,13 @@ async function bootstrap() {
     console.log('✅ Apollo Server started')
 
     // Apply GraphQL middleware
-    app.use('/graphql', async (req) => {
+    httpServer.on('request', async (req) => {
       const context = await createGraphQLContext(req)
-      
+
       return apolloServer.executeHTTPGraphQLRequest({
         httpGraphQLRequest: {
           method: req.method || 'POST',
-          headers: req.headers,
+          headers: new Map(Object.entries(req.headers)) as unknown as HeaderMap,
           body: await readBody(req),
           search: getQuery(req),
         },
@@ -77,21 +67,35 @@ async function bootstrap() {
       })
     })
 
-    // Apply WebSocket handler for subscriptions
-    applyWSSHandler({
-      server: wsServer,
-      schema,
-      context: async (ctx) => {
-        // Create context for WebSocket connections
-        return createGraphQLContext(ctx.extra.request)
-      },
-    })
-
     // Health check endpoint
-    app.use('/health', () => ({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-    }))
+    httpServer.on('request', async (req: IncomingMessage) => {
+      if (req.url === '/health') {
+        return new Response(JSON.stringify({
+          status: 'ok',
+          timestamp: new Date().toISOString(),
+        }), {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+      }
+
+      if (req.url === '/graphql') {
+        return apolloServer.executeHTTPGraphQLRequest({
+          httpGraphQLRequest: {
+            method: req.method || 'POST',
+            headers: new Map(Object.entries(req.headers)) as unknown as HeaderMap,
+            body: await readBody(req),
+            search: getQuery(req),
+          },
+          context: async () => createGraphQLContext(req as unknown as IncomingMessage),
+        })
+      }
+
+      return new Response(null, {
+        status: 404,
+      })
+    })
 
     // Start HTTP server
     await new Promise<void>((resolve) => {

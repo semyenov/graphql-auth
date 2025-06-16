@@ -24,9 +24,7 @@ builder.queryField('users', (t) =>
         resolve: async (query, _parent, args, ctx: EnhancedContext) => {
             // Apply filtering
             const where = transformUserWhereInput(args.where) || {}
-
-            // Transform order by
-            const orderBy = args.orderBy?.map(transformOrderBy).filter(Boolean) || [{ id: 'asc' }]
+            const orderBy = transformOrderBy(args.orderBy) || { id: 'asc' }
 
             return ctx.prisma.user.findMany({
                 ...query,
@@ -36,7 +34,7 @@ builder.queryField('users', (t) =>
         },
         totalCount: (_parent, args, ctx: EnhancedContext) => {
             const where = transformUserWhereInput(args.where) || {}
-            return ctx.repositories.users.count(where)
+            return ctx.prisma.user.count({ where })
         },
     })
 )
@@ -129,9 +127,6 @@ builder.queryField('searchUsers', (t) =>
                 searchTerm: args.searchTerm,
                 skip: query.skip ?? 0,
                 take: query.take ?? 10,
-                orderBy: args.orderBy?.find(o => o.name || o.email)
-                    ? { field: Object.keys(args.orderBy[0]!)[0]!, direction: Object.values(args.orderBy[0]!)[0]! as 'asc' | 'desc' }
-                    : undefined,
             })
 
             // Return users with Prisma optimization
@@ -141,7 +136,6 @@ builder.queryField('searchUsers', (t) =>
             return ctx.prisma.user.findMany({
                 ...query,
                 where: { id: { in: userIds } },
-                orderBy: args.orderBy?.map(transformOrderBy).filter(Boolean) || [{ name: 'asc' }],
             })
         },
         totalCount: async (_parent, args, ctx: EnhancedContext) => {

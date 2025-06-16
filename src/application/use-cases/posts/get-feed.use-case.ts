@@ -4,9 +4,9 @@
  * Retrieves published posts for the public feed.
  */
 
+import { Prisma } from '@prisma/client'
 import { inject, injectable } from 'tsyringe'
 import type { IPostRepository } from '../../../core/repositories/post.repository.interface'
-import { PostOrderBy } from '../../../core/repositories/post.repository.interface'
 import { PostDto } from '../../dtos/post.dto'
 import { PostMapper } from '../../mappers/post.mapper'
 
@@ -14,10 +14,7 @@ export interface GetFeedCommand {
   searchString?: string
   skip?: number
   take?: number
-  orderBy?: {
-    field: string
-    direction: 'asc' | 'desc'
-  }[]
+  orderBy?: Prisma.PostOrderByWithRelationInput
 }
 
 export interface GetFeedResult {
@@ -39,7 +36,7 @@ export class GetFeedUseCase {
       searchString,
       skip,
       take,
-      orderBy: orderBy?.[0] as PostOrderBy,
+      orderBy,
     })
 
     // Get total count

@@ -14,12 +14,12 @@ builder.prismaNode('User', {
             // Enable total count for better UX
             totalCount: true,
             // Configure query options
-            query: (args, context) => ({
+            query: (args, _context) => ({
                 // Add default ordering by creation date (newest first)
                 orderBy: { createdAt: 'desc' },
                 // Allow filtering by published status
                 where: args.published !== undefined
-                    ? { published: args.published }
+                    ? { published: args.published ?? false }
                     : undefined,
             }),
             // Add additional connection arguments
@@ -32,7 +32,7 @@ builder.prismaNode('User', {
         // Add convenience field for drafts count
         draftsCount: t.int({
             description: 'Number of unpublished posts by this user',
-            resolve: async (user, args, context) => {
+            resolve: async (user, _args, context) => {
                 return context.repositories.posts.count({
                     authorId: user.id,
                     published: false,
@@ -42,7 +42,7 @@ builder.prismaNode('User', {
         // Add convenience field for published posts count
         publishedPostsCount: t.int({
             description: 'Number of published posts by this user',
-            resolve: async (user, args, context) => {
+            resolve: async (user, _args, context) => {
                 return context.repositories.posts.count({
                     authorId: user.id,
                     published: true,

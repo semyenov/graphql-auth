@@ -3,7 +3,6 @@ import { PostId } from '../../core/value-objects/post-id.vo'
 import { parseGlobalId } from '../../shared/infrastructure/graphql/relay-helpers'
 import { builder } from '../builder'
 import { PostOrderByInput, PostWhereInput } from '../inputs'
-import { transformOrderBy } from '../utils/filter-transform'
 
 // Enhanced post by ID query - uses clean architecture
 builder.queryField('post', (t) =>
@@ -69,7 +68,6 @@ builder.queryField('feed', (t) =>
                 searchString: args.searchString ?? undefined,
                 skip: query.skip ?? 0,
                 take: query.take ?? 10,
-                orderBy: args.orderBy?.map(transformOrderBy).filter(Boolean),
             })
 
             // Return posts with Prisma optimization
@@ -78,7 +76,6 @@ builder.queryField('feed', (t) =>
             return ctx.prisma.post.findMany({
                 ...query,
                 where: { id: { in: postIds } },
-                orderBy: args.orderBy?.map(transformOrderBy).filter(Boolean) || [{ createdAt: 'desc' }],
             })
         },
         totalCount: async (_parent, args, ctx: EnhancedContext) => {
@@ -127,7 +124,6 @@ builder.queryField('drafts', (t) =>
                     currentUserId: ctx.userId.toString(),
                     skip: query.skip ?? 0,
                     take: query.take ?? 10,
-                    orderBy: args.orderBy?.map(transformOrderBy).filter(Boolean),
                 })
 
                 // Return drafts with Prisma optimization
@@ -135,8 +131,11 @@ builder.queryField('drafts', (t) =>
                 const draftIds = result.drafts.map(d => d.id)
                 return ctx.prisma.post.findMany({
                     ...query,
-                    where: { id: { in: draftIds } },
-                    orderBy: args.orderBy?.map(transformOrderBy).filter(Boolean) || [{ updatedAt: 'desc' }],
+                    where: {
+                        id: { in: draftIds },
+                        published: false
+                    },
+                    orderBy: { updatedAt: 'desc' }
                 })
             } catch (error) {
                 // Invalid user ID or unauthorized access

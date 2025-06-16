@@ -16,8 +16,10 @@ export interface PostFilter {
 }
 
 export interface PostOrderBy {
-  field: 'createdAt' | 'updatedAt' | 'title' | 'viewCount'
-  direction: 'asc' | 'desc'
+  createdAt?: 'asc' | 'desc'
+  updatedAt?: 'asc' | 'desc'
+  title?: 'asc' | 'desc'
+  viewCount?: 'asc' | 'desc'
 }
 
 export interface IPostRepository {

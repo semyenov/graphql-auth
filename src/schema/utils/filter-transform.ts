@@ -19,15 +19,29 @@ export function transformStringFilter(filter: Prisma.StringFilter | undefined): 
     return Object.keys(prismaFilter).length > 0 ? prismaFilter : undefined;
 }
 
+export function transformUserWhereInput(where: any) {
+    if (!where) return undefined;
+
+    const prismaWhere: Prisma.UserWhereInput = {};
+
+    Object.keys(where).forEach(key => {
+        if (where[key] !== undefined) {
+            prismaWhere[key as keyof Prisma.UserWhereInput] = where[key as keyof Prisma.UserWhereInput];
+        }
+    });
+
+    return Object.keys(prismaWhere).length > 0 ? prismaWhere : undefined;
+}
+
 // Transform order by input to Prisma orderBy clause
-export function transformOrderBy(orderBy: any): any {
+export function transformOrderBy(orderBy: any) {
     if (!orderBy) return undefined;
 
-    const prismaOrderBy: any = {};
+    const prismaOrderBy: Prisma.PostOrderByWithRelationInput = {};
 
     Object.keys(orderBy).forEach(key => {
         if (orderBy[key] !== undefined) {
-            prismaOrderBy[key] = orderBy[key];
+            prismaOrderBy[key as keyof Prisma.PostOrderByWithRelationInput] = orderBy[key] as Prisma.SortOrder;
         }
     });
 

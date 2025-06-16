@@ -223,6 +223,7 @@ export const UserOrderByInput = builder.inputType('UserOrderByInput', {
         id: t.field({
             type: SortOrder,
             description: 'Order by user ID',
+            defaultValue: 'asc',
         }),
         name: t.field({
             type: SortOrder,

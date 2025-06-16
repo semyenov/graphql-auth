@@ -352,7 +352,7 @@ describe('Enhanced Permissions System', () => {
 
     describe('Fallback Rules', () => {
         it('should allow public access to published posts', async () => {
-            // Test that published posts can be viewed without authentication
+            // Test that publi  shed posts can be viewed without authentication
 
             // Create a published post
             const post = await prisma.post.create({
