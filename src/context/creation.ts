@@ -1,6 +1,5 @@
 import { ContextFunction } from '@apollo/server'
 import { IncomingMessage, ServerResponse } from 'http'
-import { UserId } from '../core/value-objects/user-id.vo'
 import { ValidationError } from '../errors'
 import type { Context, GraphQLIncomingMessage } from './types.d'
 import { enhanceContext, type EnhancedContext } from './enhanced-context'
@@ -11,9 +10,9 @@ import {
     determineHttpMethod,
     extractContentType,
     extractHeaders,
-    getUserId,
     isValidRequest
 } from './utils'
+import { getUserIdFromAuthHeaderAsync } from './token-utils'
 
 /**
  * GraphQL Context Creation
@@ -113,21 +112,13 @@ function extractRequestComponents(req: GraphQLIncomingMessage) {
  * @returns Authentication context information
  */
 async function createAuthenticationContext(requestComponents: ReturnType<typeof extractRequestComponents>) {
-    // Create basic context for getUserId function
-    const basicContext = {
-        req: requestComponents.requestObject,
-        headers: requestComponents.headers,
-        method: requestComponents.method,
-        contentType: requestComponents.contentType,
-        metadata: requestComponents.metadata,
-    } as Context
-
     // Attempt to get user ID from the request
-    const userId = getUserId(basicContext)
+    const authHeader = requestComponents.headers['authorization']
+    const userId = await getUserIdFromAuthHeaderAsync(authHeader)
     const isAuthenticated = Boolean(userId)
 
     // Create security context
-    const security = createSecurityContext(isAuthenticated, userId || undefined)
+    const security = createSecurityContext(isAuthenticated, userId?.value || undefined)
 
     return {
         userId: userId || undefined,
@@ -161,7 +152,7 @@ function assembleContext(
 
         // Authentication and security
         security: authContext.security,
-        userId: authContext.userId ? UserId.create(authContext.userId) : undefined,
+        userId: authContext.userId,
         user: undefined, // Will be populated by resolvers if needed
     }
 } 

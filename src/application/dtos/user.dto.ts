@@ -27,3 +27,9 @@ export interface AuthResponseDto {
   token: string
   user: UserDto
 }
+
+export interface AuthTokensDto {
+  accessToken: string
+  refreshToken: string
+  user: UserDto
+}

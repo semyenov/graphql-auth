@@ -180,12 +180,52 @@ All GraphQL operations are implemented in clean architecture resolvers:
 
 ### Mutations
 - `signup(email, password, name)` - Create account
-- `login(email, password)` - Authenticate
+- `login(email, password)` - Authenticate (returns JWT token)
+- `loginWithTokens(email, password)` - Authenticate with refresh tokens
+- `refreshToken(refreshToken)` - Refresh access token
+- `logout` - Revoke all refresh tokens
 - `createDraft(data)` - Create draft post
 - `updatePost(id, title?, content?, published?)` - Update post
 - `deletePost(id)` - Delete post
 - `togglePublishPost(id)` - Toggle publication status
 - `incrementPostViewCount(id)` - Increment view count
+
+## Authentication & Security
+
+### JWT Token Strategy
+- **Access Tokens**: Short-lived (15 minutes), used for API requests
+- **Refresh Tokens**: Long-lived (7 days), used to obtain new access tokens
+- **Token Rotation**: Refresh tokens are single-use and rotated on each refresh
+
+### Authentication Flow
+```typescript
+// Initial login
+mutation {
+  loginWithTokens(email: "user@example.com", password: "password") {
+    accessToken    # Use in Authorization header
+    refreshToken   # Store securely
+  }
+}
+
+// Refresh tokens when access token expires
+mutation {
+  refreshToken(refreshToken: "...") {
+    accessToken    # New access token
+    refreshToken   # New refresh token (rotation)
+  }
+}
+
+// Logout (revokes all refresh tokens)
+mutation {
+  logout  # Requires authentication
+}
+```
+
+### Rate Limiting
+- **Login**: 5 attempts per 15 minutes
+- **Signup**: 3 attempts per hour
+- **General API**: 100 requests per minute
+- Uses Redis when available, falls back to in-memory
 
 ## Testing Architecture
 

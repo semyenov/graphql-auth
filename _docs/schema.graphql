@@ -1,3 +1,28 @@
+"""
+Legacy authentication response
+"""
+type AuthResponse {
+  """
+  JWT access token (deprecated, use AuthTokens instead)
+  """
+  token: String
+}
+
+"""
+Authentication tokens response
+"""
+type AuthTokens {
+  """
+  JWT access token for API requests
+  """
+  accessToken: String
+
+  """
+  Refresh token for obtaining new access tokens
+  """
+  refreshToken: String
+}
+
 input BooleanFilter {
   """
   Exact boolean match
@@ -115,6 +140,21 @@ type Mutation {
   Authenticate and receive a token
   """
   login(email: String!, password: String!): String
+
+  """
+  Authenticate and receive access and refresh tokens
+  """
+  loginWithTokens(email: String!, password: String!): AuthTokens
+
+  """
+  Logout user and revoke all refresh tokens
+  """
+  logout: Boolean
+
+  """
+  Refresh access token using a refresh token
+  """
+  refreshToken(refreshToken: String!): AuthTokens
 
   """
   Create a new user account

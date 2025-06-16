@@ -20,6 +20,7 @@ import './inputs';
 
 // Import clean architecture resolvers only
 import '../infrastructure/graphql/resolvers/auth.resolver';
+import '../infrastructure/graphql/resolvers/auth-tokens.resolver';
 import '../infrastructure/graphql/resolvers/posts.resolver';
 import '../infrastructure/graphql/resolvers/users.resolver';
 

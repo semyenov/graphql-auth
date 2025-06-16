@@ -1,5 +1,6 @@
 import SchemaBuilder from '@pothos/core';
 import DataloaderPlugin from '@pothos/plugin-dataloader';
+import ErrorsPlugin from '@pothos/plugin-errors';
 import PrismaPlugin from '@pothos/plugin-prisma';
 import type PrismaTypes from '@pothos/plugin-prisma/generated';
 import RelayPlugin from '@pothos/plugin-relay';
@@ -7,6 +8,13 @@ import ScopeAuthPlugin from '@pothos/plugin-scope-auth';
 import ValidationPlugin from '@pothos/plugin-validation';
 import type { EnhancedContext } from '../context/enhanced-context';
 import { isProduction } from '../environment';
+import {
+    AuthenticationError,
+    AuthorizationError,
+    ConflictError,
+    NotFoundError,
+    ValidationError
+} from '../errors';
 import { prisma } from '../prisma';
 import { decodeGlobalId, encodeGlobalId, parseGlobalId } from '../shared/infrastructure/graphql/relay-helpers';
 /**
@@ -18,8 +26,16 @@ import { decodeGlobalId, encodeGlobalId, parseGlobalId } from '../shared/infrast
 export const builder = new SchemaBuilder<{
     Context: EnhancedContext;
     PrismaTypes: PrismaTypes;
+    // Error types for the errors plugin
+    Errors: {
+        ValidationError: typeof ValidationError;
+        AuthenticationError: typeof AuthenticationError;
+        AuthorizationError: typeof AuthorizationError;
+        NotFoundError: typeof NotFoundError;
+        ConflictError: typeof ConflictError;
+    };
     // Authorization scopes for scope-auth plugin
-    AuthScopes: {
+    ScopeAuthScopes: {
         public: boolean;
         authenticated: boolean;
         admin: boolean;
@@ -56,7 +72,7 @@ export const builder = new SchemaBuilder<{
         };
     };
 }>({
-    plugins: [PrismaPlugin, RelayPlugin, ScopeAuthPlugin, DataloaderPlugin, ValidationPlugin],
+    plugins: [PrismaPlugin, RelayPlugin, ErrorsPlugin, ScopeAuthPlugin, DataloaderPlugin, ValidationPlugin],
     prisma: {
         client: prisma,
         // Enable field-level selection optimization and descriptions
@@ -81,32 +97,40 @@ export const builder = new SchemaBuilder<{
         nodesQueryOptions: false, // Disable automatic nodes query field generation
         // PageInfo fields are included by default in Relay implementation
     },
-    // Scope Auth plugin configuration
-    scopeAuth: {
-        // Recommended to always throw errors on unauthorized access
-        authorizeOnSubscribe: true,
-        authScopes: async (context: EnhancedContext) => ({
-            public: true,
-            authenticated: !!context.userId,
-            admin: context.user?.role === 'ADMIN',
-            postOwner: async (postId: string | number) => {
-                if (!context.userId) return false;
-                const numericPostId = typeof postId === 'string' ? parseGlobalId(postId, 'Post') : postId;
-                const post = await context.prisma.post.findUnique({
-                    where: { id: numericPostId },
-                    select: { authorId: true },
-                });
-                return post?.authorId === context.userId.value;
-            },
-            userOwner: async (userId: string | number) => {
-                if (!context.userId) return false;
-                const numericUserId = typeof userId === 'string' ? parseGlobalId(userId, 'User') : userId;
-                return numericUserId === context.userId.value;
-            },
-        }),
+    // Errors plugin configuration
+    errors: {
+        defaultTypes: [Error],
+        // Map our custom errors to GraphQL error extensions
+        directResult: false,
     },
-    // Validation plugin configuration
-    validation: {
-        validateOnSchemaStart: true,
+    // Authorization plugin configuration
+    scopeAuth: {
+        authScopes(context: EnhancedContext) {
+            return {
+                public: true,
+                authenticated: () => !!context.userId,
+                admin: () => context.user?.role === 'admin',
+                postOwner: async (postId: string | number) => {
+                    if (!context.userId) return false;
+                    const numericPostId = typeof postId === 'string' ? parseGlobalId(postId, 'Post') : postId;
+                    const post = await context.prisma.post.findUnique({
+                        where: { id: numericPostId },
+                        select: { authorId: true },
+                    });
+                    return post?.authorId === context.userId.value;
+                },
+                userOwner: async (userId: string | number) => {
+                    if (!context.userId) return false;
+                    const numericUserId = typeof userId === 'string' ? parseGlobalId(userId, 'User') : userId;
+                    return numericUserId === context.userId.value;
+                },
+            }
+        },
+    },
+    validationOptions: {
+        validationError: (error) => {
+            console.error(error);
+            return error;
+        },
     },
 });

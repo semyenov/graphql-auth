@@ -7,19 +7,16 @@
 import { z } from 'zod'
 import type { EnhancedContext } from '../../../context/enhanced-context'
 import { builder } from '../../../schema/builder'
+import { RateLimitPresets } from '../../services/rate-limiter.service'
 import { commonValidations } from '../pothos-helpers'
 import { applyRateLimit, createRateLimitConfig } from '../rate-limit-plugin'
-import { RateLimitPresets } from '../../services/rate-limiter.service'
 
 // Signup mutation with validation and error handling
 builder.mutationField('signup', (t) =>
   t.string({
     description: 'Create a new user account',
-    authScopes: {
-      public: true,
-    },
+    grantScopes: ['public'],
     args: {
-
       email: t.arg.string({
         required: true,
         validate: {
@@ -69,9 +66,7 @@ builder.mutationField('signup', (t) =>
 builder.mutationField('login', (t) =>
   t.string({
     description: 'Authenticate and receive a token',
-    authScopes: {
-      public: true,
-    },
+    grantScopes: ['public'],
     args: {
       email: t.arg.string({
         required: true,

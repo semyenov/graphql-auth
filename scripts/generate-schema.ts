@@ -1,3 +1,6 @@
+#!/usr/bin/env bun
+import 'reflect-metadata';
+
 import { mkdirSync, writeFileSync } from 'fs';
 import { printSchema } from 'graphql';
 import path from 'path';

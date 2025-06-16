@@ -26,6 +26,9 @@ export const permissions = shield({
     // Authentication mutations (public)
     login: rules.isPublic,
     signup: rules.rateLimitSensitiveOperations,
+    loginWithTokens: rules.isPublic,
+    refreshToken: rules.isPublic,
+    logout: rules.isAuthenticatedUser,
 
     // Post mutations
     createDraft: rules.canCreateDraft,
