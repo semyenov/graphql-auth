@@ -7,7 +7,7 @@ import {
   isAuthenticated,
   requireAuthentication,
 } from '../context'
-import { AuthenticationError, AuthorizationError, NotFoundError } from '../errors'
+import { AuthenticationError, AuthorizationError, NotFoundError, ValidationError } from '../errors'
 import { prisma } from '../prisma'
 
 /**
@@ -30,7 +30,7 @@ export const isPostOwner = rule({ cache: 'strict' })(
   async (_parent, args: { id: string }, context: Context) => {
     try {
       if (!args.id || typeof args.id !== 'string') {
-        throw new Error('Valid post ID is required')
+        throw new ValidationError(['Valid post ID is required'])
       }
 
       const userId = requireAuthentication(context)
@@ -54,7 +54,7 @@ export const isPostOwner = rule({ cache: 'strict' })(
 
       return true
     } catch (error) {
-      return error instanceof Error ? error : new Error('Authorization failed')
+      return error instanceof Error ? error : new AuthorizationError('Authorization failed')
     }
   }
 )
@@ -74,7 +74,7 @@ export const isUserOwner = rule({ cache: 'strict' })(
 
       return true
     } catch (error) {
-      return error instanceof Error ? error : new Error('Authorization failed')
+      return error instanceof Error ? error : new AuthorizationError('Authorization failed')
     }
   }
 )

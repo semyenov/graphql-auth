@@ -1,5 +1,6 @@
 import { ContextFunction } from '@apollo/server'
 import { IncomingMessage, ServerResponse } from 'http'
+import { ValidationError } from '../errors'
 import type { Context, GraphQLIncomingMessage } from './types.d'
 import {
     createRequestMetadata,
@@ -45,7 +46,7 @@ export const createContext: ContextFunction<[{ req: IncomingMessage; res: Server
 
     // Validate incoming request structure
     if (!isValidRequest(graphqlReq)) {
-        throw new Error('Invalid request structure provided to context creation')
+        throw new ValidationError(['Invalid request structure provided to context creation'])
     }
 
     try {

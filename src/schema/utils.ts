@@ -1,4 +1,6 @@
 
+import { ValidationError } from '../errors'
+
 /**
  * Helper to encode a global ID (same as toGlobalId in tests)
  * @param typename - The GraphQL type name (e.g., "User", "Post")
@@ -52,12 +54,12 @@ export function parseGlobalID(globalId: string, expectedType?: string): { id: nu
 
         // Validate the ID
         if (isNaN(id) || id <= 0) {
-            throw new Error(`Invalid ${expectedType || 'resource'} ID`)
+            throw new ValidationError([`Invalid ${expectedType || 'resource'} ID`])
         }
 
         // Validate type if expected
         if (expectedType && decoded.typename !== expectedType) {
-            throw new Error(`Expected ${expectedType} ID but got ${decoded.typename}`)
+            throw new ValidationError([`Expected ${expectedType} ID but got ${decoded.typename}`])
         }
 
         return {
@@ -69,6 +71,6 @@ export function parseGlobalID(globalId: string, expectedType?: string): { id: nu
         if (error instanceof Error) {
             throw error
         }
-        throw new Error(`Invalid ${expectedType || 'resource'} ID`)
+        throw new ValidationError([`Invalid ${expectedType || 'resource'} ID`])
     }
 }
