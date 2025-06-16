@@ -22,18 +22,22 @@ export const GetMeQuery = graphql(`
 
 export const GetAllUsersQuery = graphql(`
   query GetAllUsers {
-    allUsers {
-      ...UserInfo
-      posts {
-        ...PostInfo
+    users {
+      edges {
+        node {
+          ...UserInfo
+          posts { 
+            ...PostInfo
+          }
+        }
       }
     }
   }
 `, [UserInfoFragment, PostInfoFragment])
 
-export const GetPostByIdQuery = graphql(`
-  query GetPostById($id: Int!) {
-    postById(id: $id) {
+export const GetPostQuery = graphql(`
+  query GetPost($id: ID!) {
+    post(id: $id) {
       ...PostWithAuthor
     }
   }
@@ -42,25 +46,37 @@ export const GetPostByIdQuery = graphql(`
 export const GetFeedQuery = graphql(`
   query GetFeed(
     $searchString: String
-    $skip: Int
-    $take: Int
-    $orderBy: PostOrderByUpdatedAtInput
+    $after: String
+    $before: String
+    $first: Int
+    $last: Int
   ) {
-    feed(
+    feed( 
+      after: $after
+      before: $before
       searchString: $searchString
-      skip: $skip
-      take: $take
-      orderBy: $orderBy
+      first: $first 
+      last: $last
     ) {
-      ...PostWithAuthor
+      edges {
+        cursor
+        node {
+          ...PostWithAuthor
+        }
+      }
     }
   }
-`, [PostWithAuthorFragment])
+`, [PostWithAuthorFragment, PostInfoFragment])
 
 export const GetDraftsByUserQuery = graphql(`
-  query GetDraftsByUser($userUniqueInput: UserUniqueInput!) {
-    draftsByUser(userUniqueInput: $userUniqueInput) {
-      ...PostWithAuthor
+  query GetDraftsByUser($userId: ID!) {
+    drafts(userId: $userId) {
+      edges {
+        cursor
+        node {
+          ...PostWithAuthor
+        }
+      }
     }
   }
 `, [PostWithAuthorFragment]) 

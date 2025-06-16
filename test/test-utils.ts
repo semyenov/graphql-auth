@@ -73,12 +73,14 @@ export function createAuthContext(userId: string): Context {
 
   return createMockContext({
     headers: {
+      'content-type': 'application/json',
       authorization: `Bearer ${token}`,
     },
     req: {
       url: '/graphql',
       method: 'POST' as HTTPMethod,
       headers: {
+        'content-type': 'application/json',
         authorization: `Bearer ${token}`,
       },
       body: undefined,
@@ -116,12 +118,15 @@ export async function executeOperation<TData = unknown, TVariables extends Recor
   variables?: TVariables,
   context?: Context,
 ): Promise<GraphQLResponse<TData>> {
-  const response = await server.executeOperation<TData, TVariables>({
-    query,
-    variables,
-  }, {
-    contextValue: context || createMockContext()
-  })
+  const response = await server.executeOperation<TData, TVariables>(
+    {
+      query,
+      variables,
+    },
+    {
+      contextValue: context || createMockContext(),
+    }
+  )
 
   return response
 }

@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { PermissionUtils } from '../src/permissions'
+import { toPostId, toUserId } from './relay-utils'
 import { prisma } from './setup'
 import {
     createAuthContext,
@@ -145,10 +146,14 @@ describe('Enhanced Permissions System', () => {
 
             const feedQuery = `
         query {
-          feed {
-            id
-            title
-            published
+          feed(first: 10) {
+            edges {
+              node {
+                id
+                title
+                published
+              }
+            }
           }
         }
       `
@@ -159,7 +164,7 @@ describe('Enhanced Permissions System', () => {
             if (result.body.kind === 'single') {
                 expect(result.body.singleResult.errors).toBeUndefined()
                 const data = result.body.singleResult.data as any
-                expect(data?.feed).toHaveLength(2)
+                expect(data?.feed?.edges).toHaveLength(2)
             }
         })
 
@@ -189,11 +194,11 @@ describe('Enhanced Permissions System', () => {
                 expect(authResult.body.singleResult.errors).toBeUndefined()
                 const data = authResult.body.singleResult.data as any
                 expect(data?.me).toBeDefined()
-                expect(data?.me.id).toBe(testUserId)
+                expect(data?.me.id).toBe(toUserId(testUserId))
             }
         })
 
-        it('should enforce user ownership for draftsByUser query', async () => {
+        it('should enforce user ownership for drafts query', async () => {
             // Create drafts for both users
             await prisma.post.createMany({
                 data: [
@@ -213,10 +218,14 @@ describe('Enhanced Permissions System', () => {
             })
 
             const draftsQuery = `
-        query DraftsByUser($userUniqueInput: UserUniqueInput!) {
-          draftsByUser(userUniqueInput: $userUniqueInput) {
-            id
-            title
+        query Drafts($userId: ID!, $first: Int) {
+          drafts(userId: $userId, first: $first) {
+            edges {
+              node {
+                id
+                title
+              }
+            }
           }
         }
       `
@@ -225,7 +234,7 @@ describe('Enhanced Permissions System', () => {
             const ownDraftsResult = await executeOperation(
                 server,
                 draftsQuery,
-                { userUniqueInput: { id: testUserId } },
+                { userId: toUserId(testUserId), first: 10 },
                 createAuthContext(testUserId.toString())
             )
 
@@ -233,22 +242,24 @@ describe('Enhanced Permissions System', () => {
             if (ownDraftsResult.body.kind === 'single') {
                 expect(ownDraftsResult.body.singleResult.errors).toBeUndefined()
                 const data = ownDraftsResult.body.singleResult.data as any
-                expect(data?.draftsByUser).toHaveLength(1)
-                expect(data?.draftsByUser[0].title).toBe('User 1 Draft')
+                expect(data?.drafts?.edges).toHaveLength(1)
+                expect(data?.drafts?.edges[0].node.title).toBe('User 1 Draft')
             }
 
             // User should not be able to access other user's drafts
             const otherDraftsResult = await executeOperation(
                 server,
                 draftsQuery,
-                { userUniqueInput: { id: otherUserId } },
+                { userId: toUserId(otherUserId), first: 10 },
                 createAuthContext(testUserId.toString())
             )
 
             expect(otherDraftsResult.body.kind).toBe('single')
             if (otherDraftsResult.body.kind === 'single') {
-                expect(otherDraftsResult.body.singleResult.errors).toBeDefined()
-                expect(otherDraftsResult.body.singleResult.errors![0]!.message).toContain('Access denied')
+                // Should return empty list, not error
+                expect(otherDraftsResult.body.singleResult.errors).toBeUndefined()
+                const data = otherDraftsResult.body.singleResult.data as any
+                expect(data?.drafts?.edges).toHaveLength(0)
             }
         })
 
@@ -264,7 +275,7 @@ describe('Enhanced Permissions System', () => {
             })
 
             const deletePostMutation = `
-        mutation DeletePost($id: Int!) {
+        mutation DeletePost($id: ID!) {
           deletePost(id: $id) {
             id
             title
@@ -276,7 +287,7 @@ describe('Enhanced Permissions System', () => {
             const result = await executeOperation(
                 server,
                 deletePostMutation,
-                { id: post.id },
+                { id: toPostId(post.id) },
                 createAuthContext(testUserId.toString())
             )
 
@@ -295,7 +306,7 @@ describe('Enhanced Permissions System', () => {
 
         it('should handle invalid post IDs gracefully', async () => {
             const deletePostMutation = `
-        mutation DeletePost($id: Int!) {
+        mutation DeletePost($id: ID!) {
           deletePost(id: $id) {
             id
             title
@@ -306,14 +317,14 @@ describe('Enhanced Permissions System', () => {
             const result = await executeOperation(
                 server,
                 deletePostMutation,
-                { id: 999999 }, // Non-existent ID
+                { id: toPostId(999999) }, // Non-existent ID
                 createAuthContext(testUserId.toString())
             )
 
             expect(result.body.kind).toBe('single')
             if (result.body.kind === 'single') {
                 expect(result.body.singleResult.errors).toBeDefined()
-                expect(result.body.singleResult.errors![0]!.message).toContain('Post with identifier \'999999\' not found')
+                expect(result.body.singleResult.errors![0]!.message).toContain(`Post with identifier '${toPostId(999999)}' not found`)
             }
         })
     })
@@ -370,9 +381,9 @@ describe('Enhanced Permissions System', () => {
             // This tests the fallback rule in the permissions system
             // Any operation not explicitly specified should require authentication
 
-            const postByIdQuery = `
-        query PostById($id: Int!) {
-          postById(id: $id) {
+            const postQuery = `
+        query Post($id: ID!) {
+          post(id: $id) {
             id
             title
           }
@@ -392,8 +403,8 @@ describe('Enhanced Permissions System', () => {
             // Without authentication - should be denied by fallback rule
             const unauthResult = await executeOperation(
                 server,
-                postByIdQuery,
-                { id: post.id },
+                postQuery,
+                { id: toPostId(post.id) },
                 createMockContext()
             )
 
@@ -406,8 +417,8 @@ describe('Enhanced Permissions System', () => {
             // With authentication - should succeed
             const authResult = await executeOperation(
                 server,
-                postByIdQuery,
-                { id: post.id },
+                postQuery,
+                { id: toPostId(post.id) },
                 createAuthContext(testUserId.toString())
             )
 
@@ -415,9 +426,9 @@ describe('Enhanced Permissions System', () => {
             if (authResult.body.kind === 'single') {
                 expect(authResult.body.singleResult.errors).toBeUndefined()
                 const data = authResult.body.singleResult.data as any
-                expect(data?.postById).toBeDefined()
-                expect(data?.postById.id).toBe(post.id)
+                expect(data?.post).toBeDefined()
+                expect(data?.post.id).toBe(toPostId(post.id))
             }
         })
     })
-}) 
+})

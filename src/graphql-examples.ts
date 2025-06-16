@@ -3,7 +3,7 @@ import { print } from 'graphql'
 import {
   GetFeedQuery,
   GetMeQuery,
-  GetPostByIdQuery,
+  GetPostQuery,
   GraphQLClient,
   PostInfoFragment,
   UserInfoFragment,
@@ -65,9 +65,8 @@ export async function exampleQueryWithVariables() {
   console.log('🔍 Query with Variables Example')
 
   const variables: GetFeedVariables = {
-    take: 10,
-    skip: 0,
-    orderBy: { updatedAt: 'desc' },
+    first: 10,
+    after: '0',
     searchString: 'GraphQL',
   }
 
@@ -75,8 +74,8 @@ export async function exampleQueryWithVariables() {
     const result = await queryFeed(variables)
 
     const posts = result.data?.feed
-    if (posts && posts.length > 0) {
-      console.log(`Found ${posts.length} posts`)
+    if (posts && posts.edges && posts.edges.length > 0) {
+      console.log(`Found ${posts.edges.length} posts`)
       console.log('Posts loaded successfully with fragments')
     }
   } catch (error) {
@@ -162,12 +161,12 @@ export async function exampleFragments() {
   // Use fragment-based query
   const result = await executeGraphQL<GetFeedVariables, GetFeedResult>(
     print(GetFeedQuery),
-    { take: 5 },
+    { first: 5 },
   )
 
   const posts = result.data?.feed
-  if (posts && posts.length > 0) {
-    console.log(`Loaded ${posts.length} posts with fragment-based typing`)
+  if (posts && posts.edges && posts.edges.length > 0) {
+    console.log(`Loaded ${posts.edges.length} posts with fragment-based typing`)
   }
 }
 
@@ -203,15 +202,15 @@ export async function exampleResponseTransformation() {
   console.log('🔄 Response Transformation Example')
 
   try {
-    const result = await queryFeed({ take: 3 })
+    const result = await queryFeed({ first: 3 })
 
     // Transform response to count posts
-    const postsCount = result.data?.feed?.length || 0
+    const postsCount = result.data?.feed?.edges?.length || 0
     console.log('Posts count:', postsCount)
 
     // Safely unwrap data (throws on errors)
     const safeData = ResponseTransformer.unwrap(result)
-    console.log('Safe data access:', safeData.feed?.length, 'posts')
+    console.log('Safe data access:', safeData.feed?.edges?.length, 'posts')
   } catch (error) {
     if (error instanceof GraphQLResponseError) {
       console.error('GraphQL Error:', error.firstError?.message)
@@ -276,7 +275,7 @@ export async function exampleDevTools() {
 
   // Timed operation
   await devTools.logOperation('GetFeed', async () => {
-    return await queryFeed({ take: 5 })
+    return await queryFeed({ first: 5 })
   })
 
   console.log('Query completed with timing')
@@ -290,7 +289,7 @@ export async function exampleErrorHandling() {
 
   try {
     // Intentionally cause an error with invalid variables
-    const result = await executeGraphQL(print(GetPostByIdQuery), { id: -1 })
+    const result = await executeGraphQL(print(GetPostQuery), { id: 'Post:1' })
 
     if (result.errors && result.errors.length > 0) {
       console.log('GraphQL errors detected:')
@@ -382,8 +381,8 @@ export async function exampleCompleteWorkflow() {
       console.log('Created post successfully')
 
       // 4. Get updated feed
-      const feedResult = await queryFeed({ take: 5 }, authHeaders)
-      console.log(`Feed now has ${feedResult.data?.feed?.length} posts`)
+      const feedResult = await queryFeed({ first: 5 }, authHeaders)
+      console.log(`Feed now has ${feedResult.data?.feed?.edges?.length} posts`)
     }
   } catch (error) {
     console.error('Workflow failed:', error)

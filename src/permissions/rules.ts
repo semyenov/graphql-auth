@@ -27,16 +27,20 @@ export const isAuthenticatedUser = rule({ cache: 'contextual' })(
  * Ensures the user owns the post they're trying to modify
  */
 export const isPostOwner = rule({ cache: 'strict' })(
-  async (_parent, args: { id: number }, context: Context) => {
+  async (_parent, args: { id: string }, context: Context) => {
     try {
-      if (!args.id || typeof args.id !== 'number') {
+      if (!args.id || typeof args.id !== 'string') {
         throw new Error('Valid post ID is required')
       }
 
       const userId = requireAuthentication(context)
+      
+      // Parse the global ID to get numeric ID
+      const { parseGlobalID } = await import('../schema/utils')
+      const { id: postId } = parseGlobalID(args.id, 'Post')
 
       const post = await prisma.post.findUnique({
-        where: { id: args.id },
+        where: { id: postId },
         select: { authorId: true, title: true }
       })
 

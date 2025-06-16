@@ -1,4 +1,4 @@
-import { NotFoundError } from '../../errors'
+
 import { prisma } from '../../prisma'
 import { builder } from '../builder'
 import { parseGlobalID } from '../utils'
@@ -80,11 +80,7 @@ builder.queryField('drafts', (t) =>
             }
 
             // Decode the global ID
-            const { id: requestedUserId, typename } = parseGlobalID(args.userId, 'User')
-
-            if (typename !== 'User') {
-                throw new NotFoundError('User', args.userId)
-            }
+            const { id: requestedUserId } = parseGlobalID(args.userId, 'User')
 
             // Users can only see their own drafts
             if (ctx.userId !== requestedUserId) {

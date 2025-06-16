@@ -43,11 +43,7 @@ builder.queryField('user', (t) =>
             id: t.arg.id({ required: true }),
         },
         resolve: async (query, _parent, args) => {
-            const { id: userId, typename } = parseGlobalID(args.id, 'User')
-
-            if (typename !== 'User') {
-                return null
-            }
+            const { id: userId } = parseGlobalID(args.id, 'User')
 
             return prisma.user.findUnique({
                 ...query,

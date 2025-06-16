@@ -18,7 +18,7 @@ import type {
     GetDraftsByUserQuery,
     GetFeedQuery,
     GetMeQuery,
-    GetPostByIdQuery
+    GetPostQuery
 } from './queries'
 
 // =============================================================================
@@ -110,8 +110,8 @@ export type PostWithAuthor = ResultOf<typeof PostWithAuthorFragment>
 // Query Types
 export type GetMeResult = ResultOf<typeof GetMeQuery>
 export type GetAllUsersResult = ResultOf<typeof GetAllUsersQuery>
-export type GetPostByIdResult = ResultOf<typeof GetPostByIdQuery>
-export type GetPostByIdVariables = VariablesOf<typeof GetPostByIdQuery>
+export type GetPostResult = ResultOf<typeof GetPostQuery>
+export type GetPostVariables = VariablesOf<typeof GetPostQuery>
 export type GetFeedResult = ResultOf<typeof GetFeedQuery>
 export type GetFeedVariables = VariablesOf<typeof GetFeedQuery>
 export type GetDraftsByUserResult = ResultOf<typeof GetDraftsByUserQuery>

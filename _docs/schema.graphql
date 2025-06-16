@@ -1,19 +1,74 @@
+scalar DID
+
 scalar DateTime
 
+scalar JSON
+
 type Mutation {
-  createDraft(data: PostCreateInput!): Post
-  deletePost(id: Int!): Post
-  incrementPostViewCount(id: Int!): Post
-  login(email: String!, password: String!): String
-  signup(email: String!, name: String, password: String!): String
-  togglePublishPost(id: Int!): Post
+  """Create a new draft post for the authenticated user"""
+  createDraft(
+    """Post data including title and optional content"""
+    data: PostCreateInput!
+  ): Post
+
+  """Delete a post permanently"""
+  deletePost(
+    """The global ID of the post to delete"""
+    id: ID!
+  ): Post
+
+  """Increment the view count of a post"""
+  incrementPostViewCount(
+    """The global ID of the post to increment view count"""
+    id: ID!
+  ): Post
+
+  """Authenticate user and return JWT token"""
+  login(
+    """Email address of the account"""
+    email: String!
+
+    """Account password"""
+    password: String!
+  ): String
+
+  """Create a new user account and return JWT token"""
+  signup(
+    """Unique email address for the account"""
+    email: String!
+
+    """Optional display name for the user"""
+    name: String
+
+    """Password for the account (min 8 characters)"""
+    password: String!
+  ): String
+
+  """Toggle the publication status of a post"""
+  togglePublishPost(
+    """The global ID of the post to toggle"""
+    id: ID!
+  ): Post
 }
 
-type Post {
+interface Node {
+  id: ID!
+}
+
+scalar ObjectID
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+}
+
+type Post implements Node {
   author: User
   content: String
   createdAt: DateTime
-  id: Int
+  id: ID!
   published: Boolean
   title: String
   updatedAt: DateTime
@@ -30,16 +85,46 @@ input PostOrderByUpdatedAtInput {
 }
 
 type Query {
-  allUsers: [User!]
-  draftsByUser(userUniqueInput: UserUniqueInput!): [Post!]
-  feed(
-    orderBy: PostOrderByUpdatedAtInput
-    searchString: String
-    skip: Int
-    take: Int
-  ): [Post!]
+  drafts(after: String, before: String, first: Int, last: Int, userId: ID!): QueryDraftsConnection
+  feed(after: String, before: String, first: Int, last: Int, searchString: String): QueryFeedConnection
   me: User
-  postById(id: Int): Post
+  node(id: ID!): Node
+  nodes(ids: [ID!]!): [Node]!
+  post(id: ID!): Post
+  user(id: ID!): User
+  users(after: String, before: String, first: Int, last: Int): QueryUsersConnection
+}
+
+type QueryDraftsConnection {
+  edges: [QueryDraftsConnectionEdge]
+  pageInfo: PageInfo!
+}
+
+type QueryDraftsConnectionEdge {
+  cursor: String!
+  node: Post
+}
+
+type QueryFeedConnection {
+  edges: [QueryFeedConnectionEdge]
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type QueryFeedConnectionEdge {
+  cursor: String!
+  node: Post
+}
+
+type QueryUsersConnection {
+  edges: [QueryUsersConnectionEdge]
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type QueryUsersConnectionEdge {
+  cursor: String!
+  node: User
 }
 
 enum SortOrder {
@@ -47,9 +132,11 @@ enum SortOrder {
   desc
 }
 
-type User {
+scalar UUID
+
+type User implements Node {
   email: String
-  id: Int
+  id: ID!
   name: String
   posts: [Post!]
 }
