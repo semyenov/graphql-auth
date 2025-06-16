@@ -96,12 +96,7 @@ export class RateLimiterService {
                 const retryAfter = Math.round(error.msBeforeNext / 1000) || 60
                 throw new RateLimitError(
                     `Too many requests. Please retry after ${retryAfter} seconds`,
-                    retryAfter,
-                    {
-                        limit: options.points,
-                        remaining: error.remainingPoints || 0,
-                        reset: new Date(Date.now() + error.msBeforeNext),
-                    }
+                    retryAfter
                 )
             }
             throw error

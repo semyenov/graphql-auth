@@ -49,10 +49,7 @@ export class TokenService {
         const accessToken = jwt.sign(
             { ...payload, type: 'access', jti: this.generateSecureToken() },
             this.config.accessTokenSecret,
-            {
-                expiresIn: this.config.accessTokenExpiresIn,
-                algorithm: 'HS256'
-            }
+            { expiresIn: this.config.accessTokenExpiresIn }
         )
 
         // Generate refresh token
@@ -60,10 +57,7 @@ export class TokenService {
         const refreshToken = jwt.sign(
             { ...payload, type: 'refresh', jti: refreshTokenValue },
             this.config.refreshTokenSecret,
-            {
-                expiresIn: this.config.refreshTokenExpiresIn,
-                algorithm: 'HS256'
-            }
+            { expiresIn: this.config.refreshTokenExpiresIn }
         )
 
         // Calculate expiration date
@@ -166,7 +160,7 @@ export class TokenService {
         }
 
         const [, value, unit] = match
-        const numValue = parseInt(value, 10)
+        const numValue = parseInt(value!, 10)
 
         switch (unit) {
             case 's': return numValue * 1000

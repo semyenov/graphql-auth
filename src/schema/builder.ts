@@ -13,10 +13,12 @@ import {
     AuthorizationError,
     ConflictError,
     NotFoundError,
+    RateLimitError,
     ValidationError
 } from '../errors';
 import { prisma } from '../prisma';
 import { decodeGlobalId, encodeGlobalId, parseGlobalId } from '../shared/infrastructure/graphql/relay-helpers';
+import { createEnhancedAuthScopes } from '../infrastructure/graphql/authorization/enhanced-scopes';
 /**
  * SchemaBuilder configuration for Pothos with Prisma and Relay plugins
  * 
@@ -33,14 +35,25 @@ export const builder = new SchemaBuilder<{
         AuthorizationError: typeof AuthorizationError;
         NotFoundError: typeof NotFoundError;
         ConflictError: typeof ConflictError;
+        RateLimitError: typeof RateLimitError;
     };
-    // Authorization scopes for scope-auth plugin
+    // Enhanced authorization scopes for scope-auth plugin
     ScopeAuthScopes: {
         public: boolean;
         authenticated: boolean;
         admin: boolean;
         postOwner: (postId: string | number) => boolean | Promise<boolean>;
         userOwner: (userId: string | number) => boolean | Promise<boolean>;
+        hasPermission: (permission: string) => boolean | Promise<boolean>;
+        hasAnyPermission: (permissions: string[]) => boolean | Promise<boolean>;
+        hasAllPermissions: (permissions: string[]) => boolean | Promise<boolean>;
+        canViewContent: (contentType: string, contentId: string | number) => boolean | Promise<boolean>;
+        canEditContent: (contentType: string, contentId: string | number) => boolean | Promise<boolean>;
+        canDeleteContent: (contentType: string, contentId: string | number) => boolean | Promise<boolean>;
+        withinTimeLimit: (action: string, timeLimit: number) => boolean | Promise<boolean>;
+        withinRateLimit: (action: string, limit: number, window: number) => boolean | Promise<boolean>;
+        canAccessIfPublic: (resourceType: string, resourceId: string | number) => boolean | Promise<boolean>;
+        canAccessIfOwnerOrPublic: (resourceType: string, resourceId: string | number) => boolean | Promise<boolean>;
     };
     Scalars: {
         ID: {
@@ -99,32 +112,22 @@ export const builder = new SchemaBuilder<{
     },
     // Errors plugin configuration
     errors: {
-        defaultTypes: [Error],
-        // Map our custom errors to GraphQL error extensions
-        directResult: false,
+        defaultTypes: [
+            Error,
+            ValidationError,
+            AuthenticationError,
+            AuthorizationError,
+            NotFoundError,
+            ConflictError,
+            RateLimitError,
+        ],
+        // Enable direct result mode for better error handling
+        directResult: true,
     },
-    // Authorization plugin configuration
+    // Enhanced authorization plugin configuration
     scopeAuth: {
         authScopes(context: EnhancedContext) {
-            return {
-                public: true,
-                authenticated: () => !!context.userId,
-                admin: () => context.user?.role === 'admin',
-                postOwner: async (postId: string | number) => {
-                    if (!context.userId) return false;
-                    const numericPostId = typeof postId === 'string' ? parseGlobalId(postId, 'Post') : postId;
-                    const post = await context.prisma.post.findUnique({
-                        where: { id: numericPostId },
-                        select: { authorId: true },
-                    });
-                    return post?.authorId === context.userId.value;
-                },
-                userOwner: async (userId: string | number) => {
-                    if (!context.userId) return false;
-                    const numericUserId = typeof userId === 'string' ? parseGlobalId(userId, 'User') : userId;
-                    return numericUserId === context.userId.value;
-                },
-            }
+            return createEnhancedAuthScopes(context)
         },
     },
     validationOptions: {

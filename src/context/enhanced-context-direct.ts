@@ -7,13 +7,16 @@
 import type { PrismaClient } from '@prisma/client'
 import { DatabaseClient } from '../infrastructure/database'
 import { createDataLoaders, type DataLoaders } from '../infrastructure/graphql/dataloaders'
+import { createEnhancedLoaders, type EnhancedLoaders } from '../infrastructure/graphql/dataloaders/enhanced-loaders'
 import type { Context } from './types.d'
 
 export interface EnhancedContext extends Context {
   // Prisma client for direct database access in Pothos resolvers
   prisma: PrismaClient
-  // DataLoaders for batch loading (optional for tests)
+  // Original DataLoaders for batch loading (optional for tests)
   loaders?: DataLoaders
+  // Enhanced DataLoaders for Pothos loadable objects
+  enhancedLoaders?: EnhancedLoaders
 }
 
 /**
@@ -30,6 +33,8 @@ export function enhanceContext(baseContext: Context): EnhancedContext {
     // Create DataLoaders with the enhanced context (only if available)
     try {
       enhancedContext.loaders = createDataLoaders(enhancedContext)
+      // Create enhanced loaders for Pothos loadable objects
+      enhancedContext.enhancedLoaders = createEnhancedLoaders(enhancedContext.prisma)
     } catch (error) {
       // DataLoaders are optional for tests
       console.debug('DataLoaders not available:', error)

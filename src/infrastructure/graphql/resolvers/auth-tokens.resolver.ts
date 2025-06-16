@@ -4,26 +4,24 @@
  * Handles authentication with refresh tokens
  */
 
+import { container } from 'tsyringe'
 import { z } from 'zod'
 import type { EnhancedContext } from '../../../context/enhanced-context-direct'
-import { builder } from '../../../schema/builder'
-import { AuthTokensType } from '../types/auth.types'
-import { commonValidations } from '../pothos-helpers'
-import { applyRateLimit, createRateLimitConfig } from '../rate-limit-plugin'
-import { RateLimitPresets } from '../../services/rate-limiter.service'
 import { LoginWithTokensUseCase } from '../../../features/auth/application/use-cases/login-with-tokens.use-case'
 import { RefreshTokenUseCase } from '../../../features/auth/application/use-cases/refresh-token.use-case'
 import { TokenService } from '../../../features/auth/infrastructure/services/token.service'
-import { container } from 'tsyringe'
+import { builder } from '../../../schema/builder'
+import { RateLimitPresets } from '../../services/rate-limiter.service'
+import { commonValidations } from '../pothos-helpers'
+import { applyRateLimit, createRateLimitConfig } from '../rate-limit-plugin'
+import { AuthTokensType } from '../types/auth.types'
 
 // Login with tokens mutation
 builder.mutationField('loginWithTokens', (t) =>
   t.field({
     type: AuthTokensType,
     description: 'Authenticate and receive access and refresh tokens',
-    authScopes: {
-      public: true,
-    },
+    grantScopes: ['public'],
     args: {
       email: t.arg.string({
         required: true,
@@ -68,9 +66,7 @@ builder.mutationField('refreshToken', (t) =>
   t.field({
     type: AuthTokensType,
     description: 'Refresh access token using a refresh token',
-    authScopes: {
-      public: true,
-    },
+    grantScopes: ['authenticated'],
     args: {
       refreshToken: t.arg.string({
         required: true,
@@ -97,19 +93,17 @@ builder.mutationField('refreshToken', (t) =>
 builder.mutationField('logout', (t) =>
   t.boolean({
     description: 'Logout user and revoke all refresh tokens',
-    authScopes: {
-      authenticated: true,
-    },
+    grantScopes: ['authenticated'],
     resolve: async (_parent, _args, context: EnhancedContext) => {
       if (!context.userId) {
         throw new Error('Not authenticated')
       }
 
       const tokenService = container.resolve(TokenService)
-      
+
       // Revoke all refresh tokens for the user
       await tokenService.revokeAllTokens(context.userId.value)
-      
+
       return true
     },
   })

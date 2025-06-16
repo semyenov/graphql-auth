@@ -8,6 +8,8 @@ builder.prismaNode('User', {
     fields: (t) => ({
         name: t.exposeString('name', { nullable: true }),
         email: t.exposeString('email'),
+        createdAt: t.expose('createdAt', { type: 'DateTime' }),
+        updatedAt: t.expose('updatedAt', { type: 'DateTime' }),
         // Enhanced posts connection with cursor-based pagination
         posts: t.relatedConnection('posts', {
             cursor: 'id',

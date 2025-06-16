@@ -1,37 +1,62 @@
+/**
+ * Direct GraphQL Mutations
+ * 
+ * Simple GraphQL operation strings for direct resolver mutations
+ */
+
 import { graphql } from 'gql.tada'
-import * as fragments from './fragments'
 
-// =============================================================================
-// DIRECT GRAPHQL MUTATIONS (Without Use Cases)
-// =============================================================================
-
-export const LoginDirectMutation = graphql(`
-  mutation LoginDirect($email: String!, $password: String!) {
-    loginDirect(email: $email, password: $password)
-  } 
-`)
-
+// Authentication mutations
 export const SignupDirectMutation = graphql(`
   mutation SignupDirect($email: String!, $password: String!, $name: String) {
     signupDirect(email: $email, password: $password, name: $name)
   }
 `)
 
+export const LoginDirectMutation = graphql(`
+  mutation LoginDirect($email: String!, $password: String!) {
+    loginDirect(email: $email, password: $password)
+  }
+`)
+
+// Post mutations
 export const CreatePostDirectMutation = graphql(`
   mutation CreatePostDirect($input: CreatePostInput!) {
     createPostDirect(input: $input) {
-      ...PostWithAuthor 
+      id
+      title
+      content
+      published
+      viewCount
+      createdAt
+      updatedAt
+      author {
+        id
+        email
+        name
+      }
     }
-  } 
-`, [fragments.PostWithAuthorFragment])
+  }
+`)
 
 export const UpdatePostDirectMutation = graphql(`
   mutation UpdatePostDirect($id: ID!, $input: UpdatePostInput!) {
     updatePostDirect(id: $id, input: $input) {
-      ...PostWithAuthor
+      id
+      title
+      content
+      published
+      viewCount
+      createdAt
+      updatedAt
+      author {
+        id
+        email
+        name
+      }
     }
   }
-`, [fragments.PostWithAuthorFragment])
+`)
 
 export const DeletePostDirectMutation = graphql(`
   mutation DeletePostDirect($id: ID!) {
@@ -42,26 +67,48 @@ export const DeletePostDirectMutation = graphql(`
 export const TogglePublishPostDirectMutation = graphql(`
   mutation TogglePublishPostDirect($id: ID!) {
     togglePublishPostDirect(id: $id) {
-      ...PostInfo
+      id
+      title
+      content
+      published
+      viewCount
+      createdAt
+      updatedAt
       author {
-        ...UserInfo
+        id
+        email
+        name
       }
     }
   }
-`, [fragments.PostInfoFragment, fragments.UserInfoFragment])
+`)
 
 export const IncrementPostViewCountDirectMutation = graphql(`
   mutation IncrementPostViewCountDirect($id: ID!) {
     incrementPostViewCountDirect(id: $id) {
-      ...PostWithAuthor
+      id
+      title
+      content
+      published
+      viewCount
+      createdAt
+      updatedAt
+      author {
+        id
+        email
+        name
+      }
     }
   }
-`, [fragments.PostWithAuthorFragment])
+`)
 
+// User mutations
 export const UpdateUserProfileMutation = graphql(`
   mutation UpdateUserProfile($input: UpdateUserInput!) {
     updateUserProfile(input: $input) {
-      ...UserInfo
+      id
+      email
+      name
     }
   }
-`, [fragments.UserInfoFragment])
+`)

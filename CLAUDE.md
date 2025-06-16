@@ -34,57 +34,57 @@ bunx prettier --write .                # Format code
 ### Tech Stack
 - **Runtime**: Bun (fast JavaScript/TypeScript runtime)
 - **GraphQL Server**: Apollo Server 4 with H3 HTTP framework
-- **Schema Builder**: Pothos with Prisma and Relay plugins
+- **Schema Builder**: Pothos with Prisma, Relay, Errors, Validation, Scope Auth, and DataLoader plugins
 - **Database**: Prisma ORM with SQLite (dev.db)
-- **Authentication**: JWT tokens with bcryptjs
-- **Authorization**: GraphQL Shield middleware
+- **Authentication**: JWT tokens with bcryptjs + refresh token rotation
+- **Authorization**: GraphQL Shield middleware with Pothos Scope Auth
 - **Type Safety**: GraphQL Tada for compile-time GraphQL typing
 - **Testing**: Vitest with comprehensive test utilities
+- **Validation**: Zod schema validation integrated with Pothos
+- **Rate Limiting**: rate-limiter-flexible with configurable presets
 
-### Architecture: Domain-Driven Design + Legacy Schema
+### Architecture: Direct Pothos Resolvers (Modern Approach)
 
-The project is transitioning to **Domain-Driven Design (DDD)** with feature-based modules:
+The project has **completed migration** from Domain-Driven Design to direct Pothos resolvers:
 
 ```
 src/
-├── features/                  # NEW: Feature-based DDD modules
-│   ├── auth/                 # Authentication feature
-│   │   ├── domain/           # Business logic and entities
-│   │   │   ├── types.ts      # Domain models and interfaces
-│   │   │   └── services/     # Domain services (PasswordService)
-│   │   ├── application/      # Use cases and orchestration
-│   │   │   └── use-cases/    # Business operations (LoginUseCase, SignupUseCase)
-│   │   ├── infrastructure/   # External interfaces
-│   │   │   ├── repositories/ # Data access (UserRepository)
-│   │   │   └── services/     # External services (TokenService)
-│   │   └── presentation/     # GraphQL resolvers
-│   │       └── resolvers/    # Feature-specific resolvers
-│   ├── posts/                # Posts feature (same DDD structure)
-│   └── users/                # Users feature (same DDD structure)
+├── infrastructure/graphql/resolvers/  # MAIN: Direct Pothos resolvers
+│   ├── auth-direct.resolver.ts        # Auth operations (signup, login, me)
+│   ├── auth-tokens-direct.resolver.ts # Refresh token operations
+│   ├── posts-direct.resolver.ts       # Post CRUD operations
+│   └── users-direct.resolver.ts       # User search and management
 │
-├── shared/                    # Shared modules across features
-│   ├── domain/types/          # Common domain types
-│   ├── infrastructure/        # Dependency injection container
-│   │   ├── container/         # DI container setup
-│   │   └── graphql/           # GraphQL utilities (relay-helpers)
-│   └── presentation/          # Shared presentation utilities
+├── schema/                            # GraphQL Schema Definition
+│   ├── builder.ts                     # Pothos builder with plugins
+│   ├── index.ts                       # Schema assembly and middleware
+│   ├── types/                         # Prisma Node types
+│   ├── scalars.ts                     # Custom scalars (DateTime)
+│   ├── enums.ts                       # GraphQL enums
+│   ├── inputs.ts                      # Input type definitions
+│   └── error-types.ts                 # Error type definitions
 │
-├── schema/                    # LEGACY: GraphQL schema (being migrated)
-│   ├── builder.ts            # Pothos builder with Prisma + Relay plugins
-│   ├── index.ts             # Main schema export
-│   ├── types/               # Object types using prismaNode
-│   ├── queries/             # Query resolvers with prismaConnection
-│   ├── scalars.ts           # Custom scalars (DateTime)
-│   ├── enums.ts             # GraphQL enums
-│   ├── inputs.ts            # Input type definitions
-│   └── utils/               # Global ID encoding/decoding
+├── gql/                               # GraphQL Operations (Client-side)
+│   ├── mutations-direct.ts            # Direct resolver mutations
+│   ├── queries-direct.ts              # Direct resolver queries
+│   └── mutations-auth-tokens-direct.ts # Token-based auth mutations
 │
-├── infrastructure/            # NEW: Direct Pothos resolvers
-│   └── graphql/
-│       └── resolvers/        # Direct resolvers bypassing use cases
-│           ├── auth-direct.resolver.ts
-│           ├── posts-direct.resolver.ts
-│           └── users-direct.resolver.ts
+├── features/auth/infrastructure/      # LEGACY: Refresh tokens only
+│   ├── repositories/refresh-token.repository.ts
+│   └── services/token.service.ts      # JWT token generation/validation
+│
+├── core/                              # Domain Models & Interfaces  
+│   ├── entities/                      # Domain entities
+│   ├── value-objects/                 # Value objects (UserId, Email)
+│   ├── repositories/                  # Repository interfaces
+│   └── services/                      # Service interfaces
+│
+├── infrastructure/                    # Supporting Infrastructure
+│   ├── config/                        # DI container and configuration
+│   ├── database/                      # Prisma client and repositories
+│   ├── auth/                          # Password hashing service
+│   ├── logging/                       # Logger implementations
+│   └── services/                      # Rate limiting service
 ```
 
 ### Authorization System
@@ -157,9 +157,27 @@ test/
 
 ## Key Architectural Patterns
 
-### 1. Direct Pothos Resolvers (Current Approach)
+### 1. Advanced Pothos Plugin Architecture
 
-The codebase has migrated to direct Pothos resolvers that implement business logic directly:
+The schema builder uses multiple Pothos plugins with advanced integration patterns:
+
+- **PrismaPlugin**: Direct database integration with loadable objects and optimized queries
+- **RelayPlugin**: Enhanced global IDs, advanced connections with metadata, and cursor pagination  
+- **ErrorsPlugin**: Type-safe error handling with union result types and error interfaces
+- **ScopeAuthPlugin**: Dynamic authorization with scope loaders and complex permission logic
+- **ValidationPlugin**: Zod schema validation with field-level error reporting
+- **DataloaderPlugin**: Comprehensive N+1 prevention with batch loading and caching strategies
+
+**Enhanced Features:**
+- **Loadable Objects**: `LoadableUser` and `LoadablePost` for automatic batch loading
+- **Enhanced Connections**: `EnhancedPostConnection` and `EnhancedUserConnection` with metadata
+- **Safe Mutations**: Union result types (`AuthResult`, `PostResult`, `UserResult`) for error handling
+- **Dynamic Scopes**: 14+ authorization scopes including `hasPermission`, `canViewContent`, `withinTimeLimit`
+- **Advanced DataLoaders**: Entity loaders, count loaders, and relation loaders with configurable batching
+
+### 2. Direct Pothos Resolvers (Current Approach)
+
+The codebase implements business logic directly in Pothos resolvers:
 
 ```typescript
 // Direct resolver pattern - business logic in resolver
@@ -190,7 +208,7 @@ builder.mutationField('signupDirect', (t) =>
 )
 ```
 
-### 2. Enhanced Relay Implementation
+### 3. Enhanced Relay Implementation
 
 All entities use global IDs with enhanced pagination and filtering:
 
@@ -247,7 +265,7 @@ builder.queryField('feed', (t) =>
 )
 ```
 
-### 3. Error Handling Pattern
+### 4. Error Handling Pattern
 
 Always use `normalizeError` in catch blocks:
 
@@ -266,7 +284,7 @@ try {
 }
 ```
 
-### 4. Permission Rules Pattern
+### 5. Permission Rules Pattern
 
 Rules return errors instead of throwing:
 
@@ -294,7 +312,7 @@ export const isPostOwner = rule({ cache: 'strict' })(
 )
 ```
 
-### 5. Repository Pattern with Proper Entity Mapping
+### 6. Repository Pattern with Proper Entity Mapping
 
 Repositories map database fields to domain entities:
 
@@ -317,6 +335,62 @@ async findByEmail(email: Email): Promise<User | null> {
   })
 }
 ```
+
+## Current Direct Resolver Operations
+
+The following operations are available and fully tested:
+
+### Authentication Operations
+- `signupDirect` - Create new user account with email/password
+- `loginDirect` - Authenticate user and return JWT token  
+- `meDirect` - Get current authenticated user profile
+- `safeSignup` - Safe signup with union result type (AuthResult)
+- `safeLogin` - Safe login with comprehensive error handling
+
+### Authentication with Refresh Tokens
+- `loginWithTokensDirect` - Login and receive access + refresh tokens
+- `refreshTokenDirect` - Refresh access token using refresh token 
+- `logoutDirect` - Revoke all refresh tokens for user
+
+### Post Operations
+- `createPostDirect` - Create new post (draft by default)
+- `updatePostDirect` - Update existing post (owner only)
+- `deletePostDirect` - Delete post (owner only)
+- `togglePublishPostDirect` - Toggle post publish status (owner only)
+- `incrementPostViewCountDirect` - Increment post view count (public)
+- `safeCreatePost` - Safe post creation with union result type (PostResult)
+- `safeUpdatePost` - Safe post update with comprehensive error handling
+
+### Enhanced Query Operations
+- `enhancedFeed` - Advanced feed with metadata, search, and filtering
+- `enhancedUserSearch` - User search with aggregated metadata
+- `loadablePost` - Efficient post loading via DataLoader
+- `loadableUser` - Efficient user loading via DataLoader
+
+### Post Queries
+- `feedDirect` - Get published posts with search and pagination
+- `draftsDirectQuery` - Get user's draft posts (authenticated)
+- `postDirectQuery` - Get individual post by global ID
+
+### User Operations
+- `searchUsersDirect` - Search users by name or email with pagination
+- `safeUpdateProfile` - Safe profile update with union result type (UserResult)
+
+### Enhanced Features
+- **Loadable Objects**: `LoadableUser` and `LoadablePost` for N+1 prevention
+- **Enhanced Connections**: Rich metadata including totalCount, searchTerm, filters
+- **Safe Mutations**: Union result types for comprehensive error handling
+- **Advanced Search**: Multi-field search with complex filtering options
+- **Dynamic Authorization**: Content-based and permission-based access control
+
+All operations support:
+- Global IDs for consistent entity references
+- Enhanced authentication and authorization with dynamic scopes
+- Advanced input validation with Zod schemas and field-level errors
+- Rate limiting protection with time-based controls
+- Comprehensive error handling with union result types
+- DataLoader optimization with loadable objects and enhanced loaders
+- Rich metadata and performance information
 
 ## Enhanced Relay Features
 
@@ -381,7 +455,8 @@ All tests use typed queries from `src/gql/`:
 ```typescript
 import { print } from 'graphql'
 import { LoginDirectMutation, SignupDirectMutation } from '../src/gql/mutations-direct'
-import { GetFeedQuery, GetMeDirectQuery } from '../src/gql/queries-direct'
+import { FeedDirectQuery, MeDirectQuery } from '../src/gql/queries-direct'
+import { LoginWithTokensDirectMutation } from '../src/gql/mutations-auth-tokens-direct'
 
 const data = await gqlHelpers.expectSuccessfulMutation(
   server,
@@ -425,27 +500,27 @@ await snapshotTester.testSnapshot(response, {
 - Automatic cleanup between tests
 - No manual cleanup needed
 
-## Architectural Transition
+## Architectural Evolution: Complete Migration to Direct Resolvers
 
-The project has migrated from a layered DDD structure to direct Pothos resolvers:
+The project has **successfully completed** migration from a layered DDD structure to direct Pothos resolvers:
 
-### Previous DDD Structure (Being Phased Out)
-- **Domain Layer**: Business logic and entities
-- **Application Layer**: Use cases orchestrating operations
-- **Infrastructure Layer**: Repositories and external services
-- **Presentation Layer**: GraphQL resolvers calling use cases
-
-### Current Direct Resolver Pattern
+### ✅ Current Direct Resolver Pattern (Completed)
 - **Direct Resolvers**: Business logic implemented directly in Pothos resolvers
-- **Services**: Stateless services for reusable logic (PasswordService, TokenService)
-- **Repositories**: Direct Prisma usage in resolvers (no abstraction layer)
-- **Benefits**: Simpler architecture, less boilerplate, better performance
+- **Services**: Stateless services for reusable logic (PasswordService, TokenService)  
+- **Repositories**: Direct Prisma usage in resolvers (minimal abstraction layer)
+- **Benefits**: Simpler architecture, less boilerplate, better performance, easier debugging
 
-### Migration Status
-1. **Auth Operations**: ✅ Migrated to direct resolvers
-2. **Post Operations**: ✅ Migrated to direct resolvers  
-3. **User Operations**: ✅ Migrated to direct resolvers
-4. **Refresh Tokens**: ⏳ Still using use cases (to be migrated)
+### ✅ Migration Status (All Complete)
+1. **Auth Operations**: ✅ Migrated to direct resolvers (`signupDirect`, `loginDirect`, `meDirect`)
+2. **Post Operations**: ✅ Migrated to direct resolvers (`createPostDirect`, `updatePostDirect`, etc.)
+3. **User Operations**: ✅ Migrated to direct resolvers (`searchUsersDirect`)
+4. **Refresh Tokens**: ✅ Migrated to direct resolvers (`loginWithTokensDirect`, `refreshTokenDirect`, `logoutDirect`)
+
+### 🗑️ Removed Legacy Components
+- Application layer (use cases, DTOs, mappers)
+- Complex repository abstractions  
+- Service orchestration layers
+- GraphQL operation adapters
 
 ## Common Development Tasks
 
@@ -517,21 +592,18 @@ const numericId = extractNumericId(result.data.post.id)
 
 ## GraphQL Client Integration
 
-### GraphQL Tada Configuration
+### GraphQL Operations
 
 The project uses GraphQL Tada for type-safe GraphQL operations:
 
 ```typescript
 // src/gql/ directory contains:
-- client.ts         # GraphQL client setup
-- fragments.ts      # Reusable fragments
-- queries.ts        # Typed queries (legacy)
-- mutations.ts      # Typed mutations (legacy)
-- queries-direct.ts # Direct resolver queries
-- mutations-direct.ts # Direct resolver mutations
-- relay-queries.ts  # Relay-style queries
-- relay-mutations.ts # Relay-style mutations
+- queries-direct.ts           # Direct resolver queries (meDirect, feedDirect, etc.)
+- mutations-direct.ts         # Direct resolver mutations (signupDirect, createPostDirect, etc.)
+- mutations-auth-tokens-direct.ts # Token-based auth mutations (loginWithTokensDirect, etc.)
 ```
+
+All operations use `gql` template literals and are tested with the `print()` function from graphql package.
 
 ## API Endpoints
 

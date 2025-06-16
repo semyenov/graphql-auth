@@ -43,13 +43,13 @@ const UpdatePostInput = builder.inputType('UpdatePostInput', {
     title: t.string({
       required: false,
       validate: {
-        schema: z.string().min(1).max(255).optional(),
+        schema: z.string().min(1).max(255),
       },
     }),
     content: t.string({
       required: false,
       validate: {
-        schema: z.string().max(10000).optional(),
+        schema: z.string().max(10000),
       },
     }),
     published: t.boolean({
@@ -85,7 +85,7 @@ builder.mutationField('createPostDirect', (t) =>
         data: {
           title: args.input.title,
           content: args.input.content || null,
-          published: args.input.published,
+          published: args.input.published ?? false,
           authorId: userId.value,
         },
       })
@@ -294,7 +294,7 @@ builder.queryField('feedDirect', (t) =>
       searchString: t.arg.string({
         required: false,
         validate: {
-          schema: z.string().min(1).max(100).optional(),
+          schema: z.string().min(1).max(100),
         },
       }),
     },

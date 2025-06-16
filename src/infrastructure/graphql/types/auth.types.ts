@@ -7,7 +7,8 @@
 import { builder } from '../../../schema/builder';
 
 // Auth tokens response type
-export const AuthTokensType = builder.objectType<{ accessToken: string; refreshToken: string }>('AuthTokens', {
+export const AuthTokensType = builder.objectType(class AuthTokens {}, {
+    name: 'AuthTokens',
     description: 'Authentication tokens response',
     fields: (t) => ({
         accessToken: t.exposeString('accessToken', {
@@ -20,7 +21,8 @@ export const AuthTokensType = builder.objectType<{ accessToken: string; refreshT
 })
 
 // For backward compatibility
-export const AuthResponseType = builder.objectType('AuthResponse', {
+export const AuthResponseType = builder.objectType(class AuthResponse {}, {
+    name: 'AuthResponse',
     description: 'Legacy authentication response',
     fields: (t) => ({
         token: t.exposeString('token', {

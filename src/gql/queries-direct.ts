@@ -1,32 +1,41 @@
+/**
+ * Direct GraphQL Queries
+ * 
+ * Simple GraphQL operation strings for direct resolver queries
+ */
+
 import { graphql } from 'gql.tada'
-import * as fragments from './fragments'
 
-// =============================================================================
-// DIRECT GRAPHQL QUERIES (Without Use Cases)
-// =============================================================================
-
+// Authentication queries
 export const MeDirectQuery = graphql(`
-  query MeDirect {
+  query MeDirect {  
     meDirect {
-      ...UserInfo
-      posts {
-        edges {
-          node {
-            ...PostWithAuthor
-          }
-        }
-      }
+      id
+      email
+      name
     }
   }
-`, [fragments.UserInfoFragment, fragments.PostWithAuthorFragment])
+`)
 
+// Post queries
 export const FeedDirectQuery = graphql(`
-  query FeedDirect($first: Int, $after: String) {
-    feedDirect(first: $first, after: $after) {
+  query FeedDirect($first: Int, $after: String, $searchString: String) {
+    feedDirect(first: $first, after: $after, searchString: $searchString) {
       edges {
         cursor
         node {
-          ...PostWithAuthor
+          id
+          title
+          content
+          published
+          viewCount
+          createdAt
+          updatedAt
+          author {
+            id
+            email
+            name
+          }
         }
       }
       pageInfo {
@@ -38,15 +47,7 @@ export const FeedDirectQuery = graphql(`
       totalCount
     }
   }
-`, [fragments.PostWithAuthorFragment])
-
-export const PostDirectQuery = graphql(`
-  query PostDirect($id: ID!) {
-    postDirect(id: $id) {
-      ...PostWithAuthor
-    }
-  }
-`, [fragments.PostWithAuthorFragment])
+`)
 
 export const DraftsDirectQuery = graphql(`
   query DraftsDirect($first: Int, $after: String) {
@@ -54,7 +55,18 @@ export const DraftsDirectQuery = graphql(`
       edges {
         cursor
         node {
-          ...PostWithAuthor
+          id
+          title
+          content
+          published
+          viewCount
+          createdAt
+          updatedAt
+          author {
+            id
+            email
+            name
+          }
         }
       }
       pageInfo {
@@ -66,15 +78,39 @@ export const DraftsDirectQuery = graphql(`
       totalCount
     }
   }
-`, [fragments.PostWithAuthorFragment])
+`)
 
+export const PostDirectQuery = graphql(`
+  query PostDirect($id: ID!) {
+    postDirect(id: $id) {
+      id
+      title
+      content
+      published
+      viewCount
+      createdAt
+      updatedAt
+      author {
+        id
+        email
+        name
+      }
+    }
+  }
+`)
+
+// User queries
 export const UserDirectQuery = graphql(`
   query UserDirect($id: ID!) {
     userDirect(id: $id) {
-      ...UserWithPosts
+      id
+      email
+      name
+      postCount
+      publishedPostCount
     }
   }
-`, [fragments.UserWithPostsFragment])
+`)
 
 export const UsersDirectQuery = graphql(`
   query UsersDirect($first: Int, $after: String, $where: UserWhereInput, $orderBy: UserOrderByInput) {
@@ -82,7 +118,11 @@ export const UsersDirectQuery = graphql(`
       edges {
         cursor
         node {
-          ...UserInfo
+          id
+          email
+          name
+          postCount
+          publishedPostCount
         }
       }
       pageInfo {
@@ -94,7 +134,7 @@ export const UsersDirectQuery = graphql(`
       totalCount
     }
   }
-`, [fragments.UserInfoFragment])
+`)
 
 export const SearchUsersDirectQuery = graphql(`
   query SearchUsersDirect($search: String!, $first: Int, $after: String) {
@@ -102,7 +142,11 @@ export const SearchUsersDirectQuery = graphql(`
       edges {
         cursor
         node {
-          ...UserInfo
+          id
+          email
+          name
+          postCount
+          publishedPostCount
         }
       }
       pageInfo {
@@ -114,4 +158,4 @@ export const SearchUsersDirectQuery = graphql(`
       totalCount
     }
   }
-`, [fragments.UserInfoFragment])
+`)

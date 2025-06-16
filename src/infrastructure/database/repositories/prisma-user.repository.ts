@@ -30,8 +30,8 @@ export class PrismaUserRepository implements IUserRepository {
       email: Email.create(data.email),
       name: data.name,
       passwordHash: data.password, // Map 'password' field to 'passwordHash'
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
+      createdAt: new Date(), // Default value since not in schema
+      updatedAt: new Date(), // Default value since not in schema
     })
   }
 
@@ -48,8 +48,8 @@ export class PrismaUserRepository implements IUserRepository {
       email: Email.create(data.email),
       name: data.name,
       passwordHash: data.password, // Map 'password' field to 'passwordHash'
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
+      createdAt: new Date(), // Default value since not in schema
+      updatedAt: new Date(), // Default value since not in schema
     })
   }
 
@@ -125,8 +125,8 @@ export class PrismaUserRepository implements IUserRepository {
       email: Email.create(data.email),
       name: data.name,
       passwordHash: data.password,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
+      createdAt: new Date(), // Default value since not in schema
+      updatedAt: new Date(), // Default value since not in schema
     })
   }
 

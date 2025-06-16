@@ -12,20 +12,16 @@ import { prisma } from '../../prisma'
 // Core interfaces
 import { ILogger } from '../../core/services/logger.interface'
 import { IPasswordService } from '../../core/services/password.service.interface'
-import { ITokenService } from '../../core/services/token.service.interface'
 
 // Infrastructure implementations
 import { BcryptPasswordService } from '../auth/bcrypt-password.service'
-import { JwtTokenService } from '../auth/jwt-token.service'
 import { LoggerFactory } from '../logging/logger-factory'
 
-// Feature-based implementations (for refresh tokens - to be migrated)
+// Feature-based implementations (for refresh tokens)
 import { TokenService, TokenConfig } from '../../features/auth/infrastructure/services/token.service'
 import { RefreshTokenRepository } from '../../features/auth/infrastructure/repositories/refresh-token.repository'
-import { LoginWithTokensUseCase } from '../../features/auth/application/use-cases/login-with-tokens.use-case'
-import { RefreshTokenUseCase } from '../../features/auth/application/use-cases/refresh-token.use-case'
 
-// Repositories (for refresh tokens - to be migrated)
+// Repositories (for refresh tokens)
 import { IUserRepository } from '../../core/repositories/user.repository.interface'
 import { PrismaUserRepository } from '../database/repositories/prisma-user.repository'
 
@@ -55,11 +51,8 @@ export function configureContainer(): void {
   container.register<IPasswordService>('IPasswordService', {
     useClass: BcryptPasswordService,
   })
-  container.register<ITokenService>('ITokenService', {
-    useClass: JwtTokenService,
-  })
 
-  // Register feature-based services (for refresh tokens - to be migrated)
+  // Register feature-based services (for refresh tokens)
   container.register<TokenService>(TokenService, {
     useClass: TokenService,
   })
@@ -67,17 +60,9 @@ export function configureContainer(): void {
     useClass: RefreshTokenRepository,
   })
 
-  // Register repository (for refresh tokens - to be migrated)
+  // Register repository (for refresh tokens)
   container.register<IUserRepository>('IUserRepository', {
     useClass: PrismaUserRepository,
-  })
-
-  // Register use cases (for refresh tokens - to be migrated to direct resolvers)
-  container.register<LoginWithTokensUseCase>(LoginWithTokensUseCase, {
-    useClass: LoginWithTokensUseCase,
-  })
-  container.register<RefreshTokenUseCase>(RefreshTokenUseCase, {
-    useClass: RefreshTokenUseCase,
   })
 }
 
