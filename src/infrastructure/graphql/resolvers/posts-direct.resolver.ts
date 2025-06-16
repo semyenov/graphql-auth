@@ -9,7 +9,7 @@ import { z } from 'zod'
 import type { EnhancedContext } from '../../../context/enhanced-context'
 import { AuthorizationError, NotFoundError, ValidationError } from '../../../errors'
 import { builder } from '../../../schema/builder'
-import { parseAndValidateGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
+import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
 import { requireAuthentication } from '../../../context/auth'
 import type { ILogger } from '../../../core/services/logger.interface'
 
@@ -63,9 +63,7 @@ builder.mutationField('createPostDirect', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Create a new post',
-    authScopes: {
-      $granted: 'authenticated',
-    },
+    grantScopes: ['authenticated'],
     args: {
       input: t.arg({
         type: CreatePostInput,
@@ -108,9 +106,7 @@ builder.mutationField('updatePostDirect', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Update an existing post',
-    authScopes: {
-      $granted: 'authenticated',
-    },
+    grantScopes: ['authenticated'],
     args: {
       id: t.arg.id({ required: true }),
       input: t.arg({
@@ -121,7 +117,7 @@ builder.mutationField('updatePostDirect', (t) =>
     resolve: async (query, _parent, args, context: EnhancedContext) => {
       const logger = getLogger().child({ resolver: 'updatePostDirect' })
       const userId = requireAuthentication(context)
-      const postId = await parseAndValidateGlobalId(args.id.toString(), 'Post')
+      const postId = parseGlobalId(args.id.toString(), 'Post')
 
       // Check if post exists and user owns it
       const existingPost = await context.prisma.post.findUnique({
@@ -162,16 +158,14 @@ builder.mutationField('updatePostDirect', (t) =>
 builder.mutationField('deletePostDirect', (t) =>
   t.boolean({
     description: 'Delete a post',
-    authScopes: {
-      $granted: 'authenticated',
-    },
+    grantScopes: ['authenticated'],
     args: {
       id: t.arg.id({ required: true }),
     },
     resolve: async (_parent, args, context: EnhancedContext) => {
       const logger = getLogger().child({ resolver: 'deletePostDirect' })
       const userId = requireAuthentication(context)
-      const postId = await parseAndValidateGlobalId(args.id.toString(), 'Post')
+      const postId = parseGlobalId(args.id.toString(), 'Post')
 
       // Check if post exists and user owns it
       const existingPost = await context.prisma.post.findUnique({
@@ -205,16 +199,14 @@ builder.mutationField('togglePublishPostDirect', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Toggle the publish status of a post',
-    authScopes: {
-      $granted: 'authenticated',
-    },
+    grantScopes: ['authenticated'],
     args: {
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, context: EnhancedContext) => {
       const logger = getLogger().child({ resolver: 'togglePublishPostDirect' })
       const userId = requireAuthentication(context)
-      const postId = await parseAndValidateGlobalId(args.id.toString(), 'Post')
+      const postId = parseGlobalId(args.id.toString(), 'Post')
 
       // Check if post exists and user owns it
       const existingPost = await context.prisma.post.findUnique({
@@ -256,15 +248,13 @@ builder.mutationField('incrementPostViewCountDirect', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Increment the view count of a post',
-    authScopes: {
-      $granted: 'public',
-    },
+    grantScopes: ['public'],
     args: {
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, context: EnhancedContext) => {
       const logger = getLogger().child({ resolver: 'incrementPostViewCountDirect' })
-      const postId = await parseAndValidateGlobalId(args.id.toString(), 'Post')
+      const postId = parseGlobalId(args.id.toString(), 'Post')
 
       // Check if post exists
       const existingPost = await context.prisma.post.findUnique({
@@ -345,9 +335,7 @@ builder.queryField('draftsDirect', (t) =>
     type: 'Post',
     cursor: 'id',
     description: 'Get draft posts for the authenticated user',
-    authScopes: {
-      $granted: 'authenticated',
-    },
+    grantScopes: ['authenticated'],
     resolve: (query, _parent, _args, context) => {
       const userId = requireAuthentication(context)
       
@@ -383,7 +371,7 @@ builder.queryField('postDirect', (t) =>
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, context) => {
-      const postId = await parseAndValidateGlobalId(args.id.toString(), 'Post')
+      const postId = parseGlobalId(args.id.toString(), 'Post')
       
       return context.prisma.post.findUnique({
         ...query,

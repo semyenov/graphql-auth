@@ -6,13 +6,14 @@
 
 import { container } from 'tsyringe'
 import { z } from 'zod'
-import type { EnhancedContext } from '../../../context/enhanced-context'
-import { NotFoundError } from '../../../errors'
-import { builder } from '../../../schema/builder'
-import { parseAndValidateGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
 import { requireAuthentication } from '../../../context/auth'
+import type { EnhancedContext } from '../../../context/enhanced-context'
 import type { ILogger } from '../../../core/services/logger.interface'
-import { transformUserWhereInput, transformOrderBy } from '../utils/filter-transform'
+import { ConflictError } from '../../../errors'
+import { builder } from '../../../schema/builder'
+import { UserOrderByInput, UserWhereInput } from '../../../schema/inputs'
+import { transformOrderBy, transformUserWhereInput } from '../../../schema/utils/filter-transform'
+import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
 
 // Get logger from container
 const getLogger = () => container.resolve<ILogger>('ILogger')
@@ -23,28 +24,26 @@ builder.queryField('userDirect', (t) =>
     type: 'User',
     nullable: true,
     description: 'Get a user by ID',
-    authScopes: {
-      $granted: 'public',
-    },
+    grantScopes: ['public'],
     args: {
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, context: EnhancedContext) => {
       const logger = getLogger().child({ resolver: 'userDirect' })
-      const userId = await parseAndValidateGlobalId(args.id.toString(), 'User')
-      
+      const userId = parseGlobalId(args.id.toString(), 'User')
+
       logger.info('Fetching user by ID', { userId })
-      
+
       const user = await context.prisma.user.findUnique({
         ...query,
         where: { id: userId },
       })
-      
+
       if (!user) {
         logger.warn('User not found', { userId })
         return null
       }
-      
+
       return user
     },
   })
@@ -56,21 +55,16 @@ builder.queryField('usersDirect', (t) =>
     type: 'User',
     cursor: 'id',
     description: 'Get all users with optional filtering',
-    authScopes: {
-      $granted: 'public',
-    },
+    grantScopes: ['public'],
     args: {
-      where: t.arg({ type: 'UserWhereInput' }),
-      orderBy: t.arg({ type: ['UserOrderByInput'] }),
+      where: t.arg({ type: UserWhereInput, required: false }),
+      orderBy: t.arg({ type: UserOrderByInput, required: false }),
     },
     resolve: (query, _parent, args, context) => {
-      const whereClause = args.where ? transformUserWhereInput(args.where) : undefined
-      const orderByClause = args.orderBy?.map(transformOrderBy) || [{ id: 'asc' }]
-      
       return context.prisma.user.findMany({
         ...query,
-        where: whereClause,
-        orderBy: orderByClause,
+        where: args.where ? transformUserWhereInput(args.where) : undefined,
+        orderBy: args.orderBy ? transformOrderBy(args.orderBy) : { id: 'asc' },
       })
     },
     totalCount: (_parent, args, context) => {
@@ -86,9 +80,7 @@ builder.queryField('searchUsersDirect', (t) =>
     type: 'User',
     cursor: 'id',
     description: 'Search users by name or email',
-    authScopes: {
-      $granted: 'public',
-    },
+    grantScopes: ['public'],
     args: {
       search: t.arg.string({
         required: true,
@@ -100,13 +92,13 @@ builder.queryField('searchUsersDirect', (t) =>
     resolve: (query, _parent, args, context) => {
       const logger = getLogger().child({ resolver: 'searchUsersDirect' })
       logger.info('Searching users', { searchTerm: args.search })
-      
+
       return context.prisma.user.findMany({
         ...query,
         where: {
           OR: [
-            { name: { contains: args.search, mode: 'insensitive' } },
-            { email: { contains: args.search, mode: 'insensitive' } },
+            { name: { contains: args.search } },
+            { email: { contains: args.search } },
           ],
         },
         orderBy: { name: 'asc' },
@@ -116,8 +108,8 @@ builder.queryField('searchUsersDirect', (t) =>
       return context.prisma.user.count({
         where: {
           OR: [
-            { name: { contains: args.search, mode: 'insensitive' } },
-            { email: { contains: args.search, mode: 'insensitive' } },
+            { name: { contains: args.search } },
+            { email: { contains: args.search } },
           ],
         },
       })
@@ -137,9 +129,7 @@ builder.prismaObjectField('User', 'postsDirect', (t) =>
       }),
     },
     query: (args, _context) => ({
-      where: args.published !== undefined 
-        ? { published: args.published }
-        : undefined,
+      where: { published: args.published ?? true },
       orderBy: { createdAt: 'desc' },
     }),
     totalCount: true,
@@ -162,7 +152,7 @@ builder.prismaObjectField('User', 'publishedPostCount', (t) =>
     description: 'Number of published posts by this user',
     resolve: async (user, _args, context) => {
       return context.prisma.post.count({
-        where: { 
+        where: {
           authorId: user.id,
           published: true,
         },
@@ -177,13 +167,13 @@ const UpdateUserInput = builder.inputType('UpdateUserInput', {
     name: t.string({
       required: false,
       validate: {
-        schema: z.string().min(1).max(100).optional(),
+        schema: z.string().min(1).max(100),
       },
     }),
     email: t.string({
       required: false,
       validate: {
-        schema: z.string().email().optional(),
+        schema: z.string().email(),
       },
     }),
   }),
@@ -193,9 +183,7 @@ builder.mutationField('updateUserProfile', (t) =>
   t.prismaField({
     type: 'User',
     description: 'Update the current user profile',
-    authScopes: {
-      $granted: 'authenticated',
-    },
+    grantScopes: ['authenticated'],
     args: {
       input: t.arg({
         type: UpdateUserInput,
@@ -205,34 +193,34 @@ builder.mutationField('updateUserProfile', (t) =>
     resolve: async (query, _parent, args, context: EnhancedContext) => {
       const logger = getLogger().child({ resolver: 'updateUserProfile' })
       const userId = requireAuthentication(context)
-      
+
       logger.info('Updating user profile', { userId: userId.value })
-      
+
       // Build update data
       const updateData: any = {}
       if (args.input.name !== undefined) updateData.name = args.input.name
       if (args.input.email !== undefined) {
         // Check if email is already taken
         const existingUser = await context.prisma.user.findUnique({
-          where: { email: args.input.email },
+          where: { email: args.input.email ?? undefined },
           select: { id: true },
         })
-        
+
         if (existingUser && existingUser.id !== userId.value) {
           throw new ConflictError('Email already in use')
         }
-        
+
         updateData.email = args.input.email
       }
-      
+
       const user = await context.prisma.user.update({
         ...query,
         where: { id: userId.value },
         data: updateData,
       })
-      
+
       logger.info('User profile updated', { userId: userId.value })
-      
+
       return user
     },
   })

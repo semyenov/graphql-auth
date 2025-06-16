@@ -25,9 +25,9 @@ describe('Authentication', () => {
   describe('signup', () => {
     it('should create a new user with valid data', async () => {
       const variables: SignupVariables = {
-        email: 'test@example.com',
+        email: 'newsignup@example.com',
         password: 'securePassword123',
-        name: 'Test User',
+        name: 'New Signup User',
       }
 
       // Using the new helper for cleaner test code

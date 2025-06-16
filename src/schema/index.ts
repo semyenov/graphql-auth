@@ -24,6 +24,11 @@ import '../infrastructure/graphql/resolvers/auth-tokens.resolver';
 import '../infrastructure/graphql/resolvers/posts.resolver';
 import '../infrastructure/graphql/resolvers/users.resolver';
 
+// Import direct Pothos resolvers (without use cases)
+import '../infrastructure/graphql/resolvers/auth-direct.resolver';
+import '../infrastructure/graphql/resolvers/posts-direct.resolver';
+import '../infrastructure/graphql/resolvers/users-direct.resolver';
+
 // Lazy load schema to ensure all types are registered first
 let _schema: ReturnType<typeof applyMiddleware> | null = null;
 

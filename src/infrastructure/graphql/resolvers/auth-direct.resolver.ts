@@ -7,16 +7,15 @@
 import { container } from 'tsyringe'
 import { z } from 'zod'
 import type { EnhancedContext } from '../../../context/enhanced-context'
-import { ConflictError, UnauthorizedError } from '../../../errors'
-import { builder } from '../../../schema/builder'
-import { env } from '../../../environment'
-import { commonValidations } from '../pothos-helpers'
-import { applyRateLimit, createRateLimitConfig } from '../rate-limit-plugin'
-import { RateLimitPresets } from '../../services/rate-limiter.service'
+import type { ILogger } from '../../../core/services/logger.interface'
 import type { IPasswordService } from '../../../core/services/password.service.interface'
 import type { ITokenService } from '../../../core/services/token.service.interface'
-import type { ILogger } from '../../../core/services/logger.interface'
+import { AuthenticationError, ConflictError } from '../../../errors'
+import { builder } from '../../../schema/builder'
 import { signToken } from '../../../utils/jwt'
+import { RateLimitPresets } from '../../services/rate-limiter.service'
+import { commonValidations } from '../pothos-helpers'
+import { applyRateLimit, createRateLimitConfig } from '../rate-limit-plugin'
 
 // Get services from container
 const getPasswordService = () => container.resolve<IPasswordService>('IPasswordService')
@@ -44,7 +43,7 @@ builder.mutationField('signupDirect', (t) =>
       name: t.arg.string({
         required: false,
         validate: {
-          schema: z.string().min(1).max(100).optional(),
+          schema: z.string().min(1).max(100),
         },
       }),
     },
@@ -135,7 +134,7 @@ builder.mutationField('loginDirect', (t) =>
 
       if (!user) {
         logger.warn('Login failed - user not found', { email: args.email })
-        throw new UnauthorizedError('Invalid email or password')
+        throw new AuthenticationError('Invalid email or password')
       }
 
       // Verify password
@@ -144,7 +143,7 @@ builder.mutationField('loginDirect', (t) =>
 
       if (!isValidPassword) {
         logger.warn('Login failed - invalid password', { email: args.email, userId: user.id })
-        throw new UnauthorizedError('Invalid email or password')
+        throw new AuthenticationError('Invalid email or password')
       }
 
       logger.info('Login successful', { email: args.email, userId: user.id })
@@ -163,9 +162,7 @@ builder.queryField('meDirect', (t) =>
     type: 'User',
     nullable: true,
     description: 'Get the currently authenticated user',
-    authScopes: {
-      $granted: 'authenticated',
-    },
+    grantScopes: ['authenticated'],
     resolve: async (query, _parent, _args, context: EnhancedContext) => {
       if (!context.userId) {
         return null
