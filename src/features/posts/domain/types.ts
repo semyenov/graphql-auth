@@ -2,16 +2,9 @@
  * Domain types for posts feature
  */
 
-export interface Post {
-  id: number
-  title: string
-  content: string | null
-  published: boolean
-  viewCount: number
-  authorId: number | null
-  createdAt: Date
-  updatedAt: Date
-}
+import { Prisma } from '@prisma/client'
+
+export type Post = Prisma.PostGetPayload<{}>
 
 export interface CreatePostData {
   title: string

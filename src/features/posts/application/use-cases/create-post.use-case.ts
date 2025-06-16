@@ -1,6 +1,6 @@
+import { PostRepository } from '../../../../infrastructure/database/repositories/posts'
 import { createPostSchema, validateInput } from '../../../../utils/validation'
 import { CreatePostData, Post } from '../../domain/types'
-import { PostRepository } from '../../infrastructure/repositories/post.repository'
 
 /**
  * Use case for creating a new post

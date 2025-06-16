@@ -1,5 +1,4 @@
 
-import { prisma } from '../../prisma'
 import { parseGlobalId } from '../../shared/infrastructure/graphql/relay-helpers'
 import { builder } from '../builder'
 import { PostOrderByInput, PostWhereInput } from '../inputs'
@@ -21,10 +20,7 @@ builder.queryField('post', (t) =>
                 // Decode the global ID to get the numeric ID
                 const postId = parseGlobalId(args.id.toString(), 'Post')
 
-                const post = await prisma.post.findUnique({
-                    ...query,
-                    where: { id: postId },
-                })
+                const post = await ctx.repositories.posts.findById(postId)
 
                 // Check if post exists and is accessible
                 if (!post) return null;
@@ -64,7 +60,7 @@ builder.queryField('feed', (t) =>
                 description: 'Ordering options (default: newest first)',
             }),
         },
-        resolve: (query, _parent, args) => {
+        resolve: (query, _parent, args, ctx) => {
             // Build base where clause for published posts
             let where: any = { published: true };
 
@@ -91,14 +87,14 @@ builder.queryField('feed', (t) =>
             // Transform order by
             const orderBy = args.orderBy?.map(transformOrderBy).filter(Boolean) || [{ createdAt: 'desc' }];
 
-            return prisma.post.findMany({
+            return ctx.repositories.posts.findMany({
                 ...query,
                 where,
                 orderBy,
             });
         },
         // Enhanced totalCount with same filtering logic
-        totalCount: (_parent, args) => {
+        totalCount: (_parent, args, ctx) => {
             let where: any = { published: true };
 
             if (args.searchString) {
@@ -118,7 +114,7 @@ builder.queryField('feed', (t) =>
                 };
             }
 
-            return prisma.post.count({ where });
+            return ctx.repositories.posts.count(where);
         },
     })
 )
@@ -179,7 +175,7 @@ builder.queryField('drafts', (t) =>
                 // Transform order by
                 const orderBy = args.orderBy?.map(transformOrderBy).filter(Boolean) || [{ updatedAt: 'desc' }];
 
-                return prisma.post.findMany({
+                return ctx.repositories.posts.findMany({
                     ...query,
                     where,
                     orderBy,
@@ -212,7 +208,7 @@ builder.queryField('drafts', (t) =>
                     };
                 }
 
-                return prisma.post.count({ where });
+                return ctx.repositories.posts.count(where);
             } catch (error) {
                 return 0;
             }
@@ -261,7 +257,7 @@ builder.queryField('allPosts', (t) =>
             // Transform order by
             const orderBy = args.orderBy?.map(transformOrderBy).filter(Boolean) || [{ createdAt: 'desc' }];
 
-            return prisma.post.findMany({
+            return ctx.repositories.posts.findMany({
                 ...query,
                 where: finalWhere,
                 orderBy,
@@ -283,7 +279,7 @@ builder.queryField('allPosts', (t) =>
                 ? { AND: [authorFilter, where] }
                 : authorFilter;
 
-            return prisma.post.count({ where: finalWhere });
+            return ctx.repositories.posts.count(finalWhere);
         },
     })
 ) 

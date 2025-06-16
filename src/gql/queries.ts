@@ -1,9 +1,5 @@
 import { graphql } from 'gql.tada'
-import {
-  PostInfoFragment,
-  PostWithAuthorFragment,
-  UserInfoFragment,
-} from './fragments'
+import * as fragments from './fragments'
 
 // =============================================================================
 // GRAPHQL QUERIES
@@ -18,7 +14,7 @@ export const GetMeQuery = graphql(`
       }
     }
   }
-`, [UserInfoFragment, PostInfoFragment])
+`, [fragments.UserInfoFragment, fragments.PostInfoFragment])
 
 export const GetAllUsersQuery = graphql(`
   query GetAllUsers {
@@ -33,7 +29,7 @@ export const GetAllUsersQuery = graphql(`
       }
     }
   }
-`, [UserInfoFragment, PostInfoFragment])
+`, [fragments.UserInfoFragment, fragments.PostInfoFragment])
 
 export const GetPostQuery = graphql(`
   query GetPost($id: ID!) {
@@ -41,7 +37,7 @@ export const GetPostQuery = graphql(`
       ...PostWithAuthor
     }
   }
-`, [PostWithAuthorFragment])
+`, [fragments.PostWithAuthorFragment])
 
 export const GetFeedQuery = graphql(`
   query GetFeed(
@@ -66,7 +62,7 @@ export const GetFeedQuery = graphql(`
       }
     }
   }
-`, [PostWithAuthorFragment, PostInfoFragment])
+`, [fragments.PostWithAuthorFragment, fragments.PostInfoFragment])
 
 export const GetDraftsByUserQuery = graphql(`
   query GetDraftsByUser($userId: ID!) {
@@ -79,4 +75,4 @@ export const GetDraftsByUserQuery = graphql(`
       }
     }
   }
-`, [PostWithAuthorFragment]) 
+`, [fragments.PostWithAuthorFragment]) 

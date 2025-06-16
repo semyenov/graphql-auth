@@ -1,9 +1,9 @@
-import { SignupData, User } from '../../domain/types'
-import { PasswordService } from '../../domain/services/password.service'
-import { UserRepository } from '../../infrastructure/repositories/user.repository'
-import { TokenService } from '../../infrastructure/services/token.service'
-import { ConflictError } from '../../../../errors'
 import { ERROR_MESSAGES } from '../../../../constants'
+import { ConflictError } from '../../../../errors'
+import { UserRepository } from '../../../../infrastructure/database/repositories'
+import { PasswordService } from '../../domain/services/password.service'
+import { SignupData } from '../../domain/types'
+import { TokenService } from '../../infrastructure/services/token.service'
 
 /**
  * Use case for user signup
@@ -13,7 +13,7 @@ export class SignupUseCase {
   constructor(
     private userRepository: UserRepository,
     private tokenService: TokenService
-  ) {}
+  ) { }
 
   async execute(data: SignupData): Promise<string> {
     // Check if user already exists

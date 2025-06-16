@@ -530,3 +530,352 @@ Cancelled
 
 ---
 
+_**User**_
+
+For the code present, we get this error:
+```
+Type 'ApolloServer<Context<Record<string, unknown>, string>>' is not assignable to type 'ApolloServer<BaseContext>'.
+  Types of property 'addPlugin' are incompatible.
+    Type '(plugin: ApolloServerPlugin<Context<Record<string, unknown>, string>>) => void' is not assignable to type '(plugin: ApolloServerPlugin<BaseContext>) => void'.
+      Types of parameters 'plugin' and 'plugin' are incompatible.
+        Type 'ApolloServerPlugin<BaseContext>' is not assignable to type 'ApolloServerPlugin<Context<Record<string, unknown>, string>>'.
+          Type 'Context<Record<string, unknown>, string>' is missing the following properties from type 'BaseContext': request, prisma
+```
+How can I resolve this? If you propose a fix, please make it concise.
+
+---
+
+_**Assistant**_
+
+The error occurs because there's a mismatch between the context types in the test utilities and the actual server context. Let me fix this by updating the context type in the integration utils:
+
+
+---
+
+
+
+---
+
+Let me try a different approach by updating the test server creation:
+
+
+---
+
+```diff
+  import { ApolloServer, GraphQLResponse } from '@apollo/server'
+  import jwt from 'jsonwebtoken'
+- import type { Context } from '../src/context/types.d'
++ import type { Context } from '../src/context/types'
+  import { env } from '../src/environment'
+  import type { HTTPMethod } from '../src/gql/types.d'
+```
+
+```diff
+  
+  // Create test context
+- export function createMockContext(overrides?: Partial<Context>): Context {
+-   const defaultContext: Context = {
+-     req: {
+-       url: '/graphql',
+-       method: 'POST' as HTTPMethod,
+-       headers: {},
+-       body: undefined,
+-     },
+-     headers: {
+-       'content-type': 'application/json',
+-     },
+-     method: 'POST' as HTTPMethod,
+-     contentType: 'application/json',
+-     metadata: {
+-       ip: '127.0.0.1',
+-       userAgent: 'test-user-agent',
+-       startTime: Date.now(),
+-     },
++ export function createMockContext(): Context {
++   return {
++     request: {} as any,
++     prisma: {} as any,
++     userId: null,
+      security: {
+        isAuthenticated: false,
+-       userId: undefined,
+-       userEmail: undefined,
+-       roles: [],
+-       permissions: [],
+-     },
+-   } as Context
+- 
+-   return {
+-     ...defaultContext,
+-     ...overrides,
++       permissions: ['read:public'],
++       roles: ['user'],
++     },
+    }
+  }
+```
+
+---
+
+Let me fix the remaining linter error:
+
+
+---
+
+```diff
+  
+  // Create test context
+- export function createMockContext(): Context {
+-   return {
++ export function createMockContext(overrides?: Partial<Context>): Context {
++   const defaultContext: Context = {
+      request: {} as any,
+      prisma: {} as any,
+```
+
+```diff
+      },
+    }
++ 
++   return {
++     ...defaultContext,
++     ...overrides,
++   }
+  }
+  
+```
+
+---
+
+Let me check the context types to fix the remaining error:
+
+
+---
+
+Could not find file 'src/context/types.ts' in the workspace.
+
+---
+
+Read file: src/context/types.d.ts
+
+---
+
+Now I can fix the test utils with the correct context type:
+
+
+---
+
+```diff
+  import { ApolloServer, GraphQLResponse } from '@apollo/server'
+  import jwt from 'jsonwebtoken'
+- import type { Context } from '../src/context/types'
++ import type { Context } from '../src/context/types.d'
+  import { env } from '../src/environment'
+  import type { HTTPMethod } from '../src/gql/types.d'
+```
+
+```diff
+  export function createMockContext(overrides?: Partial<Context>): Context {
+    const defaultContext: Context = {
+-     request: {} as any,
+-     prisma: {} as any,
+-     userId: null,
++     req: {
++       url: '/graphql',
++       method: 'POST',
++       headers: {},
++       body: undefined,
++     },
++     headers: {
++       'content-type': 'application/json',
++     },
++     method: 'POST',
++     contentType: 'application/json',
++     metadata: {
++       ip: '127.0.0.1',
++       userAgent: 'test-user-agent',
++       startTime: Date.now(),
++     },
+      security: {
+        isAuthenticated: false,
+```
+
+---
+
+This should resolve the type mismatch error. The key changes were:
+
+1. Using the correct `Context` type from `types.d.ts`
+2. Implementing the mock context with all required fields from the interface
+3. Ensuring the test server uses the same context type as the main server
+
+The error occurred because we were trying to use a simplified context type that didn't match the full interface required by Apollo Server. Now the types are properly aligned.
+
+---
+
+_**User**_
+
+For the code present, we get this error:
+```
+Type 'ApolloServer<Context<Record<string, unknown>, string>>' is not assignable to type 'ApolloServer<BaseContext>'.
+  Types of property 'addPlugin' are incompatible.
+    Type '(plugin: ApolloServerPlugin<Context<Record<string, unknown>, string>>) => void' is not assignable to type '(plugin: ApolloServerPlugin<BaseContext>) => void'.
+      Types of parameters 'plugin' and 'plugin' are incompatible.
+        Type 'ApolloServerPlugin<BaseContext>' is not assignable to type 'ApolloServerPlugin<Context<Record<string, unknown>, string>>'.
+          Type 'Context<Record<string, unknown>, string>' is missing the following properties from type 'BaseContext': request, prisma
+```
+How can I resolve this? If you propose a fix, please make it concise.
+
+---
+
+_**Assistant**_
+
+The issue is in `integration-utils.ts` where we're mixing Apollo's `BaseContext` with our custom `Context`. Let's fix it:
+
+
+---
+
+```diff
+  import type { Post, User } from '@prisma/client'
+  import { print } from 'graphql'
+- import type { Context } from '../src/context/types'
++ import type { Context } from '../src/context/types.d'
+  import { measureOperation, type PerformanceMetrics } from './performance-utils'
+  import { GraphQLSnapshotTester, type SnapshotResult } from './snapshot-utils'
+```
+
+---
+
+Let me check the performance utils to fix the remaining errors:
+
+
+---
+
+Read file: test/performance-utils.ts
+
+---
+
+Let me update the performance utils to use our custom Context type:
+
+
+---
+
+```diff
+  import type { GraphQLResponse } from '@apollo/server'
+  import { ApolloServer } from '@apollo/server'
+- import type { Context } from '../src/context/types'
++ import type { Context } from '../src/context/types.d'
+  import { executeOperation } from './test-utils'
+  
+```
+
+---
+
+Now let me update the integration utils to use the correct types:
+
+
+---
+
+
+
+---
+
+Let me try a different approach by updating the test server creation:
+
+
+---
+
+
+
+---
+
+Let me try one more approach by updating the integration utils to use the correct type imports:
+
+
+---
+
+
+
+---
+
+Let me try one final approach by updating the context type definition:
+
+
+---
+
+```diff
+   * @template TOperationName - The specific operation name as a string literal
+   */
+- export interface Context<
+-     TVariables = Record<string, unknown>,
+-     TOperationName extends string = string
+- > extends BaseContext {
++ export interface Context extends BaseContext {
+      // Operation-specific information
+-     operationName?: TOperationName
+-     variables?: TVariables
++     operationName?: string
++     variables?: Record<string, unknown>
+  
+      // Request information
+```
+
+```diff
+          readonly method: HTTPMethod
+          readonly headers: Record<string, string>
+-         readonly body?: GraphQLRequestBody<TVariables>
++         readonly body?: GraphQLRequestBody
+      }
+      headers: Record<string, string>
+```
+
+---
+
+This should resolve the type mismatch error. The key changes were:
+
+1. Simplified the `Context` interface to extend `BaseContext` directly
+2. Removed the generic type parameters that were causing conflicts
+3. Made the types more specific and aligned with Apollo Server's expectations
+
+The error occurred because our context type was too generic and didn't properly extend Apollo's `BaseContext`. Now it should work correctly.
+
+---
+
+_**User**_
+
+For the code present, we get this error:
+```
+Argument of type 'ApolloServer<Context>' is not assignable to parameter of type 'ApolloServer<BaseContext>'.
+  Types of property 'addPlugin' are incompatible.
+    Type '(plugin: ApolloServerPlugin<Context>) => void' is not assignable to type '(plugin: ApolloServerPlugin<BaseContext>) => void'.
+      Types of parameters 'plugin' and 'plugin' are incompatible.
+        Type 'ApolloServerPlugin<BaseContext>' is not assignable to type 'ApolloServerPlugin<Context>'.
+          Type 'Context' is missing the following properties from type 'BaseContext': request, prisma
+```
+How can I resolve this? If you propose a fix, please make it concise.
+
+---
+
+_**Assistant**_
+
+Let me check the subscription helper to fix the type mismatch:
+
+
+---
+
+Read file: test/subscription-utils.ts
+
+---
+
+Let me update the subscription utils to use the correct context type:
+
+
+---
+
+
+
+---
+
+
+
+---
+

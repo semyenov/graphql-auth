@@ -31,4 +31,7 @@ export const PostWithAuthorFragment = graphql(`
       ...UserInfo
     }
   }
-`, [PostInfoFragment, UserInfoFragment]) 
+`, [
+  PostInfoFragment,
+  UserInfoFragment
+]) 

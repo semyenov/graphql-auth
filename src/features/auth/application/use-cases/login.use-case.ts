@@ -1,9 +1,9 @@
-import { UserCredentials } from '../../domain/types'
-import { PasswordService } from '../../domain/services/password.service'
-import { UserRepository } from '../../infrastructure/repositories/user.repository'
-import { TokenService } from '../../infrastructure/services/token.service'
-import { AuthenticationError } from '../../../../errors'
 import { ERROR_MESSAGES } from '../../../../constants'
+import { AuthenticationError } from '../../../../errors'
+import { UserRepository } from '../../../../infrastructure/database/repositories'
+import { PasswordService } from '../../domain/services/password.service'
+import { UserCredentials } from '../../domain/types'
+import { TokenService } from '../../infrastructure/services/token.service'
 
 /**
  * Use case for user login
@@ -13,7 +13,7 @@ export class LoginUseCase {
   constructor(
     private userRepository: UserRepository,
     private tokenService: TokenService
-  ) {}
+  ) { }
 
   async execute(credentials: UserCredentials): Promise<string> {
     // Find user by email

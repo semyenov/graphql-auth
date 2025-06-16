@@ -1,6 +1,6 @@
 import { NotFoundError } from '../../../../errors';
+import { PostRepository } from '../../../../infrastructure/database/repositories/posts';
 import { PostAuthorizationService } from '../../domain/services/post-authorization.service';
-import { PostRepository } from '../../infrastructure/repositories/post.repository';
 
 export class IncrementPostViewCountUseCase {
   constructor(private postRepository: PostRepository) { }

@@ -5,7 +5,7 @@
 import type { GraphQLResponse } from '@apollo/server'
 import { ApolloServer } from '@apollo/server'
 import { parse } from 'graphql'
-import type { Context } from '../src/context/types'
+import type { Context } from '../src/context/types.d'
 
 export interface SubscriptionTestHelper {
   subscribe: () => Promise<AsyncIterator<GraphQLResponse>>

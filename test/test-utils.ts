@@ -27,24 +27,23 @@ import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import jwt from 'jsonwebtoken'
 import type { Context } from '../src/context/types.d'
 import { env } from '../src/environment'
-import type { HTTPMethod } from '../src/gql/types.d'
-
-// Import the already built schema with permissions
 import { schema } from '../src/schema'
+import { UserRepository, PostRepository } from '../src/infrastructure/database'
+import { prisma } from '../src/prisma'
 
 // Create test context
 export function createMockContext(overrides?: Partial<Context>): Context {
   const defaultContext: Context = {
     req: {
       url: '/graphql',
-      method: 'POST' as HTTPMethod,
+      method: 'POST',
       headers: {},
       body: undefined,
     },
     headers: {
       'content-type': 'application/json',
     },
-    method: 'POST' as HTTPMethod,
+    method: 'POST',
     contentType: 'application/json',
     metadata: {
       ip: '127.0.0.1',
@@ -53,12 +52,14 @@ export function createMockContext(overrides?: Partial<Context>): Context {
     },
     security: {
       isAuthenticated: false,
-      userId: undefined,
-      userEmail: undefined,
-      roles: [],
-      permissions: [],
+      permissions: ['read:public'],
+      roles: ['user'],
     },
-  } as Context
+    repositories: {
+      users: new UserRepository(prisma),
+      posts: new PostRepository(prisma),
+    },
+  }
 
   return {
     ...defaultContext,
@@ -78,7 +79,7 @@ export function createAuthContext(userId: string): Context {
     },
     req: {
       url: '/graphql',
-      method: 'POST' as HTTPMethod,
+      method: 'POST',
       headers: {
         'content-type': 'application/json',
         authorization: `Bearer ${token}`,

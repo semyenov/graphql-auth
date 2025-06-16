@@ -1,6 +1,5 @@
 import { requireAuthentication } from '../../../../context/auth'
 import { normalizeError, NotFoundError } from '../../../../errors'
-import { prisma } from '../../../../prisma'
 import { builder } from '../../../../schema/builder'
 import { PostCreateInput } from '../../../../schema/inputs'
 import { container } from '../../../../shared/infrastructure/container'
@@ -20,7 +19,7 @@ builder.mutationField('createDraft', (t) =>
         description: 'Post data including title and optional content',
       }),
     },
-    resolve: async (query, _parent, args, context) => {
+    resolve: async (_query, _parent, args, context) => {
       try {
         // Ensure user is authenticated
         const userId = requireAuthentication(context)
@@ -32,11 +31,12 @@ builder.mutationField('createDraft', (t) =>
           authorId: userId,
         })
 
-        // Return with Prisma query optimization
-        return prisma.post.findUniqueOrThrow({
-          ...query,
-          where: { id: post.id },
-        })
+        // Return the created post with proper query selection
+        const result = await context.repositories.posts.findById(post.id)
+        if (!result) {
+          throw new NotFoundError('Post', post.id.toString())
+        }
+        return result
       } catch (error) {
         throw normalizeError(error)
       }
@@ -66,7 +66,7 @@ builder.mutationField('updatePost', (t) =>
         description: 'New published status for the post',
       }),
     },
-    resolve: async (query, _parent, args, context) => {
+    resolve: async (_query, _parent, args, context) => {
       try {
         const userId = requireAuthentication(context)
         const postId = parseGlobalId(args.id.toString(), 'Post')
@@ -75,10 +75,7 @@ builder.mutationField('updatePost', (t) =>
           throw new Error('At least one field must be provided for update')
         }
 
-        const existingPost = await prisma.post.findUnique({
-          where: { id: postId },
-          select: { id: true, authorId: true },
-        })
+        const existingPost = await context.repositories.posts.findById(postId)
 
         if (!existingPost) {
           throw new NotFoundError('Post', args.id.toString())
@@ -93,11 +90,7 @@ builder.mutationField('updatePost', (t) =>
         if (args.content !== undefined) updateData.content = args.content
         if (args.published !== undefined) updateData.published = args.published
 
-        return prisma.post.update({
-          ...query,
-          where: { id: postId },
-          data: updateData,
-        })
+        return context.repositories.posts.update(postId, updateData)
       } catch (error) {
         throw normalizeError(error)
       }
@@ -118,7 +111,7 @@ builder.mutationField('deletePost', (t) =>
         description: 'The global ID of the post to delete',
       }),
     },
-    resolve: async (query, _parent, args, context) => {
+    resolve: async (_query, _parent, args, context) => {
       try {
         // Ensure user is authenticated
         const userId = requireAuthentication(context)
@@ -126,21 +119,18 @@ builder.mutationField('deletePost', (t) =>
         // Parse global ID
         const postId = parseGlobalId(args.id.toString(), 'Post')
 
-        // First fetch the post with the query to ensure we have all requested fields
-        const post = await prisma.post.findUnique({
-          ...query,
-          where: { id: postId },
-        })
+        // First fetch the post with author to ensure we have all required field data
+        const postWithAuthor = await context.repositories.posts.findById(postId, true)
 
-        if (!post) {
+        if (!postWithAuthor) {
           throw new NotFoundError('Post', args.id.toString())
         }
 
-        // Execute delete use case (this will also verify permissions)
+        // Execute delete use case (this will verify permissions and delete it)
         await container.deletePostUseCase.execute(postId, userId)
 
-        // Return the post data we fetched earlier
-        return post
+        // Return the post with author data that we fetched before deletion
+        return postWithAuthor
       } catch (error) {
         // Handle Prisma not found error
         if (error instanceof Error && 'code' in error && error.code === 'P2025') {
@@ -165,7 +155,7 @@ builder.mutationField('togglePublishPost', (t) =>
         description: 'The global ID of the post to toggle',
       }),
     },
-    resolve: async (query, _parent, args, context) => {
+    resolve: async (_query, _parent, args, context) => {
       try {
         // Ensure user is authenticated
         const userId = requireAuthentication(context)
@@ -176,11 +166,12 @@ builder.mutationField('togglePublishPost', (t) =>
         // Execute toggle publish use case
         const post = await container.togglePublishPostUseCase.execute(postId, userId)
 
-        // Return with Prisma query optimization
-        return prisma.post.findUniqueOrThrow({
-          ...query,
-          where: { id: post.id },
-        })
+        // Return the updated post
+        const result = await context.repositories.posts.findById(post.id)
+        if (!result) {
+          throw new NotFoundError('Post', post.id.toString())
+        }
+        return result
       } catch (error) {
         throw normalizeError(error)
       }
@@ -201,7 +192,7 @@ builder.mutationField('incrementPostViewCount', (t) =>
         description: 'The global ID of the post to increment view count',
       }),
     },
-    resolve: async (query, _parent, args, _context) => {
+    resolve: async (_query, _parent, args, context) => {
       try {
         // Parse global ID
         const postId = parseGlobalId(args.id.toString(), 'Post')
@@ -209,11 +200,12 @@ builder.mutationField('incrementPostViewCount', (t) =>
         // Execute increment view count use case
         const post = await container.incrementPostViewCountUseCase.execute(postId)
 
-        // Return with Prisma query optimization
-        return prisma.post.findUniqueOrThrow({
-          ...query,
-          where: { id: post.id },
-        })
+        // Return the updated post
+        const result = await context.repositories.posts.findById(post.id)
+        if (!result) {
+          throw new NotFoundError('Post', post.id.toString())
+        }
+        return result
       } catch (error) {
         // Handle Prisma not found error
         if (error instanceof Error && 'code' in error && error.code === 'P2025') {

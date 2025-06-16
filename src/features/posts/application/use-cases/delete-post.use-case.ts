@@ -1,7 +1,7 @@
 import { NotFoundError } from '../../../../errors'
+import { PostRepository } from '../../../../infrastructure/database/repositories/posts'
 import { PostAuthorizationService } from '../../domain/services/post-authorization.service'
 import { Post } from '../../domain/types'
-import { PostRepository } from '../../infrastructure/repositories/post.repository'
 
 /**
  * Use case for deleting a post

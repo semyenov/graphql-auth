@@ -5,7 +5,7 @@
 import { ApolloServer, type GraphQLResponse } from '@apollo/server'
 import type { Post, User } from '@prisma/client'
 import { print } from 'graphql'
-import type { Context } from '../src/context/types'
+import type { Context } from '../src/context/types.d'
 import { measureOperation, type PerformanceMetrics } from './performance-utils'
 import { GraphQLSnapshotTester, type SnapshotResult } from './snapshot-utils'
 import { createSubscriptionHelper, type SubscriptionTestHelper } from './subscription-utils'

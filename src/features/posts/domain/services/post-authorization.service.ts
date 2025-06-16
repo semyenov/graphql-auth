@@ -1,7 +1,7 @@
 import { Post, UnauthorizedPostAccessError } from '../types'
 
 /**
- * Domain service for post authorization rules
+ * Domain service for post authorization rules  
  */
 export class PostAuthorizationService {
   /**

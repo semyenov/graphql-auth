@@ -3,11 +3,9 @@
  * These types represent the core business entities and rules
  */
 
-export interface User {
-  id: number
-  email: string
-  name: string | null
-}
+import { Prisma } from '@prisma/client'
+
+export type User = Prisma.UserGetPayload<{}>
 
 export interface AuthUser extends User {
   password: string

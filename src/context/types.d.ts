@@ -6,6 +6,7 @@ import type {
     MimeType
 } from '../gql/types'
 import type { RequestMetadata, SecurityContext, User } from '../types.d'
+import type { UserRepository, PostRepository } from '../infrastructure/database'
 
 /**
  * GraphQL Context Type Definitions
@@ -89,20 +90,17 @@ export interface GraphQLIncomingMessage extends IncomingMessage {
  * @template TVariables - The type of GraphQL variables for the operation
  * @template TOperationName - The specific operation name as a string literal
  */
-export interface Context<
-    TVariables = Record<string, unknown>,
-    TOperationName extends string = string
-> extends BaseContext {
+export interface Context extends BaseContext {
     // Operation-specific information
-    operationName?: TOperationName
-    variables?: TVariables
+    operationName?: string
+    variables?: Record<string, unknown>
 
     // Request information
     req: {
         readonly url: string
         readonly method: HTTPMethod
         readonly headers: Record<string, string>
-        readonly body?: GraphQLRequestBody<TVariables>
+        readonly body?: GraphQLRequestBody
     }
     headers: Record<string, string>
     method: HTTPMethod
@@ -113,4 +111,10 @@ export interface Context<
     security: SecurityContext
     userId?: number
     user?: User
+
+    // Database repositories
+    repositories: {
+        users: UserRepository
+        posts: PostRepository
+    }
 }

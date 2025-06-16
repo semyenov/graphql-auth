@@ -1,5 +1,5 @@
 import { graphql } from 'gql.tada'
-import { PostWithAuthorFragment } from './fragments'
+import * as fragments from './fragments'
 
 // =============================================================================
 // GRAPHQL MUTATIONS
@@ -23,7 +23,7 @@ export const CreateDraftMutation = graphql(`
       ...PostWithAuthor 
     }
   } 
-`, [PostWithAuthorFragment])
+`, [fragments.PostWithAuthorFragment])
 
 export const DeletePostMutation = graphql(`
   mutation DeletePost($id: ID!) {
@@ -31,7 +31,7 @@ export const DeletePostMutation = graphql(`
       ...PostWithAuthor
     }
   }
-`, [PostWithAuthorFragment])
+`, [fragments.PostWithAuthorFragment])
 
 export const TogglePublishPostMutation = graphql(`
   mutation TogglePublishPost($id: ID!) {
@@ -39,7 +39,7 @@ export const TogglePublishPostMutation = graphql(`
       ...PostWithAuthor
     }
   }
-`, [PostWithAuthorFragment])
+`, [fragments.PostWithAuthorFragment])
 
 export const IncrementPostViewCountMutation = graphql(`
   mutation IncrementPostViewCount($id: ID!) {
@@ -47,4 +47,4 @@ export const IncrementPostViewCountMutation = graphql(`
       ...PostWithAuthor
     }
   }
-`, [PostWithAuthorFragment]) 
+`, [fragments.PostWithAuthorFragment]) 

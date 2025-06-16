@@ -1,5 +1,4 @@
-import { signToken, verifyToken } from '../../../../utils/jwt'
-import { JWTPayload } from '../../../../utils/jwt'
+import { JWTPayload, signToken, verifyToken } from '../../../../utils/jwt';
 
 /**
  * Infrastructure service for JWT token management
@@ -15,12 +14,12 @@ export class TokenService {
 
   extractFromHeader(authHeader: string | undefined): string | null {
     if (!authHeader) return null
-    
+
     const parts = authHeader.split(' ')
     if (parts.length !== 2 || parts[0] !== 'Bearer') {
       return null
     }
-    
+
     return parts[1] || null
   }
 }

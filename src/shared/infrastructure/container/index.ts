@@ -7,18 +7,15 @@ import {
   LoginUseCase,
   SignupUseCase,
   TokenService,
-  UserRepository,
 } from '../../../features/auth'
-
 import {
   CreatePostUseCase,
   DeletePostUseCase,
-  PostRepository,
 } from '../../../features/posts'
-
 import { IncrementPostViewCountUseCase } from '../../../features/posts/application/use-cases/increment-post-view-count.use-case'
 import { TogglePublishPostUseCase } from '../../../features/posts/application/use-cases/toggle-publish-post.use-case'
 import { PostAuthorizationService } from '../../../features/posts/domain/services/post-authorization.service'
+import { PostRepository, UserRepository } from '../../../infrastructure/database/repositories'
 
 /**
  * Container class for managing dependencies

@@ -1,10 +1,6 @@
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import type { introspection_types } from '../graphql-env'
-import type {
-    PostInfoFragment,
-    PostWithAuthorFragment,
-    UserInfoFragment
-} from './fragments'
+import type * as fragments from './fragments'
 import type {
     CreateDraftMutation,
     DeletePostMutation,
@@ -103,9 +99,9 @@ export type SortOrder = 'asc' | 'desc'
 // =============================================================================
 
 // Fragment Types
-export type UserInfo = ResultOf<typeof UserInfoFragment>
-export type PostInfo = ResultOf<typeof PostInfoFragment>
-export type PostWithAuthor = ResultOf<typeof PostWithAuthorFragment>
+export type UserInfo = ResultOf<typeof fragments.UserInfoFragment>
+export type PostInfo = ResultOf<typeof fragments.PostInfoFragment>
+export type PostWithAuthor = ResultOf<typeof fragments.PostWithAuthorFragment>
 
 // Query Types
 export type GetMeResult = ResultOf<typeof GetMeQuery>

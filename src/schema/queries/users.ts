@@ -1,5 +1,4 @@
 import { getUserId } from '../../context/utils'
-import { prisma } from '../../prisma'
 import { parseGlobalId } from '../../shared/infrastructure/graphql/relay-helpers'
 import { builder } from '../builder'
 import { UserOrderByInput, UserWhereInput } from '../inputs'
@@ -22,22 +21,22 @@ builder.queryField('users', (t) =>
                 description: 'Ordering options (default: by ID ascending)',
             }),
         },
-        resolve: (query, _parent, args) => {
+        resolve: (query, _parent, args, ctx) => {
             // Apply filtering
             const where = transformUserWhereInput(args.where) || {};
 
             // Transform order by
             const orderBy = args.orderBy?.map(transformOrderBy).filter(Boolean) || [{ id: 'asc' }];
 
-            return prisma.user.findMany({
+            return ctx.repositories.users.findMany({
                 ...query,
                 where,
                 orderBy,
             });
         },
-        totalCount: (_parent, args) => {
+        totalCount: (_parent, args, ctx) => {
             const where = transformUserWhereInput(args.where) || {};
-            return prisma.user.count({ where });
+            return ctx.repositories.users.count(where);
         },
     })
 )
@@ -52,10 +51,7 @@ builder.queryField('me', (t) =>
             const userId = getUserId(context)
             if (!userId) return null
 
-            return prisma.user.findUnique({
-                ...query,
-                where: { id: userId },
-            })
+            return context.repositories.users.findById(userId)
         },
     })
 )
@@ -71,14 +67,11 @@ builder.queryField('user', (t) =>
                 description: 'Global ID of the user to retrieve',
             }),
         },
-        resolve: async (query, _parent, args) => {
+        resolve: async (query, _parent, args, ctx) => {
             try {
                 const userId = parseGlobalId(args.id.toString(), 'User')
 
-                return prisma.user.findUnique({
-                    ...query,
-                    where: { id: userId },
-                })
+                return ctx.repositories.users.findById(userId)
             } catch (error) {
                 // Invalid global ID format
                 return null;
@@ -104,7 +97,7 @@ builder.queryField('searchUsers', (t) =>
                 description: 'Ordering options (default: by name ascending)',
             }),
         },
-        resolve: (query, _parent, args) => {
+        resolve: (query, _parent, args, ctx) => {
             const searchTerm = args.searchTerm.trim();
 
             if (!searchTerm) {
@@ -122,13 +115,13 @@ builder.queryField('searchUsers', (t) =>
             // Transform order by
             const orderBy = args.orderBy?.map(transformOrderBy).filter(Boolean) || [{ name: 'asc' }];
 
-            return prisma.user.findMany({
+            return ctx.repositories.users.findMany({
                 ...query,
                 where,
                 orderBy,
             });
         },
-        totalCount: (_parent, args) => {
+        totalCount: (_parent, args, ctx) => {
             const searchTerm = args.searchTerm.trim();
 
             if (!searchTerm) {
@@ -142,7 +135,7 @@ builder.queryField('searchUsers', (t) =>
                 ],
             };
 
-            return prisma.user.count({ where });
+            return ctx.repositories.users.count(where);
         },
     })
 ) 

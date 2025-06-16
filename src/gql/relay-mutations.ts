@@ -1,5 +1,5 @@
 import { graphql } from 'gql.tada'
-import { RelayPostFragment } from './relay-queries'
+import * as relayQueries from './relay-queries'
 
 // =============================================================================
 // RELAY GRAPHQL MUTATIONS
@@ -25,7 +25,7 @@ export const CreateDraftMutation = graphql(`
       ...RelayPost
     }
   }
-`, [RelayPostFragment])
+`, [relayQueries.RelayPostFragment])
 
 export const DeletePostMutation = graphql(`
   mutation DeletePost($id: ID!) {
@@ -33,7 +33,7 @@ export const DeletePostMutation = graphql(`
       ...RelayPost
     }
   }
-`, [RelayPostFragment])
+`, [relayQueries.RelayPostFragment])
 
 export const TogglePublishPostMutation = graphql(`
   mutation TogglePublishPost($id: ID!) {
@@ -41,7 +41,7 @@ export const TogglePublishPostMutation = graphql(`
       ...RelayPost
     }
   }
-`, [RelayPostFragment])
+`, [relayQueries.RelayPostFragment])
 
 export const IncrementPostViewCountMutation = graphql(`
   mutation IncrementPostViewCount($id: ID!) {
@@ -49,4 +49,4 @@ export const IncrementPostViewCountMutation = graphql(`
       ...RelayPost
     }
   }
-`, [RelayPostFragment])
+`, [relayQueries.RelayPostFragment])

@@ -33,11 +33,9 @@ builder.prismaNode('User', {
         draftsCount: t.int({
             description: 'Number of unpublished posts by this user',
             resolve: async (user, args, context) => {
-                return context.prisma.post.count({
-                    where: {
-                        authorId: user.id,
-                        published: false,
-                    },
+                return context.repositories.posts.count({
+                    authorId: user.id,
+                    published: false,
                 });
             },
         }),
@@ -45,11 +43,9 @@ builder.prismaNode('User', {
         publishedPostsCount: t.int({
             description: 'Number of published posts by this user',
             resolve: async (user, args, context) => {
-                return context.prisma.post.count({
-                    where: {
-                        authorId: user.id,
-                        published: true,
-                    },
+                return context.repositories.posts.count({
+                    authorId: user.id,
+                    published: true,
                 });
             },
         }),

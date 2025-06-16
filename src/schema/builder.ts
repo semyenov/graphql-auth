@@ -52,12 +52,8 @@ export const builder = new SchemaBuilder<{
         exposeDescriptions: true,
         filterConnectionTotalCount: true,
         // Validation handled by Pothos automatically
-        // Performance optimizations
-        selectModePreference: 'include', // Prefer include over select for better type safety
         // Error handling for unused queries in development
         onUnusedQuery: isProduction ? null : 'warn',
-        // Enable additional debugging information in development  
-        // dmmf: handled automatically by Pothos
     },
     relay: {
         // Use the same ID encoding as our test utilities

@@ -11,7 +11,6 @@ export * from './application/use-cases/login.use-case'
 export * from './application/use-cases/signup.use-case'
 
 // Infrastructure exports
-export * from './infrastructure/repositories/user.repository'
 export * from './infrastructure/services/token.service'
 
 // Presentation exports
