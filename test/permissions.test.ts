@@ -2,8 +2,8 @@ import bcrypt from 'bcryptjs'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { UserId } from '../src/core/value-objects/user-id.vo'
-import { DeletePostMutation, LoginMutation } from '../src/gql/relay-mutations'
-import { GetFeedQuery, GetMeQuery, GetPostQuery } from '../src/gql/relay-queries'
+import { DeletePostDirectMutation, LoginDirectMutation } from '../src/gql/mutations-direct'
+import { FeedDirectQuery, MeDirectQuery, PostDirectQuery } from '../src/gql/queries-direct'
 import { PermissionUtils } from '../src/permissions'
 import { toPostId, toUserId } from './relay-utils'
 import { prisma } from './setup'
@@ -150,7 +150,7 @@ describe('Enhanced Permissions System', () => {
 
             const result = await executeOperation(
                 server,
-                print(GetFeedQuery),
+                print(FeedDirectQuery),
                 { first: 10 },
                 createMockContext()
             )
@@ -160,7 +160,7 @@ describe('Enhanced Permissions System', () => {
                 expect(result.body.singleResult.errors).toBeUndefined()
                 const data = result.body.singleResult.data as any
                 // At least 2 posts should be returned (may include posts from other tests)
-                expect(data?.feed?.edges.length).toBeGreaterThanOrEqual(2)
+                expect(data?.feedDirect?.edges.length).toBeGreaterThanOrEqual(2)
             }
         })
 
@@ -168,7 +168,7 @@ describe('Enhanced Permissions System', () => {
             // Test without authentication
             const unauthResult = await executeOperation(
                 server,
-                print(GetMeQuery),
+                print(MeDirectQuery),
                 {},
                 createMockContext()
             )
@@ -187,7 +187,7 @@ describe('Enhanced Permissions System', () => {
             // Test with authentication - user should exist
             const authResult = await executeOperation(
                 server,
-                print(GetMeQuery),
+                print(MeDirectQuery),
                 {},
                 createAuthContext(UserId.create(testUserId))
             )
@@ -196,10 +196,10 @@ describe('Enhanced Permissions System', () => {
                 expect(authResult.body.singleResult.errors).toBeUndefined()
                 const data = authResult.body.singleResult.data as any
                 // The me query should work since testUserId was created in beforeEach
-                expect(data?.me).toBeTruthy()
-                if (data?.me) {
-                    expect(data.me.id).toBe(toUserId(testUserId))
-                    expect(data.me.email).toBe(`permtest${testCounter}@example.com`)
+                expect(data?.meDirect).toBeTruthy()
+                if (data?.meDirect) {
+                    expect(data.meDirect.id).toBe(toUserId(testUserId))
+                    expect(data.meDirect.email).toBe(`permtest${testCounter}@example.com`)
                 }
             }
         })
@@ -226,7 +226,7 @@ describe('Enhanced Permissions System', () => {
             // Create custom query without userId
             const draftsQuery = `
                 query GetDrafts($first: Int, $after: String) {
-                    drafts(first: $first, after: $after) {
+                    draftsDirect(first: $first, after: $after) {
                         edges {
                             cursor
                             node {
@@ -255,8 +255,8 @@ describe('Enhanced Permissions System', () => {
             if (ownDraftsResult.body.kind === 'single') {
                 expect(ownDraftsResult.body.singleResult.errors).toBeUndefined()
                 const data = ownDraftsResult.body.singleResult.data as any
-                expect(data?.drafts?.edges).toHaveLength(1)
-                expect(data?.drafts?.edges[0].node.title).toBe('User 1 Draft')
+                expect(data?.draftsDirect?.edges).toHaveLength(1)
+                expect(data?.draftsDirect?.edges[0].node.title).toBe('User 1 Draft')
             }
 
             // Other user should see their own drafts
@@ -272,8 +272,8 @@ describe('Enhanced Permissions System', () => {
                 // Should return only their own drafts
                 expect(otherDraftsResult.body.singleResult.errors).toBeUndefined()
                 const data = otherDraftsResult.body.singleResult.data as any
-                expect(data?.drafts?.edges).toHaveLength(1)
-                expect(data?.drafts?.edges[0].node.title).toBe('User 2 Draft')
+                expect(data?.draftsDirect?.edges).toHaveLength(1)
+                expect(data?.draftsDirect?.edges[0].node.title).toBe('User 2 Draft')
             }
         })
 
@@ -291,7 +291,7 @@ describe('Enhanced Permissions System', () => {
             // testUserId should not be able to delete otherUserId's post
             const result = await executeOperation(
                 server,
-                print(DeletePostMutation),
+                print(DeletePostDirectMutation),
                 { id: toPostId(post.id) },
                 createAuthContext(UserId.create(testUserId))
             )
@@ -312,7 +312,7 @@ describe('Enhanced Permissions System', () => {
         it('should handle invalid post IDs gracefully', async () => {
             const result = await executeOperation(
                 server,
-                print(DeletePostMutation),
+                print(DeletePostDirectMutation),
                 { id: toPostId(999999) }, // Non-existent ID
                 createAuthContext(UserId.create(testUserId))
             )
@@ -329,7 +329,7 @@ describe('Enhanced Permissions System', () => {
         it('should apply rate limiting rules to signup', async () => {
             const signupMutation = `
         mutation Signup($email: String!, $password: String!, $name: String) {
-          signup(email: $email, password: $password, name: $name)
+          signupDirect(email: $email, password: $password, name: $name)
         }
       `
 
@@ -357,7 +357,7 @@ describe('Enhanced Permissions System', () => {
 
             const result = await executeOperation(
                 server,
-                print(LoginMutation),
+                print(LoginDirectMutation),
                 variables,
                 createMockContext()
             )
@@ -388,7 +388,7 @@ describe('Enhanced Permissions System', () => {
             // Without authentication - should succeed for published posts
             const unauthResult = await executeOperation(
                 server,
-                print(GetPostQuery),
+                print(PostDirectQuery),
                 { id: toPostId(post.id) },
                 createMockContext()
             )
@@ -397,14 +397,14 @@ describe('Enhanced Permissions System', () => {
             if (unauthResult.body.kind === 'single') {
                 expect(unauthResult.body.singleResult.errors).toBeUndefined()
                 const data = unauthResult.body.singleResult.data as any
-                expect(data?.post).toBeDefined()
-                expect(data?.post.id).toBe(toPostId(post.id))
+                expect(data?.postDirect).toBeDefined()
+                expect(data?.postDirect.id).toBe(toPostId(post.id))
             }
 
             // With authentication - should succeed
             const authResult = await executeOperation(
                 server,
-                print(GetPostQuery),
+                print(PostDirectQuery),
                 { id: toPostId(post.id) },
                 createAuthContext(UserId.create(testUserId))
             )
@@ -413,8 +413,8 @@ describe('Enhanced Permissions System', () => {
             if (authResult.body.kind === 'single') {
                 expect(authResult.body.singleResult.errors).toBeUndefined()
                 const data = authResult.body.singleResult.data as any
-                expect(data?.post).toBeDefined()
-                expect(data?.post.id).toBe(toPostId(post.id))
+                expect(data?.postDirect).toBeDefined()
+                expect(data?.postDirect.id).toBe(toPostId(post.id))
             }
         })
     })

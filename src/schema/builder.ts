@@ -6,7 +6,7 @@ import type PrismaTypes from '@pothos/plugin-prisma/generated';
 import RelayPlugin from '@pothos/plugin-relay';
 import ScopeAuthPlugin from '@pothos/plugin-scope-auth';
 import ValidationPlugin from '@pothos/plugin-validation';
-import type { EnhancedContext } from '../context/enhanced-context';
+import type { EnhancedContext } from '../context/enhanced-context-direct';
 import { isProduction } from '../environment';
 import {
     AuthenticationError,

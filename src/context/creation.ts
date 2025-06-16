@@ -1,8 +1,9 @@
 import { ContextFunction } from '@apollo/server'
 import { IncomingMessage, ServerResponse } from 'http'
 import { ValidationError } from '../errors'
+import { enhanceContext, type EnhancedContext } from './enhanced-context-direct'
+import { getUserIdFromAuthHeaderAsync } from './token-utils'
 import type { Context, GraphQLIncomingMessage } from './types.d'
-import { enhanceContext, type EnhancedContext } from './enhanced-context'
 import {
     createRequestMetadata,
     createRequestObject,
@@ -12,7 +13,6 @@ import {
     extractHeaders,
     isValidRequest
 } from './utils'
-import { getUserIdFromAuthHeaderAsync } from './token-utils'
 
 /**
  * GraphQL Context Creation
@@ -60,7 +60,7 @@ export const createContext: ContextFunction<[{ req: IncomingMessage; res: Server
         // Assemble final context
         const context = assembleContext(requestComponents, authContext)
 
-        // Enhance context with use cases
+        // Enhance context with Prisma client and DataLoaders
         return enhanceContext(context)
     } catch (error) {
         // Enhanced error handling with context information

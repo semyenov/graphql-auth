@@ -26,7 +26,7 @@ import './test-env'
 
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import jwt from 'jsonwebtoken'
-import { enhanceContext, type EnhancedContext } from '../src/context/enhanced-context'
+import { enhanceContext, type EnhancedContext } from '../src/context/enhanced-context-direct'
 import type { Context } from '../src/context/types.d'
 import { UserId } from '../src/core/value-objects/user-id.vo'
 import { env } from '../src/environment'

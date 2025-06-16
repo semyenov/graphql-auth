@@ -18,13 +18,15 @@ import './types/post';
 // Import inputs after types
 import './inputs';
 
-// Import clean architecture resolvers only
-import '../infrastructure/graphql/resolvers/auth.resolver';
-import '../infrastructure/graphql/resolvers/auth-tokens.resolver';
-import '../infrastructure/graphql/resolvers/posts.resolver';
-import '../infrastructure/graphql/resolvers/users.resolver';
+// OLD: Clean architecture resolvers with use cases (commented out - using direct resolvers now)
+// import '../infrastructure/graphql/resolvers/auth.resolver';
+// import '../infrastructure/graphql/resolvers/posts.resolver';
+// import '../infrastructure/graphql/resolvers/users.resolver';
 
-// Import direct Pothos resolvers (without use cases)
+// Keep auth-tokens.resolver as it handles refresh tokens (not yet migrated to direct)
+import '../infrastructure/graphql/resolvers/auth-tokens.resolver';
+
+// NEW: Direct Pothos resolvers (without use cases)
 import '../infrastructure/graphql/resolvers/auth-direct.resolver';
 import '../infrastructure/graphql/resolvers/posts-direct.resolver';
 import '../infrastructure/graphql/resolvers/users-direct.resolver';

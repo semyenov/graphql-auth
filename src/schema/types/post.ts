@@ -1,4 +1,4 @@
-import { type EnhancedContext } from '../../context/enhanced-context';
+import { type EnhancedContext } from '../../context/enhanced-context-direct';
 import { builder } from '../builder';
 
 // Define Post object type using Relay Node pattern

@@ -74,35 +74,14 @@ input IntFilter {
 scalar JSON
 
 type Mutation {
-  """Create a new draft post"""
-  createDraft(
-    """Post data including title and optional content"""
-    data: PostCreateInput!
-  ): Post
-
   """Create a new post"""
   createPostDirect(input: CreatePostInput!): Post
-
-  """Delete a post"""
-  deletePost(
-    """The global ID of the post to delete"""
-    id: ID!
-  ): Post
 
   """Delete a post"""
   deletePostDirect(id: ID!): Boolean
 
   """Increment the view count of a post"""
-  incrementPostViewCount(
-    """The global ID of the post to increment view count"""
-    id: ID!
-  ): Post
-
-  """Increment the view count of a post"""
   incrementPostViewCountDirect(id: ID!): Post
-
-  """Authenticate and receive a token"""
-  login(email: String!, password: String!): String
 
   """Authenticate and receive a token"""
   loginDirect(email: String!, password: String!): String
@@ -117,34 +96,10 @@ type Mutation {
   refreshToken(refreshToken: String!): AuthTokens
 
   """Create a new user account"""
-  signup(email: String!, name: String, password: String!): String
-
-  """Create a new user account"""
   signupDirect(email: String!, name: String, password: String!): String
-
-  """Toggle the publication status of a post"""
-  togglePublishPost(
-    """The global ID of the post to toggle"""
-    id: ID!
-  ): Post
 
   """Toggle the publish status of a post"""
   togglePublishPostDirect(id: ID!): Post
-
-  """Update an existing post"""
-  updatePost(
-    """New content for the post"""
-    content: String
-
-    """The global ID of the post to update"""
-    id: ID!
-
-    """New published status for the post"""
-    published: Boolean
-
-    """New title for the post"""
-    title: String
-  ): Post
 
   """Update an existing post"""
   updatePostDirect(id: ID!, input: UpdatePostInput!): Post
@@ -269,88 +224,26 @@ input PostWhereInput {
 }
 
 type Query {
-  """Get drafts for a specific user or the current user"""
-  drafts(
-    after: String
-    before: String
-    first: Int
-    last: Int
-
-    """The ID of the user whose drafts to retrieve (defaults to current user)"""
-    userId: ID
-  ): QueryDraftsConnection
-
   """Get draft posts for the authenticated user"""
   draftsDirect(after: String, before: String, first: Int, last: Int): QueryDraftsDirectConnection
-
-  """Get published posts with filtering and pagination"""
-  feed(
-    after: String
-    before: String
-    first: Int
-    last: Int
-    orderBy: [PostOrderByInput!]
-
-    """Search in title and content"""
-    searchString: String
-    where: PostWhereInput
-  ): QueryFeedConnection
 
   """Get published posts with optional search"""
   feedDirect(after: String, before: String, first: Int, last: Int, searchString: String): QueryFeedDirectConnection
 
   """Get the currently authenticated user"""
-  me: User
-
-  """Get the currently authenticated user"""
   meDirect: User
-  post(
-    """Global ID of the post to retrieve"""
-    id: ID!
-  ): Post
 
   """Get a post by ID"""
   postDirect(id: ID!): Post
 
-  """Search for users by name or email"""
-  searchUsers(after: String, before: String, first: Int, last: Int, search: UserSearchInput): QuerySearchUsersConnection
-
   """Search users by name or email"""
   searchUsersDirect(after: String, before: String, first: Int, last: Int, search: String!): QuerySearchUsersDirectConnection
-
-  """Get a user by their ID"""
-  user(id: ID!): User
 
   """Get a user by ID"""
   userDirect(id: ID!): User
 
-  """Get all users with advanced filtering and pagination"""
-  users(
-    after: String
-    before: String
-    first: Int
-    last: Int
-
-    """Ordering options (default: by ID ascending)"""
-    orderBy: [UserOrderByInput!] = [{id: asc}]
-
-    """Filtering options for users"""
-    where: UserWhereInput
-  ): QueryUsersConnection
-
   """Get all users with optional filtering"""
   usersDirect(after: String, before: String, first: Int, last: Int, orderBy: UserOrderByInput, where: UserWhereInput): QueryUsersDirectConnection
-}
-
-type QueryDraftsConnection {
-  edges: [QueryDraftsConnectionEdge]
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type QueryDraftsConnectionEdge {
-  cursor: String!
-  node: Post
 }
 
 type QueryDraftsDirectConnection {
@@ -360,17 +253,6 @@ type QueryDraftsDirectConnection {
 }
 
 type QueryDraftsDirectConnectionEdge {
-  cursor: String!
-  node: Post
-}
-
-type QueryFeedConnection {
-  edges: [QueryFeedConnectionEdge]
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type QueryFeedConnectionEdge {
   cursor: String!
   node: Post
 }
@@ -386,17 +268,6 @@ type QueryFeedDirectConnectionEdge {
   node: Post
 }
 
-type QuerySearchUsersConnection {
-  edges: [QuerySearchUsersConnectionEdge]
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type QuerySearchUsersConnectionEdge {
-  cursor: String!
-  node: User
-}
-
 type QuerySearchUsersDirectConnection {
   edges: [QuerySearchUsersDirectConnectionEdge]
   pageInfo: PageInfo!
@@ -404,17 +275,6 @@ type QuerySearchUsersDirectConnection {
 }
 
 type QuerySearchUsersDirectConnectionEdge {
-  cursor: String!
-  node: User
-}
-
-type QueryUsersConnection {
-  edges: [QueryUsersConnectionEdge]
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type QueryUsersConnectionEdge {
   cursor: String!
   node: User
 }

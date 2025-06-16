@@ -4,7 +4,7 @@
 
 import type { GraphQLResponse } from '@apollo/server'
 import { ApolloServer } from '@apollo/server'
-import { EnhancedContext } from '../src/context/enhanced-context'
+import { EnhancedContext } from '../src/context/enhanced-context-direct'
 import { executeOperation } from './test-utils'
 
 export interface PerformanceMetrics {

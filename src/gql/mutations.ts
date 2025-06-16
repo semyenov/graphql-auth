@@ -7,19 +7,19 @@ import * as fragments from './fragments'
 
 export const LoginMutation = graphql(`
   mutation Login($email: String!, $password: String!) {
-    login(email: $email, password: $password)
+    loginDirect(email: $email, password: $password)
   } 
 `)
 
 export const SignupMutation = graphql(`
   mutation Signup($email: String!, $password: String!, $name: String) {
-    signup(email: $email, password: $password, name: $name)
+    signupDirect(email: $email, password: $password, name: $name)
   }
 `)
 
-export const CreateDraftMutation = graphql(`
-  mutation CreateDraft($data: PostCreateInput!) {
-    createDraft(data: $data) {
+export const CreatePostMutation = graphql(`
+  mutation CreatePost($input: CreatePostInput!) {
+    createPostDirect(input: $input) {
       ...PostWithAuthor 
     }
   } 
@@ -27,15 +27,13 @@ export const CreateDraftMutation = graphql(`
 
 export const DeletePostMutation = graphql(`
   mutation DeletePost($id: ID!) {
-    deletePost(id: $id) {
-      ...PostWithAuthor
-    }
+    deletePostDirect(id: $id)
   }
 `, [fragments.PostWithAuthorFragment])
 
 export const TogglePublishPostMutation = graphql(`
   mutation TogglePublishPost($id: ID!) {
-    togglePublishPost(id: $id) {
+    togglePublishPostDirect(id: $id) {
       ...PostWithAuthor
     }
   }
@@ -43,7 +41,7 @@ export const TogglePublishPostMutation = graphql(`
 
 export const IncrementPostViewCountMutation = graphql(`
   mutation IncrementPostViewCount($id: ID!) {
-    incrementPostViewCount(id: $id) {
+    incrementPostViewCountDirect(id: $id) {
       ...PostWithAuthor
     }
   }

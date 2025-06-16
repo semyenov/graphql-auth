@@ -6,7 +6,7 @@
 
 import { container } from 'tsyringe'
 import { z } from 'zod'
-import type { EnhancedContext } from '../../../context/enhanced-context'
+import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import { AuthorizationError, NotFoundError, ValidationError } from '../../../errors'
 import { builder } from '../../../schema/builder'
 import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'

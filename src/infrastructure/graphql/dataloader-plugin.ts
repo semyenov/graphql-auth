@@ -4,7 +4,7 @@
  * Configures the DataLoader plugin to work with our enhanced context
  */
 
-import type { EnhancedContext } from '../../context/enhanced-context';
+import type { EnhancedContext } from '../../context/enhanced-context-direct';
 import { builder } from '../../schema/builder';
 
 // Configure DataLoader plugin

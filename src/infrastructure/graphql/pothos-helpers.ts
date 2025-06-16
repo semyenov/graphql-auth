@@ -7,7 +7,7 @@
 import type { FieldRef, InputFieldMap, InputFieldRef, SchemaTypes } from '@pothos/core';
 import type PrismaTypes from '@pothos/plugin-prisma/generated';
 import { z } from 'zod';
-import type { EnhancedContext } from '../../context/enhanced-context';
+import type { EnhancedContext } from '../../context/enhanced-context-direct';
 import { AuthenticationError } from '../../errors';
 import { builder } from '../../schema/builder';
 

@@ -1,8 +1,7 @@
 import bcrypt from 'bcryptjs'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { LoginVariables, SignupVariables } from '../src/gql'
-import { LoginMutation, SignupMutation } from '../src/gql'
+import { LoginDirectMutation, SignupDirectMutation } from '../src/gql/mutations-direct'
 import { prisma } from './setup'
 import {
   createMockContext,
@@ -11,8 +10,8 @@ import {
 } from './test-utils'
 
 interface AuthMutationResponse {
-  signup?: string
-  login?: string
+  signupDirect?: string
+  loginDirect?: string
 }
 
 describe('Authentication', () => {
@@ -24,22 +23,22 @@ describe('Authentication', () => {
 
   describe('signup', () => {
     it('should create a new user with valid data', async () => {
-      const variables: SignupVariables = {
+      const variables = {
         email: 'newsignup@example.com',
         password: 'securePassword123',
         name: 'New Signup User',
       }
 
       // Using the new helper for cleaner test code
-      const data = await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse, SignupVariables>(
+      const data = await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse>(
         server,
-        print(SignupMutation),
+        print(SignupDirectMutation),
         variables,
         createMockContext()
       )
 
-      expect(data.signup).toBeDefined()
-      expect(data.signup).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/)
+      expect(data.signupDirect).toBeDefined()
+      expect(data.signupDirect).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/)
 
       // Verify user was created in database
       const user = await prisma.user.findUnique({
@@ -60,16 +59,16 @@ describe('Authentication', () => {
         },
       })
 
-      const variables: SignupVariables = {
+      const variables = {
         email: 'existing@example.com',
         password: 'newPassword123',
         name: 'Another User',
       }
 
       // Using the new helper to expect and verify errors
-      const errors = await gqlHelpers.expectGraphQLError<AuthMutationResponse, SignupVariables>(
+      const errors = await gqlHelpers.expectGraphQLError<AuthMutationResponse>(
         server,
-        print(SignupMutation),
+        print(SignupDirectMutation),
         variables,
         createMockContext(),
         'An account with this email already exists'
@@ -93,20 +92,20 @@ describe('Authentication', () => {
         },
       })
 
-      const variables: LoginVariables = {
+      const variables = {
         email,
         password,
       }
 
       // Using the new helper for cleaner success case
-      const data = await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse, LoginVariables>(
+      const data = await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse>(
         server,
-        print(LoginMutation),
+        print(LoginDirectMutation),
         variables,
         createMockContext()
       )
 
-      expect(data.login).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/)
+      expect(data.loginDirect).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/)
     })
 
     it('should fail with invalid password', async () => {
@@ -123,15 +122,15 @@ describe('Authentication', () => {
         },
       })
 
-      const variables: LoginVariables = {
+      const variables = {
         email,
         password: wrongPassword,
       }
 
       // Using the new helper to expect specific error
-      await gqlHelpers.expectGraphQLError<AuthMutationResponse, LoginVariables>(
+      await gqlHelpers.expectGraphQLError<AuthMutationResponse>(
         server,
-        print(LoginMutation),
+        print(LoginDirectMutation),
         variables,
         createMockContext(),
         'Invalid email or password'
@@ -142,15 +141,15 @@ describe('Authentication', () => {
       const email = 'nonexistent@example.com'
       const password = 'anyPassword'
 
-      const variables: LoginVariables = {
+      const variables = {
         email,
         password,
       }
 
       // Using the new helper to expect specific error
-      await gqlHelpers.expectGraphQLError<AuthMutationResponse, LoginVariables>(
+      await gqlHelpers.expectGraphQLError<AuthMutationResponse>(
         server,
-        print(LoginMutation),
+        print(LoginDirectMutation),
         variables,
         createMockContext(),
         'Invalid email or password'

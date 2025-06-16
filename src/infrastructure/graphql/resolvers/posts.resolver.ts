@@ -4,7 +4,7 @@
  * Handles post-related GraphQL operations using clean architecture.
  */
 
-import type { EnhancedContext } from '../../../context/enhanced-context'
+import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import { PostId } from '../../../core/value-objects/post-id.vo'
 import { builder } from '../../../schema/builder'
 import { PostCreateInput, PostOrderByInput, PostWhereInput } from '../../../schema/inputs'

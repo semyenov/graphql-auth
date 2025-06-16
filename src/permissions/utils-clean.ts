@@ -1,6 +1,6 @@
 import { ROLE_HIERARCHY } from '../constants'
 import { hasPermission, hasRole, isAuthenticated, requireAuthentication } from '../context/auth'
-import type { EnhancedContext } from '../context/enhanced-context'
+import type { EnhancedContext } from '../context/enhanced-context-direct'
 
 /**
  * Permission utility type definition

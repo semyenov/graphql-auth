@@ -4,7 +4,7 @@
  * Handles user-related GraphQL operations using clean architecture.
  */
 
-import type { EnhancedContext } from '../../../context/enhanced-context'
+import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import { builder } from '../../../schema/builder'
 import { UserOrderByInput, UserSearchInput, UserWhereInput } from '../../../schema/inputs'
 import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'

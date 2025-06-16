@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod'
-import type { EnhancedContext } from '../../../context/enhanced-context'
+import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import { builder } from '../../../schema/builder'
 import { AuthTokensType } from '../types/auth.types'
 import { commonValidations } from '../pothos-helpers'

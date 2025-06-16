@@ -7,6 +7,7 @@ import { afterAll, beforeAll, beforeEach } from 'vitest'
 import { DatabaseClient } from '../src/infrastructure/database/client'
 import { setTestPrismaClient } from '../src/prisma'
 import { TEST_DATABASE_URL } from './test-database-url'
+import { configureContainer } from '../src/infrastructure/config/container'
 
 // Create a test database client
 export const prisma = new PrismaClient({
@@ -25,6 +26,9 @@ const dbFilePath = TEST_DATABASE_URL.replace('file:', '')
 beforeAll(async () => {
   try {
     console.log(`Setting up test database: ${TEST_DATABASE_URL}`)
+
+    // Configure dependency injection container for tests
+    configureContainer()
 
     // Set the shared prisma instance to use our test client
     setTestPrismaClient(prisma)

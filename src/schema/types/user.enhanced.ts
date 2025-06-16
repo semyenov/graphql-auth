@@ -4,7 +4,7 @@
  * Enhanced User object type using DataLoaders for efficient data fetching
  */
 
-import type { EnhancedContext } from '../../context/enhanced-context';
+import type { EnhancedContext } from '../../context/enhanced-context-direct';
 import { builder } from '../builder';
 
 // Define User object type using Relay Node pattern with DataLoader optimizations

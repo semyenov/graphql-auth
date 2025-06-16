@@ -14,6 +14,7 @@ export const RelayPostFragment = graphql(`
     viewCount
     createdAt
     updatedAt
+    published
     author {
       id
       name
@@ -34,7 +35,7 @@ export const RelayUserFragment = graphql(`
 // Get current user
 export const GetMeQuery = graphql(`
   query GetMe {
-    me {
+    meDirect {
       ...RelayUser
     }
   }
@@ -43,7 +44,7 @@ export const GetMeQuery = graphql(`
 // Get user by ID (global ID)
 export const GetUserQuery = graphql(`
   query GetUser($id: ID!) {
-    user(id: $id) {
+    userDirect(id: $id) {
       ...RelayUser
     }
   }
@@ -52,7 +53,7 @@ export const GetUserQuery = graphql(`
 // Get all users with pagination
 export const GetUsersQuery = graphql(`
   query GetUsers($first: Int, $after: String) {
-    users(first: $first, after: $after) {
+    usersDirect(first: $first, after: $after) {
       edges {
         cursor
         node {
@@ -71,7 +72,7 @@ export const GetUsersQuery = graphql(`
 // Get post by ID (global ID)
 export const GetPostQuery = graphql(`
   query GetPost($id: ID!) {
-    post(id: $id) {
+    postDirect(id: $id) {
       ...RelayPost
     }
   }
@@ -84,7 +85,7 @@ export const GetFeedQuery = graphql(`
     $after: String
     $searchString: String
   ) {
-    feed(
+    feedDirect(
       first: $first
       after: $after
       searchString: $searchString
@@ -106,8 +107,8 @@ export const GetFeedQuery = graphql(`
 
 // Get user drafts with pagination
 export const GetDraftsQuery = graphql(`
-  query GetDrafts($userId: ID!, $first: Int, $after: String) {
-    drafts(userId: $userId, first: $first, after: $after) {
+  query GetDrafts($first: Int, $after: String) {
+    draftsDirect(first: $first, after: $after) {
       edges {
         cursor
         node {

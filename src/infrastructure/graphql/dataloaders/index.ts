@@ -6,7 +6,7 @@
 
 import type { Post, User } from '@prisma/client';
 import DataLoader from 'dataloader';
-import type { EnhancedContext } from '../../../context/enhanced-context';
+import type { EnhancedContext } from '../../../context/enhanced-context-direct';
 import { prisma } from '../../../prisma';
 
 /**

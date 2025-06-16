@@ -6,7 +6,7 @@
 
 import { beforeEach, describe, expect, it, afterAll } from 'vitest'
 import { print } from 'graphql'
-import { LoginMutation, SignupMutation } from '../src/gql/relay-mutations'
+import { LoginDirectMutation, SignupDirectMutation } from '../src/gql/mutations-direct'
 import { rateLimiter } from '../src/infrastructure/services/rate-limiter.service'
 import { createMockContext, createTestServer, executeOperation, gqlHelpers } from './test-utils'
 import { prisma } from './setup'
@@ -51,7 +51,7 @@ describe('Rate Limiting', () => {
             for (let i = 0; i < 5; i++) {
                 const response = await executeOperation(
                     server,
-                    print(LoginMutation),
+                    print(LoginDirectMutation),
                     variables,
                     createMockContext()
                 )
@@ -73,7 +73,7 @@ describe('Rate Limiting', () => {
             for (let i = 0; i < 5; i++) {
                 await executeOperation(
                     server,
-                    print(LoginMutation),
+                    print(LoginDirectMutation),
                     variables,
                     createMockContext()
                 )
@@ -82,7 +82,7 @@ describe('Rate Limiting', () => {
             // 6th attempt should be rate limited
             await gqlHelpers.expectGraphQLError(
                 server,
-                print(LoginMutation),
+                print(LoginDirectMutation),
                 variables,
                 createMockContext(),
                 'Too many requests'
@@ -102,7 +102,7 @@ describe('Rate Limiting', () => {
             for (let i = 0; i < 5; i++) {
                 await executeOperation(
                     server,
-                    print(LoginMutation),
+                    print(LoginDirectMutation),
                     { email: 'ratelimit@example.com', password: 'wrong' },
                     createMockContext()
                 )
@@ -111,7 +111,7 @@ describe('Rate Limiting', () => {
             // Should still allow attempts for different email
             const response = await executeOperation(
                 server,
-                print(LoginMutation),
+                print(LoginDirectMutation),
                 { email: 'another@example.com', password: 'wrong' },
                 createMockContext()
             )
@@ -135,13 +135,13 @@ describe('Rate Limiting', () => {
                 
                 const data = await gqlHelpers.expectSuccessfulMutation(
                     server,
-                    print(SignupMutation),
+                    print(SignupDirectMutation),
                     variables,
                     createMockContext()
                 )
                 
-                expect(data.signup).toBeDefined()
-                expect(typeof data.signup).toBe('string')
+                expect(data.signupDirect).toBeDefined()
+                expect(typeof data.signupDirect).toBe('string')
             }
         })
         
@@ -153,7 +153,7 @@ describe('Rate Limiting', () => {
             for (let i = 0; i < 3; i++) {
                 await executeOperation(
                     server,
-                    print(SignupMutation),
+                    print(SignupDirectMutation),
                     {
                         email: baseEmail,
                         password: 'password123',
@@ -166,7 +166,7 @@ describe('Rate Limiting', () => {
             // 4th attempt should be rate limited
             await gqlHelpers.expectGraphQLError(
                 server,
-                print(SignupMutation),
+                print(SignupDirectMutation),
                 {
                     email: baseEmail,
                     password: 'password123',
@@ -188,7 +188,7 @@ describe('Rate Limiting', () => {
             for (let i = 0; i < 3; i++) {
                 await executeOperation(
                     server,
-                    print(SignupMutation),
+                    print(SignupDirectMutation),
                     {
                         email: emails[i],
                         password: 'password123',
@@ -201,7 +201,7 @@ describe('Rate Limiting', () => {
             // Next attempt with any variation should be rate limited
             await gqlHelpers.expectGraphQLError(
                 server,
-                print(SignupMutation),
+                print(SignupDirectMutation),
                 {
                     email: 'testuser@example.com',
                     password: 'password123',
@@ -233,7 +233,7 @@ describe('Rate Limiting', () => {
             for (let i = 0; i < 5; i++) {
                 await executeOperation(
                     server,
-                    print(LoginMutation),
+                    print(LoginDirectMutation),
                     { email: 'ratelimit@example.com', password: 'wrong' },
                     createMockContext()
                 )
@@ -242,7 +242,7 @@ describe('Rate Limiting', () => {
             // Check error details
             const response = await executeOperation(
                 server,
-                print(LoginMutation),
+                print(LoginDirectMutation),
                 { email: 'ratelimit@example.com', password: 'wrong' },
                 createMockContext()
             )

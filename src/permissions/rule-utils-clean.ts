@@ -1,4 +1,4 @@
-import type { EnhancedContext } from '../context/enhanced-context'
+import type { EnhancedContext } from '../context/enhanced-context-direct'
 import { AuthenticationError, AuthorizationError, ValidationError } from '../errors'
 
 /**

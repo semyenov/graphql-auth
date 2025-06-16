@@ -6,7 +6,7 @@
 
 import { container } from 'tsyringe'
 import { z } from 'zod'
-import type { EnhancedContext } from '../../../context/enhanced-context'
+import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import type { ILogger } from '../../../core/services/logger.interface'
 import type { IPasswordService } from '../../../core/services/password.service.interface'
 import type { ITokenService } from '../../../core/services/token.service.interface'

@@ -1,6 +1,6 @@
 import { rule } from 'graphql-shield'
 import { ERROR_MESSAGES } from '../constants'
-import type { EnhancedContext } from '../context/enhanced-context'
+import type { EnhancedContext } from '../context/enhanced-context-direct'
 import { requireAuthentication } from '../context/auth'
 import { AuthorizationError, NotFoundError } from '../errors'
 import {

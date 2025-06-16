@@ -8,20 +8,20 @@ import * as relayQueries from './relay-queries'
 // Auth mutations (unchanged - they don't return nodes)
 export const SignupMutation = graphql(`
   mutation Signup($email: String!, $password: String!, $name: String) {
-    signup(email: $email, password: $password, name: $name)
+    signupDirect(email: $email, password: $password, name: $name)
   }
 `)
 
 export const LoginMutation = graphql(`
   mutation Login($email: String!, $password: String!) {
-    login(email: $email, password: $password)
+    loginDirect(email: $email, password: $password)
   }
 `)
 
 // Post mutations using global IDs
 export const CreateDraftMutation = graphql(`
-  mutation CreateDraft($data: PostCreateInput!) {
-    createDraft(data: $data) {
+  mutation CreateDraft($input: CreatePostInput!) {
+    createPostDirect(input: $input) {
       ...RelayPost
     }
   }
@@ -29,15 +29,13 @@ export const CreateDraftMutation = graphql(`
 
 export const DeletePostMutation = graphql(`
   mutation DeletePost($id: ID!) {
-    deletePost(id: $id) {
-      ...RelayPost
-    }
+    deletePostDirect(id: $id)
   }
 `, [relayQueries.RelayPostFragment])
 
 export const TogglePublishPostMutation = graphql(`
   mutation TogglePublishPost($id: ID!) {
-    togglePublishPost(id: $id) {
+    togglePublishPostDirect(id: $id) {
       ...RelayPost
     }
   }
@@ -45,7 +43,7 @@ export const TogglePublishPostMutation = graphql(`
 
 export const IncrementPostViewCountMutation = graphql(`
   mutation IncrementPostViewCount($id: ID!) {
-    incrementPostViewCount(id: $id) {
+    incrementPostViewCountDirect(id: $id) {
       ...RelayPost
     }
   }

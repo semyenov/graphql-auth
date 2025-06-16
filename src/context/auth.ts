@@ -1,7 +1,7 @@
 import { ERROR_MESSAGES } from '../constants'
 import { UserId } from '../core/value-objects/user-id.vo'
 import { AuthenticationError } from '../errors'
-import type { EnhancedContext } from './enhanced-context'
+import type { EnhancedContext } from './enhanced-context-direct'
 
 /**
  * Authentication and authorization utilities for GraphQL context

@@ -17,7 +17,7 @@ export const PostInfoFragment = graphql(`
     id
     title
     content
-    published
+    published 
     createdAt
     updatedAt
     viewCount
@@ -34,4 +34,17 @@ export const PostWithAuthorFragment = graphql(`
 `, [
   PostInfoFragment,
   UserInfoFragment
-]) 
+])
+
+export const UserWithPostsFragment = graphql(`
+  fragment UserWithPosts on User {
+    ...UserInfo
+    posts {
+      edges {
+        node {
+          ...PostWithAuthor
+        }
+      }
+    }
+  }
+`, [UserInfoFragment, PostWithAuthorFragment])  

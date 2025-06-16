@@ -7,7 +7,7 @@
 import { container } from 'tsyringe'
 import { z } from 'zod'
 import { requireAuthentication } from '../../../context/auth'
-import type { EnhancedContext } from '../../../context/enhanced-context'
+import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import type { ILogger } from '../../../core/services/logger.interface'
 import { ConflictError } from '../../../errors'
 import { builder } from '../../../schema/builder'

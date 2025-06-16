@@ -4,7 +4,7 @@
  * Enhanced Post object type using advanced Pothos patterns
  */
 
-import { type EnhancedContext } from '../../context/enhanced-context';
+import { type EnhancedContext } from '../../context/enhanced-context-direct';
 import { builder } from '../builder';
 import { createDateField, createComputedField, withFieldAuth } from '../../infrastructure/graphql/pothos-helpers';
 

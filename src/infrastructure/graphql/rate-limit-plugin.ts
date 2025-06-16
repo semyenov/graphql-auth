@@ -5,7 +5,7 @@
  */
 
 import type { FieldRef } from '@pothos/core'
-import type { EnhancedContext } from '../../context/enhanced-context'
+import type { EnhancedContext } from '../../context/enhanced-context-direct'
 import { rateLimiter, type RateLimiterOptions } from '../services/rate-limiter.service'
 import { RateLimitError } from '../../errors'
 import { builder } from '../../schema/builder'
