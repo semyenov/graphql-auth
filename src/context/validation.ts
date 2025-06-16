@@ -40,8 +40,8 @@ function createValidationResult(errors: string[]): ValidationResult {
  * }
  * ```
  */
-export function validateContext<TVariables = Record<string, unknown>>(
-    context: Context<TVariables>
+export function validateContext(
+    context: Context
 ): ValidationResult {
     const errors: string[] = []
 
@@ -83,8 +83,8 @@ export function validateContext<TVariables = Record<string, unknown>>(
  * @param context - The context to validate
  * @returns Validation result for authentication requirements
  */
-export function validateAuthentication<TVariables = Record<string, unknown>>(
-    context: Context<TVariables>
+export function validateAuthentication(
+    context: Context
 ): ValidationResult {
     const errors: string[] = []
 
@@ -119,8 +119,8 @@ export function isValidOperationName(operationName: string | undefined): boolean
  * @param context - The context to validate
  * @returns Validation result for operation-specific requirements
  */
-export function validateOperationContext<TVariables = Record<string, unknown>>(
-    context: Context<TVariables>
+export function validateOperationContext(
+    context: Context
 ): ValidationResult {
     const errors: string[] = []
 
@@ -149,8 +149,8 @@ export function validateOperationContext<TVariables = Record<string, unknown>>(
  * @param context - The context to validate comprehensively
  * @returns Combined validation result
  */
-export function validateContextComprehensive<TVariables = Record<string, unknown>>(
-    context: Context<TVariables>
+export function validateContextComprehensive(
+    context: Context
 ): ValidationResult {
     const errors: string[] = []
 

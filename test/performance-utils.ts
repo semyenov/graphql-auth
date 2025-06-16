@@ -4,7 +4,7 @@
 
 import type { GraphQLResponse } from '@apollo/server'
 import { ApolloServer } from '@apollo/server'
-import type { Context } from '../src/context/types.d'
+import { EnhancedContext } from '../src/context/enhanced-context'
 import { executeOperation } from './test-utils'
 
 export interface PerformanceMetrics {
@@ -34,10 +34,10 @@ export interface PerformanceReport {
  * Measure the performance of a GraphQL operation
  */
 export async function measureOperation<T = any>(
-  server: ApolloServer<Context>,
+  server: ApolloServer<EnhancedContext>,
   operation: string,
   variables: Record<string, any>,
-  context: Context,
+  context: EnhancedContext,
 ): Promise<{ result: GraphQLResponse<T>; metrics: PerformanceMetrics }> {
   const startMemory = process.memoryUsage().heapUsed
   const startTime = performance.now()
@@ -62,10 +62,10 @@ export async function measureOperation<T = any>(
  * Run a performance benchmark for an operation
  */
 export async function benchmark<T = any>(
-  server: ApolloServer<Context>,
+  server: ApolloServer<EnhancedContext>,
   operation: string,
   variables: Record<string, any>,
-  context: Context,
+  context: EnhancedContext,
   options: {
     iterations?: number
     warmup?: number
@@ -99,11 +99,11 @@ export async function benchmark<T = any>(
  * Benchmark multiple operations concurrently
  */
 export async function benchmarkConcurrent<T = any>(
-  server: ApolloServer<Context>,
+  server: ApolloServer<EnhancedContext>,
   operations: Array<{
     operation: string
     variables: Record<string, any>
-    context: Context
+    context: EnhancedContext
   }>,
   options: {
     concurrency?: number
@@ -153,10 +153,10 @@ export async function benchmarkConcurrent<T = any>(
  * Load test with gradually increasing concurrency
  */
 export async function loadTest<T = any>(
-  server: ApolloServer<Context>,
+  server: ApolloServer<EnhancedContext>,
   operation: string,
   variables: Record<string, any>,
-  context: Context,
+  context: EnhancedContext,
   options: {
     maxConcurrency?: number
     step?: number

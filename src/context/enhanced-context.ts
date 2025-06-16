@@ -11,6 +11,7 @@ import { DatabaseClient } from '../infrastructure/database'
 import type { Context } from './types.d'
 
 // Import new use cases
+import type { PrismaClient } from '@prisma/client'
 import { LoginUseCase } from '../application/use-cases/auth/login.use-case'
 import { SignupUseCase } from '../application/use-cases/auth/signup.use-case'
 import { CreatePostUseCase } from '../application/use-cases/posts/create-post.use-case'
@@ -23,7 +24,6 @@ import { UpdatePostUseCase } from '../application/use-cases/posts/update-post.us
 import { GetCurrentUserUseCase } from '../application/use-cases/users/get-current-user.use-case'
 import { GetUserByIdUseCase } from '../application/use-cases/users/get-user-by-id.use-case'
 import { SearchUsersUseCase } from '../application/use-cases/users/search-users.use-case'
-import type { PrismaClient } from '@prisma/client'
 
 
 export interface EnhancedContext extends Context {

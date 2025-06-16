@@ -1,4 +1,3 @@
-import 'reflect-metadata'
 import type {
     GraphQLRequestContext,
     GraphQLRequestListener
@@ -9,9 +8,10 @@ import { startStandaloneServer } from '@apollo/server/standalone'
 import consola from 'consola'
 import type { HTTPMethod, MimeType } from 'fetchdts'
 import { GraphQLError, type GraphQLFormattedError } from 'graphql'
+import 'reflect-metadata'
 import { SERVER } from './constants'
 import { createContext } from './context/creation'
-import type { Context } from './context/types.d'
+import type { Context } from './context/types'
 import { env, isDevelopment } from './environment'
 import { isBaseError } from './errors'
 import { disconnectPrisma } from './prisma'

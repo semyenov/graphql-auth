@@ -903,7 +903,56 @@ How can I resolve this? If you propose a fix, please make it concise.
 
 _**Assistant**_
 
+The error occurs because TypeScript decorators need to be enabled in the configuration. Let me check the current TypeScript configuration:
 
+
+---
+
+Read file: tsconfig.json
+
+---
+
+Let me add the necessary decorator configuration:
+
+
+---
+
+```diff
+      "noUnusedLocals": true,
+      "noUnusedParameters": true,
++     "experimentalDecorators": true,
++     "emitDecoratorMetadata": true,
+      "types": ["bun"],
+      "typeRoots": [
+```
+
+---
+
+I've added two key TypeScript compiler options:
+1. `"experimentalDecorators": true` - Enables decorator support
+2. `"emitDecoratorMetadata": true` - Enables reflection metadata for decorators
+
+This should resolve the decorator error. You'll need to restart your TypeScript server for the changes to take effect.
+
+---
+
+_**User**_
+
+For the code present, we get this error:
+```
+Argument of type 'ApolloServer<Context>' is not assignable to parameter of type 'ApolloServer<EnhancedContext>'.
+  Type 'Context' is missing the following properties from type 'EnhancedContext': prisma, useCases
+```
+How can I resolve this? If you propose a fix, please make it concise.
+
+---
+
+_**Assistant**_
+
+This error means your `executeOperation` function (or similar utility) expects an `ApolloServer<EnhancedContext>`, but you are passing `ApolloServer<Context>`.  
+**Solution:**  
+- Update your test code to use `EnhancedContext` everywhere instead of `Context`.
+- Or, if you intend to use only `Context`, update the type signature of `executeOperation` and related helpers to accept `ApolloServer<Context
 
 ---
 

@@ -3,7 +3,6 @@ import { IncomingMessage, ServerResponse } from 'http'
 import { UserId } from '../core/value-objects/user-id.vo'
 import { ValidationError } from '../errors'
 import { DatabaseClient, PostRepository, UserRepository } from '../infrastructure/database'
-import { enhanceContext, type EnhancedContext } from './enhanced-context'
 import type { Context, GraphQLIncomingMessage } from './types.d'
 import {
     createRequestMetadata,
@@ -43,7 +42,7 @@ import {
  * });
  * ```
  */
-export const createContext: ContextFunction<[{ req: IncomingMessage; res: ServerResponse }], EnhancedContext> = async ({ req }) => {
+export const createContext: ContextFunction<[{ req: IncomingMessage; res: ServerResponse }], Context> = async ({ req }) => {
     // Cast to our extended type for body access
     const graphqlReq = req as GraphQLIncomingMessage
 
@@ -65,8 +64,7 @@ export const createContext: ContextFunction<[{ req: IncomingMessage; res: Server
         // Assemble final context
         const context = assembleContext(requestComponents, authContext, repositories)
 
-        // Enhance with clean architecture use cases
-        return enhanceContext(context)
+        return context
     } catch (error) {
         // Enhanced error handling with context information
         const errorMessage = error instanceof Error ? error.message : 'Unknown error during context creation'

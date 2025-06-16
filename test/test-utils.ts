@@ -64,7 +64,7 @@ export function createMockContext(overrides?: Partial<Context>): EnhancedContext
     },
   }
 
-  const baseContext = {
+  const baseContext: Context = {
     ...defaultContext,
     ...overrides,
   }

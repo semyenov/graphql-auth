@@ -5,7 +5,7 @@
 import { ApolloServer, type GraphQLResponse } from '@apollo/server'
 import type { Post, User } from '@prisma/client'
 import { print } from 'graphql'
-import type { Context } from '../src/context/types.d'
+import { EnhancedContext } from '../src/context/enhanced-context'
 import { measureOperation, type PerformanceMetrics } from './performance-utils'
 import { GraphQLSnapshotTester, type SnapshotResult } from './snapshot-utils'
 import { createSubscriptionHelper, type SubscriptionTestHelper } from './subscription-utils'
@@ -13,7 +13,7 @@ import { createBlogScenario, createPermissionScenario } from './test-fixtures'
 import { createTestServer } from './test-utils'
 
 export interface IntegrationTestContext {
-  server: ApolloServer<Context>
+  server: ApolloServer<EnhancedContext>
   snapshotTester: GraphQLSnapshotTester
   scenarios: {
     blog?: Awaited<ReturnType<typeof createBlogScenario>>
@@ -85,7 +85,7 @@ export class E2ETestFlow {
     name: string,
     operation: string | DocumentNode,
     variables: Record<string, any> = {},
-    authContext?: Context,
+    authContext?: EnhancedContext,
   ): E2ETestFlow {
     this.steps.push(async () => {
       const operationStr = typeof operation === 'string' ? operation : print(operation)
@@ -121,7 +121,7 @@ export class E2ETestFlow {
     name: string,
     operation: string | DocumentNode,
     variables: Record<string, any> = {},
-    authContext?: Context,
+    authContext?: EnhancedContext,
   ): E2ETestFlow {
     this.steps.push(async () => {
       const operationStr = typeof operation === 'string' ? operation : print(operation)
@@ -157,7 +157,7 @@ export class E2ETestFlow {
     name: string,
     operation: string | DocumentNode,
     variables: Record<string, any> = {},
-    authContext?: Context,
+    authContext?: EnhancedContext,
   ): E2ETestFlow {
     let helper: SubscriptionTestHelper | null = null
 
@@ -311,7 +311,7 @@ export const commonScenarios = {
    */
   async postCrudFlow(
     context: IntegrationTestContext,
-    authContext: Context,
+    authContext: EnhancedContext,
   ): Promise<{ posts: Post[] }> {
     const flow = new E2ETestFlow(context)
 
@@ -375,7 +375,7 @@ export const commonScenarios = {
    */
   async permissionBoundariesFlow(
     context: IntegrationTestContext,
-    users: { owner: Context; other: Context },
+    users: { owner: EnhancedContext; other: EnhancedContext },
     postId: string,
   ): Promise<void> {
     const flow = new E2ETestFlow(context)

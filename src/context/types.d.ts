@@ -103,6 +103,7 @@ export interface Context extends BaseContext {
         readonly headers: Record<string, string>
         readonly body?: GraphQLRequestBody
     }
+
     headers: Record<string, string>
     method: HTTPMethod
     contentType: MimeType | string
