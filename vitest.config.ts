@@ -16,7 +16,6 @@ export default defineConfig({
         'test/',
         'prisma/',
         'dist/',
-        '.pothos/',
         'types/',
       ],
     },

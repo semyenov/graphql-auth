@@ -43,6 +43,8 @@
     "h3": "^1.15.3",
     "jsonwebtoken": "9.0.2",
     "pathe": "^2.0.3",
+    "reflect-metadata": "^0.2.2",
+    "tsyringe": "^4.10.0",
     "zod": "^3.25.64"
   },
   "devDependencies": {

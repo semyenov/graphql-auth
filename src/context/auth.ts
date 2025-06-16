@@ -1,6 +1,7 @@
 import { ERROR_MESSAGES } from '../constants'
-import type { Context } from '../context/types.d'
+import { UserId } from '../core/value-objects/user-id.vo'
 import { AuthenticationError } from '../errors'
+import type { EnhancedContext } from './enhanced-context'
 
 /**
  * Authentication and authorization utilities for GraphQL context
@@ -23,9 +24,9 @@ import { AuthenticationError } from '../errors'
  * }
  * ```
  */
-export function isAuthenticated<TVariables = Record<string, unknown>>(
-    context: Context<TVariables>
-): context is Context<TVariables> & { userId: number } {
+export function isAuthenticated(
+    context: EnhancedContext
+): context is EnhancedContext & { userId: UserId } {
     return context.security.isAuthenticated && Boolean(context.userId)
 }
 
@@ -42,17 +43,14 @@ export function isAuthenticated<TVariables = Record<string, unknown>>(
  * // userId is guaranteed to be a valid number
  * ```
  */
-export function requireAuthentication<TVariables = Record<string, unknown>>(
-    context: Context<TVariables>
-): number {
+export function requireAuthentication(
+    context: EnhancedContext
+): UserId {
     if (!isAuthenticated(context)) {
         throw new AuthenticationError(ERROR_MESSAGES.AUTHENTICATION_REQUIRED)
     }
 
-    if (typeof context.userId !== 'number' || context.userId <= 0) {
-        throw new AuthenticationError(ERROR_MESSAGES.INVALID_CREDENTIALS)
-    }
-
+    // userId is already a UserId value object
     return context.userId
 }
 
@@ -70,8 +68,8 @@ export function requireAuthentication<TVariables = Record<string, unknown>>(
  * }
  * ```
  */
-export function hasPermission<TVariables = Record<string, unknown>>(
-    context: Context<TVariables>,
+export function hasPermission(
+    context: EnhancedContext,
     permission: string
 ): boolean {
     if (!permission || typeof permission !== 'string') {
@@ -96,8 +94,8 @@ export function hasPermission<TVariables = Record<string, unknown>>(
  * }
  * ```
  */
-export function hasRole<TVariables = Record<string, unknown>>(
-    context: Context<TVariables>,
+export function hasRole(
+    context: EnhancedContext,
     role: string
 ): boolean {
     if (!role || typeof role !== 'string') {
@@ -122,8 +120,8 @@ export function hasRole<TVariables = Record<string, unknown>>(
  * }
  * ```
  */
-export function hasAnyPermission<TVariables = Record<string, unknown>>(
-    context: Context<TVariables>,
+export function hasAnyPermission(
+    context: EnhancedContext,
     permissions: string[]
 ): boolean {
     if (!Array.isArray(permissions) || permissions.length === 0) {
@@ -147,8 +145,8 @@ export function hasAnyPermission<TVariables = Record<string, unknown>>(
  * }
  * ```
  */
-export function hasAllPermissions<TVariables = Record<string, unknown>>(
-    context: Context<TVariables>,
+export function hasAllPermissions(
+    context: EnhancedContext,
     permissions: string[]
 ): boolean {
     if (!Array.isArray(permissions) || permissions.length === 0) {

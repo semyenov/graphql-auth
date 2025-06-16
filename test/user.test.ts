@@ -62,7 +62,7 @@ describe('User queries', () => {
           server,
           print(GetMeQuery),
           {},
-          createAuthContext(testUserId.toString())
+          createAuthContext(testUserId)
         )
 
         expect(data.me).toBeDefined()
@@ -107,7 +107,7 @@ describe('User queries', () => {
         server,
         print(TogglePublishPostMutation),
         variables,
-        createAuthContext(testUserId.toString())
+        createAuthContext(testUserId)
       )
 
       expect(data1.togglePublishPost.published).toBe(true)
@@ -117,7 +117,7 @@ describe('User queries', () => {
         server,
         print(TogglePublishPostMutation),
         variables,
-        createAuthContext(testUserId.toString())
+        createAuthContext(testUserId)
       )
 
       expect(data2.togglePublishPost.published).toBe(false)
@@ -155,7 +155,7 @@ describe('User queries', () => {
         server,
         print(TogglePublishPostMutation),
         variables,
-        createAuthContext(testUserId.toString()), // Different user
+        createAuthContext(testUserId), // Different user
         'You can only modify posts that you have created'
       )
 
@@ -173,7 +173,7 @@ describe('User queries', () => {
         server,
         print(TogglePublishPostMutation),
         variables,
-        createAuthContext(testUserId.toString()),
+        createAuthContext(testUserId),
         'Post with identifier'
       )
     })

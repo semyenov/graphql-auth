@@ -2,7 +2,7 @@ import SchemaBuilder from '@pothos/core';
 import PrismaPlugin from '@pothos/plugin-prisma';
 import type PrismaTypes from '@pothos/plugin-prisma/generated';
 import RelayPlugin from '@pothos/plugin-relay';
-import type { Context } from '../context';
+import type { EnhancedContext } from '../context/enhanced-context';
 import { isProduction } from '../environment';
 import { prisma } from '../prisma';
 import { decodeGlobalId, encodeGlobalId } from '../shared/infrastructure/graphql/relay-helpers';
@@ -13,7 +13,7 @@ import { decodeGlobalId, encodeGlobalId } from '../shared/infrastructure/graphql
  * as the test utilities to ensure consistency across the codebase.
  */
 export const builder = new SchemaBuilder<{
-    Context: Context;
+    Context: EnhancedContext;
     PrismaTypes: PrismaTypes;
     Scalars: {
         ID: {

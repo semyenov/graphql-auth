@@ -132,7 +132,7 @@ export class UserRepository extends BaseRepository {
     skip?: number
     take?: number
     where?: Prisma.UserWhereInput
-    orderBy?: Prisma.UserOrderByWithRelationInput
+    orderBy?: Prisma.UserOrderByWithRelationInput[]
   } = {}): Promise<UserPublic[]> {
     return this.db.user.findMany({
       ...options,

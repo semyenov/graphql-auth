@@ -1,4 +1,5 @@
 // Import test environment first to ensure environment variables are set
+import 'reflect-metadata'
 import './test-env'
 
 // =============================================================================
@@ -25,14 +26,16 @@ import './test-env'
 
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import jwt from 'jsonwebtoken'
+import { enhanceContext, type EnhancedContext } from '../src/context/enhanced-context'
 import type { Context } from '../src/context/types.d'
+import { UserId } from '../src/core/value-objects/user-id.vo'
 import { env } from '../src/environment'
-import { schema } from '../src/schema'
-import { UserRepository, PostRepository } from '../src/infrastructure/database'
+import { PostRepository, UserRepository } from '../src/infrastructure/database'
 import { prisma } from '../src/prisma'
+import { schema } from '../src/schema'
 
 // Create test context
-export function createMockContext(overrides?: Partial<Context>): Context {
+export function createMockContext(overrides?: Partial<Context>): EnhancedContext {
   const defaultContext: Context = {
     req: {
       url: '/graphql',
@@ -61,16 +64,17 @@ export function createMockContext(overrides?: Partial<Context>): Context {
     },
   }
 
-  return {
+  const baseContext = {
     ...defaultContext,
     ...overrides,
   }
+
+  return enhanceContext(baseContext)
 }
 
 // Create authenticated context
-export function createAuthContext(userId: string): Context {
+export function createAuthContext(userId: UserId): EnhancedContext {
   const token = generateTestToken(userId)
-  const userIdNum = parseInt(userId, 10)
 
   return createMockContext({
     headers: {
@@ -86,10 +90,10 @@ export function createAuthContext(userId: string): Context {
       },
       body: undefined,
     },
-    userId: userIdNum, // Add the top-level userId property
+    userId: userId, // Add the top-level userId property
     security: {
       isAuthenticated: true,
-      userId: userIdNum,
+      userId: userId,
       userEmail: undefined, // Would typically be filled by auth middleware
       roles: ['user'], // Default role for authenticated users
       permissions: [],
@@ -99,25 +103,25 @@ export function createAuthContext(userId: string): Context {
 
 // Create test server
 export function createTestServer() {
-  return new ApolloServer<Context>({
+  return new ApolloServer<EnhancedContext>({
     schema,
     introspection: true,
   })
 }
 
 // Generate test JWT token
-export function generateTestToken(userId: string): string {
-  return jwt.sign({ userId: parseInt(userId, 10) }, env.APP_SECRET)
+export function generateTestToken(userId: UserId): string {
+  return jwt.sign({ userId: userId.value }, env.APP_SECRET)
 }
 
 export type VariableValues = { [name: string]: unknown }
 
 // GraphQL query helper with improved error handling
 export async function executeOperation<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-  server: ApolloServer<Context>,
+  server: ApolloServer<EnhancedContext>,
   query: string,
   variables?: TVariables,
-  context?: Context,
+  context?: EnhancedContext,
 ): Promise<GraphQLResponse<TData>> {
   const response = await server.executeOperation<TData, TVariables>(
     {
@@ -171,10 +175,10 @@ export function getGraphQLErrors<T>(response: GraphQLResponse<T>): string[] {
 export const gqlHelpers = {
   // Execute a query and expect success
   async expectSuccessfulQuery<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-    server: ApolloServer<Context>,
+    server: ApolloServer<EnhancedContext>,
     query: string,
     variables?: TVariables,
-    context?: Context,
+    context?: EnhancedContext,
   ): Promise<TData> {
     const response = await executeOperation<TData, TVariables>(server, query, variables, context)
     return extractGraphQLData(response)
@@ -182,10 +186,10 @@ export const gqlHelpers = {
 
   // Execute a mutation and expect success
   async expectSuccessfulMutation<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-    server: ApolloServer<Context>,
+    server: ApolloServer<EnhancedContext>,
     mutation: string,
     variables?: TVariables,
-    context?: Context,
+    context?: EnhancedContext,
   ): Promise<TData> {
     const response = await executeOperation<TData, TVariables>(server, mutation, variables, context)
     return extractGraphQLData(response)
@@ -193,10 +197,10 @@ export const gqlHelpers = {
 
   // Execute an operation and expect it to fail with specific error
   async expectGraphQLError<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-    server: ApolloServer<Context>,
+    server: ApolloServer<EnhancedContext>,
     operation: string,
     variables?: TVariables,
-    context?: Context,
+    context?: EnhancedContext,
     expectedErrorSubstring?: string,
   ): Promise<string[]> {
     const response = await executeOperation<TData, TVariables>(server, operation, variables, context)

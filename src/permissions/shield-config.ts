@@ -1,7 +1,7 @@
 import { shield } from 'graphql-shield'
 import { isDevelopment } from '../environment'
 import { AuthorizationError } from '../errors'
-import * as rules from './rules'
+import * as rules from './rules-clean'
 
 /**
  * GraphQL Shield permissions configuration
@@ -16,7 +16,7 @@ export const permissions = shield({
 
     // Post-related queries
     feed: rules.isPublic,
-    post: rules.isAuthenticatedUser,
+    post: rules.isPublic, // Authorization handled by use case
     drafts: rules.isUserOwner,
 
     // Node queries disabled in builder config

@@ -3,8 +3,7 @@
  */
 
 import type { Post, User } from '@prisma/client'
-import { prisma } from './setup'
-import { createTestUser, createTestPost } from './test-data'
+import { createTestPost, createTestUser } from './test-data'
 
 /**
  * Create a complete blog scenario with multiple users and posts
@@ -19,23 +18,23 @@ export async function createBlogScenario(): Promise<{
     email: 'alice@blog.com',
     name: 'Alice Author',
   })
-  
+
   const bob = await createTestUser({
     email: 'bob@blog.com',
     name: 'Bob Blogger',
   })
-  
+
   const charlie = await createTestUser({
     email: 'charlie@blog.com',
     name: 'Charlie Contributor',
   })
-  
+
   // Create readers (users without posts)
   const readers = await Promise.all([
     createTestUser({ email: 'reader1@blog.com', name: 'Reader One' }),
     createTestUser({ email: 'reader2@blog.com', name: 'Reader Two' }),
   ])
-  
+
   // Create posts with various states
   const posts = await Promise.all([
     // Alice's posts - mix of published and drafts
@@ -59,7 +58,7 @@ export async function createBlogScenario(): Promise<{
       content: 'Work in progress...',
       published: false,
     }),
-    
+
     // Bob's posts - all published
     createTestPost({
       authorId: bob.id,
@@ -75,7 +74,7 @@ export async function createBlogScenario(): Promise<{
       published: true,
       viewCount: 175,
     }),
-    
+
     // Charlie's posts - all drafts
     createTestPost({
       authorId: charlie.id,
@@ -90,7 +89,7 @@ export async function createBlogScenario(): Promise<{
       published: false,
     }),
   ])
-  
+
   return {
     authors: [alice, bob, charlie],
     posts,
@@ -125,7 +124,7 @@ export async function createPermissionScenario(): Promise<{
       name: 'Regular User',
     }),
   ])
-  
+
   // In a real scenario, you'd set roles here
   // For now, we'll just create posts for each user
   const [adminPost, moderatorPost, userPost] = await Promise.all([
@@ -148,7 +147,7 @@ export async function createPermissionScenario(): Promise<{
       published: false,
     }),
   ])
-  
+
   return {
     admin,
     moderator,
@@ -176,9 +175,9 @@ export async function createSocialScenario(): Promise<{
     createTestUser({ email: 'lurker@social.test', name: 'Lurker User' }),
     createTestUser({ email: 'newbie@social.test', name: 'New User' }),
   ])
-  
+
   const [popular, active, lurker, newbie] = users
-  
+
   // Create posts with different engagement levels
   const posts = await Promise.all([
     // Popular user's viral post
@@ -214,7 +213,7 @@ export async function createSocialScenario(): Promise<{
       viewCount: 10,
     }),
   ])
-  
+
   // Define follower relationships (would be implemented with a join table in real app)
   const connections = [
     { follower: active, following: popular },
@@ -223,7 +222,7 @@ export async function createSocialScenario(): Promise<{
     { follower: lurker, following: active },
     { follower: newbie, following: active },
   ]
-  
+
   return {
     users,
     connections,
@@ -252,7 +251,7 @@ export async function createModerationScenario(): Promise<{
     createTestUser({ email: 'spammer@moderation.test', name: 'Spammer' }),
     createTestUser({ email: 'troll@moderation.test', name: 'Troll User' }),
   ])
-  
+
   // Create appropriate content
   const appropriate = await Promise.all([
     createTestPost({
@@ -268,7 +267,7 @@ export async function createModerationScenario(): Promise<{
       published: true,
     }),
   ])
-  
+
   // Create flagged content (in a real app, these would have moderation flags)
   const flagged = await Promise.all([
     createTestPost({
@@ -284,10 +283,10 @@ export async function createModerationScenario(): Promise<{
       published: true,
     }),
   ])
-  
+
   // These would be soft-deleted in a real app
   const deleted: Post[] = []
-  
+
   return {
     posts: {
       appropriate,
@@ -313,7 +312,7 @@ export async function createPaginationScenario(): Promise<{
     email: 'prolific@pagination.test',
     name: 'Prolific Writer',
   })
-  
+
   // Create many posts for pagination testing
   const posts = await Promise.all(
     Array.from({ length: 25 }, (_, i) =>
@@ -326,6 +325,6 @@ export async function createPaginationScenario(): Promise<{
       })
     )
   )
-  
+
   return { user, posts }
 }

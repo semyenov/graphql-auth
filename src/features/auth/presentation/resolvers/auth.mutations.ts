@@ -1,6 +1,6 @@
 import { normalizeError } from '../../../../errors'
 import { builder } from '../../../../schema/builder'
-import { container } from '../../../../shared/infrastructure/container'
+import type { EnhancedContext } from '../../../../context/enhanced-context'
 
 /**
  * User signup mutation
@@ -22,14 +22,14 @@ builder.mutationField('signup', (t) =>
         description: 'User display name',
       }),
     },
-    resolve: async (_parent, args) => {
+    resolve: async (_parent, args, ctx: EnhancedContext) => {
       try {
-        const token = await container.signupUseCase.execute({
+        const result = await ctx.useCases.auth.signup.execute({
           email: args.email,
           password: args.password,
           name: args.name ?? null,
         })
-        return token
+        return result.token
       } catch (error) {
         throw normalizeError(error)
       }
@@ -53,13 +53,13 @@ builder.mutationField('login', (t) =>
         description: 'User password',
       }),
     },
-    resolve: async (_parent, args) => {
+    resolve: async (_parent, args, ctx: EnhancedContext) => {
       try {
-        const token = await container.loginUseCase.execute({
+        const result = await ctx.useCases.auth.login.execute({
           email: args.email,
           password: args.password,
         })
-        return token
+        return result.token
       } catch (error) {
         throw normalizeError(error)
       }

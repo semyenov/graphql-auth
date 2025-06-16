@@ -871,9 +871,37 @@ Let me update the subscription utils to use the correct context type:
 
 ---
 
-
+```diff
+  import { ApolloServer } from '@apollo/server'
+  import { parse } from 'graphql'
+- import type { Context } from '../src/context/types'
++ import type { Context } from '../src/context/types.d'
+  
+  export interface SubscriptionTestHelper {
+```
 
 ---
+
+The key changes were:
+
+1. Updated the import path to use `types.d.ts` instead of `types`
+2. Ensured consistent use of our custom `Context` type throughout the subscription utilities
+
+This should resolve the type mismatch error by ensuring all components use the same context type definition.
+
+---
+
+_**User**_
+
+For the code present, we get this error:
+```
+Decorators are not valid here.
+```
+How can I resolve this? If you propose a fix, please make it concise.
+
+---
+
+_**Assistant**_
 
 
 

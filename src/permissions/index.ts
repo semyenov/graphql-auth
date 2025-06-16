@@ -8,10 +8,10 @@
  * - shield-config.ts: Shield configuration mapping rules to operations
  */
 
-export * as rules from './rules'
+export * as rules from './rules-clean'
 export { permissions } from './shield-config'
-export { PermissionUtils } from './utils'
-export type { PermissionUtilsType } from './utils'
+export { PermissionUtils } from './utils-clean'
+export type { PermissionUtilsType } from './utils-clean'
 
 // Export rule types for external use
 export type { IRule as Rule } from 'graphql-shield'

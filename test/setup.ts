@@ -1,11 +1,12 @@
 import { PrismaClient } from '@prisma/client'
 import { execSync } from 'child_process'
 import { rm } from 'fs/promises'
-import { dirname, resolve } from 'path'
+import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { afterAll, beforeAll, beforeEach } from 'vitest'
-import { setPrismaClient } from '../src/prisma'
-import { TEST_DATABASE_URL } from './test-env'
+import { DatabaseClient } from '../src/infrastructure/database/client'
+import { setTestPrismaClient } from '../src/prisma'
+import { TEST_DATABASE_URL } from './test-database-url'
 
 // Create a test database client
 export const prisma = new PrismaClient({
@@ -19,15 +20,17 @@ export const prisma = new PrismaClient({
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const prismaPath = resolve(__dirname, "..", "prisma")
-const dbFilePath = resolve(prismaPath, TEST_DATABASE_URL.replace('file:', ''))
+const dbFilePath = TEST_DATABASE_URL.replace('file:', '')
 
 beforeAll(async () => {
   try {
     console.log(`Setting up test database: ${TEST_DATABASE_URL}`)
 
     // Set the shared prisma instance to use our test client
-    setPrismaClient(prisma)
+    setTestPrismaClient(prisma)
+
+    // Also set the test client for clean architecture DatabaseClient
+    DatabaseClient.setTestClient(prisma)
 
     // Connect to the database
     await prisma.$connect()
@@ -43,8 +46,19 @@ beforeAll(async () => {
       timeout: 30000
     })
 
-    // Test the connection
+    // Test the connection and write access
     await prisma.$queryRaw`SELECT 1`
+
+    // Test write access by creating and deleting a test user
+    const testUser = await prisma.user.create({
+      data: {
+        email: 'test-write-access@example.com',
+        password: 'test',
+        name: 'Test Write Access',
+      }
+    })
+    await prisma.user.delete({ where: { id: testUser.id } })
+
     console.log('Test database setup complete')
   } catch (error) {
     console.error('Failed to set up test database:', error)

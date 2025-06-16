@@ -157,7 +157,7 @@ export interface LogMetadata {
 // Security Types
 export interface SecurityContext {
   isAuthenticated: boolean
-  userId?: number
+  userId?: UserId
   userEmail?: string
   roles: string[]
   permissions: string[]

@@ -1,15 +1,5 @@
-import { Context } from '../context'
+import type { EnhancedContext } from '../context/enhanced-context'
 import { AuthenticationError, AuthorizationError, ValidationError } from '../errors'
-import { prisma } from '../prisma'
-
-/**
- * Resource ownership check result
- */
-export interface OwnershipCheckResult {
-  isOwner: boolean
-  resourceExists: boolean
-  ownerId?: number
-}
 
 /**
  * Validates that a resource ID is valid
@@ -21,36 +11,6 @@ export interface OwnershipCheckResult {
 export function validateResourceId(id: unknown, resourceType: string): asserts id is string {
   if (!id || typeof id !== 'string') {
     throw new ValidationError([`Valid ${resourceType} ID is required`])
-  }
-}
-
-/**
- * Checks if a user owns a specific post
- * 
- * @param postId - The numeric post ID
- * @param userId - The user ID to check ownership against
- * @returns Ownership check result
- */
-export async function checkPostOwnership(
-  postId: number,
-  userId: number
-): Promise<OwnershipCheckResult> {
-  const post = await prisma.post.findUnique({
-    where: { id: postId },
-    select: { authorId: true },
-  })
-
-  if (!post) {
-    return {
-      isOwner: false,
-      resourceExists: false,
-    }
-  }
-
-  return {
-    isOwner: post.authorId === userId,
-    resourceExists: true,
-    ownerId: post.authorId ?? undefined,
   }
 }
 
@@ -76,8 +36,8 @@ export async function parseAndValidateGlobalId(
  * @param context - The GraphQL context
  * @returns True if authenticated, AuthenticationError otherwise
  */
-export function createAuthenticationCheck(context: Context): true | AuthenticationError {
-  if (!context.userId || typeof context.userId !== 'number') {
+export function createAuthenticationCheck(context: EnhancedContext): true | AuthenticationError {
+  if (!context.userId) {
     return new AuthenticationError()
   }
   return true
@@ -92,7 +52,7 @@ export function createAuthenticationCheck(context: Context): true | Authenticati
  * @returns True if has role, AuthorizationError otherwise
  */
 export function createRoleCheck(
-  context: Context,
+  context: EnhancedContext,
   requiredRole: string,
   errorMessage?: string
 ): true | AuthenticationError | AuthorizationError {
@@ -120,7 +80,7 @@ export function createRoleCheck(
  * @returns True if has permission, error otherwise
  */
 export function createPermissionCheck(
-  context: Context,
+  context: EnhancedContext,
   requiredPermission: string,
   errorMessage?: string
 ): true | AuthenticationError | AuthorizationError {

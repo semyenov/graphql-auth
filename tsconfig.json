@@ -19,6 +19,8 @@
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "types": ["bun"],
     "typeRoots": [
       "./node_modules/@types",

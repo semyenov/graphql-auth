@@ -1,12 +1,13 @@
 import { BaseContext } from '@apollo/server'
 import type { Endpoint, HTTPMethod } from 'fetchdts'
 import { IncomingMessage } from 'http'
+import { UserId } from '../core/value-objects/user-id.vo'
 import type {
     GraphQLRequestBody,
     MimeType
 } from '../gql/types'
+import type { PostRepository, UserRepository } from '../infrastructure/database'
 import type { RequestMetadata, SecurityContext, User } from '../types.d'
-import type { UserRepository, PostRepository } from '../infrastructure/database'
 
 /**
  * GraphQL Context Type Definitions
@@ -109,7 +110,7 @@ export interface Context extends BaseContext {
 
     // Security and authentication
     security: SecurityContext
-    userId?: number
+    userId?: UserId
     user?: User
 
     // Database repositories

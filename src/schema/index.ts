@@ -9,21 +9,35 @@ builder.mutationType({});
 // Import all schema components to register them with the builder
 // Order matters: scalars/enums → types → inputs → queries/mutations
 import './enums';
-import './inputs';
 import './scalars';
 
-import './types/post';
+// Import types BEFORE inputs (as inputs might reference types)
 import './types/user';
+import './types/post';
 
-import './queries/posts';
-import './queries/users';
+// Import inputs after types
+import './inputs';
+
+// Import queries/mutations last
+import './queries/posts-clean';
+import './queries/users-clean';
 
 // Import feature-based mutations
 import '../features/auth/presentation/resolvers/auth.mutations';
 import '../features/posts/presentation/resolvers/post.mutations';
 
-// Build the schema
-const pothosSchema = builder.toSchema();
+// Lazy load schema to ensure all types are registered first
+let _schema: ReturnType<typeof applyMiddleware> | null = null;
 
-// Export the schema with permissions middleware applied
-export const schema = applyMiddleware(pothosSchema, permissions); 
+export function getSchema() {
+  if (!_schema) {
+    // Build the schema
+    const pothosSchema = builder.toSchema();
+    // Apply permissions middleware
+    _schema = applyMiddleware(pothosSchema, permissions);
+  }
+  return _schema;
+}
+
+// Export a getter that builds the schema on first access
+export const schema = getSchema(); 
