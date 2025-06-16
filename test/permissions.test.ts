@@ -1,5 +1,8 @@
 import bcrypt from 'bcryptjs'
+import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { DeletePostMutation, LoginMutation } from '../src/gql/relay-mutations'
+import { GetDraftsQuery, GetFeedQuery, GetMeQuery, GetPostQuery } from '../src/gql/relay-queries'
 import { PermissionUtils } from '../src/permissions'
 import { toPostId, toUserId } from './relay-utils'
 import { prisma } from './setup'
@@ -7,7 +10,7 @@ import {
     createAuthContext,
     createMockContext,
     createTestServer,
-    executeOperation,
+    executeOperation
 } from './test-utils'
 
 describe('Enhanced Permissions System', () => {
@@ -144,21 +147,12 @@ describe('Enhanced Permissions System', () => {
                 ],
             })
 
-            const feedQuery = `
-        query {
-          feed(first: 10) {
-            edges {
-              node {
-                id
-                title
-                published
-              }
-            }
-          }
-        }
-      `
-
-            const result = await executeOperation(server, feedQuery, {}, createMockContext())
+            const result = await executeOperation(
+                server,
+                print(GetFeedQuery),
+                { first: 10 },
+                createMockContext()
+            )
 
             expect(result.body.kind).toBe('single')
             if (result.body.kind === 'single') {
@@ -169,18 +163,13 @@ describe('Enhanced Permissions System', () => {
         })
 
         it('should require authentication for me query', async () => {
-            const meQuery = `
-        query {
-          me {
-            id
-            email
-            name
-          }
-        }
-      `
-
             // Test without authentication
-            const unauthResult = await executeOperation(server, meQuery, {}, createMockContext())
+            const unauthResult = await executeOperation(
+                server,
+                print(GetMeQuery),
+                {},
+                createMockContext()
+            )
             expect(unauthResult.body.kind).toBe('single')
             if (unauthResult.body.kind === 'single') {
                 expect(unauthResult.body.singleResult.errors).toBeDefined()
@@ -188,7 +177,12 @@ describe('Enhanced Permissions System', () => {
             }
 
             // Test with authentication
-            const authResult = await executeOperation(server, meQuery, {}, createAuthContext(testUserId.toString()))
+            const authResult = await executeOperation(
+                server,
+                print(GetMeQuery),
+                {},
+                createAuthContext(testUserId.toString())
+            )
             expect(authResult.body.kind).toBe('single')
             if (authResult.body.kind === 'single') {
                 expect(authResult.body.singleResult.errors).toBeUndefined()
@@ -217,23 +211,10 @@ describe('Enhanced Permissions System', () => {
                 ],
             })
 
-            const draftsQuery = `
-        query Drafts($userId: ID!, $first: Int) {
-          drafts(userId: $userId, first: $first) {
-            edges {
-              node {
-                id
-                title
-              }
-            }
-          }
-        }
-      `
-
             // User should be able to access their own drafts
             const ownDraftsResult = await executeOperation(
                 server,
-                draftsQuery,
+                print(GetDraftsQuery),
                 { userId: toUserId(testUserId), first: 10 },
                 createAuthContext(testUserId.toString())
             )
@@ -249,7 +230,7 @@ describe('Enhanced Permissions System', () => {
             // User should not be able to access other user's drafts
             const otherDraftsResult = await executeOperation(
                 server,
-                draftsQuery,
+                print(GetDraftsQuery),
                 { userId: toUserId(otherUserId), first: 10 },
                 createAuthContext(testUserId.toString())
             )
@@ -274,19 +255,10 @@ describe('Enhanced Permissions System', () => {
                 },
             })
 
-            const deletePostMutation = `
-        mutation DeletePost($id: ID!) {
-          deletePost(id: $id) {
-            id
-            title
-          }
-        }
-      `
-
             // testUserId should not be able to delete otherUserId's post
             const result = await executeOperation(
                 server,
-                deletePostMutation,
+                print(DeletePostMutation),
                 { id: toPostId(post.id) },
                 createAuthContext(testUserId.toString())
             )
@@ -305,18 +277,9 @@ describe('Enhanced Permissions System', () => {
         })
 
         it('should handle invalid post IDs gracefully', async () => {
-            const deletePostMutation = `
-        mutation DeletePost($id: ID!) {
-          deletePost(id: $id) {
-            id
-            title
-          }
-        }
-      `
-
             const result = await executeOperation(
                 server,
-                deletePostMutation,
+                print(DeletePostMutation),
                 { id: toPostId(999999) }, // Non-existent ID
                 createAuthContext(testUserId.toString())
             )
@@ -354,18 +317,17 @@ describe('Enhanced Permissions System', () => {
         })
 
         it('should allow public access to login', async () => {
-            const loginMutation = `
-        mutation Login($email: String!, $password: String!) {
-          login(email: $email, password: $password)
-        }
-      `
-
             const variables = {
                 email: 'nonexistent@example.com',
                 password: 'wrongPassword',
             }
 
-            const result = await executeOperation(server, loginMutation, variables, createMockContext())
+            const result = await executeOperation(
+                server,
+                print(LoginMutation),
+                variables,
+                createMockContext()
+            )
 
             expect(result.body.kind).toBe('single')
             if (result.body.kind === 'single') {
@@ -381,15 +343,6 @@ describe('Enhanced Permissions System', () => {
             // This tests the fallback rule in the permissions system
             // Any operation not explicitly specified should require authentication
 
-            const postQuery = `
-        query Post($id: ID!) {
-          post(id: $id) {
-            id
-            title
-          }
-        }
-      `
-
             // Create a post
             const post = await prisma.post.create({
                 data: {
@@ -403,7 +356,7 @@ describe('Enhanced Permissions System', () => {
             // Without authentication - should be denied by fallback rule
             const unauthResult = await executeOperation(
                 server,
-                postQuery,
+                print(GetPostQuery),
                 { id: toPostId(post.id) },
                 createMockContext()
             )
@@ -417,7 +370,7 @@ describe('Enhanced Permissions System', () => {
             // With authentication - should succeed
             const authResult = await executeOperation(
                 server,
-                postQuery,
+                print(GetPostQuery),
                 { id: toPostId(post.id) },
                 createAuthContext(testUserId.toString())
             )

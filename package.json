@@ -52,6 +52,7 @@
     "@types/bun": "^1.2.16",
     "@types/jsonwebtoken": "9.0.9",
     "@types/node": "^22.15.29",
+    "jest-diff": "^30.0.0",
     "prisma": "^6.9.0",
     "typescript": "5.8.2"
   },

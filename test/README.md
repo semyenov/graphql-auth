@@ -1,41 +1,163 @@
-# Test Suite
+# GraphQL Auth Test Suite
 
-This directory contains the test suite for the GraphQL authentication server using Vitest.
+This directory contains a comprehensive testing framework for the GraphQL authentication API, featuring sophisticated utilities for unit, integration, performance, and snapshot testing.
 
 ## Test Structure
 
 ```
 test/
-├── auth.test.ts        # Authentication (signup/login) tests
-├── posts.test.ts       # Post CRUD operation tests
-├── user.test.ts        # User query and mutation tests
-├── permissions.test.ts # Authorization and permission tests
-├── setup.ts            # Test database setup and teardown
-├── test-env.ts         # Test environment configuration
-├── test-utils.ts       # Core test utilities and helpers
-├── relay-utils.ts      # Relay global ID conversion utilities
-├── test-data.ts        # Test data factory functions
-└── index.ts            # Consolidated exports for all test utilities
+├── auth.test.ts            # Authentication (signup/login) tests
+├── permissions.test.ts     # Permission system tests
+├── posts.test.ts          # Post CRUD operation tests
+├── user.test.ts           # User-related tests
+├── example-integration.test.ts  # Integration test examples
+│
+├── test-utils.ts          # Core testing utilities
+├── test-data.ts           # Test data factories
+├── test-fixtures.ts       # Complex test scenarios
+├── relay-utils.ts         # Relay ID conversion utilities
+│
+├── performance-utils.ts   # Performance testing tools
+├── snapshot-utils.ts      # Snapshot testing utilities
+├── subscription-utils.ts  # Subscription testing helpers
+├── integration-utils.ts   # E2E test flow builder
+│
+├── setup.ts              # Test environment setup
+├── shared-prisma.ts      # Shared Prisma client for tests
+├── test-env.ts           # Test environment configuration
+└── index.ts              # Consolidated exports
 ```
 
-## Key Utilities
+## Key Features
 
-### Context Creation
+### 1. Typed GraphQL Queries
+
+All tests use typed GraphQL operations from `src/gql/` for type safety:
 
 ```typescript
-import { createMockContext, createAuthContext } from './test-utils'
+import { print } from 'graphql'
+import { LoginMutation, SignupMutation } from '../src/gql/relay-mutations'
+import { GetFeedQuery, GetMeQuery } from '../src/gql/relay-queries'
 
-// Create unauthenticated context
-const context = createMockContext()
-
-// Create authenticated context with user ID
-const authContext = createAuthContext('1')
+// Use with test helpers
+const data = await gqlHelpers.expectSuccessfulMutation(
+  server,
+  print(LoginMutation),
+  { email: 'test@example.com', password: 'password' },
+  context
+)
 ```
 
-### Global ID Conversion (Relay)
+### 2. Test Utilities (`test-utils.ts`)
 
-The test utilities use the same ID encoding/decoding logic as the Pothos Relay plugin
-configured in `src/schema/builder.ts`, ensuring consistency between tests and production.
+Core helpers for GraphQL testing:
+
+```typescript
+// Create test contexts
+const mockContext = createMockContext()
+const authContext = createAuthContext('userId')
+
+// Execute operations with helpers
+const data = await gqlHelpers.expectSuccessfulQuery(server, query, variables, context)
+const error = await gqlHelpers.expectGraphQLError(server, query, variables, context, 'Expected error')
+```
+
+### 3. Test Data Factories (`test-data.ts`, `test-fixtures.ts`)
+
+Create consistent test data:
+
+```typescript
+// Simple factories
+const user = await createTestUser({ email: 'test@example.com' })
+const post = await createTestPost({ authorId: user.id, published: true })
+
+// Complex scenarios
+const blogScenario = await createBlogScenario() // Multiple users, posts, comments
+const permissionScenario = await createPermissionScenario() // Users with different roles
+```
+
+### 4. Performance Testing (`performance-utils.ts`)
+
+Measure and benchmark GraphQL operations:
+
+```typescript
+// Measure single operation
+const { result, metrics } = await measureOperation(server, operation, variables, context)
+
+// Run benchmarks
+const report = await benchmark(server, operation, variables, context, {
+  iterations: 100,
+  warmup: 10
+})
+
+// Assert performance requirements
+assertPerformance(report, {
+  maxAverageTime: 50,    // 50ms average
+  maxP95Time: 100,       // 100ms for 95th percentile
+  maxMemory: 10 * 1024 * 1024  // 10MB max
+})
+```
+
+### 5. Snapshot Testing (`snapshot-utils.ts`)
+
+Ensure API response consistency:
+
+```typescript
+const snapshotTester = new GraphQLSnapshotTester()
+
+const result = await snapshotTester.testSnapshot(response, {
+  name: 'feed-query',
+  normalizers: [
+    commonNormalizers.timestamps,  // Replace timestamps
+    commonNormalizers.ids,         // Replace IDs
+    commonNormalizers.cursors      // Replace cursors
+  ],
+  redactFields: ['email', 'password']
+})
+```
+
+### 6. Integration Testing (`integration-utils.ts`)
+
+Build complex E2E test flows:
+
+```typescript
+const flow = new E2ETestFlow(context)
+
+await flow
+  .mutation('signup', SignupMutation, { email, password })
+  .mutation('login', LoginMutation, { email, password })
+  .query('profile', GetMeQuery)
+  .assert('has-profile', (results) => {
+    const profile = results.get('profile')
+    expect(profile.data.me).toBeDefined()
+  })
+  .execute()
+```
+
+### 7. Subscription Testing (`subscription-utils.ts`)
+
+Test GraphQL subscriptions (when implemented):
+
+```typescript
+const helper = await createSubscriptionHelper(server, subscription, variables, context)
+
+// Get events
+const event = await helper.getNext()
+const events = await helper.getAll(5)
+
+// Test with expectations
+await subscriptionTester.expectSubscriptionEvent(
+  subscription,
+  variables,
+  context,
+  triggerFn,
+  validator
+)
+```
+
+### 8. Relay ID Conversion (`relay-utils.ts`)
+
+Convert between numeric and global IDs:
 
 ```typescript
 import { toPostId, toUserId, extractNumericId } from './relay-utils'
@@ -48,52 +170,6 @@ const globalUserId = toUserId(42) // "VXNlcjo0Mg=="
 const numericId = extractNumericId(globalPostId) // 1
 ```
 
-### Test Data Creation
-
-```typescript
-import {
-  createTestUser,
-  createTestPost,
-  createUserWithPosts,
-} from './test-data'
-
-// Create a test user
-const user = await createTestUser({
-  email: 'test@example.com',
-  password: 'secure123',
-  name: 'Test User',
-})
-
-// Create a user with posts
-const { user, posts } = await createUserWithPosts({
-  postCount: 5,
-  publishedPosts: 2,
-})
-```
-
-### GraphQL Operation Helpers
-
-```typescript
-import { gqlHelpers } from './test-utils'
-
-// Execute and expect successful query/mutation
-const data = await gqlHelpers.expectSuccessfulQuery(
-  server,
-  query,
-  variables,
-  context,
-)
-
-// Execute and expect error
-await gqlHelpers.expectGraphQLError(
-  server,
-  operation,
-  variables,
-  context,
-  'Expected error message',
-)
-```
-
 ## Running Tests
 
 ```bash
@@ -101,16 +177,19 @@ await gqlHelpers.expectGraphQLError(
 bun run test
 
 # Run specific test file
-bun test test/auth.test.ts
+bun test auth.test.ts
 
 # Run tests matching pattern
-bun run test -t "should create draft"
+bun test -t "should create user"
 
-# Run tests in watch mode
-bun run test -- --watch
+# Update snapshots
+UPDATE_SNAPSHOTS=true bun test
 
 # Run with coverage
 bun run test:coverage
+
+# Run with UI
+bun run test:ui
 ```
 
 ## Test Database
@@ -120,58 +199,139 @@ bun run test:coverage
 - Data is cleaned between tests (in `beforeEach`)
 - Database file is removed after all tests complete
 
-## Writing New Tests
+## Best Practices
+
+### 1. Use Typed Queries
+
+Always use typed queries from `src/gql/`:
 
 ```typescript
-import { describe, it, expect, beforeEach } from 'vitest'
-import { print } from 'graphql'
-import {
-  createTestServer,
-  createAuthContext,
-  gqlHelpers,
-  toPostId,
-  createTestUser,
-} from './'
+// ✅ Good
+import { GetFeedQuery } from '../src/gql/relay-queries'
+executeOperation(server, print(GetFeedQuery), variables, context)
 
-describe('Feature', () => {
-  const server = createTestServer()
+// ❌ Bad
+executeOperation(server, 'query { feed { id } }', variables, context)
+```
 
-  beforeEach(async () => {
-    // Setup test data if needed
-    // Database is automatically cleaned between tests
-  })
+### 2. Test Isolation
 
-  it('should work correctly', async () => {
-    const user = await createTestUser()
+Each test should be independent:
 
-    const data = await gqlHelpers.expectSuccessfulQuery(
-      server,
-      print(YourQuery),
-      { id: toPostId(1) },
-      createAuthContext(user.id.toString()),
-    )
-
-    expect(data).toBeDefined()
-  })
+```typescript
+beforeEach(async () => {
+  // Database is automatically cleaned by setup.ts
+  // Create fresh test data for each test
+  testUser = await createTestUser()
 })
 ```
 
-## Type Safety
+### 3. Comprehensive Assertions
 
-All test utilities are fully typed:
+Test both success and error cases:
 
-- GraphQL operations use generated types from `src/gql/`
-- Test data factories return proper Prisma types
-- Context creation functions return typed `Context`
-- Global ID utilities maintain type safety throughout
+```typescript
+it('should handle authentication', async () => {
+  // Test success
+  const data = await gqlHelpers.expectSuccessfulMutation(...)
+  expect(data.login).toBeDefined()
+  
+  // Test failure
+  await gqlHelpers.expectGraphQLError(
+    server,
+    operation,
+    invalidVariables,
+    context,
+    'Invalid credentials'
+  )
+})
+```
 
-## Best Practices
+### 4. Performance Awareness
 
-1. **Use factory functions** for consistent test data
-2. **Use global ID converters** when testing Relay mutations
-3. **Clean data in setup.ts** not in individual tests
-4. **Use gqlHelpers** for cleaner test code
-5. **Import from test index** for better organization
-6. **Test both success and error cases**
-7. **Use descriptive test names** that explain the scenario
+Include performance tests for critical paths:
+
+```typescript
+it('should meet performance SLA', async () => {
+  const report = await benchmark(server, GetFeedQuery, { first: 20 }, context)
+  assertPerformance(report, { maxP95Time: 100 })
+})
+```
+
+### 5. Snapshot Testing
+
+Use snapshots for API stability:
+
+```typescript
+it('should maintain consistent response shape', async () => {
+  const result = await snapshotTester.testSnapshot(response, {
+    name: 'user-query',
+    normalizers: [commonNormalizers.timestamps]
+  })
+  expect(result.passed).toBe(true)
+})
+```
+
+## Common Test Patterns
+
+### Authentication Flow
+
+```typescript
+const { user, token } = await commonScenarios.authenticationFlow(context, {
+  email: 'test@example.com',
+  password: 'password123',
+  name: 'Test User'
+})
+```
+
+### Permission Testing
+
+```typescript
+await commonScenarios.permissionBoundariesFlow(
+  context,
+  { owner: ownerContext, other: otherContext },
+  postId
+)
+```
+
+### CRUD Operations
+
+```typescript
+const { posts } = await commonScenarios.postCrudFlow(context, authContext)
+```
+
+## Debugging Tests
+
+### Enable Detailed Logging
+
+```typescript
+// In test file
+console.log('Query result:', JSON.stringify(result, null, 2))
+console.log('Performance metrics:', metrics)
+```
+
+### Inspect Database State
+
+```typescript
+// Check what's in the database
+const users = await prisma.user.findMany()
+console.log('Users in DB:', users)
+```
+
+### Use Test UI
+
+```bash
+bun run test:ui
+```
+
+## Contributing
+
+When adding new tests:
+
+1. Use typed queries from `src/gql/`
+2. Follow existing patterns for consistency
+3. Include both positive and negative test cases
+4. Add performance tests for new critical operations
+5. Update snapshots when API changes are intentional
+6. Document complex test scenarios
 

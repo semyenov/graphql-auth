@@ -2,8 +2,8 @@
  * Test data factory functions for creating consistent test data
  */
 
-import bcrypt from 'bcryptjs'
 import type { Post, User } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 import { prisma } from './setup'
 
 /**
@@ -16,7 +16,7 @@ export async function createTestUser(data?: {
 }): Promise<User> {
   const timestamp = Date.now()
   const randomId = Math.random().toString(36).substr(2, 9)
-  
+
   return prisma.user.create({
     data: {
       email: data?.email || `test-${timestamp}-${randomId}@example.com`,
@@ -37,7 +37,7 @@ export async function createTestPost(data: {
   viewCount?: number
 }): Promise<Post> {
   const timestamp = Date.now()
-  
+
   return prisma.post.create({
     data: {
       title: data.title || `Test Post ${timestamp}`,
@@ -58,10 +58,10 @@ export async function createUserWithPosts(options?: {
 }): Promise<{ user: User; posts: Post[] }> {
   const user = await createTestUser()
   const posts: Post[] = []
-  
+
   const postCount = options?.postCount ?? 3
   const publishedPosts = options?.publishedPosts ?? 1
-  
+
   for (let i = 0; i < postCount; i++) {
     const post = await createTestPost({
       authorId: user.id,
@@ -70,7 +70,7 @@ export async function createUserWithPosts(options?: {
     })
     posts.push(post)
   }
-  
+
   return { user, posts }
 }
 
@@ -95,6 +95,6 @@ export async function seedTestUsers(): Promise<User[]> {
       name: 'Charlie Test',
     }),
   ])
-  
+
   return users
 }
