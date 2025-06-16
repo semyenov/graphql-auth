@@ -102,6 +102,15 @@ export interface Context extends BaseContext {
         readonly headers: Record<string, string>
         readonly body?: GraphQLRequestBody
     }
+    
+    // Additional request information for rate limiting
+    request?: {
+        ip?: string
+        headers?: Record<string, string | string[] | undefined>
+        connection?: {
+            remoteAddress?: string
+        }
+    }
 
     headers: Record<string, string>
     method: HTTPMethod

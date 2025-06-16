@@ -1,8 +1,7 @@
-import { UserId } from '../../core/value-objects/user-id.vo';
+import type { EnhancedContext } from '../../context/enhanced-context';
 import { builder } from '../builder';
 
-// Define User object type using Relay Node pattern
-// prismaNode automatically exposes ALL fields including relations
+// Define User object type using Relay Node pattern with DataLoader optimizations
 builder.prismaNode('User', {
     // Map Prisma's numeric id to Relay's global ID
     id: { field: 'id' },
@@ -30,22 +29,30 @@ builder.prismaNode('User', {
                 }),
             },
         }),
-        // Add convenience field for drafts count
+        // Use DataLoader for drafts count (fallback to direct query)
         draftsCount: t.int({
             description: 'Number of unpublished posts by this user',
-            resolve: async (user, _args, context) => {
-                return context.useCases.posts.getUserDrafts.execute({
-                    authorId: UserId.create(user.id),
-                }).then(result => result.totalCount);
+            resolve: async (user, _args, context: EnhancedContext) => {
+                if (context.loaders) {
+                    return context.loaders.draftPostsCountByAuthor.load(user.id);
+                }
+                // Fallback to direct count
+                return context.prisma.post.count({
+                    where: { authorId: user.id, published: false }
+                });
             },
         }),
-        // Add convenience field for published posts count
+        // Use DataLoader for published posts count (fallback to direct query)
         publishedPostsCount: t.int({
             description: 'Number of published posts by this user',
-            resolve: async (user, _args, context) => {
-                return context.useCases.posts.getUserDrafts.execute({
-                    authorId: UserId.create(user.id),
-                }).then(result => result.totalCount);
+            resolve: async (user, _args, context: EnhancedContext) => {
+                if (context.loaders) {
+                    return context.loaders.publishedPostsCountByAuthor.load(user.id);
+                }
+                // Fallback to direct count
+                return context.prisma.post.count({
+                    where: { authorId: user.id, published: true }
+                });
             },
         }),
     }),

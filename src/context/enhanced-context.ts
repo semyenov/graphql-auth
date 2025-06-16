@@ -24,10 +24,13 @@ import { UpdatePostUseCase } from '../application/use-cases/posts/update-post.us
 import { GetCurrentUserUseCase } from '../application/use-cases/users/get-current-user.use-case'
 import { GetUserByIdUseCase } from '../application/use-cases/users/get-user-by-id.use-case'
 import { SearchUsersUseCase } from '../application/use-cases/users/search-users.use-case'
+import { createDataLoaders, type DataLoaders } from '../infrastructure/graphql/dataloaders'
 
 export interface EnhancedContext extends Context {
   // Add prisma client for Pothos resolvers
   prisma: PrismaClient
+  // DataLoaders for batch loading (optional for tests)
+  loaders?: DataLoaders
   // New clean architecture use cases
   useCases: {
     auth: {
@@ -62,7 +65,7 @@ export function enhanceContext(baseContext: Context): EnhancedContext {
 
   try {
     // Create enhanced context
-    return {
+    const enhancedContext: EnhancedContext = {
       ...baseContext,
       prisma: DatabaseClient.getClient(),
       useCases: {
@@ -86,6 +89,16 @@ export function enhanceContext(baseContext: Context): EnhancedContext {
         },
       },
     }
+    
+    // Create DataLoaders with the enhanced context (only if available)
+    try {
+      enhancedContext.loaders = createDataLoaders(enhancedContext)
+    } catch (error) {
+      // DataLoaders are optional for tests
+      console.debug('DataLoaders not available:', error)
+    }
+    
+    return enhancedContext
   } catch (error) {
     console.error('Error enhancing context:', error)
     throw error

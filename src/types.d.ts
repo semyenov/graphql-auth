@@ -7,6 +7,7 @@ import type { ContextErrorCode, ContextErrorMessage } from './context/constants'
 export interface User extends Omit<PrismaUser, 'password'> {
   id: number
   email: string
+  role: string
   name: string | null
   posts?: Post[]
 }

@@ -332,7 +332,7 @@ input PostWhereInput {
 
 type Query {
   """
-  Get drafts for a specific user
+  Get drafts for a specific user or the current user
   """
   drafts(
     after: String
@@ -341,9 +341,9 @@ type Query {
     last: Int
 
     """
-    The ID of the user whose drafts to retrieve
+    The ID of the user whose drafts to retrieve (defaults to current user)
     """
-    userId: ID!
+    userId: ID
   ): QueryDraftsConnection
 
   """
