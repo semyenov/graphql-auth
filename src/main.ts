@@ -6,13 +6,13 @@
 
 import { ApolloServer, HeaderMap } from '@apollo/server'
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
-import { createServer, IncomingMessage } from 'http'
+import { createServer, IncomingMessage, ServerResponse } from 'http'
 import 'reflect-metadata'
 
 // Import configuration and DI
+import { createContext } from './context/creation'
 import { getConfigInstance } from './infrastructure/config/configuration'
 import { configureContainer } from './infrastructure/config/container'
-import { createContext } from './context/creation'
 
 // Import schema
 import { schema } from './schema'
@@ -53,8 +53,8 @@ async function bootstrap() {
     console.log('✅ Apollo Server started')
 
     // Apply GraphQL middleware
-    httpServer.on('request', async (req) => {
-      const context = await createContext({ req })
+    httpServer.on('request', async (req, res) => {
+      const context = await createContext({ req, res: res as unknown as ServerResponse })
 
       return apolloServer.executeHTTPGraphQLRequest({
         httpGraphQLRequest: {
@@ -68,7 +68,7 @@ async function bootstrap() {
     })
 
     // Health check endpoint
-    httpServer.on('request', async (req: IncomingMessage) => {
+    httpServer.on('request', async (req: IncomingMessage, res: ServerResponse) => {
       if (req.url === '/health') {
         return new Response(JSON.stringify({
           status: 'ok',
@@ -88,7 +88,7 @@ async function bootstrap() {
             body: await readBody(req),
             search: getQuery(req),
           },
-          context: async () => createContext({ req: req as unknown as IncomingMessage }),
+          context: async () => createContext({ req: req as unknown as IncomingMessage, res: res as unknown as ServerResponse }),
         })
       }
 

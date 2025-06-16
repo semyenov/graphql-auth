@@ -4,10 +4,10 @@
  * Defines types for authentication responses
  */
 
-import { builder } from '../../../schema/builder'
+import { builder } from '../../../schema/builder';
 
 // Auth tokens response type
-export const AuthTokensType = builder.objectType('AuthTokens', {
+export const AuthTokensType = builder.objectType<{ accessToken: string; refreshToken: string }>('AuthTokens', {
     description: 'Authentication tokens response',
     fields: (t) => ({
         accessToken: t.exposeString('accessToken', {
