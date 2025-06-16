@@ -7,15 +7,18 @@ builder.queryType({});
 builder.mutationType({});
 
 // Import all schema components to register them with the builder
+// Order matters: scalars/enums → types → inputs → queries/mutations
 import './enums';
 import './inputs';
+import './scalars';
+
+import './types/post';
+import './types/user';
+
 import './mutations/auth';
 import './mutations/posts';
 import './queries/posts';
 import './queries/users';
-import './scalars';
-import './types/post';
-import './types/user';
 
 // Build the schema
 const pothosSchema = builder.toSchema();

@@ -1,86 +1,104 @@
-import { prisma } from '../../prisma';
-import { builder } from '../builder';
-import { PostOrderByUpdatedAtInput, UserUniqueInput } from '../inputs';
+import { NotFoundError } from '../../errors'
+import { prisma } from '../../prisma'
+import { builder } from '../builder'
+import { parseGlobalID } from '../utils'
 
-// Define post queries
-builder.queryField('postById', (t) =>
+// Post by ID query - now accepts a global ID
+builder.queryField('post', (t) =>
     t.prismaField({
         type: 'Post',
         nullable: true,
         args: {
-            id: t.arg.int(),
+            id: t.arg.id({ required: true }),
         },
-        resolve: (query, _parent, args) => {
+        resolve: async (query, _parent, args) => {
+            // Decode the global ID to get the numeric ID
+            const { id: postId } = parseGlobalID(args.id, 'Post')
+
             return prisma.post.findUnique({
                 ...query,
-                where: { id: args.id || undefined },
-            });
+                where: { id: postId },
+            })
         },
     })
-);
+)
 
+// Feed query with cursor-based pagination
 builder.queryField('feed', (t) =>
-    t.prismaField({
-        type: ['Post'],
+    t.prismaConnection({
+        type: 'Post',
+        cursor: 'id',
         args: {
             searchString: t.arg.string(),
-            skip: t.arg.int(),
-            take: t.arg.int(),
-            orderBy: t.arg({
-                type: PostOrderByUpdatedAtInput,
-            }),
         },
         resolve: (query, _parent, args) => {
-            const or = args.searchString
-                ? {
+            const where = {
+                published: true,
+                ...(args.searchString && {
                     OR: [
                         { title: { contains: args.searchString } },
                         { content: { contains: args.searchString } },
                     ],
-                }
-                : {};
+                }),
+            }
 
             return prisma.post.findMany({
                 ...query,
-                where: {
-                    published: true,
-                    ...or,
-                },
-                take: args.take || undefined,
-                skip: args.skip || undefined,
-                orderBy: args.orderBy || undefined,
-            });
+                where,
+                orderBy: { createdAt: 'desc' },
+            })
+        },
+        // Add totalCount field to the connection
+        totalCount: (_parent, args) => {
+            const where = {
+                published: true,
+                ...(args.searchString && {
+                    OR: [
+                        { title: { contains: args.searchString } },
+                        { content: { contains: args.searchString } },
+                    ],
+                }),
+            }
+            return prisma.post.count({ where })
         },
     })
-);
+)
 
-builder.queryField('draftsByUser', (t) =>
-    t.prismaField({
-        type: ['Post'],
+// User drafts with cursor-based pagination
+builder.queryField('drafts', (t) =>
+    t.prismaConnection({
+        type: 'Post',
+        cursor: 'id',
         nullable: true,
         args: {
-            userUniqueInput: t.arg({
-                type: UserUniqueInput,
-                required: true,
-            }),
+            userId: t.arg.id({ required: true }),
         },
-        resolve: async (query, _parent, args) => {
-            const user = await prisma.user.findUnique({
-                where: {
-                    id: args.userUniqueInput.id || undefined,
-                    email: args.userUniqueInput.email || undefined,
-                },
-            });
+        resolve: async (query, _parent, args, ctx) => {
+            // Check if user is authenticated and requesting their own drafts
+            if (!ctx.userId) {
+                return []
+            }
 
-            if (!user) return null;
+            // Decode the global ID
+            const { id: requestedUserId, typename } = parseGlobalID(args.userId, 'User')
+
+            if (typename !== 'User') {
+                throw new NotFoundError('User', args.userId)
+            }
+
+            // Users can only see their own drafts
+            if (ctx.userId !== requestedUserId) {
+                return []
+            }
 
             return prisma.post.findMany({
                 ...query,
                 where: {
-                    authorId: user.id,
+                    authorId: requestedUserId,
                     published: false,
                 },
-            });
+                orderBy: { updatedAt: 'desc' },
+            })
         },
     })
-); 
+) 

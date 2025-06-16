@@ -4,6 +4,7 @@ import { prisma } from '../../prisma'
 import { createPostSchema, validateInput } from '../../utils/validation'
 import { builder } from '../builder'
 import { PostCreateInput } from '../inputs'
+import { parseGlobalID } from '../utils'
 
 /**
  * Create a new draft post
@@ -27,10 +28,10 @@ builder.mutationField('createDraft', (t) =>
                 if (!userId) {
                     throw new AuthenticationError()
                 }
-                
+
                 // Validate input
                 const validatedData = validateInput(createPostSchema, args.data)
-                
+
                 // Create the post
                 return await prisma.post.create({
                     ...query,
@@ -57,9 +58,9 @@ builder.mutationField('togglePublishPost', (t) =>
         type: 'Post',
         description: 'Toggle the publication status of a post',
         args: {
-            id: t.arg.int({ 
+            id: t.arg.id({
                 required: true,
-                description: 'The ID of the post to toggle',
+                description: 'The global ID of the post to toggle',
             }),
         },
         resolve: async (query, _parent, args, context) => {
@@ -69,11 +70,14 @@ builder.mutationField('togglePublishPost', (t) =>
                 if (!userId) {
                     throw new AuthenticationError()
                 }
-                
+
+                // Decode the global ID
+                const { id: postId } = parseGlobalID(args.id, 'Post')
+
                 // Find the post and check ownership
                 const post = await prisma.post.findUnique({
-                    where: { id: args.id },
-                    select: { 
+                    where: { id: postId },
+                    select: {
                         published: true,
                         authorId: true,
                     },
@@ -82,11 +86,11 @@ builder.mutationField('togglePublishPost', (t) =>
                 if (!post) {
                     throw new NotFoundError('Post', args.id)
                 }
-                
+
                 // Update the post
                 return await prisma.post.update({
                     ...query,
-                    where: { id: args.id },
+                    where: { id: postId },
                     data: { published: !post.published },
                 })
             } catch (error) {
@@ -105,17 +109,20 @@ builder.mutationField('incrementPostViewCount', (t) =>
         type: 'Post',
         description: 'Increment the view count of a post',
         args: {
-            id: t.arg.int({ 
+            id: t.arg.id({
                 required: true,
-                description: 'The ID of the post to increment view count',
+                description: 'The global ID of the post to increment view count',
             }),
         },
         resolve: async (query, _parent, args) => {
             try {
+                // Decode the global ID
+                const { id: postId } = parseGlobalID(args.id, 'Post')
+
                 // Update view count atomically
                 return await prisma.post.update({
                     ...query,
-                    where: { id: args.id },
+                    where: { id: postId },
                     data: {
                         viewCount: {
                             increment: 1,
@@ -142,9 +149,9 @@ builder.mutationField('deletePost', (t) =>
         type: 'Post',
         description: 'Delete a post permanently',
         args: {
-            id: t.arg.int({ 
+            id: t.arg.id({
                 required: true,
-                description: 'The ID of the post to delete',
+                description: 'The global ID of the post to delete',
             }),
         },
         resolve: async (query, _parent, args, context) => {
@@ -154,11 +161,14 @@ builder.mutationField('deletePost', (t) =>
                 if (!userId) {
                     throw new AuthenticationError()
                 }
-                
+
+                // Decode the global ID
+                const { id: postId } = parseGlobalID(args.id, 'Post')
+
                 // Delete the post (will fail if it doesn't exist)
                 return await prisma.post.delete({
                     ...query,
-                    where: { id: args.id },
+                    where: { id: postId },
                 })
             } catch (error) {
                 // Handle case where post doesn't exist
