@@ -7,13 +7,14 @@
 import { inject, injectable } from 'tsyringe'
 import { UnauthorizedError } from '../../../core/errors/domain.errors'
 import type { IPostRepository } from '../../../core/repositories/post.repository.interface'
+import type { ILogger } from '../../../core/services/logger.interface'
 import { UserId } from '../../../core/value-objects/user-id.vo'
 import { PostDto } from '../../dtos/post.dto'
 import { PostMapper } from '../../mappers/post.mapper'
 
 export interface GetUserDraftsCommand {
-  requestedUserId: string
-  currentUserId: string
+  requestedUserId: UserId
+  currentUserId: UserId
   skip?: number
   take?: number
 }
@@ -25,40 +26,59 @@ export interface GetUserDraftsResult {
 
 @injectable()
 export class GetUserDraftsUseCase {
+  private logger: ILogger
+
   constructor(
     @inject('IPostRepository') private postRepository: IPostRepository,
-  ) { }
+    @inject('ILogger') logger: ILogger,
+  ) {
+    this.logger = logger.child({ useCase: 'GetUserDraftsUseCase' })
+  }
 
   async execute(command: GetUserDraftsCommand): Promise<GetUserDraftsResult> {
-    const requestedUserId = UserId.create(parseInt(command.requestedUserId))
-    const currentUserId = UserId.create(parseInt(command.currentUserId))
-
-    // Users can only see their own drafts
-    if (!requestedUserId.equals(currentUserId)) {
-      throw new UnauthorizedError('You can only view your own drafts')
-    }
-
-    const { skip = 0, take = 10 } = command
-
-    // Get unpublished posts for the user
-    const drafts = await this.postRepository.findByAuthor(requestedUserId, {
-      includeUnpublished: true,
-      skip,
-      take,
+    this.logger.debug('Fetching user drafts', {
+      requestedUserId: command.requestedUserId.value,
+      currentUserId: command.currentUserId.value,
+      skip: command.skip,
+      take: command.take
     })
 
-    // Filter only unpublished posts
-    const unpublishedDrafts = drafts.filter(post => !post.published)
+    try {
+      // Users can only see their own drafts
+      if (!command.requestedUserId.equals(command.currentUserId)) {
+        throw new UnauthorizedError('You can only view your own drafts')
+      }
 
-    // Get total count of drafts
-    const allDrafts = await this.postRepository.findByAuthor(requestedUserId, {
-      includeUnpublished: true,
-    })
-    const totalCount = allDrafts.filter(post => !post.published).length
+      const { skip = 0, take = 10 } = command
 
-    return {
-      drafts: unpublishedDrafts.map(PostMapper.toDto),
-      totalCount,
+      // Get unpublished posts for the user
+      const drafts = await this.postRepository.findByAuthor(command.requestedUserId, {
+        includeUnpublished: true,
+        skip,
+        take,
+      })
+
+      // Filter only unpublished posts
+      const unpublishedDrafts = drafts.filter(post => !post.published)
+
+      // Get total count of drafts
+      const allDrafts = await this.postRepository.findByAuthor(command.requestedUserId, {
+        includeUnpublished: true,
+      })
+      const totalCount = allDrafts.filter(post => !post.published).length
+
+      return {
+        drafts: unpublishedDrafts.map(PostMapper.toDto),
+        totalCount,
+      }
+    } catch (error) {
+      this.logger.error('Failed to fetch user drafts', error as Error, {
+        requestedUserId: command.requestedUserId.value,
+        currentUserId: command.currentUserId.value,
+        skip: command.skip,
+        take: command.take
+      })
+      throw error
     }
   }
 }

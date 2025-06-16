@@ -30,19 +30,21 @@ bunx prettier --write .                # Format code
 bun run gen:schema                     # Generate GraphQL schema file
 ```
 
-## Critical Architecture: Mixed DDD + Legacy
+## Architecture: Clean Architecture
 
-The codebase uses **two parallel architectures** that must be kept in sync:
+The codebase follows **Clean Architecture** principles with clear separation of concerns:
 
-### 1. Clean Architecture (DDD) - New Features
-Located in `src/features/` and `src/application/`, following Domain-Driven Design:
-- **Domain Layer**: Business logic, entities, value objects
-- **Application Layer**: Use cases that orchestrate business operations
-- **Infrastructure Layer**: External integrations (database, services)
-- **Presentation Layer**: GraphQL resolvers
+### Layer Structure
+1. **Core Layer** (`src/core/`): Domain entities, value objects, repository interfaces
+2. **Application Layer** (`src/application/`): Use cases, DTOs, mappers
+3. **Infrastructure Layer** (`src/infrastructure/`): Database, auth, GraphQL implementation
+4. **Schema Layer** (`src/schema/`): GraphQL schema definition using Pothos
 
-### 2. Legacy Architecture - Existing Features
-Located in `src/schema/`, using Pothos GraphQL schema builder directly
+### Key Architectural Patterns
+- **Dependency Injection**: TSyringe for DI with interface-based dependencies
+- **Use Case Pattern**: All business operations go through use cases
+- **Repository Pattern**: Database access through repository interfaces
+- **Value Objects**: Strongly typed IDs and domain values
 
 ### Critical Integration Points
 

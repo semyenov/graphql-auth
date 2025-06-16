@@ -16,6 +16,10 @@ export class UserId {
     return new UserId(value)
   }
 
+  static from(value: number): UserId {
+    return UserId.create(value)
+  }
+
   static generate(): UserId {
     // In a real application, this would be handled by the database
     // For now, we'll use a timestamp-based approach

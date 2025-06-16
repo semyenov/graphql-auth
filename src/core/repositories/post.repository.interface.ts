@@ -27,7 +27,7 @@ export interface IPostRepository {
   findById(id: PostId): Promise<Post | null>
   findByIds(ids: PostId[]): Promise<Post[]>
   save(post: Post): Promise<Post>
-  delete(id: PostId): Promise<void>
+  delete(id: PostId): Promise<Post | null>
 
   // Query operations
   findMany(criteria: {

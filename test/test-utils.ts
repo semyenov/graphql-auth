@@ -30,8 +30,6 @@ import { enhanceContext, type EnhancedContext } from '../src/context/enhanced-co
 import type { Context } from '../src/context/types.d'
 import { UserId } from '../src/core/value-objects/user-id.vo'
 import { env } from '../src/environment'
-import { PostRepository, UserRepository } from '../src/infrastructure/database'
-import { prisma } from '../src/prisma'
 import { schema } from '../src/schema'
 
 // Create test context
@@ -58,10 +56,6 @@ export function createMockContext(overrides?: Partial<Context>): EnhancedContext
       permissions: ['read:public'],
       roles: ['user'],
     },
-    repositories: {
-      users: new UserRepository(prisma),
-      posts: new PostRepository(prisma),
-    },
   }
 
   const baseContext: Context = {
@@ -73,8 +67,9 @@ export function createMockContext(overrides?: Partial<Context>): EnhancedContext
 }
 
 // Create authenticated context
-export function createAuthContext(userId: UserId): EnhancedContext {
-  const token = generateTestToken(userId)
+export function createAuthContext(userId: number | UserId): EnhancedContext {
+  const userIdObject = typeof userId === 'number' ? UserId.create(userId) : userId
+  const token = generateTestToken(userIdObject)
 
   return createMockContext({
     headers: {
@@ -90,10 +85,10 @@ export function createAuthContext(userId: UserId): EnhancedContext {
       },
       body: undefined,
     },
-    userId: userId, // Add the top-level userId property
+    userId: userIdObject, // Add the top-level userId property
     security: {
       isAuthenticated: true,
-      userId: userId,
+      userId: userIdObject,
       userEmail: undefined, // Would typically be filled by auth middleware
       roles: ['user'], // Default role for authenticated users
       permissions: [],
@@ -104,7 +99,7 @@ export function createAuthContext(userId: UserId): EnhancedContext {
 // Create test server
 export function createTestServer() {
   return new ApolloServer<EnhancedContext>({
-    schema,
+    schema: schema(),
     introspection: true,
   })
 }

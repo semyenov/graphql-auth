@@ -58,11 +58,8 @@ export const createContext: ContextFunction<[{ req: IncomingMessage; res: Server
         // Create authentication context
         const authContext = await createAuthenticationContext(requestComponents)
 
-        // Create repository instances
-        const repositories = createRepositories()
-
         // Assemble final context
-        const context = assembleContext(requestComponents, authContext, repositories)
+        const context = assembleContext(requestComponents, authContext)
 
         return context
     } catch (error) {
@@ -156,13 +153,11 @@ function createRepositories() {
  * 
  * @param requestComponents - The processed request components
  * @param authContext - The authentication context
- * @param repositories - The repository instances
  * @returns The complete Context object
  */
 function assembleContext(
     requestComponents: ReturnType<typeof extractRequestComponents>,
     authContext: ReturnType<typeof createAuthenticationContext> extends Promise<infer T> ? T : never,
-    repositories: ReturnType<typeof createRepositories>
 ): Context {
     return {
         // Request information
@@ -180,8 +175,5 @@ function assembleContext(
         security: authContext.security,
         userId: authContext.userId ? UserId.create(authContext.userId) : undefined,
         user: undefined, // Will be populated by resolvers if needed
-
-        // Database repositories
-        repositories,
     }
 } 

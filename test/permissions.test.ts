@@ -3,7 +3,7 @@ import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { UserId } from '../src/core/value-objects/user-id.vo'
 import { DeletePostMutation, LoginMutation } from '../src/gql/relay-mutations'
-import { GetDraftsQuery, GetFeedQuery, GetMeQuery, GetPostQuery } from '../src/gql/relay-queries'
+import { GetFeedQuery, GetMeQuery, GetPostQuery } from '../src/gql/relay-queries'
 import { PermissionUtils } from '../src/permissions'
 import { toPostId, toUserId } from './relay-utils'
 import { prisma } from './setup'
@@ -223,11 +223,31 @@ describe('Enhanced Permissions System', () => {
                 ],
             })
 
+            // Create custom query without userId
+            const draftsQuery = `
+                query GetDrafts($first: Int, $after: String) {
+                    drafts(first: $first, after: $after) {
+                        edges {
+                            cursor
+                            node {
+                                id
+                                title
+                                published
+                            }
+                        }
+                        pageInfo {
+                            hasNextPage
+                            endCursor
+                        }
+                    }
+                }
+            `
+
             // User should be able to access their own drafts
             const ownDraftsResult = await executeOperation(
                 server,
-                print(GetDraftsQuery),
-                { userId: toUserId(testUserId), first: 10 },
+                draftsQuery,
+                { first: 10 },
                 createAuthContext(UserId.create(testUserId))
             )
 
@@ -239,20 +259,21 @@ describe('Enhanced Permissions System', () => {
                 expect(data?.drafts?.edges[0].node.title).toBe('User 1 Draft')
             }
 
-            // User should not be able to access other user's drafts
+            // Other user should see their own drafts
             const otherDraftsResult = await executeOperation(
                 server,
-                print(GetDraftsQuery),
-                { userId: toUserId(otherUserId), first: 10 },
-                createAuthContext(UserId.create(testUserId))
+                draftsQuery,
+                { first: 10 },
+                createAuthContext(UserId.create(otherUserId))
             )
 
             expect(otherDraftsResult.body.kind).toBe('single')
             if (otherDraftsResult.body.kind === 'single') {
-                // Should return empty list, not error
+                // Should return only their own drafts
                 expect(otherDraftsResult.body.singleResult.errors).toBeUndefined()
                 const data = otherDraftsResult.body.singleResult.data as any
-                expect(data?.drafts?.edges).toHaveLength(0)
+                expect(data?.drafts?.edges).toHaveLength(1)
+                expect(data?.drafts?.edges[0].node.title).toBe('User 2 Draft')
             }
         })
 

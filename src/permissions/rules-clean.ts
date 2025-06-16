@@ -36,16 +36,18 @@ export const isPostOwner = rule({ cache: 'strict' })(
       // Parse the global ID
       const postId = await parseAndValidateGlobalId(args.id, 'Post')
 
-      // Check post ownership directly through repository
+      // Check post ownership directly through Prisma
       // We can't use the GetPostUseCase here because it enforces viewing permissions
       // which would prevent checking ownership of unpublished posts
-      const post = await context.repositories.posts.findById(postId)
+      const post = await context.prisma.post.findUnique({
+        where: { id: postId }
+      })
 
       if (!post) {
         throw new NotFoundError('Post', args.id)
       }
 
-      if (post.authorId !== parseInt(userId.toString())) {
+      if (post.authorId !== userId.value) {
         throw new AuthorizationError(ERROR_MESSAGES.NOT_POST_OWNER)
       }
 

@@ -26,6 +26,15 @@ export function normalizeGraphQLError(error: unknown): GraphQLError {
     return domainErrorToGraphQLError(error)
   }
 
+  // Handle regular Error instances
+  if (error instanceof Error) {
+    return new GraphQLError(error.message, {
+      extensions: {
+        code: 'INTERNAL_SERVER_ERROR',
+      },
+    })
+  }
+  
   // Handle unknown errors
   console.error('Unexpected error:', error)
   return new GraphQLError('Internal server error', {

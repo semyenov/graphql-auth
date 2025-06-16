@@ -19,7 +19,7 @@ import { schema } from './schema'
 
 // Enhanced Apollo Server with better typing
 const server = new ApolloServer<Context>({
-    schema,
+    schema: schema(),
     plugins: [
         ApolloServerPluginInlineTrace(),
         // Custom plugin for request/response logging with fetchdts types

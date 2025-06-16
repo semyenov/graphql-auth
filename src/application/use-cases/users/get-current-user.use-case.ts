@@ -6,12 +6,12 @@
 
 import { inject, injectable } from 'tsyringe'
 import type { IUserRepository } from '../../../core/repositories/user.repository.interface'
-import { UserId } from '../../../core/value-objects/user-id.vo'
+import type { UserId } from '../../../core/value-objects/user-id.vo'
 import { UserDto } from '../../dtos/user.dto'
 import { UserMapper } from '../../mappers/user.mapper'
 
 export interface GetCurrentUserCommand {
-  userId: string
+  userId: UserId
 }
 
 @injectable()
@@ -21,9 +21,7 @@ export class GetCurrentUserUseCase {
   ) { }
 
   async execute(command: GetCurrentUserCommand): Promise<UserDto | null> {
-    const userId = UserId.create(parseInt(command.userId))
-
-    const user = await this.userRepository.findById(userId)
+    const user = await this.userRepository.findById(command.userId)
     if (!user) {
       return null
     }

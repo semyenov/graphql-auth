@@ -67,10 +67,11 @@ export class PrismaPostRepository implements IPostRepository {
     return PostMapper.toDomain(saved)
   }
 
-  async delete(id: PostId): Promise<void> {
-    await this.prisma.post.delete({
+  async delete(id: PostId): Promise<Post | null> {
+    const data = await this.prisma.post.delete({
       where: { id: id.value },
     })
+    return data ? PostMapper.toDomain(data) : null
   }
 
   async findMany(criteria: {
@@ -86,7 +87,7 @@ export class PrismaPostRepository implements IPostRepository {
       where,
       skip,
       take,
-      orderBy: orderBy ? { [orderBy.field]: orderBy.direction } : undefined,
+      orderBy
     })
 
     return data.map(PostMapper.toDomain)
@@ -142,7 +143,7 @@ export class PrismaPostRepository implements IPostRepository {
       where,
       skip,
       take,
-      orderBy: orderBy ? { [orderBy.field]: orderBy.direction } : { createdAt: 'desc' },
+      orderBy
     })
 
     return data.map(PostMapper.toDomain)

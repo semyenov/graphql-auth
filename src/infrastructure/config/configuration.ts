@@ -43,13 +43,13 @@ export interface AppConfig {
 // Validate and parse environment variables
 function validateEnv() {
   const parsed = envSchema.safeParse(process.env)
-  
+
   if (!parsed.success) {
     console.error('❌ Invalid environment variables:')
     console.error(parsed.error.format())
     throw new Error('Invalid environment variables')
   }
-  
+
   return parsed.data
 }
 
@@ -57,8 +57,8 @@ function validateEnv() {
 export function getConfig(): AppConfig {
   const env = validateEnv()
 
-  const databaseLogLevel = env.NODE_ENV === 'production' 
-    ? ['error', 'warn'] 
+  const databaseLogLevel = env.NODE_ENV === 'production'
+    ? ['error', 'warn']
     : ['query', 'info', 'warn', 'error']
 
   return {

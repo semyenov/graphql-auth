@@ -33,6 +33,21 @@ export function transformUserWhereInput(where: any) {
     return Object.keys(prismaWhere).length > 0 ? prismaWhere : undefined;
 }
 
+// Transform post where input to Prisma where clause
+export function transformPostWhereInput(where: any) {
+    if (!where) return undefined;
+
+    const prismaWhere: Prisma.PostWhereInput = {};
+
+    Object.keys(where).forEach(key => {
+        if (where[key] !== undefined) {
+            prismaWhere[key as keyof Prisma.PostWhereInput] = where[key as keyof Prisma.PostWhereInput];
+        }
+    });
+
+    return Object.keys(prismaWhere).length > 0 ? prismaWhere : undefined;
+}
+
 // Transform order by input to Prisma orderBy clause
 export function transformOrderBy(orderBy: any) {
     if (!orderBy) return undefined;

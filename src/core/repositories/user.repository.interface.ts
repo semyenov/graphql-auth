@@ -5,6 +5,7 @@
  * This is a port in hexagonal architecture.
  */
 
+import { Prisma } from '@prisma/client'
 import { User } from '../entities/user.entity'
 import { Email } from '../value-objects/email.vo'
 import { UserId } from '../value-objects/user-id.vo'
@@ -15,13 +16,14 @@ export interface IUserRepository {
   findByEmail(email: Email): Promise<User | null>
   findByIds(ids: UserId[]): Promise<User[]>
   save(user: User): Promise<User>
-  delete(id: UserId): Promise<void>
+  delete(id: UserId): Promise<User | null>
 
   // Query operations
   findMany(criteria: {
+    searchTerm?: string
     skip?: number
     take?: number
-    orderBy?: { field: string; direction: 'asc' | 'desc' }
+    orderBy?: Prisma.UserOrderByWithRelationInput
   }): Promise<User[]>
 
   count(criteria?: {

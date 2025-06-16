@@ -5,8 +5,8 @@
  */
 
 import { Post } from '../entities/post.entity'
-import { UserId } from '../value-objects/user-id.vo'
 import { ForbiddenError, UnauthorizedError } from '../errors/domain.errors'
+import { UserId } from '../value-objects/user-id.vo'
 
 export class PostAuthorizationService {
   static canView(post: Post, userId?: UserId): boolean {
@@ -14,9 +14,7 @@ export class PostAuthorizationService {
   }
 
   static canEdit(post: Post, userId?: UserId): boolean {
-    if (!userId) {
-      return false
-    }
+    if (!userId) return false
     return post.isOwnedBy(userId)
   }
 

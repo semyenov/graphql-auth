@@ -4,9 +4,9 @@
  * Handles authentication-related GraphQL operations.
  */
 
-import { GraphQLContext } from '../context/graphql-context'
+import { builder } from '../../../schema/builder'
+import type { EnhancedContext } from '../../../context/enhanced-context'
 import { normalizeGraphQLError } from '../errors/graphql-error-handler'
-import { builder } from '../schema/builder'
 
 // Signup mutation
 builder.mutationField('signup', (t) =>
@@ -17,7 +17,7 @@ builder.mutationField('signup', (t) =>
       password: t.arg.string({ required: true }),
       name: t.arg.string({ required: false }),
     },
-    resolve: async (_parent, args, context: GraphQLContext) => {
+    resolve: async (_parent, args, context: EnhancedContext) => {
       try {
         const result = await context.useCases.auth.signup.execute({
           email: args.email,
@@ -40,7 +40,7 @@ builder.mutationField('login', (t) =>
       email: t.arg.string({ required: true }),
       password: t.arg.string({ required: true }),
     },
-    resolve: async (_parent, args, context: GraphQLContext) => {
+    resolve: async (_parent, args, context: EnhancedContext) => {
       try {
         const result = await context.useCases.auth.login.execute({
           email: args.email,

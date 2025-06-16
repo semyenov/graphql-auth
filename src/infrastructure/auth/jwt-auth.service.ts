@@ -5,7 +5,7 @@
  */
 
 import bcrypt from 'bcryptjs'
-import jwt, { JwtPayload, Secret, SignOptions } from 'jsonwebtoken'
+import jwt, { JwtPayload, Secret } from 'jsonwebtoken'
 import { inject, injectable } from 'tsyringe'
 import { IAuthService } from '../../core/services/auth.service.interface'
 import { UserId } from '../../core/value-objects/user-id.vo'
@@ -38,7 +38,7 @@ export class JwtAuthService implements IAuthService {
 
     return jwt.sign(payload, this.config.jwtSecret, {
       expiresIn: this.config.jwtExpiresIn,
-    } as SignOptions)
+    })
   }
 
   async verifyToken(token: string): Promise<UserId | null> {

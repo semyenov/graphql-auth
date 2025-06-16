@@ -21,10 +21,12 @@ export interface SignupCommand {
 
 @injectable()
 export class SignupUseCase {
+
   constructor(
     @inject('IUserRepository') private userRepository: IUserRepository,
     @inject('IAuthService') private authService: IAuthService,
-  ) { }
+  ) {
+  }
 
   async execute(command: SignupCommand): Promise<AuthResponseDto> {
     // Validate email

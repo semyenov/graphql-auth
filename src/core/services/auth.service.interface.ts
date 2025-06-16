@@ -4,7 +4,6 @@
  * Defines authentication-related operations.
  */
 
-import { User } from '../entities/user.entity'
 import { UserId } from '../value-objects/user-id.vo'
 
 export interface IAuthService {

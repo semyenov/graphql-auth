@@ -8,11 +8,10 @@ import {
   IncrementPostViewCountMutation
 } from '../src/gql/relay-mutations'
 import {
-  GetDraftsQuery,
   GetFeedQuery
 } from '../src/gql/relay-queries'
 import { CreateDraftVariables, DeletePostVariables, IncrementPostViewCountVariables } from '../src/gql/types.d'
-import { extractNumericId, toPostId, toUserId } from './relay-utils'
+import { extractNumericId, toPostId } from './relay-utils'
 import { prisma } from './setup'
 import {
   createAuthContext,
@@ -143,14 +142,36 @@ describe('Posts', () => {
         ],
       })
 
+      const query = `
+        query GetDrafts($first: Int, $after: String) {
+          drafts(first: $first, after: $after) {
+            edges {
+              cursor
+              node {
+                id
+                title
+                content
+                published
+                viewCount
+                createdAt
+                updatedAt
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+      `
+
       const variables = {
-        userId: toUserId(testUserId.value),
         first: 10
       }
 
       const data = await gqlHelpers.expectSuccessfulQuery<GetDraftsResponse>(
         server,
-        print(GetDraftsQuery),
+        query,
         variables,
         createAuthContext(testUserId)
       )
@@ -160,14 +181,36 @@ describe('Posts', () => {
     })
 
     it('should require authentication for drafts', async () => {
+      const query = `
+        query GetDrafts($first: Int, $after: String) {
+          drafts(first: $first, after: $after) {
+            edges {
+              cursor
+              node {
+                id
+                title
+                content
+                published
+                viewCount
+                createdAt
+                updatedAt
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+      `
+
       const variables = {
-        userId: toUserId(testUserId.value),
         first: 10
       }
 
       await gqlHelpers.expectGraphQLError(
         server,
-        print(GetDraftsQuery),
+        query,
         variables,
         createMockContext(), // No auth
         'You must be logged in to perform this action. Please authenticate and try again.'

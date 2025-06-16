@@ -14,8 +14,8 @@ import { PostDto, UpdatePostDto } from '../../dtos/post.dto'
 import { PostMapper } from '../../mappers/post.mapper'
 
 export interface UpdatePostCommand extends UpdatePostDto {
-  postId: string
-  userId: string
+  postId: PostId
+  userId: UserId
 }
 
 @injectable()
@@ -25,17 +25,14 @@ export class UpdatePostUseCase {
   ) { }
 
   async execute(command: UpdatePostCommand): Promise<PostDto> {
-    const postId = PostId.create(parseInt(command.postId))
-    const userId = UserId.create(parseInt(command.userId))
-
     // Find the post
-    const post = await this.postRepository.findById(postId)
+    const post = await this.postRepository.findById(command.postId)
     if (!post) {
-      throw new EntityNotFoundError('Post', command.postId)
+      throw new EntityNotFoundError('Post', command.postId.toString())
     }
 
     // Check authorization
-    PostAuthorizationService.ensureCanEdit(post, userId)
+    PostAuthorizationService.canEdit(post, command.userId)
 
     // Update the post
     if (command.title !== undefined || command.content !== undefined) {

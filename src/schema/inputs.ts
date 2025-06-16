@@ -217,6 +217,14 @@ export const UserWhereInput = builder.inputType('UserWhereInput', {
     }),
 });
 
+export const UserSearchInput = builder.inputType('UserSearchInput', {
+    fields: (t) => ({
+        query: t.string({
+            description: 'Search query',
+        })
+    }),
+});
+
 // User ordering input type
 export const UserOrderByInput = builder.inputType('UserOrderByInput', {
     fields: (t) => ({

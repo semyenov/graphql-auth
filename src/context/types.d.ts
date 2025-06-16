@@ -6,7 +6,6 @@ import type {
     GraphQLRequestBody,
     MimeType
 } from '../gql/types'
-import type { PostRepository, UserRepository } from '../infrastructure/database'
 import type { RequestMetadata, SecurityContext, User } from '../types.d'
 
 /**
@@ -113,10 +112,4 @@ export interface Context extends BaseContext {
     security: SecurityContext
     userId?: UserId
     user?: User
-
-    // Database repositories
-    repositories: {
-        users: UserRepository
-        posts: PostRepository
-    }
 }

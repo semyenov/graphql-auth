@@ -34,7 +34,7 @@ async function bootstrap() {
 
     // Create Apollo Server
     const apolloServer = new ApolloServer({
-      schema,
+      schema: schema(),
       introspection: config.server.environment !== 'production',
       plugins: [
         ApolloServerPluginDrainHttpServer({ httpServer }),

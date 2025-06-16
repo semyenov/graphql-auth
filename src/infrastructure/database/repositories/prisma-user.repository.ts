@@ -4,7 +4,7 @@
  * Implements the user repository interface using Prisma.
  */
 
-import { PrismaClient } from '@prisma/client'
+import { Prisma, PrismaClient } from '@prisma/client'
 import { inject, injectable } from 'tsyringe'
 import { UserMapper } from '../../../application/mappers/user.mapper'
 import { User } from '../../../core/entities/user.entity'
@@ -70,23 +70,35 @@ export class PrismaUserRepository implements IUserRepository {
     return UserMapper.toDomain(saved)
   }
 
-  async delete(id: UserId): Promise<void> {
-    await this.prisma.user.delete({
+  async delete(id: UserId): Promise<User | null> {
+    const data = await this.prisma.user.delete({
       where: { id: id.value },
     })
+    return data ? UserMapper.toDomain(data) : null
   }
 
   async findMany(criteria: {
+    searchTerm?: string
     skip?: number
     take?: number
-    orderBy?: { field: string; direction: 'asc' | 'desc' }
+    orderBy?: Prisma.UserOrderByWithRelationInput
   }): Promise<User[]> {
-    const { skip = 0, take = 10, orderBy } = criteria
+    const { searchTerm, skip = 0, take = 10, orderBy } = criteria
+    const trimmedSearchTerm = searchTerm?.trim()
+    if (!trimmedSearchTerm) {
+      return []
+    }
 
     const data = await this.prisma.user.findMany({
       skip,
       take,
-      orderBy: orderBy ? { [orderBy.field]: orderBy.direction } : undefined,
+      orderBy,
+      where: {
+        OR: [
+          { email: { contains: trimmedSearchTerm } },
+          { name: { contains: trimmedSearchTerm } },
+        ],
+      },
     })
 
     return data.map(UserMapper.toDomain)

@@ -22,9 +22,10 @@ import './inputs';
 import './queries/posts-clean';
 import './queries/users-clean';
 
-// Import feature-based mutations
-import '../features/auth/presentation/resolvers/auth.mutations';
-import '../features/posts/presentation/resolvers/post.mutations';
+// Import clean architecture resolvers
+import '../infrastructure/graphql/resolvers/auth.resolver';
+import '../infrastructure/graphql/resolvers/posts.resolver';
+import '../infrastructure/graphql/resolvers/users.resolver';
 
 // Lazy load schema to ensure all types are registered first
 let _schema: ReturnType<typeof applyMiddleware> | null = null;
@@ -40,4 +41,4 @@ export function getSchema() {
 }
 
 // Export a getter that builds the schema on first access
-export const schema = getSchema(); 
+export const schema = getSchema; 

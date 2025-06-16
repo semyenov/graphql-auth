@@ -18,8 +18,7 @@ export type PermissionUtilsType = {
  */
 function canAccessUserData(context: EnhancedContext, targetUserId: number): boolean {
   if (!context.userId) return false
-  const currentUserId = parseInt(context.userId.toString())
-  return currentUserId === targetUserId || hasRole(context, 'admin')
+  return context.userId.value === targetUserId || hasRole(context, 'admin')
 }
 
 /**
@@ -29,13 +28,15 @@ async function canModifyPost(context: EnhancedContext, postId: number): Promise<
   try {
     const userId = requireAuthentication(context)
 
-    // Check post ownership directly through repository
+    // Check post ownership directly through Prisma
     // We can't use the GetPostUseCase here because it enforces viewing permissions
-    const post = await context.repositories.posts.findById(postId)
+    const post = await context.prisma.post.findUnique({
+      where: { id: postId }
+    })
 
     if (!post) return false
 
-    return post.authorId === parseInt(userId.toString()) || hasRole(context, 'admin')
+    return post.authorId === userId.value || hasRole(context, 'admin')
   } catch {
     return false
   }

@@ -41,7 +41,7 @@ export class GetPostUseCase {
     // Get author information
     const author = await this.userRepository.findById(post.authorId!)
     if (!author) {
-      throw new EntityNotFoundError('User', post.authorId?.toString() ?? '0')
+      throw new EntityNotFoundError('User', post.authorId?.toString() ?? 'Unknown')
     }
 
     // Return post with author
