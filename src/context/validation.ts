@@ -1,11 +1,6 @@
-import { CONTEXT_CONTEXT_ERROR_MESSAGES, OPERATION_NAMES } from './constants'
+import { CONTEXT_ERROR_MESSAGES, OPERATION_NAMES } from './constants'
 import type {
     Context,
-    CreateDraftContext,
-    GetMeContext,
-    GetPostsContext,
-    LoginContext,
-    SignupContext
 } from './types'
 
 /**
@@ -104,56 +99,6 @@ export function validateAuthentication<TVariables = Record<string, unknown>>(
     }
 
     return createValidationResult(errors)
-}
-
-/**
- * Type guard: Checks if context is for Login operation
- * 
- * @param context - The context to check
- * @returns True if context is LoginContext
- */
-export function isLoginContext(context: Context): context is LoginContext {
-    return context.operationName === OPERATION_NAMES.LOGIN
-}
-
-/**
- * Type guard: Checks if context is for Signup operation
- * 
- * @param context - The context to check  
- * @returns True if context is SignupContext
- */
-export function isSignupContext(context: Context): context is SignupContext {
-    return context.operationName === OPERATION_NAMES.SIGNUP
-}
-
-/**
- * Type guard: Checks if context is for CreateDraft operation
- * 
- * @param context - The context to check
- * @returns True if context is CreateDraftContext
- */
-export function isCreateDraftContext(context: Context): context is CreateDraftContext {
-    return context.operationName === OPERATION_NAMES.CREATE_DRAFT
-}
-
-/**
- * Type guard: Checks if context is for GetMe operation
- * 
- * @param context - The context to check
- * @returns True if context is GetMeContext
- */
-export function isGetMeContext(context: Context): context is GetMeContext {
-    return context.operationName === OPERATION_NAMES.GET_ME
-}
-
-/**
- * Type guard: Checks if context is for GetPosts operation
- * 
- * @param context - The context to check
- * @returns True if context is GetPostsContext
- */
-export function isGetPostsContext(context: Context): context is GetPostsContext {
-    return context.operationName === OPERATION_NAMES.GET_POSTS
 }
 
 /**

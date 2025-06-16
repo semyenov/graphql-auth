@@ -1,15 +1,14 @@
 import { rule } from 'graphql-shield'
+import { ERROR_MESSAGES } from '../constants'
 import {
   Context,
   hasPermission,
   hasRole,
   isAuthenticated,
-  isCreateDraftContext,
   requireAuthentication,
 } from '../context'
-import { prisma } from '../prisma'
 import { AuthenticationError, AuthorizationError, NotFoundError } from '../errors'
-import { ERROR_MESSAGES } from '../constants'
+import { prisma } from '../prisma'
 
 /**
  * Basic authentication rule
@@ -17,8 +16,8 @@ import { ERROR_MESSAGES } from '../constants'
  */
 export const isAuthenticatedUser = rule({ cache: 'contextual' })(
   (_parent, _args, context: Context) => {
-    return isAuthenticated(context) 
-      ? true 
+    return isAuthenticated(context)
+      ? true
       : new AuthenticationError()
   }
 )
@@ -157,12 +156,6 @@ export const canCreateDraft = rule({ cache: 'contextual' })(
   (_parent, _args, context: Context) => {
     if (!isAuthenticated(context)) {
       return new AuthenticationError()
-    }
-
-    // Additional business logic for draft creation
-    if (isCreateDraftContext(context)) {
-      // Context-specific validation
-      return true
     }
 
     return true

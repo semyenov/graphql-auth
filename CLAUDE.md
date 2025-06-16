@@ -330,7 +330,9 @@ fullName: t.string({
 
 ### Relay Support (Available but Not Used)
 
-The project has `@pothos/plugin-relay` installed and configured but currently uses offset-based pagination. 
+The project has `@pothos/plugin-relay` installed and configured but currently uses offset-based pagination.
+
+**Example Implementation**: See `src/schema/relay-examples.ts` for complete working examples of Relay patterns. 
 
 Benefits of Relay patterns:
 - **Stable pagination**: Cursor-based pagination handles data changes better
