@@ -34,7 +34,7 @@ builder.queryField('post', (t) =>
                 // Convert string ID to number for Prisma
                 return ctx.prisma.post.findUnique({
                     ...query,
-                    where: { id: parseInt(postDto.id, 10) },
+                    where: { id: postDto.id },
                 })
             } catch (error) {
                 // Post not found or not accessible
@@ -74,7 +74,7 @@ builder.queryField('feed', (t) =>
 
             // Return posts with Prisma optimization
             // Convert string IDs to numbers for Prisma
-            const postIds = result.posts.map(p => parseInt(p.id, 10))
+            const postIds = result.posts.map(p => p.id)
             return ctx.prisma.post.findMany({
                 ...query,
                 where: { id: { in: postIds } },
@@ -132,7 +132,7 @@ builder.queryField('drafts', (t) =>
 
                 // Return drafts with Prisma optimization
                 // Convert string IDs to numbers for Prisma
-                const draftIds = result.drafts.map(d => parseInt(d.id, 10))
+                const draftIds = result.drafts.map(d => d.id)
                 return ctx.prisma.post.findMany({
                     ...query,
                     where: { id: { in: draftIds } },

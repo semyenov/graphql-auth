@@ -8,7 +8,7 @@ export interface PostDto {
   content: string | null
   published: boolean
   viewCount: number
-  authorId: number
+  authorId: number | null
   createdAt: Date
   updatedAt: Date
 }

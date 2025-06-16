@@ -952,7 +952,50 @@ _**Assistant**_
 This error means your `executeOperation` function (or similar utility) expects an `ApolloServer<EnhancedContext>`, but you are passing `ApolloServer<Context>`.  
 **Solution:**  
 - Update your test code to use `EnhancedContext` everywhere instead of `Context`.
-- Or, if you intend to use only `Context`, update the type signature of `executeOperation` and related helpers to accept `ApolloServer<Context
+- Or, if you intend to use only `Context`, update the type signature of `executeOperation` and related helpers to accept `ApolloServer<Context>`.
+
+**Concise fix:**  
+If you want to use `EnhancedContext`, update your import and usage:
+```ts
+import type { EnhancedContext } from '../src/context/types.d'
+// ...
+const server: ApolloServer<EnhancedContext> = createTestServer() // or however you create it
+```
+And update all context references accordingly.
+
+If you want to use only `Context`, change the type signature of `executeOperation` and any helpers to use `Context` instead of `EnhancedContext`.
+
+**Pick one context type and use it consistently across your server, helpers, and tests.**
+
+---
+
+_**User**_
+
+For the code present, we get this error:
+```
+Argument of type 'string | Date | DateTimeFilter<"Post">' is not assignable to parameter of type 'DateTimeFilter<never> | undefined'.
+  Type 'string' has no properties in common with type 'DateTimeFilter<never>'.
+```
+How can I resolve this? If you propose a fix, please make it concise.
+
+---
+
+_**Assistant**_
+
+This error occurs because the Prisma `where` input fields can be either a primitive (like `string`, `number`, or `Date`) or a filter object, but your transformer expects only the filter object.
+
+**Concise fix:**  
+Add a type check before calling the transformer, and only call it if the value is an object (not a primitive):
+
+```ts
+if (where.createdAt && typeof where.createdAt === 'object') {
+  prismaWhere.createdAt = transformDateTimeFilter(where.createdAt);
+} else if (where.createdAt) {
+  prismaWhere.createdAt = where.createdAt;
+}
+```
+
+Apply this pattern for all similar fields (e.g., `createdAt`, `updatedAt`, `authorId`, etc.) to handle both primitives and filter objects.
 
 ---
 

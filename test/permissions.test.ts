@@ -104,13 +104,13 @@ describe('Enhanced Permissions System', () => {
 
         it('should handle role hierarchy correctly', () => {
             // Mock contexts with different roles
-            const userContext = createAuthContext(testUserId.toString())
+            const userContext = createAuthContext(UserId.create(testUserId))
             userContext.security.roles = ['user']
 
-            const moderatorContext = createAuthContext(testUserId.toString())
+            const moderatorContext = createAuthContext(UserId.create(testUserId))
             moderatorContext.security.roles = ['moderator']
 
-            const adminContext = createAuthContext(testUserId.toString())
+            const adminContext = createAuthContext(UserId.create(testUserId))
             adminContext.security.roles = ['admin']
 
             // Test role hierarchy
@@ -183,7 +183,7 @@ describe('Enhanced Permissions System', () => {
                 where: { id: testUserId }
             })
             expect(testUser).toBeTruthy()
-            
+
             // Test with authentication - user should exist
             const authResult = await executeOperation(
                 server,

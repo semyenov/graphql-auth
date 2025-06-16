@@ -1,15 +1,13 @@
-import jwt from 'jsonwebtoken'
+import jwt, { type JwtPayload } from 'jsonwebtoken'
 import { AUTH, ERROR_MESSAGES } from '../constants'
 import { AuthenticationError } from '../errors'
 
 /**
  * JWT payload interface
  */
-export interface JWTPayload {
+export interface JWTPayload extends JwtPayload {
   userId: number
   email?: string
-  iat?: number
-  exp?: number
 }
 
 /**

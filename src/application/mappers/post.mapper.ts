@@ -12,12 +12,12 @@ import { PostDto } from '../dtos/post.dto'
 export class PostMapper {
   static toDto(post: Post): PostDto {
     return {
-      id: post.id.value.toString(),
+      id: post.id.value,
       title: post.title,
       content: post.content,
       published: post.published,
       viewCount: post.viewCount,
-      authorId: post.authorId?.value.toString() ?? '0',
+      authorId: post.authorId?.value ?? null,
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
     }
