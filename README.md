@@ -1141,3 +1141,46 @@ datasource db {
 - [Subscribe to our YouTube channel](https://pris.ly/youtube?utm_source=github&utm_medium=prisma_examples&utm_content=next_steps_section) for live demos and video tutorials.
 - [Follow us on X](https://pris.ly/x?utm_source=github&utm_medium=prisma_examples&utm_content=next_steps_section) for the latest updates.
 - Report issues or ask [questions on GitHub](https://pris.ly/github?utm_source=github&utm_medium=prisma_examples&utm_content=next_steps_section).
+
+## AI Development Assistance
+
+This project is configured with **Context7 MCP** (Model Context Protocol) to provide enhanced AI assistance. Context7 understands the project's architecture, patterns, and conventions to generate consistent, high-quality code.
+
+### Setup Context7 MCP
+
+1. **Install the MCP server**:
+
+   ```bash
+   bun add -D @context7/mcp-server
+   ```
+
+2. **Configure Claude Desktop** (add to `claude_desktop_config.json`):
+
+   ```json
+   {
+     "mcpServers": {
+       "context7": {
+         "command": "context7-mcp",
+         "args": ["--project", "/path/to/graphql-auth"]
+       }
+     }
+   }
+   ```
+
+3. **Initialize Context7**:
+   ```bash
+   bunx context7 init
+   ```
+
+See [CONTEXT7.md](./CONTEXT7.md) for detailed setup instructions and usage examples.
+
+### Benefits
+
+With Context7 MCP, AI assistants will:
+
+- Understand Pothos GraphQL patterns and best practices
+- Follow Prisma ORM conventions (always spread `query` parameter)
+- Apply DataLoader patterns for N+1 prevention
+- Maintain consistent error handling
+- Use Relay-style connections and global IDs
+- Respect JWT authentication patterns

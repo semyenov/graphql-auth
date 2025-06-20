@@ -21,6 +21,7 @@ import {
 } from '../errors/enhanced-error-handling'
 import { requireAuthentication } from '../../../context/auth'
 import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
+import { prisma } from '../../../prisma'
 
 // Get services from container
 const getPasswordService = () => container.resolve<IPasswordService>('IPasswordService')
@@ -53,7 +54,7 @@ builder.mutationField('safeSignup', (t) =>
         logger.info('Safe signup attempt', { email: args.email })
         
         // Check if user already exists
-        const existingUser = await context.prisma.user.findUnique({
+        const existingUser = await prisma.user.findUnique({
           where: { email: args.email },
         })
 
@@ -67,7 +68,7 @@ builder.mutationField('safeSignup', (t) =>
         const hashedPassword = await passwordService.hash(args.password)
 
         // Create user
-        const user = await context.prisma.user.create({
+        const user = await prisma.user.create({
           data: {
             email: args.email,
             password: hashedPassword,
@@ -121,7 +122,7 @@ builder.mutationField('safeLogin', (t) =>
         logger.info('Safe login attempt', { email: args.email })
 
         // Find user by email
-        const user = await context.prisma.user.findUnique({
+        const user = await prisma.user.findUnique({
           where: { email: args.email },
         })
 
@@ -189,7 +190,7 @@ builder.mutationField('safeCreatePost', (t) =>
         })
 
         // Create post
-        const post = await context.prisma.post.create({
+        const post = await prisma.post.create({
           data: {
             title: args.title,
             content: args.content || null,
@@ -258,7 +259,7 @@ builder.mutationField('safeUpdatePost', (t) =>
         })
 
         // Check if post exists and user owns it
-        const existingPost = await context.prisma.post.findUnique({
+        const existingPost = await prisma.post.findUnique({
           where: { id: postId },
           select: { id: true, authorId: true, title: true },
         })
@@ -278,7 +279,7 @@ builder.mutationField('safeUpdatePost', (t) =>
         }
 
         // Update post
-        const updatedPost = await context.prisma.post.update({
+        const updatedPost = await prisma.post.update({
           where: { id: postId },
           data: {
             ...(args.title !== undefined && { title: args.title }),
@@ -339,7 +340,7 @@ builder.mutationField('safeUpdateProfile', (t) =>
 
         // Check for email conflicts if email is being updated
         if (args.email) {
-          const existingUser = await context.prisma.user.findUnique({
+          const existingUser = await prisma.user.findUnique({
             where: { email: args.email },
           })
 
@@ -353,7 +354,7 @@ builder.mutationField('safeUpdateProfile', (t) =>
         }
 
         // Update user profile
-        const updatedUser = await context.prisma.user.update({
+        const updatedUser = await prisma.user.update({
           where: { id: userId.value },
           data: {
             ...(args.name !== undefined && { name: args.name }),

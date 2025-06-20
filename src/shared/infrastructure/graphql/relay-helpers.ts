@@ -54,3 +54,8 @@ export const encodeGlobalId = toGlobalId
  * Alias for fromGlobalId for backward compatibility with Pothos builder
  */
 export const decodeGlobalId = fromGlobalId
+
+/**
+ * Alias for parseGlobalId for backward compatibility
+ */
+export const parseAndValidateGlobalId = parseGlobalId

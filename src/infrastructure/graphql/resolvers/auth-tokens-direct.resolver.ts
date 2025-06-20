@@ -17,6 +17,7 @@ import { RateLimitPresets } from '../../services/rate-limiter.service'
 import { commonValidations } from '../pothos-helpers'
 import { applyRateLimit, createRateLimitConfig } from '../rate-limit-plugin'
 import { AuthTokensType } from '../types/auth.types'
+import { prisma } from '../../../prisma'
 
 // Get services from container
 const getPasswordService = () => container.resolve<IPasswordService>('IPasswordService')
@@ -58,7 +59,7 @@ builder.mutationField('loginWithTokensDirect', (t) =>
         )
 
         // Find user by email
-        const user = await context.prisma.user.findUnique({
+        const user = await prisma.user.findUnique({
           where: { email: args.email },
         })
 

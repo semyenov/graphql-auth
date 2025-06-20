@@ -1,4 +1,4 @@
-import type { HTTPMethod } from '../gql/types.d'
+import { HTTPMethod } from 'fetchdts'
 import { RequestMetadata, SecurityContext } from '../types.d'
 import { getUserIdFromAuthHeader } from '../utils/jwt'
 import { DEFAULT_VALUES, HEADER_KEYS } from './constants'

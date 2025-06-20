@@ -11,6 +11,7 @@ import {
   parseAndValidateGlobalId,
   validateResourceId,
 } from './rule-utils-clean'
+import { prisma } from '../prisma'
 
 /**
  * Basic authentication rule
@@ -39,7 +40,7 @@ export const isPostOwner = rule({ cache: 'strict' })(
       // Check post ownership directly through Prisma
       // We can't use the GetPostUseCase here because it enforces viewing permissions
       // which would prevent checking ownership of unpublished posts
-      const post = await context.prisma.post.findUnique({
+      const post = await prisma.post.findUnique({
         where: { id: postId }
       })
 

@@ -57,16 +57,18 @@
     "zod": "^3.25.64"
   },
   "devDependencies": {
+    "@context7/mcp-server": "^1.0.0",
     "@graphql-tools/mock": "^9.0.23",
     "@graphql-tools/schema": "^10.0.23",
-    "@types/bcryptjs": "3.0.0",
+    "@types/bcryptjs": "^2.4.6",
     "@types/bun": "^1.2.16",
-    "@types/jsonwebtoken": "9.0.9",
-    "@types/node": "^22.15.29",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.10.5",
     "@types/ws": "^8.18.1",
     "jest-diff": "^30.0.0",
-    "prisma": "^6.9.0",
-    "typescript": "5.8.2"
+    "prisma": "^5.7.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
   },
   "prisma": {
     "seed": "bun run prisma/seed.ts"

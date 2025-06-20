@@ -12,6 +12,7 @@ import type { ILogger } from '../../../core/services/logger.interface'
 import { AuthorizationError, NotFoundError } from '../../../errors'
 import { builder } from '../../../schema/builder'
 import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
+import { prisma } from '../../../prisma'
 
 // Get logger from container
 const getLogger = () => container.resolve<ILogger>('ILogger')
@@ -80,7 +81,7 @@ builder.mutationField('createPostDirect', (t) =>
         published: args.input.published
       })
 
-      const post = await context.prisma.post.create({
+      const post = await prisma.post.create({
         ...query,
         data: {
           title: args.input.title,
@@ -120,7 +121,7 @@ builder.mutationField('updatePostDirect', (t) =>
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
       // Check if post exists and user owns it
-      const existingPost = await context.prisma.post.findUnique({
+      const existingPost = await prisma.post.findUnique({
         where: { id: postId },
         select: { authorId: true },
       })
@@ -141,7 +142,7 @@ builder.mutationField('updatePostDirect', (t) =>
       if (args.input.content !== undefined) updateData.content = args.input.content
       if (args.input.published !== undefined) updateData.published = args.input.published
 
-      const post = await context.prisma.post.update({
+      const post = await prisma.post.update({
         ...query,
         where: { id: postId },
         data: updateData,
@@ -168,7 +169,7 @@ builder.mutationField('deletePostDirect', (t) =>
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
       // Check if post exists and user owns it
-      const existingPost = await context.prisma.post.findUnique({
+      const existingPost = await prisma.post.findUnique({
         where: { id: postId },
         select: { authorId: true },
       })
@@ -183,7 +184,7 @@ builder.mutationField('deletePostDirect', (t) =>
 
       logger.info('Deleting post', { postId, userId: userId.value })
 
-      await context.prisma.post.delete({
+      await prisma.post.delete({
         where: { id: postId },
       })
 
@@ -209,7 +210,7 @@ builder.mutationField('togglePublishPostDirect', (t) =>
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
       // Check if post exists and user owns it
-      const existingPost = await context.prisma.post.findUnique({
+      const existingPost = await prisma.post.findUnique({
         where: { id: postId },
         select: { authorId: true, published: true },
       })
@@ -227,7 +228,7 @@ builder.mutationField('togglePublishPostDirect', (t) =>
         currentStatus: existingPost.published
       })
 
-      const post = await context.prisma.post.update({
+      const post = await prisma.post.update({
         ...query,
         where: { id: postId },
         data: { published: !existingPost.published },
@@ -257,7 +258,7 @@ builder.mutationField('incrementPostViewCountDirect', (t) =>
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
       // Check if post exists
-      const existingPost = await context.prisma.post.findUnique({
+      const existingPost = await prisma.post.findUnique({
         where: { id: postId },
         select: { id: true },
       })
@@ -268,7 +269,7 @@ builder.mutationField('incrementPostViewCountDirect', (t) =>
 
       logger.info('Incrementing post view count', { postId })
 
-      const post = await context.prisma.post.update({
+      const post = await prisma.post.update({
         ...query,
         where: { id: postId },
         data: { viewCount: { increment: 1 } },
@@ -308,7 +309,7 @@ builder.queryField('feedDirect', (t) =>
         ]
       }
 
-      return context.prisma.post.findMany({
+      return prisma.post.findMany({
         ...query,
         where: whereClause,
         orderBy: { createdAt: 'desc' },
@@ -324,7 +325,7 @@ builder.queryField('feedDirect', (t) =>
         ]
       }
 
-      return context.prisma.post.count({ where: whereClause })
+      return prisma.post.count({ where: whereClause })
     },
   })
 )
@@ -339,7 +340,7 @@ builder.queryField('draftsDirect', (t) =>
     resolve: (query, _parent, _args, context) => {
       const userId = requireAuthentication(context)
 
-      return context.prisma.post.findMany({
+      return prisma.post.findMany({
         ...query,
         where: {
           authorId: userId.value,
@@ -351,7 +352,7 @@ builder.queryField('draftsDirect', (t) =>
     totalCount: (_parent, _args, context) => {
       const userId = requireAuthentication(context)
 
-      return context.prisma.post.count({
+      return prisma.post.count({
         where: {
           authorId: userId.value,
           published: false,
@@ -373,7 +374,7 @@ builder.queryField('postDirect', (t) =>
     resolve: async (query, _parent, args, context) => {
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
-      return context.prisma.post.findUnique({
+      return prisma.post.findUnique({
         ...query,
         where: { id: postId },
       })

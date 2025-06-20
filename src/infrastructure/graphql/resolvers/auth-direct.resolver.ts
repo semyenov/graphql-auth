@@ -11,6 +11,7 @@ import type { ILogger } from '../../../core/services/logger.interface'
 import type { IPasswordService } from '../../../core/services/password.service.interface'
 import type { ITokenService } from '../../../core/services/token.service.interface'
 import { AuthenticationError, ConflictError, normalizeError } from '../../../errors'
+import { prisma } from '../../../prisma'
 import { builder } from '../../../schema/builder'
 import { AuthResult, createAuthSuccess } from '../../../schema/result-types'
 import { signToken } from '../../../utils/jwt'
@@ -63,7 +64,7 @@ builder.mutationField('signupDirect', (t) =>
       )
 
       // Check if user already exists
-      const existingUser = await context.prisma.user.findUnique({
+      const existingUser = await prisma.user.findUnique({
         where: { email: args.email },
       })
 
@@ -77,7 +78,7 @@ builder.mutationField('signupDirect', (t) =>
       const hashedPassword = await passwordService.hash(args.password)
 
       // Create user
-      const user = await context.prisma.user.create({
+      const user = await prisma.user.create({
         data: {
           email: args.email,
           password: hashedPassword,
@@ -129,7 +130,7 @@ builder.mutationField('loginDirect', (t) =>
       )
 
       // Find user by email
-      const user = await context.prisma.user.findUnique({
+      const user = await prisma.user.findUnique({
         where: { email: args.email },
       })
 
@@ -169,7 +170,7 @@ builder.queryField('meDirect', (t) =>
         return null
       }
 
-      return context.prisma.user.findUnique({
+      return prisma.user.findUnique({
         ...query,
         where: { id: context.userId.value },
       })
@@ -220,7 +221,7 @@ builder.mutationField('safeSignup', (t) =>
         )
         
         // Check if user already exists
-        const existingUser = await context.prisma.user.findUnique({
+        const existingUser = await prisma.user.findUnique({
           where: { email: args.email },
         })
         
@@ -234,7 +235,7 @@ builder.mutationField('safeSignup', (t) =>
         const hashedPassword = await passwordService.hash(args.password)
         
         // Create user
-        const user = await context.prisma.user.create({
+        const user = await prisma.user.create({
           data: {
             email: args.email,
             password: hashedPassword,
@@ -293,7 +294,7 @@ builder.mutationField('safeLogin', (t) =>
         )
         
         // Find user by email
-        const user = await context.prisma.user.findUnique({
+        const user = await prisma.user.findUnique({
           where: { email: args.email },
         })
         

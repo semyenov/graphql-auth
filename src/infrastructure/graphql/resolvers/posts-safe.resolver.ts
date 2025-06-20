@@ -15,6 +15,7 @@ import { CreatePostInput, PostOrderByInput, PostWhereInput, UpdatePostInput } fr
 import { createDeleteSuccess, createPostSuccess, DeleteResult, PostResult } from '../../../schema/result-types'
 import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
 import { transformOrderBy } from '../../../schema/utils/filter-transform'
+import { prisma } from '../../../prisma'
 
 // Get logger from container
 const getLogger = () => container.resolve<ILogger>('ILogger')
@@ -35,7 +36,7 @@ builder.mutationField('safeCreatePost', (t) =>
         const userId = requireAuthentication(context)
         logger.info('Creating post', { userId: userId.value, title: args.input.title })
 
-        const post = await context.prisma.post.create({
+        const post = await prisma.post.create({
           data: {
             title: args.input.title,
             content: args.input.content || null,
@@ -74,7 +75,7 @@ builder.mutationField('safeUpdatePost', (t) =>
         logger.info('Updating post', { postId, userId: userId.value })
 
         // Check if post exists and user owns it
-        const existingPost = await context.prisma.post.findUnique({
+        const existingPost = await prisma.post.findUnique({
           where: { id: postId },
           select: { authorId: true },
         })
@@ -89,7 +90,7 @@ builder.mutationField('safeUpdatePost', (t) =>
           return new AuthorizationError('You can only modify posts that you have created')
         }
 
-        const post = await context.prisma.post.update({
+        const post = await prisma.post.update({
           where: { id: postId },
           data: {
             ...(args.input.title !== undefined && { title: args.input.title }),
@@ -127,7 +128,7 @@ builder.mutationField('safeDeletePost', (t) =>
         logger.info('Deleting post', { postId, userId: userId.value })
 
         // Check if post exists and user owns it
-        const existingPost = await context.prisma.post.findUnique({
+        const existingPost = await prisma.post.findUnique({
           where: { id: postId },
           select: { authorId: true, title: true },
         })
@@ -142,7 +143,7 @@ builder.mutationField('safeDeletePost', (t) =>
           return new AuthorizationError('You can only delete posts that you have created')
         }
 
-        await context.prisma.post.delete({
+        await prisma.post.delete({
           where: { id: postId },
         })
 
@@ -186,7 +187,7 @@ builder.queryField('optimizedFeed', (t) =>
 
       const orderBy = args.orderBy?.map(transformOrderBy) || [{ createdAt: 'desc' }]
 
-      return context.prisma.post.findMany({
+      return prisma.post.findMany({
         ...query, // Critical for performance - enables field-level optimization
         where: whereClause,
         orderBy,
@@ -211,7 +212,7 @@ builder.queryField('optimizedFeed', (t) =>
         ]
       }
 
-      return context.prisma.post.count({ where: whereClause })
+      return prisma.post.count({ where: whereClause })
     },
   })
 )

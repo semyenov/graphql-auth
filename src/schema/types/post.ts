@@ -1,4 +1,3 @@
-import { type EnhancedContext } from '../../context/enhanced-context-direct';
 import { builder } from '../builder';
 
 // Define Post object type using Relay Node pattern
@@ -59,7 +58,7 @@ export const PostNode = builder.prismaNode('Post', {
         }),
         isOwner: t.boolean({
             description: 'Whether the current user is the owner of this post',
-            resolve: (post, _args, context: EnhancedContext) => {
+            resolve: (post, _args, context) => {
                 return context.userId?.value === post.authorId;
             },
         }),

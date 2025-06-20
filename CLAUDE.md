@@ -27,6 +27,14 @@ bun run clean                          # Clean build directory
 # Code Quality
 bunx tsc --noEmit                      # Type check all files
 bunx prettier --write .                # Format code
+
+# GraphQL Schema
+bun run gen:schema                      # Generate GraphQL schema file
+bunx gql.tada generate-output           # Generate GraphQL type definitions
+
+# Environment & Debugging
+bun run env:verify                      # Verify environment setup
+bun run graphql:examples                # Run GraphQL query examples
 ```
 
 ## Architecture Overview
@@ -35,13 +43,13 @@ bunx prettier --write .                # Format code
 - **Runtime**: Bun (fast JavaScript/TypeScript runtime)
 - **GraphQL Server**: Apollo Server 4 with H3 HTTP framework
 - **Schema Builder**: Pothos with advanced plugin integration:
-  - **Prisma Plugin**: Optimized with DMMF preloading and field-level selection
+  - **Prisma Plugin**: Direct access pattern (NOT in context) for better TypeScript performance
   - **Relay Plugin**: Global IDs, connections with metadata, cursor pagination
   - **Errors Plugin**: Union result types for comprehensive error handling
   - **Scope Auth Plugin**: Dynamic authorization with 14+ scope types
   - **DataLoader Plugin**: Loadable objects for N+1 prevention
   - **Validation Plugin**: Zod integration with async refinements
-- **Database**: Prisma ORM with SQLite (dev.db)
+- **Database**: Prisma ORM with SQLite (dev.db) - accessed directly, not through context
 - **Authentication**: JWT tokens with bcryptjs + refresh token rotation
 - **Authorization**: GraphQL Shield middleware with Pothos Scope Auth
 - **Type Safety**: GraphQL Tada for compile-time GraphQL typing
@@ -198,11 +206,14 @@ errors: {
 - **Advanced DataLoaders**: Entity loaders, count loaders, and relation loaders with configurable batching
 - **Enhanced Validation**: Async refinements with database checks, contextual validation, field dependencies
 
-### 2. Direct Pothos Resolvers (Current Approach)
+### 2. Direct Pothos Resolvers with Direct Prisma Access
 
-The codebase implements business logic directly in Pothos resolvers:
+The codebase implements business logic directly in Pothos resolvers with direct Prisma imports (following Pothos best practices):
 
 ```typescript
+// Import Prisma directly - NOT from context
+import { prisma } from '../../../prisma'
+
 // Direct resolver pattern - business logic in resolver
 builder.mutationField('signupDirect', (t) =>
   t.string({
@@ -214,15 +225,15 @@ builder.mutationField('signupDirect', (t) =>
       name: t.arg.string({ required: false }),
     },
     resolve: async (_parent, args, context: EnhancedContext) => {
-      // Direct business logic implementation
-      const existingUser = await context.prisma.user.findUnique({
+      // Direct business logic implementation with direct Prisma access
+      const existingUser = await prisma.user.findUnique({
         where: { email: args.email },
       })
       if (existingUser) {
         throw new ConflictError('An account with this email already exists')
       }
       const hashedPassword = await passwordService.hash(args.password)
-      const user = await context.prisma.user.create({
+      const user = await prisma.user.create({
         data: { email: args.email, password: hashedPassword, name: args.name },
       })
       return signToken({ userId: user.id, email: user.email })
@@ -230,6 +241,8 @@ builder.mutationField('signupDirect', (t) =>
   })
 )
 ```
+
+**Important**: Following Pothos best practices, Prisma is NOT included in the GraphQL context to improve TypeScript performance and developer experience.
 
 ### 3. Enhanced Relay Implementation
 
@@ -274,15 +287,15 @@ builder.queryField('feed', (t) =>
       const where = transformPostWhereInput(args.where) || { published: true }
       const orderBy = args.orderBy?.map(transformOrderBy) || [{ createdAt: 'desc' }]
       
-      return ctx.prisma.post.findMany({
+      return prisma.post.findMany({
         ...query, // ALWAYS spread query for Prisma optimizations
         where,
         orderBy,
       })
     },
-    totalCount: (parent, args) => {
+    totalCount: (parent, args, ctx) => {
       const where = transformPostWhereInput(args.where) || { published: true }
-      return ctx.prisma.post.count({ where })
+      return prisma.post.count({ where })
     },
   })
 )
@@ -553,6 +566,16 @@ The project has **successfully completed** migration from a layered DDD structur
 - Service orchestration layers
 - GraphQL operation adapters
 
+## Environment Variables
+
+Required environment variables (see `.env.example`):
+```bash
+DATABASE_URL="file:./dev.db"              # SQLite database path
+JWT_SECRET="your-secret-key"              # JWT signing secret
+BCRYPT_ROUNDS=10                          # Password hashing rounds
+NODE_ENV="development"                    # Environment mode
+```
+
 ## Common Development Tasks
 
 ### Adding a New Feature (Direct Resolver Approach)
@@ -621,6 +644,22 @@ const globalId = toPostId(1)
 const numericId = extractNumericId(result.data.post.id)
 ```
 
+### Running a Single Test
+
+```bash
+# Run a specific test file
+bun test test/auth.test.ts
+
+# Run tests matching a pattern
+bun run test -t "should create a new user"
+
+# Run tests with UI
+bun run test:ui
+
+# Run tests with coverage
+bun run test:coverage
+```
+
 ## GraphQL Client Integration
 
 ### GraphQL Operations
@@ -677,3 +716,102 @@ export const searchUsersDirect = builder.queryField('searchUsersDirect', ...)
 - **Test failures**: Check error message changes in constants/index.ts
 - **Relay connections**: Always spread `query` in resolver functions
 - **Direct resolver debugging**: Check grantScopes configuration and context type
+- **Environment verification**: Run `bun run env:verify` to check setup
+- **Schema generation**: Run `bun run gen:schema` to update schema.graphql
+- **Type generation**: Run `bunx gql.tada generate-output` for GraphQL types
+
+## Important Patterns to Remember
+
+### Always Spread Prisma Query Parameter
+When using Pothos with Prisma, ALWAYS spread the `query` parameter first:
+```typescript
+resolve: async (query, _parent, args, context) => {
+  return context.prisma.post.findMany({
+    ...query, // CRITICAL: This enables field-level optimization
+    where: { published: true },
+    orderBy: { createdAt: 'desc' },
+  })
+}
+```
+
+### Error Normalization
+Always normalize errors in catch blocks:
+```typescript
+try {
+  // operation
+} catch (error) {
+  throw normalizeError(error) // Converts unknown errors to BaseError
+}
+```
+
+### Global ID Handling
+Use the centralized relay helpers for consistency:
+```typescript
+import { parseAndValidateGlobalId, encodeGlobalId } from '../../shared/infrastructure/graphql/relay-helpers'
+```
+
+## Sequential Thinking Workflow
+
+This project follows the Context7 sequential thinking approach for complex tasks. When implementing features or solving problems:
+
+1. **Break down the task** into logical, sequential steps
+2. **Complete each step fully** before moving to the next
+3. **Verify each step** works correctly in isolation
+4. **Build incrementally** on verified foundations
+
+Example workflow for adding a new feature:
+```
+Step 1: Update database schema → Verify migration works
+Step 2: Create types and inputs → Verify GraphQL schema compiles  
+Step 3: Implement resolver logic → Verify business logic works
+Step 4: Add permissions → Verify authorization works
+Step 5: Write tests → Verify all tests pass
+Step 6: Update documentation → Verify docs are accurate
+```
+
+This approach ensures robust, well-tested code by validating each component before building on it.
+
+Reference: https://blog.langdb.ai/smarter-coding-workflows-with-context7-sequential-thinking
+
+### Setting up Context7 MCP
+
+Context7 MCP (Model Context Protocol) is already configured for this project. The setup includes:
+
+1. **Installation** (already added to devDependencies):
+   ```bash
+   # Install locally (recommended)
+   bun install
+   
+   # Or install globally
+   bun add -g @context7/mcp-server
+   ```
+
+2. **Claude Desktop Configuration**:
+   Copy the example configuration to your Claude Desktop config:
+   ```bash
+   # Location varies by OS:
+   # macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
+   # Windows: %APPDATA%\Claude\claude_desktop_config.json
+   # Linux: ~/.config/Claude/claude_desktop_config.json
+   ```
+   
+   See `claude-desktop-config.example.json` for the configuration template.
+
+3. **Project Configuration**:
+   The `.context7rc` file is already configured with:
+   - All project patterns (direct resolvers, Prisma, JWT auth, DataLoader, etc.)
+   - Context files including schemas, resolvers, tests, and documentation
+   - Code generation preferences and import paths
+   - Testing patterns and conventions
+
+4. **Usage**:
+   Once configured, Context7 MCP will:
+   - Understand Pothos GraphQL patterns and generate consistent code
+   - Follow Prisma best practices (always spread `query` parameter)
+   - Apply DataLoader patterns for N+1 query prevention
+   - Maintain the established error hierarchy
+   - Use proper Relay conventions for connections and global IDs
+   - Follow JWT authentication patterns with refresh tokens
+
+For detailed setup instructions, see [CONTEXT7.md](./CONTEXT7.md).
+For more information: https://github.com/context7/mcp-server

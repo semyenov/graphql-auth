@@ -1,6 +1,7 @@
 import { ROLE_HIERARCHY } from '../constants'
 import { hasPermission, hasRole, isAuthenticated, requireAuthentication } from '../context/auth'
 import type { EnhancedContext } from '../context/enhanced-context-direct'
+import { prisma } from '../prisma'
 
 /**
  * Permission utility type definition
@@ -30,7 +31,7 @@ async function canModifyPost(context: EnhancedContext, postId: number): Promise<
 
     // Check post ownership directly through Prisma
     // We can't use the GetPostUseCase here because it enforces viewing permissions
-    const post = await context.prisma.post.findUnique({
+    const post = await prisma.post.findUnique({
       where: { id: postId }
     })
 

@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "console-ninja": {
+      "command": "node",
+      "args": [
+        "~/.console-ninja/mcp/"
+      ]
+    },
+    "context7": {
+      "command": "context7-mcp",
+      "args": [
+        "--project",
+        "/Users/aleksandrsemenov/Projects/graphql-auth"
+      ]
+    },
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    }
+  }
+}

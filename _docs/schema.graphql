@@ -1,7 +1,26 @@
+input AdvancedSearchInput {
+  query: String!
+}
+
 """Legacy authentication response"""
 type AuthResponse {
   """JWT access token (deprecated, use AuthTokens instead)"""
   token: String
+}
+
+"""Result of authentication operations (signup/login)"""
+union AuthResult = AuthSuccess | AuthenticationError | ConflictError | RateLimitError | ValidationError
+
+"""Successful authentication result"""
+type AuthSuccess {
+  """Token expiration time"""
+  expiresAt: DateTime
+
+  """JWT authentication token"""
+  token: String
+
+  """The authenticated user"""
+  user: User
 }
 
 """Authentication tokens response"""
@@ -13,12 +32,30 @@ type AuthTokens {
   refreshToken: String
 }
 
+type AuthenticationError {
+  code: String
+  message: String
+  statusCode: Int
+}
+
+type AuthorizationError {
+  code: String
+  message: String
+  statusCode: Int
+}
+
 input BooleanFilter {
   """Exact boolean match"""
   equals: Boolean
 
   """Boolean does not equal this value"""
   not: Boolean
+}
+
+type ConflictError {
+  code: String
+  message: String
+  statusCode: Int
 }
 
 input CreatePostInput {
@@ -28,6 +65,21 @@ input CreatePostInput {
 }
 
 scalar DID
+
+"""Date range"""
+type DateRange {
+  """End date"""
+  end: DateTime
+
+  """Start date"""
+  start: DateTime
+}
+
+"""Date range for filtering"""
+input DateRangeInput {
+  end: DateTime!
+  start: DateTime!
+}
 
 scalar DateTime
 
@@ -46,6 +98,102 @@ input DateTimeFilter {
 
   """Date on or before this value"""
   lte: DateTime
+}
+
+"""Result of delete operations"""
+union DeleteResult = AuthenticationError | AuthorizationError | DeleteSuccess | NotFoundError
+
+"""Successful deletion result"""
+type DeleteSuccess {
+  """ID of the deleted resource"""
+  deletedId: String
+
+  """Deletion confirmation message"""
+  message: String
+
+  """Whether the deletion was successful"""
+  success: Boolean
+}
+
+input EnhancedCreatePostInput {
+  content: String
+  publishAt: DateTime
+  tags: [String!]
+  title: String!
+}
+
+"""Post connection with enhanced metadata"""
+type EnhancedPostConnection {
+  """Number of draft posts in this connection"""
+  draftCount: Int
+  edges: [EnhancedPostEdge]
+
+  """Summary of applied filters"""
+  filterSummary: FilterSummary
+  pageInfo: PageInfo!
+
+  """Number of published posts in this connection"""
+  publishedCount: Int
+
+  """Metadata about the search query if applicable"""
+  searchMetadata: SearchMetadata
+
+  """Total number of posts matching the query"""
+  totalCount: Int
+
+  """Total views across all posts in this connection"""
+  totalViews: Int
+}
+
+type EnhancedPostEdge {
+  cursor: String!
+  node: Post
+}
+
+"""User connection with enhanced metadata"""
+type EnhancedUserConnection {
+  """Number of users with at least one post"""
+  activeUsers: Int
+  edges: [EnhancedUserEdge]
+  pageInfo: PageInfo!
+
+  """Metadata about the search query if applicable"""
+  searchMetadata: SearchMetadata
+
+  """Total number of users matching the query"""
+  totalCount: Int
+
+  """Total posts by all users in this connection"""
+  totalPosts: Int
+}
+
+type EnhancedUserEdge {
+  cursor: String!
+  node: User
+}
+
+"""Information about an applied filter"""
+type FilterInfo {
+  """The field being filtered"""
+  field: String
+
+  """The filter operator (e.g., equals, contains)"""
+  operator: String
+
+  """The filter value as a string"""
+  value: String
+}
+
+"""Summary of filters applied to a query"""
+type FilterSummary {
+  """List of active filters"""
+  activeFilters: [FilterInfo!]
+
+  """Number of active filters"""
+  filterCount: Int
+
+  """Whether any filters are applied"""
+  hasFilters: Boolean
 }
 
 input IntFilter {
@@ -73,6 +221,37 @@ input IntFilter {
 
 scalar JSON
 
+"""Post with automatic batch loading and caching"""
+type LoadablePost {
+  author: User
+  content: String
+  createdAt: DateTime
+  id: ID
+  metadata: PostMetadata
+  published: Boolean
+  title: String
+  updatedAt: DateTime
+  viewCount: Int
+}
+
+"""User with automatic batch loading and caching"""
+type LoadableUser {
+  createdAt: DateTime
+
+  """Number of draft posts"""
+  draftCount: Int
+  email: String
+  name: String
+
+  """Total number of posts by this user"""
+  postCount: Int
+  posts(
+    """Filter posts by published status"""
+    published: Boolean
+  ): [Post!]
+  updatedAt: DateTime
+}
+
 type Mutation {
   """Create a new post"""
   createPostDirect(input: CreatePostInput!): Post
@@ -89,11 +268,35 @@ type Mutation {
   """Authenticate and receive access and refresh tokens"""
   loginWithTokens(email: String!, password: String!): AuthTokens
 
+  """Authenticate and receive access and refresh tokens"""
+  loginWithTokensDirect(email: String!, password: String!): AuthTokens
+
   """Logout user and revoke all refresh tokens"""
   logout: Boolean
 
+  """Logout user and revoke all refresh tokens"""
+  logoutDirect: Boolean
+
   """Refresh access token using a refresh token"""
   refreshToken(refreshToken: String!): AuthTokens
+
+  """Refresh access token using a refresh token"""
+  refreshTokenDirect(refreshToken: String!): AuthTokens
+
+  """Create a post with comprehensive error handling"""
+  safeCreatePost(input: CreatePostInput!): PostResult
+
+  """Delete a post with comprehensive error handling"""
+  safeDeletePost(id: ID!): DeleteResult
+
+  """Authenticate with comprehensive error handling"""
+  safeLogin(email: String!, password: String!): AuthResult
+
+  """Create a new user account with comprehensive error handling"""
+  safeSignup(email: String!, name: String, password: String!): AuthResult
+
+  """Update a post with comprehensive error handling"""
+  safeUpdatePost(id: ID!, input: UpdatePostInput!): PostResult
 
   """Create a new user account"""
   signupDirect(email: String!, name: String, password: String!): String
@@ -110,6 +313,12 @@ type Mutation {
 
 interface Node {
   id: ID!
+}
+
+type NotFoundError {
+  code: String
+  message: String
+  statusCode: Int
 }
 
 scalar ObjectID
@@ -157,12 +366,42 @@ type Post implements Node {
   wordCount: Int
 }
 
+"""Aggregated post analytics"""
+type PostAnalytics {
+  """Average views per post"""
+  averageViews: Int
+
+  """The date range for this analytics data"""
+  dateRange: DateRange
+
+  """Top posts by view count"""
+  topPostsByViews: [PostSummary!]
+
+  """Total number of posts"""
+  totalPosts: Int
+
+  """Total views across all posts"""
+  totalViews: Int
+}
+
 input PostCreateInput {
   """The content/body of the post"""
   content: String
 
   """The title of the post"""
   title: String!
+}
+
+"""Computed metadata for a post"""
+type PostMetadata {
+  """Whether the post has any content"""
+  hasContent: Boolean
+
+  """Estimated reading time in minutes"""
+  readingTime: Int
+
+  """Number of words in the post content"""
+  wordCount: Int
 }
 
 input PostOrderByInput {
@@ -187,6 +426,30 @@ input PostOrderByInput {
 
 input PostOrderByUpdatedAtInput {
   updatedAt: SortOrder!
+}
+
+"""Result of post mutations"""
+union PostResult = AuthenticationError | AuthorizationError | NotFoundError | PostSuccess | ValidationError
+
+"""Successful post operation result"""
+type PostSuccess {
+  """Success message"""
+  message: String
+
+  """The post that was created/updated"""
+  post: Post
+}
+
+"""Summary information about a post"""
+type PostSummary {
+  """Post ID"""
+  id: ID
+
+  """Post title"""
+  title: String
+
+  """Number of views"""
+  viewCount: Int
 }
 
 input PostUpdateInput {
@@ -224,14 +487,70 @@ input PostWhereInput {
 }
 
 type Query {
+  """Load multiple users efficiently with DataLoader"""
+  batchUsers(ids: [ID!]!): [LoadableUser!]
+
   """Get draft posts for the authenticated user"""
   draftsDirect(after: String, before: String, first: Int, last: Int): QueryDraftsDirectConnection
+
+  """Advanced feed with metadata, search, and filtering"""
+  enhancedFeed(
+    after: String
+    first: Int
+    orderBy: [PostOrderByInput!]
+
+    """Search posts by title or content"""
+    searchTerm: String
+    where: PostWhereInput
+  ): EnhancedPostConnection
+
+  """User search with aggregated metadata"""
+  enhancedUserSearch(
+    after: String
+    first: Int
+
+    """Include post statistics in results"""
+    includePostStats: Boolean = false
+
+    """Search users by name or email"""
+    searchTerm: String!
+  ): EnhancedUserConnection
 
   """Get published posts with optional search"""
   feedDirect(after: String, before: String, first: Int, last: Int, searchString: String): QueryFeedDirectConnection
 
+  """Get a post using DataLoader for efficient loading"""
+  loadablePost(id: ID!): LoadablePost
+
+  """Get a user using DataLoader for efficient loading"""
+  loadableUser(id: ID!): LoadableUser
+
   """Get the currently authenticated user"""
   meDirect: User
+
+  """Optimized feed query with proper Prisma integration"""
+  optimizedFeed(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    limit: Int
+    offset: Int
+    orderBy: PostOrderByInput
+
+    """Search posts by title or content"""
+    searchString: String
+    where: PostWhereInput
+  ): QueryOptimizedFeedConnection
+
+  """Get aggregated analytics for posts"""
+  postAnalytics(
+    authorId: ID
+
+    """Filter by date range"""
+    dateRange: DateRangeInput
+    published: Boolean
+  ): PostAnalytics
 
   """Get a post by ID"""
   postDirect(id: ID!): Post
@@ -268,6 +587,17 @@ type QueryFeedDirectConnectionEdge {
   node: Post
 }
 
+type QueryOptimizedFeedConnection {
+  edges: [QueryOptimizedFeedConnectionEdge]
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type QueryOptimizedFeedConnectionEdge {
+  cursor: String!
+  node: Post
+}
+
 type QuerySearchUsersDirectConnection {
   edges: [QuerySearchUsersDirectConnectionEdge]
   pageInfo: PageInfo!
@@ -288,6 +618,25 @@ type QueryUsersDirectConnection {
 type QueryUsersDirectConnectionEdge {
   cursor: String!
   node: User
+}
+
+type RateLimitError {
+  code: String
+  message: String
+  retryAfter: Int
+  statusCode: Int
+}
+
+"""Metadata about a search query"""
+type SearchMetadata {
+  """Fields that were searched"""
+  matchedFields: [String!]
+
+  """The search query string"""
+  query: String
+
+  """Time taken to execute the search in milliseconds"""
+  searchTime: Float
 }
 
 enum SortOrder {
@@ -312,6 +661,21 @@ input StringFilter {
   startsWith: String
 }
 
+"""Result of token refresh operations"""
+union TokenRefreshResult = AuthenticationError | TokenRefreshSuccess | ValidationError
+
+"""Successful token refresh result"""
+type TokenRefreshSuccess {
+  """New JWT access token"""
+  accessToken: String
+
+  """Access token expiration time"""
+  expiresAt: DateTime
+
+  """New refresh token"""
+  refreshToken: String
+}
+
 scalar UUID
 
 input UpdatePostInput {
@@ -326,6 +690,8 @@ input UpdateUserInput {
 }
 
 type User implements Node {
+  createdAt: DateTime
+
   """Number of unpublished posts by this user"""
   draftsCount: Int
   email: String
@@ -360,6 +726,7 @@ type User implements Node {
 
   """Number of published posts by this user"""
   publishedPostsCount: Int
+  updatedAt: DateTime
 }
 
 input UserOrderByInput {
@@ -395,9 +762,21 @@ type UserPostsDirectConnectionEdge {
   node: Post
 }
 
+"""Result of user mutations"""
+union UserResult = AuthenticationError | ConflictError | UserSuccess | ValidationError
+
 input UserSearchInput {
   """Search query"""
   query: String
+}
+
+"""Successful user operation result"""
+type UserSuccess {
+  """Success message"""
+  message: String
+
+  """The user that was created/updated"""
+  user: User
 }
 
 input UserUniqueInput {
@@ -414,4 +793,10 @@ input UserWhereInput {
 
   """Filter users by name"""
   name: StringFilter
+}
+
+type ValidationError {
+  code: String
+  message: String
+  statusCode: Int
 }

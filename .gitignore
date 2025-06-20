@@ -3,3 +3,6 @@ dist/
 src/generated/
 *.env*
 *.db
+
+# Claude Desktop configuration (contains API keys)
+claude_desktop_config.json

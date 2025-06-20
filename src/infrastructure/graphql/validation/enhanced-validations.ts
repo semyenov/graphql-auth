@@ -304,7 +304,7 @@ export function createContextualValidation<T>(
 //     },
 //     resolve: async (_parent, args, context) => {
 //       // Implementation here
-//       return context.prisma.post.create({
+//       return prisma.post.create({
 //         data: {
 //           title: args.input.title,
 //           content: args.input.content,

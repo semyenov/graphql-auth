@@ -9,6 +9,7 @@ import type { Post, User } from '@prisma/client'
 import DataLoader from 'dataloader'
 import { NotFoundError } from '../errors'
 import { builder } from './builder'
+import { prisma } from '../prisma'
 
 /**
  * LoadableUser - User object with automatic batch loading
@@ -22,7 +23,7 @@ export const LoadableUser = builder.loadableObject('LoadableUser', {
   description: 'User with automatic batch loading and caching',
   load: async (ids: number[], context) => {
     // Batch load users by IDs
-    const users = await context.prisma.user.findMany({
+    const users = await prisma.user.findMany({
       where: { id: { in: ids } }
     })
 
@@ -114,7 +115,7 @@ export const LoadablePost = builder.loadableObject('LoadablePost', {
   description: 'Post with automatic batch loading and caching',
   load: async (ids: number[], context) => {
     // Batch load posts by IDs
-    const posts = await context.prisma.post.findMany({
+    const posts = await prisma.post.findMany({
       where: { id: { in: ids } }
     })
 

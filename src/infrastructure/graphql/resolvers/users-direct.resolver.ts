@@ -14,6 +14,7 @@ import { builder } from '../../../schema/builder'
 import { UserOrderByInput, UserWhereInput } from '../../../schema/inputs'
 import { transformOrderBy, transformUserWhereInput } from '../../../schema/utils/filter-transform'
 import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
+import { prisma } from '../../../prisma'
 
 // Get logger from container
 const getLogger = () => container.resolve<ILogger>('ILogger')
@@ -34,7 +35,7 @@ builder.queryField('userDirect', (t) =>
 
       logger.info('Fetching user by ID', { userId })
 
-      const user = await context.prisma.user.findUnique({
+      const user = await prisma.user.findUnique({
         ...query,
         where: { id: userId },
       })
@@ -61,7 +62,7 @@ builder.queryField('usersDirect', (t) =>
       orderBy: t.arg({ type: UserOrderByInput, required: false }),
     },
     resolve: (query, _parent, args, context) => {
-      return context.prisma.user.findMany({
+      return prisma.user.findMany({
         ...query,
         where: args.where ? transformUserWhereInput(args.where) : undefined,
         orderBy: args.orderBy ? transformOrderBy(args.orderBy) : { id: 'asc' },
@@ -69,7 +70,7 @@ builder.queryField('usersDirect', (t) =>
     },
     totalCount: (_parent, args, context) => {
       const whereClause = args.where ? transformUserWhereInput(args.where) : undefined
-      return context.prisma.user.count({ where: whereClause })
+      return prisma.user.count({ where: whereClause })
     },
   })
 )
@@ -93,7 +94,7 @@ builder.queryField('searchUsersDirect', (t) =>
       const logger = getLogger().child({ resolver: 'searchUsersDirect' })
       logger.info('Searching users', { searchTerm: args.search })
 
-      return context.prisma.user.findMany({
+      return prisma.user.findMany({
         ...query,
         where: {
           OR: [
@@ -105,7 +106,7 @@ builder.queryField('searchUsersDirect', (t) =>
       })
     },
     totalCount: (_parent, args, context) => {
-      return context.prisma.user.count({
+      return prisma.user.count({
         where: {
           OR: [
             { name: { contains: args.search } },
@@ -140,7 +141,7 @@ builder.prismaObjectField('User', 'postCount', (t) =>
   t.int({
     description: 'Total number of posts by this user',
     resolve: async (user, _args, context) => {
-      return context.prisma.post.count({
+      return prisma.post.count({
         where: { authorId: user.id },
       })
     },
@@ -151,7 +152,7 @@ builder.prismaObjectField('User', 'publishedPostCount', (t) =>
   t.int({
     description: 'Number of published posts by this user',
     resolve: async (user, _args, context) => {
-      return context.prisma.post.count({
+      return prisma.post.count({
         where: {
           authorId: user.id,
           published: true,
@@ -201,7 +202,7 @@ builder.mutationField('updateUserProfile', (t) =>
       if (args.input.name !== undefined) updateData.name = args.input.name
       if (args.input.email !== undefined) {
         // Check if email is already taken
-        const existingUser = await context.prisma.user.findUnique({
+        const existingUser = await prisma.user.findUnique({
           where: { email: args.input.email ?? undefined },
           select: { id: true },
         })
@@ -213,7 +214,7 @@ builder.mutationField('updateUserProfile', (t) =>
         updateData.email = args.input.email
       }
 
-      const user = await context.prisma.user.update({
+      const user = await prisma.user.update({
         ...query,
         where: { id: userId.value },
         data: updateData,

@@ -6,6 +6,7 @@
 
 import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import { builder } from '../../../schema/builder'
+import { prisma } from '../../../prisma'
 
 // Enhanced PageInfo with additional metadata
 export const EnhancedPageInfo = builder.objectType('EnhancedPageInfo', {
@@ -124,7 +125,7 @@ export const EnhancedUserConnection = builder.connectionObject({
         }
         
         // Fallback to direct query
-        const result = await context.prisma.post.aggregate({
+        const result = await prisma.post.aggregate({
           where: { authorId: { in: userIds } },
           _count: { id: true },
         })
@@ -147,7 +148,7 @@ export const EnhancedUserConnection = builder.connectionObject({
         }
         
         // Fallback to direct query
-        const activeUsers = await context.prisma.user.findMany({
+        const activeUsers = await prisma.user.findMany({
           where: {
             id: { in: userIds },
             posts: {

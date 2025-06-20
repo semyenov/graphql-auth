@@ -1,5 +1,6 @@
 import type { EnhancedContext } from '../../context/enhanced-context-direct';
-import { builder } from '../builder';
+import { builder } from '../builder'
+import { prisma } from '../../prisma';
 
 // Define User object type using Relay Node pattern with DataLoader optimizations
 builder.prismaNode('User', {
@@ -39,7 +40,7 @@ builder.prismaNode('User', {
                     return context.loaders.draftPostsCountByAuthor.load(user.id);
                 }
                 // Fallback to direct count
-                return context.prisma.post.count({
+                return prisma.post.count({
                     where: { authorId: user.id, published: false }
                 });
             },
@@ -52,7 +53,7 @@ builder.prismaNode('User', {
                     return context.loaders.publishedPostsCountByAuthor.load(user.id);
                 }
                 // Fallback to direct count
-                return context.prisma.post.count({
+                return prisma.post.count({
                     where: { authorId: user.id, published: true }
                 });
             },

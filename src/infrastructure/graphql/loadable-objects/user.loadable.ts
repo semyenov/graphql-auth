@@ -7,13 +7,14 @@
 import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import { builder } from '../../../schema/builder'
 import { LoadablePost } from './post.loadable'
+import { prisma } from '../../../prisma'
 
 // Loadable User object using Pothos DataLoader plugin
 export const LoadableUser = builder.loadableObject('LoadableUser', {
   description: 'User loaded via DataLoader for optimal performance',
   load: async (ids: number[], context: EnhancedContext) => {
     // Batch load users by IDs
-    const users = await context.prisma.user.findMany({
+    const users = await prisma.user.findMany({
       where: { id: { in: ids } },
       // Select only needed fields to optimize query
       select: {
@@ -43,7 +44,7 @@ export const LoadableUser = builder.loadableObject('LoadableUser', {
       load: async (ids: number[], context: EnhancedContext) => {
         const userIds = ids
 
-        const posts = await context.prisma.post.findMany({
+        const posts = await prisma.post.findMany({
           where: { authorId: { in: userIds } },
           orderBy: { createdAt: 'desc' },
           select: {
@@ -81,7 +82,7 @@ export const LoadableUser = builder.loadableObject('LoadableUser', {
           return context.loaders.postCountByAuthor.load(user.id)
         }
 
-        return context.prisma.post.count({
+        return prisma.post.count({
           where: { authorId: user.id }
         })
       },
@@ -98,7 +99,7 @@ export const LoadableUser = builder.loadableObject('LoadableUser', {
           return context.loaders.publishedPostCountByAuthor.load(user.id)
         }
 
-        return context.prisma.post.count({
+        return prisma.post.count({
           where: { authorId: user.id, published: true }
         })
       },
@@ -115,7 +116,7 @@ export const LoadableUser = builder.loadableObject('LoadableUser', {
           return context.loaders.draftPostsCountByAuthor.load(user.id)
         }
 
-        return context.prisma.post.count({
+        return prisma.post.count({
           where: { authorId: user.id, published: false }
         })
       },

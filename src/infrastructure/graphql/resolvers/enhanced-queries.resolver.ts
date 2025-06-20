@@ -15,6 +15,7 @@ import { createEnhancedConnection, EnhancedPostConnection, EnhancedUserConnectio
 import { LoadablePost, LoadableUser } from '../../../schema/loadable-objects'
 import { transformOrderBy, transformPostWhereInput } from '../../../schema/utils/filter-transform'
 import { parseAndValidateGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
+import { prisma } from '../../../prisma'
 
 // Enhanced feed query with metadata and performance tracking
 builder.queryField('enhancedFeed', (t) =>
@@ -51,11 +52,11 @@ builder.queryField('enhancedFeed', (t) =>
       const orderBy = args.orderBy?.map(transformOrderBy) || [{ createdAt: 'desc' }]
 
       // Get total count
-      const totalCount = await context.prisma.post.count({ where })
+      const totalCount = await prisma.post.count({ where })
 
       // Get posts with cursor pagination
       const limit = args.first || 10
-      const posts = await context.prisma.post.findMany({
+      const posts = await prisma.post.findMany({
         where,
         orderBy,
         take: limit + 1, // Take one extra to check hasNextPage
@@ -129,10 +130,10 @@ builder.queryField('enhancedUserSearch', (t) =>
         ]
       }
 
-      const totalCount = await context.prisma.user.count({ where })
+      const totalCount = await prisma.user.count({ where })
 
       const limit = args.first || 10
-      const users = await context.prisma.user.findMany({
+      const users = await prisma.user.findMany({
         where,
         take: limit + 1,
         cursor: args.after ? { id: args.after } : undefined,
@@ -260,16 +261,16 @@ builder.queryField('postAnalytics', (t) =>
 
       // Aggregate data
       const [totalPosts, totalViews, avgViews, topPosts] = await Promise.all([
-        context.prisma.post.count({ where }),
-        context.prisma.post.aggregate({
+        prisma.post.count({ where }),
+        prisma.post.aggregate({
           where,
           _sum: { viewCount: true }
         }),
-        context.prisma.post.aggregate({
+        prisma.post.aggregate({
           where,
           _avg: { viewCount: true }
         }),
-        context.prisma.post.findMany({
+        prisma.post.findMany({
           where,
           orderBy: { viewCount: 'desc' },
           take: 5,

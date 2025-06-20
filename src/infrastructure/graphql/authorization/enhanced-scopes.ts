@@ -6,6 +6,7 @@
 
 import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
+import { prisma } from '../../../prisma'
 
 // Enhanced scope types for better type safety
 export interface EnhancedAuthScopes {
@@ -44,8 +45,8 @@ export function createEnhancedAuthScopes(context: EnhancedContext): EnhancedAuth
   return {
     // Basic scopes
     public: true,
-    authenticated: () => !!context.userId,
-    admin: () => context.user?.role === 'admin',
+    authenticated: !!context.userId,
+    admin: context.user?.role === 'admin',
     
     // Resource ownership scopes with caching
     postOwner: async (postId: string | number) => {
@@ -60,7 +61,7 @@ export function createEnhancedAuthScopes(context: EnhancedContext): EnhancedAuth
       }
       
       // Fallback to direct query
-      const post = await context.prisma.post.findUnique({
+      const post = await prisma.post.findUnique({
         where: { id: numericPostId },
         select: { authorId: true },
       })
@@ -79,7 +80,7 @@ export function createEnhancedAuthScopes(context: EnhancedContext): EnhancedAuth
       
       // Check user permissions from database or cache
       // This could be extended to use a proper permission system
-      const user = await context.prisma.user.findUnique({
+      const user = await prisma.user.findUnique({
         where: { id: context.userId.value },
         select: { role: true }, // Assuming role-based permissions for now
       })
@@ -117,7 +118,7 @@ export function createEnhancedAuthScopes(context: EnhancedContext): EnhancedAuth
         // Check if content is public
         if (contentType === 'Post') {
           const numericId = typeof contentId === 'string' ? parseGlobalId(contentId, 'Post') : contentId
-          const post = await context.prisma.post.findUnique({
+          const post = await prisma.post.findUnique({
             where: { id: numericId },
             select: { published: true },
           })
@@ -154,19 +155,19 @@ export function createEnhancedAuthScopes(context: EnhancedContext): EnhancedAuth
       const scopes = createEnhancedAuthScopes(context)
       
       // Admin can delete anything
-      if (await scopes.admin()) return true
+      if (scopes.admin) return true
       
       // Owner can delete their own content
       return await scopes.canEditContent(contentType, contentId)
     },
     
     // Time-based authorization
-    withinTimeLimit: async (action: string, timeLimit: number) => {
+    withinTimeLimit: async (_action: string, _timeLimit: number) => {
       if (!context.userId) return false
       
       // Check when user last performed this action
       // This is a simplified example - you'd want a proper tracking system
-      const lastAction = await context.prisma.user.findUnique({
+      const lastAction = await prisma.user.findUnique({
         where: { id: context.userId.value },
         select: { updatedAt: true }, // Using updatedAt as proxy
       })
@@ -178,7 +179,7 @@ export function createEnhancedAuthScopes(context: EnhancedContext): EnhancedAuth
     },
     
     // Rate limiting integration
-    withinRateLimit: async (action: string, limit: number, window: number) => {
+    withinRateLimit: async (_action: string, _limit: number, _window: number) => {
       if (!context.userId) return false
       
       // This would integrate with your rate limiting system
@@ -190,7 +191,7 @@ export function createEnhancedAuthScopes(context: EnhancedContext): EnhancedAuth
     canAccessIfPublic: async (resourceType: string, resourceId: string | number) => {
       if (resourceType === 'Post') {
         const numericId = typeof resourceId === 'string' ? parseGlobalId(resourceId, 'Post') : resourceId
-        const post = await context.prisma.post.findUnique({
+        const post = await prisma.post.findUnique({
           where: { id: numericId },
           select: { published: true },
         })
@@ -234,7 +235,7 @@ export class ScopeLoader {
       return postIds.map(() => false)
     }
     
-    const posts = await this.context.prisma.post.findMany({
+    const posts = await prisma.post.findMany({
       where: { id: { in: postIds } },
       select: { id: true, authorId: true },
     })
@@ -251,7 +252,7 @@ export class ScopeLoader {
       return permissions.map(() => false)
     }
     
-    const user = await this.context.prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: this.context.userId.value },
       select: { role: true },
     })

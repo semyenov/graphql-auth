@@ -6,6 +6,7 @@
 
 import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import { builder } from '../../../schema/builder'
+import { prisma } from '../../../prisma'
 
 // Loadable Post object using Pothos DataLoader plugin
 export const LoadablePost = builder.loadableObject('LoadablePost', {
@@ -13,7 +14,7 @@ export const LoadablePost = builder.loadableObject('LoadablePost', {
   description: 'Post loaded via DataLoader for optimal performance',
   load: async (ids: number[], context: EnhancedContext) => {
     // Batch load posts by IDs
-    const posts = await context.prisma.post.findMany({
+    const posts = await prisma.post.findMany({
       where: { id: { in: ids } },
       select: {
         id: true,
@@ -54,7 +55,7 @@ export const LoadablePost = builder.loadableObject('LoadablePost', {
 
         // Fallback to original loader or direct query
         return context.loaders?.userById?.load(id) ||
-          context.prisma.user.findUnique({ where: { id } })
+          prisma.user.findUnique({ where: { id } })
       },
       resolve: (author) => author,
     }),

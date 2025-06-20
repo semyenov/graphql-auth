@@ -1,0 +1,90 @@
+{
+  "project": "graphql-auth",
+  "framework": "pothos-graphql",
+  "runtime": "bun",
+  "database": "prisma-sqlite",
+  "patterns": [
+    "direct-resolvers",
+    "prisma-orm",
+    "jwt-auth",
+    "graphql-shield",
+    "relay-connections",
+    "dataloader",
+    "zod-validation",
+    "refresh-tokens",
+    "scope-auth",
+    "union-result-types"
+  ],
+  "contextFiles": [
+    "CLAUDE.md",
+    "CONTEXT7.md",
+    "src/schema/**/*.ts",
+    "src/infrastructure/graphql/resolvers/**/*.ts",
+    "src/infrastructure/graphql/dataloaders/**/*.ts",
+    "src/permissions/**/*.ts",
+    "src/context/**/*.ts",
+    "src/errors/**/*.ts",
+    "test/**/*.test.ts",
+    "test/test-utils.ts",
+    "prisma/schema.prisma"
+  ],
+  "conventions": {
+    "fileNaming": "kebab-case",
+    "resolverNaming": "direct-suffix",
+    "globalIds": "relay-base64",
+    "errorHandling": "normalized-errors",
+    "authentication": "jwt-bearer"
+  },
+  "sequentialThinking": {
+    "enabled": true,
+    "verifySteps": true,
+    "testDriven": true
+  },
+  "codeGeneration": {
+    "preferredPatterns": [
+      "always-spread-prisma-query",
+      "use-enhanced-context",
+      "throw-normalized-errors",
+      "grant-scopes-authorization",
+      "use-dataloader-for-relations",
+      "union-types-for-safe-mutations"
+    ],
+    "imports": {
+      "relayHelpers": "../../shared/infrastructure/graphql/relay-helpers",
+      "context": "../../../context",
+      "errors": "../../../errors",
+      "dataloaders": "../../../infrastructure/graphql/dataloaders"
+    }
+  },
+  "testing": {
+    "framework": "vitest",
+    "utilities": "test/test-utils.ts",
+    "patterns": [
+      "isolated-db-per-file",
+      "typed-graphql-operations",
+      "global-id-conversion"
+    ]
+  },
+  "dependencies": {
+    "core": [
+      "@apollo/server",
+      "@pothos/core",
+      "@pothos/plugin-prisma",
+      "@pothos/plugin-relay",
+      "@pothos/plugin-dataloader",
+      "@pothos/plugin-errors",
+      "@pothos/plugin-scope-auth",
+      "@pothos/plugin-validation",
+      "graphql-shield",
+      "prisma",
+      "jsonwebtoken",
+      "bcryptjs"
+    ],
+    "dev": [
+      "vitest",
+      "typescript",
+      "@types/node",
+      "@types/bun"
+    ]
+  }
+}
