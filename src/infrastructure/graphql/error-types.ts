@@ -4,19 +4,25 @@
  * Implements error types for the Pothos Errors plugin
  */
 
-import { builder } from '../../schema/builder';
 import {
-    ValidationError,
     AuthenticationError,
     AuthorizationError,
+    BaseError,
+    ConflictError,
     NotFoundError,
-    ConflictError
+    ValidationError
 } from '../../errors';
+import { builder } from '../../graphql/schema/builder';
 
 // Base error interface
-const BaseErrorInterface = builder.interfaceRef<Error>('BaseError').implement({
+const BaseErrorInterface = builder.interfaceRef<BaseError>('BaseError').implement({
+    name: 'BaseError',
     fields: (t) => ({
         message: t.exposeString('message'),
+        code: t.exposeString('code'),
+        identifier: t.exposeString('identifier', { nullable: true }),
+        resource: t.exposeString('resource', { nullable: true }),
+        statusCode: t.exposeInt('statusCode', { nullable: true }),
     }),
 });
 
@@ -24,61 +30,28 @@ const BaseErrorInterface = builder.interfaceRef<Error>('BaseError').implement({
 builder.objectType(ValidationError, {
     name: 'ValidationError',
     interfaces: [BaseErrorInterface],
-    fields: (t) => ({
-        code: t.string({ 
-            resolve: () => 'VALIDATION_ERROR' 
-        }),
-        errors: t.field({
-            type: 'JSON',
-            nullable: true,
-            resolve: (error) => error.errors,
-        }),
-    }),
 });
 
 // Implement AuthenticationError
 builder.objectType(AuthenticationError, {
     name: 'AuthenticationError',
     interfaces: [BaseErrorInterface],
-    fields: (t) => ({
-        code: t.string({ 
-            resolve: () => 'UNAUTHENTICATED' 
-        }),
-    }),
 });
 
 // Implement AuthorizationError
 builder.objectType(AuthorizationError, {
     name: 'AuthorizationError',
     interfaces: [BaseErrorInterface],
-    fields: (t) => ({
-        code: t.string({ 
-            resolve: () => 'FORBIDDEN' 
-        }),
-    }),
 });
 
 // Implement NotFoundError
 builder.objectType(NotFoundError, {
     name: 'NotFoundError',
     interfaces: [BaseErrorInterface],
-    fields: (t) => ({
-        code: t.string({ 
-            resolve: () => 'NOT_FOUND' 
-        }),
-        resource: t.exposeString('resource', { nullable: true }),
-        identifier: t.exposeString('identifier', { nullable: true }),
-    }),
 });
 
 // Implement ConflictError
 builder.objectType(ConflictError, {
     name: 'ConflictError',
     interfaces: [BaseErrorInterface],
-    fields: (t) => ({
-        code: t.string({ 
-            resolve: () => 'CONFLICT' 
-        }),
-        field: t.exposeString('field', { nullable: true }),
-    }),
 });

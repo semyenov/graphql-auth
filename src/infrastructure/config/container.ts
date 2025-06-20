@@ -14,8 +14,8 @@ import { ILogger } from '../../core/services/logger.interface'
 import { IPasswordService } from '../../core/services/password.service.interface'
 
 // Infrastructure implementations
-import { BcryptPasswordService } from '../auth/bcrypt-password.service'
-import { LoggerFactory } from '../logging/logger-factory'
+import { BcryptPasswordService } from '../../modules/auth/services/password.service'
+import { LoggerFactory } from '../../core/logging/logger-factory'
 
 // Feature-based implementations (for refresh tokens)
 import { RefreshTokenRepository } from '../../data/repositories/refresh-token.repository'

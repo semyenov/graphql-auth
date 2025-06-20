@@ -5,13 +5,16 @@
  */
 
 import { PrismaClient, RefreshToken } from '@prisma/client'
-import { injectable, inject } from 'tsyringe'
+import { inject, injectable } from 'tsyringe'
+import { BaseRepository } from './base'
 
 @injectable()
-export class RefreshTokenRepository {
+export class RefreshTokenRepository extends BaseRepository {
     constructor(
-        @inject('PrismaClient') private readonly prisma: PrismaClient
-    ) {}
+        @inject('PrismaClient') db: PrismaClient,
+    ) {
+        super(db)
+    }
 
     /**
      * Create a new refresh token
@@ -21,7 +24,7 @@ export class RefreshTokenRepository {
         userId: number
         expiresAt: Date
     }): Promise<RefreshToken> {
-        return this.prisma.refreshToken.create({
+        return this.db.refreshToken.create({
             data
         })
     }
@@ -30,7 +33,7 @@ export class RefreshTokenRepository {
      * Find a refresh token by token value
      */
     async findByToken(token: string): Promise<RefreshToken | null> {
-        return this.prisma.refreshToken.findUnique({
+        return this.db.refreshToken.findUnique({
             where: { token },
             include: { user: true }
         })
@@ -40,7 +43,7 @@ export class RefreshTokenRepository {
      * Delete a refresh token
      */
     async delete(id: string): Promise<void> {
-        await this.prisma.refreshToken.delete({
+        await this.db.refreshToken.delete({
             where: { id }
         })
     }
@@ -49,7 +52,7 @@ export class RefreshTokenRepository {
      * Delete all refresh tokens for a user
      */
     async deleteAllForUser(userId: number): Promise<void> {
-        await this.prisma.refreshToken.deleteMany({
+        await this.db.refreshToken.deleteMany({
             where: { userId }
         })
     }
@@ -58,7 +61,7 @@ export class RefreshTokenRepository {
      * Delete expired refresh tokens
      */
     async deleteExpired(): Promise<void> {
-        await this.prisma.refreshToken.deleteMany({
+        await this.db.refreshToken.deleteMany({
             where: {
                 expiresAt: {
                     lt: new Date()
@@ -71,7 +74,7 @@ export class RefreshTokenRepository {
      * Count refresh tokens for a user
      */
     async countForUser(userId: number): Promise<number> {
-        return this.prisma.refreshToken.count({
+        return this.db.refreshToken.count({
             where: { userId }
         })
     }

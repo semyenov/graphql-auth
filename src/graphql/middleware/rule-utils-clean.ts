@@ -10,7 +10,7 @@ import { AuthenticationError, AuthorizationError, ValidationError } from '../../
  */
 export function validateResourceId(id: unknown, resourceType: string): asserts id is string {
   if (!id || typeof id !== 'string') {
-    throw new ValidationError([`Valid ${resourceType} ID is required`])
+    throw new ValidationError(resourceType, id as string, `Valid ${resourceType} ID is required`)
   }
 }
 

@@ -6,16 +6,16 @@
 
 import { container } from 'tsyringe'
 import { z } from 'zod'
-import { requireAuthentication } from '../guards/auth.guards'
 import type { ILogger } from '../../../core/services/logger.interface'
 import type { IPasswordService } from '../../../core/services/password.service.interface'
 import { AuthenticationError, normalizeError } from '../../../errors'
-import { TokenService } from '../services/token.service'
-import { prisma } from '../../../prisma'
 import { builder } from '../../../graphql/schema/builder'
+import { commonValidations } from '../../../graphql/schema/helpers'
+import { applyRateLimit, createRateLimitConfig } from '../../../graphql/schema/plugins/rate-limit.plugin'
 import { RateLimitPresets } from '../../../infrastructure/services/rate-limiter.service'
-import { commonValidations } from '../../../infrastructure/graphql/pothos-helpers'
-import { applyRateLimit, createRateLimitConfig } from '../../../infrastructure/graphql/rate-limit-plugin'
+import { prisma } from '../../../prisma'
+import { requireAuthentication } from '../guards/auth.guards'
+import { TokenService } from '../services/token.service'
 import { AuthTokensType } from '../types/auth.types'
 
 // Get services from container
@@ -111,7 +111,7 @@ builder.mutationField('refreshToken', (t) =>
         },
       }),
     },
-    resolve: async (_parent, args, context) => {
+    resolve: async (_parent, args, _context) => {
       const logger = getLogger().child({ resolver: 'refreshToken' })
       logger.info('Token refresh attempt')
 

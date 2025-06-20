@@ -1,5 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client'
-import { DatabaseClient } from '../client'
+import { prisma } from '../../prisma'
 
 /**
  * Base repository class that provides common database operations
@@ -10,7 +10,7 @@ export abstract class BaseRepository {
 
   constructor(dbClient?: PrismaClient) {
     // Allow dependency injection for testing, otherwise use singleton
-    this.db = dbClient || DatabaseClient.getClient()
+    this.db = dbClient || prisma
   }
 
   /**

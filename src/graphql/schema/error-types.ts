@@ -2,15 +2,15 @@
  * Error type definitions for Pothos Errors plugin
  */
 
-import { builder } from './builder'
 import {
   AuthenticationError,
   AuthorizationError,
   ConflictError,
   NotFoundError,
-  ValidationError,
   RateLimitError,
+  ValidationError,
 } from '../../errors'
+import { builder } from './builder'
 
 // Register error types with the builder
 builder.objectType(AuthenticationError, {

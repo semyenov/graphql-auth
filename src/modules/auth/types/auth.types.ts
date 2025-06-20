@@ -6,8 +6,21 @@
 
 import { builder } from '../../../graphql/schema/builder';
 
+export class AuthTokens {
+    constructor(
+        public readonly accessToken: string,
+        public readonly refreshToken: string
+    ) { }
+}
+
+export class AuthResponse {
+    constructor(
+        public readonly token: string
+    ) { }
+}
+
 // Auth tokens response type
-export const AuthTokensType = builder.objectType(class AuthTokens {}, {
+export const AuthTokensType = builder.objectType(AuthTokens, {
     name: 'AuthTokens',
     description: 'Authentication tokens response',
     fields: (t) => ({
@@ -21,7 +34,7 @@ export const AuthTokensType = builder.objectType(class AuthTokens {}, {
 })
 
 // For backward compatibility
-export const AuthResponseType = builder.objectType(class AuthResponse {}, {
+export const AuthResponseType = builder.objectType(AuthResponse, {
     name: 'AuthResponse',
     description: 'Legacy authentication response',
     fields: (t) => ({

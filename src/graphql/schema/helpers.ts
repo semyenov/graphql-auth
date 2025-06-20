@@ -4,12 +4,12 @@
  * Provides reusable patterns and utilities for Pothos schema building
  */
 
-import type { FieldRef, InputFieldMap, InputFieldRef, SchemaTypes } from '@pothos/core';
+import type { FieldRef, InputFieldBuilder, InputFieldMap, InputFieldRef, SchemaTypes } from '@pothos/core';
 import type PrismaTypes from '@pothos/plugin-prisma/generated';
 import { z } from 'zod';
 import type { Context } from '../../context/context-direct';
 import { AuthenticationError } from '../../errors';
-import { builder } from '../../graphql/schema/builder';
+import { builder } from './builder';
 
 /**
  * Creates a mutation field that requires authentication
@@ -21,7 +21,7 @@ export function createAuthenticatedMutation<TArgs extends Record<string, unknown
         resolve: (args: TArgs, context: Context) => Promise<TReturn> | TReturn;
         type: string | FieldRef<SchemaTypes>;
         errors?: Array<typeof Error>;
-        args: (t: typeof builder['args']) => InputFieldMap;
+        args: (t: InputFieldBuilder<SchemaTypes>) => InputFieldMap;
     }
 ) {
     return builder.mutationField(name, (t) =>
@@ -53,7 +53,7 @@ export function createPrismaConnection<TModel extends keyof PrismaTypes>(
         defaultWhere?: Record<string, unknown>;
         defaultOrderBy?: Record<string, unknown>;
         authScopes?: Record<string, unknown>;
-        additionalArgs?: (t: typeof builder['args']) => Record<string, InputFieldRef<SchemaTypes>>;
+        additionalArgs?: (t: InputFieldBuilder<SchemaTypes>) => Record<string, InputFieldRef<SchemaTypes>>;
     } = {}
 ) {
     return (t: any) =>
@@ -144,7 +144,7 @@ export function createValidatedStringArg(
         defaultValue?: string;
     }
 ) {
-    return (t: typeof builder['args']) =>
+    return (t: InputFieldBuilder<SchemaTypes>) =>
         t.string({
             required: options?.required ?? true,
             description: options?.description,

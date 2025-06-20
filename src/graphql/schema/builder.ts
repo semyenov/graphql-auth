@@ -6,8 +6,10 @@ import type PrismaTypes from '@pothos/plugin-prisma/generated';
 import RelayPlugin from '@pothos/plugin-relay';
 import ScopeAuthPlugin from '@pothos/plugin-scope-auth';
 import ValidationPlugin from '@pothos/plugin-validation';
-import type { Context } from '../../context/context-direct';
 import { isProduction } from '../../app/config/environment';
+import type { Context } from '../../context/context-direct';
+import { createEnhancedAuthScopes } from '../../core/auth/scopes';
+import { decodeGlobalId, encodeGlobalId } from '../../core/utils/relay-helpers';
 import {
     AuthenticationError,
     AuthorizationError,
@@ -16,10 +18,8 @@ import {
     RateLimitError,
     ValidationError
 } from '../../errors';
-import { createEnhancedAuthScopes } from '../../core/auth/scopes';
-import * as rules from '../middleware/rules-clean';
 import { prisma } from '../../prisma';
-import { decodeGlobalId, encodeGlobalId } from '../../core/utils/relay-helpers';
+import * as rules from '../middleware/rules-clean';
 // import ShieldPlugin from './plugins/shield';
 
 /**

@@ -9,9 +9,9 @@
  */
 
 import { z } from 'zod'
-import type { Context } from '../../../context/context-direct'
-import { prisma } from '../../../prisma'
-import { builder } from '../../../schema/builder'
+import type { Context } from '../../context/context-direct'
+import { builder } from '../../graphql/schema/builder'
+import { prisma } from '../../prisma'
 
 /**
  * Enhanced email validation with async uniqueness check

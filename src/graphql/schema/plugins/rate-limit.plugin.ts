@@ -4,11 +4,9 @@
  * Provides rate limiting directives and helpers for GraphQL operations
  */
 
-import type { FieldRef } from '@pothos/core'
-import type { Context } from '../../context/context-direct'
-import { rateLimiter, type RateLimiterOptions } from '../services/rate-limiter.service'
-import { RateLimitError } from '../../errors'
-import { builder } from '../../schema/builder'
+import type { FieldRef, SchemaTypes } from '@pothos/core'
+import type { Context } from '../../../context/context-direct'
+import { rateLimiter, type RateLimiterOptions } from '../../../infrastructure/services/rate-limiter.service'
 
 /**
  * Rate limit configuration for a field
@@ -39,11 +37,13 @@ function getRateLimitIdentifier(
     }
 
     // For unauthenticated requests, use IP address
-    const ip = context.request?.ip || 
-                context.request?.headers?.['x-forwarded-for'] || 
-                context.request?.connection?.remoteAddress ||
-                'unknown'
-    
+    const ip = context.request?.ip ||
+        context.request?.headers?.['x-forwarded-for'] ||
+        context.request?.connection?.remoteAddress ||
+        context.metadata?.ip ||
+        context.req?.headers?.['x-forwarded-for'] ||
+        'unknown'
+
     return `ip:${ip}`
 }
 
@@ -52,7 +52,7 @@ function getRateLimitIdentifier(
  */
 export function rateLimitedField<TReturn>(
     config: RateLimitConfig & {
-        type: string | FieldRef<unknown>
+        type: string | FieldRef<SchemaTypes>
         description?: string
         resolve: (args: any, context: Context) => Promise<TReturn> | TReturn
         args?: any
@@ -67,7 +67,7 @@ export function rateLimitedField<TReturn>(
             nullable: config.nullable,
             authScopes: config.authScopes,
             args: config.args,
-            resolve: async (root: any, args: any, context: Context, info: any) => {
+            resolve: async (_root: any, args: any, context: Context, _info: any) => {
                 // Check if rate limiting should be skipped
                 if (config.skipIf && await config.skipIf(args, context)) {
                     return config.resolve(args, context)
@@ -140,10 +140,12 @@ export const createRateLimitConfig = {
     forIp: (operation: string, pointsPerRequest: number = 1): RateLimitConfig => ({
         key: `ip:${operation}`,
         identifier: (_args, context) => {
-            const ip = context.request?.ip || 
-                       context.request?.headers?.['x-forwarded-for'] || 
-                       context.request?.connection?.remoteAddress ||
-                       'unknown'
+            const ip = context.request?.ip ||
+                context.request?.headers?.['x-forwarded-for'] ||
+                context.request?.connection?.remoteAddress ||
+                context.metadata?.ip ||
+                context.req?.headers?.['x-forwarded-for'] ||
+                'unknown'
             return `ip:${ip}`
         },
         points: pointsPerRequest,

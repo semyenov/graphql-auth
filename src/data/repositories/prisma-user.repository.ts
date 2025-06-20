@@ -10,15 +10,18 @@ import { User } from '../../core/entities/user.entity'
 import { IUserRepository, UserFilter, UserOrderBy } from '../../core/repositories/user.repository.interface'
 import { Email } from '../../core/value-objects/email.vo'
 import { UserId } from '../../core/value-objects/user-id.vo'
+import { BaseRepository } from './base'
 
 @injectable()
-export class PrismaUserRepository implements IUserRepository {
+export class PrismaUserRepository extends BaseRepository implements IUserRepository {
   constructor(
-    @inject('PrismaClient') private prisma: PrismaClient,
-  ) { }
+    @inject('PrismaClient') db: PrismaClient,
+  ) {
+    super(db)
+  }
 
   async findById(id: UserId): Promise<User | null> {
-    const data = await this.prisma.user.findUnique({
+    const data = await this.db.user.findUnique({
       where: { id: id.value },
     })
 
@@ -36,7 +39,7 @@ export class PrismaUserRepository implements IUserRepository {
   }
 
   async findByEmail(email: Email): Promise<User | null> {
-    const data = await this.prisma.user.findUnique({
+    const data = await this.db.user.findUnique({
       where: { email: email.value },
     })
 
@@ -54,7 +57,7 @@ export class PrismaUserRepository implements IUserRepository {
   }
 
   async findByIds(ids: UserId[]): Promise<User[]> {
-    const data = await this.prisma.user.findMany({
+    const data = await this.db.user.findMany({
       where: {
         id: { in: ids.map(id => id.value) },
       },
@@ -76,7 +79,7 @@ export class PrismaUserRepository implements IUserRepository {
     // For new users (ID is 0 or very large timestamp), create without specifying ID
     // to let the database auto-increment handle it
     if (data.id === 0 || data.id > 1000000000) {
-      const saved = await this.prisma.user.create({
+      const saved = await this.db.user.create({
         data: {
           email: data.email,
           name: data.name,
@@ -94,7 +97,7 @@ export class PrismaUserRepository implements IUserRepository {
     }
 
     // For existing users, update
-    const saved = await this.prisma.user.update({
+    const saved = await this.db.user.update({
       where: { id: data.id },
       data: {
         email: data.email,
@@ -114,7 +117,7 @@ export class PrismaUserRepository implements IUserRepository {
   }
 
   async delete(id: UserId): Promise<User | null> {
-    const data = await this.prisma.user.delete({
+    const data = await this.db.user.delete({
       where: { id: id.value },
     })
 
@@ -142,7 +145,7 @@ export class PrismaUserRepository implements IUserRepository {
       return []
     }
 
-    const data = await this.prisma.user.findMany({
+    const data = await this.db.user.findMany({
       skip,
       take,
       orderBy,
@@ -178,11 +181,11 @@ export class PrismaUserRepository implements IUserRepository {
       where.name = { contains: criteria.nameContains }
     }
 
-    return this.prisma.user.count({ where })
+    return this.db.user.count({ where })
   }
 
   async existsByEmail(email: Email): Promise<boolean> {
-    const count = await this.prisma.user.count({
+    const count = await this.db.user.count({
       where: { email: email.value },
     })
     return count > 0
@@ -208,7 +211,7 @@ export class PrismaUserRepository implements IUserRepository {
       }
     }
 
-    const data = await this.prisma.user.findMany({
+    const data = await this.db.user.findMany({
       where,
       skip,
       take,

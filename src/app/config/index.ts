@@ -3,60 +3,108 @@
  * Centralizes all configuration values and environment variables
  */
 
-import { VALIDATION } from '../../constants'
-import {
-  APP_CONFIG,
-  AUTH_CONFIG,
-  DATABASE_CONFIG,
-  PAGINATION_CONFIG,
-  RATE_LIMIT_CONFIG,
-  SERVER_CONFIG
-} from '../../constants/config'
+import { authConfig } from './auth'
+import { databaseConfig } from './database'
+import { env } from './environment'
+import { serverConfig } from './server'
 
+/**
+ * Application defaults
+ */
+const APP_DEFAULTS = {
+  NAME: 'GraphQL Auth Server',
+  VERSION: '1.0.0',
+  GRAPHQL_PATH: '/graphql',
+} as const
+
+/**
+ * Pagination defaults
+ */
+const PAGINATION_DEFAULTS = {
+  DEFAULT_LIMIT: 10,
+  MAX_LIMIT: 100,
+} as const
+
+/**
+ * Validation defaults
+ */
+const VALIDATION_DEFAULTS = {
+  MAX_TITLE_LENGTH: 200,
+  MAX_CONTENT_LENGTH: 10000,
+  MAX_NAME_LENGTH: 100,
+  MAX_EMAIL_LENGTH: 255,
+} as const
+
+/**
+ * Rate limiting defaults
+ */
+const RATE_LIMIT_DEFAULTS = {
+  WINDOW_MS: 15 * 60 * 1000, // 15 minutes
+  MAX_REQUESTS: 100,
+} as const
+
+/**
+ * Unified application configuration
+ */
 export const config = {
   app: {
-    name: APP_CONFIG.NAME,
-    version: APP_CONFIG.VERSION,
-    environment: process.env.NODE_ENV || APP_CONFIG.DEFAULT_ENVIRONMENT,
+    name: APP_DEFAULTS.NAME,
+    version: APP_DEFAULTS.VERSION,
+    environment: env.NODE_ENV,
   },
 
   server: {
-    port: parseInt(process.env.PORT || String(SERVER_CONFIG.DEFAULT_PORT), 10),
-    host: process.env.HOST || SERVER_CONFIG.DEFAULT_HOST,
-    graphqlPath: SERVER_CONFIG.GRAPHQL_PATH,
-    playground: process.env.NODE_ENV !== 'production',
-    introspection: process.env.NODE_ENV !== 'production',
+    port: serverConfig.port,
+    host: serverConfig.host,
+    graphqlPath: serverConfig.graphqlPath,
+    playground: serverConfig.playground,
+    introspection: serverConfig.introspection,
+    cors: serverConfig.cors,
+    bodyLimit: serverConfig.bodyLimit,
+    requestTimeout: serverConfig.requestTimeout,
   },
 
   auth: {
-    jwtSecret: process.env.JWT_SECRET || process.env.APP_SECRET || AUTH_CONFIG.DEFAULT_JWT_SECRET,
-    jwtExpiresIn: AUTH_CONFIG.DEFAULT_JWT_EXPIRES_IN,
-    bcryptRounds: AUTH_CONFIG.DEFAULT_BCRYPT_ROUNDS,
-    passwordMinLength: AUTH_CONFIG.MIN_PASSWORD_LENGTH,
-    passwordMaxLength: AUTH_CONFIG.MAX_PASSWORD_LENGTH,
+    jwtSecret: authConfig.jwtSecret,
+    jwtExpiresIn: authConfig.jwtExpiresIn,
+    refreshTokenExpiresIn: authConfig.refreshTokenExpiresIn,
+    bcryptRounds: authConfig.bcryptRounds,
+    passwordMinLength: authConfig.passwordMinLength,
+    passwordMaxLength: authConfig.passwordMaxLength,
+    sessionTimeout: authConfig.sessionTimeout,
+    maxLoginAttempts: authConfig.maxLoginAttempts,
+    lockoutDuration: authConfig.lockoutDuration,
   },
 
   database: {
-    url: process.env.DATABASE_URL,
-    logLevel: process.env.NODE_ENV === 'production' ? DATABASE_CONFIG.LOG_LEVELS_PRODUCTION : DATABASE_CONFIG.LOG_LEVELS_DEVELOPMENT,
+    url: databaseConfig.url,
+    logLevel: databaseConfig.logLevel,
+    connectionLimit: databaseConfig.connectionLimit,
+    poolTimeout: databaseConfig.poolTimeout,
   },
 
   pagination: {
-    defaultLimit: PAGINATION_CONFIG.DEFAULT_LIMIT,
-    maxLimit: PAGINATION_CONFIG.MAX_LIMIT,
+    defaultLimit: PAGINATION_DEFAULTS.DEFAULT_LIMIT,
+    maxLimit: PAGINATION_DEFAULTS.MAX_LIMIT,
   },
 
   validation: {
-    maxTitleLength: VALIDATION.MAX_TITLE_LENGTH,
-    maxContentLength: VALIDATION.MAX_CONTENT_LENGTH,
-    maxNameLength: VALIDATION.MAX_NAME_LENGTH,
-    maxEmailLength: VALIDATION.MAX_EMAIL_LENGTH,
+    maxTitleLength: VALIDATION_DEFAULTS.MAX_TITLE_LENGTH,
+    maxContentLength: VALIDATION_DEFAULTS.MAX_CONTENT_LENGTH,
+    maxNameLength: VALIDATION_DEFAULTS.MAX_NAME_LENGTH,
+    maxEmailLength: VALIDATION_DEFAULTS.MAX_EMAIL_LENGTH,
   },
 
   rateLimit: {
-    windowMs: RATE_LIMIT_CONFIG.WINDOW_MS,
-    maxRequests: RATE_LIMIT_CONFIG.MAX_REQUESTS,
+    windowMs: RATE_LIMIT_DEFAULTS.WINDOW_MS,
+    maxRequests: RATE_LIMIT_DEFAULTS.MAX_REQUESTS,
   },
 } as const
 
 export type Config = typeof config
+
+// Re-export for convenience
+export { AUTH_DEFAULTS, AUTH_ERRORS, authConfig } from './auth'
+export { DATABASE_DEFAULTS, databaseConfig, prismaLogConfig } from './database'
+export { env, isDevelopment, isProduction, isTest } from './environment'
+export { graphqlServerOptions, SERVER_DEFAULTS, serverConfig } from './server'

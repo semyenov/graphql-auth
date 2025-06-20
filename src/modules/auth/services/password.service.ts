@@ -6,7 +6,7 @@
 
 import * as bcrypt from 'bcryptjs'
 import { injectable } from 'tsyringe'
-import { IPasswordService } from '../../core/services/password.service.interface'
+import { IPasswordService } from '../../../core/services/password.service.interface'
 
 @injectable()
 export class BcryptPasswordService implements IPasswordService {

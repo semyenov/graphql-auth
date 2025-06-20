@@ -20,16 +20,16 @@ The codebase uses a hierarchical error system with specific error classes for di
 ```typescript
 // Login validation
 if (!user) {
-    throw new AuthenticationError(ERROR_MESSAGES.INVALID_CREDENTIALS)
+  throw new AuthenticationError(ERROR_MESSAGES.INVALID_CREDENTIALS)
 }
 
 if (!isValidPassword) {
-    throw new AuthenticationError(ERROR_MESSAGES.INVALID_CREDENTIALS)
+  throw new AuthenticationError(ERROR_MESSAGES.INVALID_CREDENTIALS)
 }
 
 // Signup conflict
 if (existingUser) {
-    throw new ConflictError(ERROR_MESSAGES.EMAIL_ALREADY_EXISTS)
+  throw new ConflictError(ERROR_MESSAGES.EMAIL_ALREADY_EXISTS)
 }
 ```
 
@@ -39,17 +39,17 @@ if (existingUser) {
 // Authentication check
 const userId = getUserId(context)
 if (!userId) {
-    throw new AuthenticationError()
+  throw new AuthenticationError()
 }
 
 // Resource not found
 if (!post) {
-    throw new NotFoundError('Post', args.id.toString())
+  throw new NotFoundError('Post', args.id.toString())
 }
 
 // Prisma error handling
 if (error.code === 'P2025') {
-    throw new NotFoundError('Post', args.id.toString())
+  throw new NotFoundError('Post', args.id.toString())
 }
 ```
 
@@ -59,10 +59,8 @@ if (error.code === 'P2025') {
 // Authentication rule
 export const isAuthenticatedUser = rule({ cache: 'contextual' })(
   (_parent, _args, context: Context) => {
-    return isAuthenticated(context)
-      ? true
-      : new AuthenticationError()
-  }
+    return isAuthenticated(context) ? true : new AuthenticationError()
+  },
 )
 
 // Authorization rule
@@ -81,17 +79,17 @@ if (post.authorId !== userId) {
 ```typescript
 // Token verification
 if (!decoded.userId) {
-    throw new AuthenticationError(ERROR_MESSAGES.INVALID_TOKEN)
+  throw new AuthenticationError(ERROR_MESSAGES.INVALID_TOKEN)
 }
 
 // Token expiration
 if (error instanceof jwt.TokenExpiredError) {
-    throw new AuthenticationError(ERROR_MESSAGES.TOKEN_EXPIRED)
+  throw new AuthenticationError(ERROR_MESSAGES.TOKEN_EXPIRED)
 }
 
 // Invalid token
 if (error instanceof jwt.JsonWebTokenError) {
-    throw new AuthenticationError(ERROR_MESSAGES.INVALID_TOKEN)
+  throw new AuthenticationError(ERROR_MESSAGES.INVALID_TOKEN)
 }
 ```
 
@@ -100,17 +98,17 @@ if (error instanceof jwt.JsonWebTokenError) {
 ```typescript
 // Require authentication helper
 export function requireAuthentication<TVariables = Record<string, unknown>>(
-    context: Context<TVariables>
+  context: Context<TVariables>,
 ): number {
-    if (!isAuthenticated(context)) {
-        throw new AuthenticationError(ERROR_MESSAGES.AUTHENTICATION_REQUIRED)
-    }
+  if (!isAuthenticated(context)) {
+    throw new AuthenticationError(ERROR_MESSAGES.AUTHENTICATION_REQUIRED)
+  }
 
-    if (typeof context.userId !== 'number' || context.userId <= 0) {
-        throw new AuthenticationError(ERROR_MESSAGES.INVALID_CREDENTIALS)
-    }
+  if (typeof context.userId !== 'number' || context.userId <= 0) {
+    throw new AuthenticationError(ERROR_MESSAGES.INVALID_CREDENTIALS)
+  }
 
-    return context.userId
+  return context.userId
 }
 ```
 
@@ -118,10 +116,7 @@ export function requireAuthentication<TVariables = Record<string, unknown>>(
 
 ```typescript
 // Input validation with Zod
-export function validateInput<T>(
-  schema: z.ZodSchema<T>,
-  data: unknown,
-): T {
+export function validateInput<T>(schema: z.ZodSchema<T>, data: unknown): T {
   try {
     return schema.parse(data)
   } catch (error) {
@@ -147,13 +142,14 @@ Throughout the codebase, the `normalizeError` function is used in catch blocks t
 
 ```typescript
 try {
-    // ... operation
+  // ... operation
 } catch (error) {
-    throw normalizeError(error)
+  throw normalizeError(error)
 }
 ```
 
 This pattern:
+
 - Converts Prisma errors to appropriate error classes
 - Preserves existing BaseError instances
 - Wraps unknown errors in a BaseError with proper status codes
@@ -165,10 +161,8 @@ Error classes are returned (not thrown) in GraphQL Shield rules:
 ```typescript
 export const isAuthenticatedUser = rule({ cache: 'contextual' })(
   (_parent, _args, context: Context) => {
-    return isAuthenticated(context)
-      ? true
-      : new AuthenticationError()  // Return, don't throw
-  }
+    return isAuthenticated(context) ? true : new AuthenticationError() // Return, don't throw
+  },
 )
 ```
 

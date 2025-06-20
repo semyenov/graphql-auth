@@ -26,7 +26,7 @@ import {
  * Example: Require authentication in a resolver
  */
 export async function createPostResolver(
-    parent: unknown,
+    _parent: unknown,    // eslint-disable-line @typescript-eslint/no-unused-vars
     args: { title: string; content?: string },
     context: { userId?: number }
 ) {
@@ -49,7 +49,7 @@ export async function createPostResolver(
  * Example: Custom authentication error messages
  */
 export async function loginResolver(
-    parent: unknown,
+    _parent: unknown,    // eslint-disable-line @typescript-eslint/no-unused-vars
     args: { email: string; password: string }
 ) {
     const user = await prisma.user.findUnique({
@@ -77,7 +77,7 @@ export async function loginResolver(
  * Example: Check resource ownership
  */
 export async function updatePostResolver(
-    parent: unknown,
+    _parent: unknown,
     args: { id: number; title: string },
     context: { userId?: number }
 ) {
@@ -91,7 +91,7 @@ export async function updatePostResolver(
     })
 
     if (!post) {
-        throw new NotFoundError('Post', args.id)
+        throw new NotFoundError('Post', args.id.toString())
     }
 
     if (post.authorId !== context.userId) {
@@ -108,8 +108,8 @@ export async function updatePostResolver(
  * Example: Role-based authorization
  */
 export async function adminOnlyResolver(
-    parent: unknown,
-    args: unknown,
+    _parent: unknown,
+    _args: unknown,
     context: { userId?: number; roles?: string[] }
 ) {
     if (!context.userId) {
@@ -131,7 +131,7 @@ export async function adminOnlyResolver(
  * Example: Field-specific validation errors
  */
 export async function signupResolver(
-    parent: unknown,
+    _parent: unknown,
     args: { email: string; password: string; name?: string }
 ) {
     const errors: Record<string, string[]> = {}
@@ -195,7 +195,7 @@ export function validatePostInput(input: unknown) {
  * Example: Resource not found
  */
 export async function getPostResolver(
-    parent: unknown,
+    _parent: unknown,
     args: { id: number }
 ) {
     const post = await prisma.post.findUnique({
@@ -203,7 +203,7 @@ export async function getPostResolver(
     })
 
     if (!post) {
-        throw new NotFoundError('Post', args.id)
+        throw new NotFoundError('Post', args.id.toString())
     }
 
     return post
@@ -223,7 +223,7 @@ export async function deletePostResolver(
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
             if (error.code === 'P2025') {
-                throw new NotFoundError('Post', args.id)
+                throw new NotFoundError('Post', args.id.toString())
             }
         }
         throw normalizeError(error)
@@ -324,7 +324,7 @@ export async function complexOperationResolver(
         })
 
         if (!resource) {
-            throw new NotFoundError('Post', args.id)
+            throw new NotFoundError('Post', args.id.toString())
         }
 
         if (resource.authorId !== context.userId) {

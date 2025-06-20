@@ -69,6 +69,7 @@ src/
 │   │   │   ├── auth.resolver.ts       # Auth operations (signup, login, me)
 │   │   │   └── auth-tokens.resolver.ts # Refresh token operations
 │   │   ├── services/                  # Module services
+│   │   │   ├── password.service.ts    # Password hashing with bcrypt
 │   │   │   └── token.service.ts       # JWT token generation/validation
 │   │   ├── guards/                    # Authentication guards
 │   │   │   └── auth.guards.ts         # requireAuthentication, isAuthenticated
@@ -91,20 +92,20 @@ src/
 │   ├── schema/                        # Schema Definition
 │   │   ├── builder.ts                 # Pothos builder with plugins
 │   │   ├── index.ts                   # Schema assembly and middleware
+│   │   ├── helpers.ts                 # Pothos helper functions
 │   │   ├── scalars.ts                 # Custom scalars (DateTime)
 │   │   ├── enums.ts                   # GraphQL enums
 │   │   ├── inputs.ts                  # Input type definitions
 │   │   ├── error-types.ts             # Error type definitions
-│   │   └── types/                     # Prisma Node types
+│   │   ├── types/                     # Prisma Node types
+│   │   └── plugins/                   # Custom plugins
+│   │       └── rate-limit.plugin.ts   # Rate limiting plugin
 │   │
-│   ├── middleware/                    # GraphQL Middleware
-│   │   ├── shield-config.ts           # Maps rules to schema operations
-│   │   ├── rules-clean.ts             # Permission rules
-│   │   ├── rule-utils-clean.ts        # Rule logic utilities
-│   │   └── utils-clean.ts             # Permission utilities
-│   │
-│   └── resolvers/                     # Shared resolver utilities
-│       └── index.ts                   # Resolver exports
+│   └── middleware/                    # GraphQL Middleware
+│       ├── shield-config.ts           # Maps rules to schema operations
+│       ├── rules.ts                   # Permission rules
+│       ├── rule-utils.ts              # Rule logic utilities
+│       └── utils.ts                   # Permission utilities
 │
 ├── core/                              # Core Business Logic & Shared Utilities
 │   ├── auth/                          # Authentication core
@@ -113,19 +114,19 @@ src/
 │   ├── entities/                      # Domain entities
 │   ├── value-objects/                 # Value objects (UserId, Email)
 │   ├── errors/                        # Error hierarchy
+│   ├── logging/                       # Logging infrastructure
+│   │   └── logger-factory.ts          # Logger factory implementation
 │   ├── validation/                    # Validation schemas
+│   │   └── enhanced-validations.ts    # Enhanced validation patterns
 │   └── utils/                         # Shared utilities
+│       └── relay-helpers.ts           # Global ID utilities
 │
 ├── data/                              # Data Access Layer
-│   ├── repositories/                  # Repository implementations
-│   │   ├── prisma-user.repository.ts
-│   │   └── refresh-token.repository.ts
-│   └── loaders/                       # DataLoader implementations
-│       └── loaders.ts                 # Entity and relation loaders
+│   └── repositories/                  # Repository implementations
+│       ├── prisma-user.repository.ts
+│       └── refresh-token.repository.ts
 │
 ├── infrastructure/                    # External Service Integrations
-│   ├── auth/                          # Authentication services
-│   │   └── bcrypt-password.service.ts # Password hashing
 │   ├── services/                      # Infrastructure services
 │   │   └── rate-limiter.service.ts   # Rate limiting service
 │   └── config/                        # Configuration
@@ -134,12 +135,18 @@ src/
 ├── context/                           # GraphQL Context System
 │   ├── context-direct.ts              # Context type definitions
 │   ├── creation.ts                    # Context creation
-│   └── validation.ts                  # Context validation utilities
+│   ├── validation.ts                  # Context validation utilities
+│   ├── utils.ts                       # JWT and request utilities
+│   └── types.d.ts                     # Operation-specific context types
 │
 ├── app/                               # Application Entry Points
 │   ├── server.ts                      # Main server setup
 │   └── config/                        # App configuration
-│       └── environment.ts             # Environment variables
+│       ├── environment.ts             # Environment variables
+│       ├── index.ts                   # Config exports
+│       ├── database.ts                # Database configuration
+│       ├── auth.ts                    # Auth configuration
+│       └── server.ts                  # Server configuration
 │
 ├── gql/                               # GraphQL Operations (Client-side)
 │   ├── mutations.ts                   # GraphQL mutations
@@ -848,7 +855,7 @@ Reference: https://blog.langdb.ai/smarter-coding-workflows-with-context7-sequent
 
 Current test suite status:
 - **Total Tests**: 140
-- **Passing**: 135
-- **Success Rate**: 96.4%
+- **Passing**: 140 ✓
+- **Success Rate**: 100%
 
 The project has comprehensive test coverage across all modules with isolated SQLite databases for each test file.

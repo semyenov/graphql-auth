@@ -6,14 +6,14 @@
 
 import { container } from 'tsyringe'
 import { z } from 'zod'
-import { requireAuthentication } from '../../auth/guards/auth.guards'
 import type { ILogger } from '../../../core/services/logger.interface'
+import { parseGlobalId } from '../../../core/utils/relay-helpers'
 import { ConflictError } from '../../../errors'
-import { prisma } from '../../../prisma'
 import { builder } from '../../../graphql/schema/builder'
 import { UserOrderByInput, UserWhereInput } from '../../../graphql/schema/inputs'
 import { transformOrderBy, transformUserWhereInput } from '../../../graphql/schema/utils/filter-transform'
-import { parseGlobalId } from '../../../core/utils/relay-helpers'
+import { prisma } from '../../../prisma'
+import { requireAuthentication } from '../../auth/guards/auth.guards'
 
 // Get logger from container
 const getLogger = () => container.resolve<ILogger>('ILogger')
@@ -28,7 +28,7 @@ builder.queryField('user', (t) =>
     args: {
       id: t.arg.id({ required: true }),
     },
-    resolve: async (query, _parent, args, context) => {
+    resolve: async (query, _parent, args, _context) => {
       const logger = getLogger().child({ resolver: 'user' })
       const userId = parseGlobalId(args.id.toString(), 'User')
 
@@ -60,14 +60,14 @@ builder.queryField('users', (t) =>
       where: t.arg({ type: UserWhereInput, required: false }),
       orderBy: t.arg({ type: UserOrderByInput, required: false }),
     },
-    resolve: (query, _parent, args, context) => {
+    resolve: (query, _parent, args, _context) => {
       return prisma.user.findMany({
         ...query,
         where: args.where ? transformUserWhereInput(args.where) : undefined,
         orderBy: args.orderBy ? transformOrderBy(args.orderBy) : { id: 'asc' },
       })
     },
-    totalCount: (_parent, args, context) => {
+    totalCount: (_parent, args, _context) => {
       const whereClause = args.where ? transformUserWhereInput(args.where) : undefined
       return prisma.user.count({ where: whereClause })
     },
@@ -89,7 +89,7 @@ builder.queryField('searchUsers', (t) =>
         },
       }),
     },
-    resolve: (query, _parent, args, context) => {
+    resolve: (query, _parent, args, _context) => {
       const logger = getLogger().child({ resolver: 'searchUsers' })
       logger.info('Searching users', { searchTerm: args.search })
 
@@ -104,7 +104,7 @@ builder.queryField('searchUsers', (t) =>
         orderBy: { name: 'asc' },
       })
     },
-    totalCount: (_parent, args, context) => {
+    totalCount: (_parent, args, _context) => {
       return prisma.user.count({
         where: {
           OR: [
@@ -122,7 +122,7 @@ builder.queryField('searchUsers', (t) =>
 builder.prismaObjectField('User', 'postCount', (t) =>
   t.int({
     description: 'Total number of posts by this user',
-    resolve: async (user, _args, context) => {
+    resolve: async (user, _args, _context) => {
       return prisma.post.count({
         where: { authorId: user.id },
       })
@@ -133,7 +133,7 @@ builder.prismaObjectField('User', 'postCount', (t) =>
 builder.prismaObjectField('User', 'publishedPostCount', (t) =>
   t.int({
     description: 'Number of published posts by this user',
-    resolve: async (user, _args, context) => {
+    resolve: async (user, _args, _context) => {
       return prisma.post.count({
         where: {
           authorId: user.id,
