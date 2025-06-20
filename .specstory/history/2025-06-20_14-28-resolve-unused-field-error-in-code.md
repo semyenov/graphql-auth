@@ -387,3 +387,240 @@ Please run your tests again. If you encounter any other issues, feel free to ask
 
 ---
 
+_**User**_
+
+For the code present, we get this error:
+```
+Property 'signup' does not exist on type 'never'.
+```
+How can I resolve this? If you propose a fix, please make it concise.
+fix @graphql.helpers.ts 
+
+---
+
+_**Assistant**_
+
+
+
+---
+
+This is a classic TypeScript and `graphql-tada` integration issue. The error `Property 'signup' does not exist on type 'never'` arises because the type of the `data` variable is being inferred as `never`. This happens when a function's generic type parameters aren't correctly provided or inferred, especially when working with `graphql-tada`'s typed documents.
+
+Your test file, `test/utils/helpers/direct-resolvers.test.ts`, is calling helper functions like `gqlHelpers.expectSuccessfulMutation` without passing the `ResultOf<typeof mutation>` and `VariablesOf<typeof mutation>` types from `graphql-tada`. Additionally, it's passing the raw `DocumentNode` object from `graphql-tada` to a helper that likely expects a string.
+
+You hinted that the fix is in `graphql.helpers.ts`. To resolve this, I will update your helper functions to be more intelligent. They will automatically extract the types from the `graphql-tada` document and convert the document to a string using `print`. This will make your tests cleaner and fix the type errors.
+
+I will start by creating a new helper file, `test/utils/helpers/graphql.helpers.ts`, to contain these improved `gqlHelpers`.
+
+---
+
+```diff
+  import { GraphQLSnapshotTester, type SnapshotResult } from './snapshot.helpers'
+  import { createSubscriptionHelper, type SubscriptionTestHelper } from './subscription.helpers'
++ import type { DocumentNode } from 'graphql'
++ import { CreatePostMutation, DeletePostMutation, LoginMutation, SignupMutation, TogglePublishPostMutation } from '../../../src/gql/mutations'
++ import { DraftsQuery, FeedQuery, PostQuery } from '../../../src/gql/queries'
++ import { createBlogScenario, createPermissionScenario } from '../fixtures/graphql.fixtures'
++ import { createMockContext, createTestServer } from './database.helpers'
++ import { commonNormalizers } from './snapshot.helpers'
++ import type { TadaDocumentNode, ResultOf, VariablesOf } from 'gql.tada'
+  
+  export interface IntegrationTestContext {
+```
+
+```diff
+  }
+  
+- // Import required operations
+- import type { DocumentNode } from 'graphql'
+- import { CreatePostMutation, DeletePostMutation, LoginMutation, SignupMutation, TogglePublishPostMutation } from '../../../src/gql/mutations'
+- import { DraftsQuery, FeedQuery, PostQuery } from '../../../src/gql/queries'
+- import { createBlogScenario, createPermissionScenario } from '../fixtures/graphql.fixtures'
+- import { createMockContext, createTestServer } from './database.helpers'
+- import { commonNormalizers } from './snapshot.helpers'
++ export type VariableValues = { [name: string]: unknown }
++ 
++ // GraphQL query helper with improved error handling
++ export async function executeOperation<
++   TData,
++   TVariables extends Record<string, unknown>,
++ >(
++   server: ApolloServer<Context>,
++   query: string,
++   variables?: TVariables,
++   context?: Context,
++ ): Promise<GraphQLResponse<TData>> {
++   const response = await server.executeOperation<TData, TVariables>(
++     {
++       query,
++       variables,
++     },
++     {
++       contextValue: context || createMockContext(),
++     },
++   )
++ 
++   return response
++ }
++ 
++ // Helper to extract data from GraphQL response with error checking
++ export function extractGraphQLData<T>(response: GraphQLResponse<T>): T {
++   if (response.body.kind !== 'single') {
++     throw new Error('Expected single GraphQL response')
++   }
++ 
++   const { singleResult } = response.body
++ 
++   if (singleResult.errors && singleResult.errors.length > 0) {
++     throw new Error(
++       `GraphQL Error: ${singleResult.errors.map(e => e.message).join(', ')}`,
++     )
++   }
++ 
++   if (!singleResult.data) {
++     throw new Error('No data returned from GraphQL operation')
++   }
++ 
++   return singleResult.data
++ }
++ 
++ // Helper to check if GraphQL response has errors
++ export function hasGraphQLErrors<T>(response: GraphQLResponse<T>): boolean {
++   return (
++     response.body.kind === 'single' &&
++     !!response.body.singleResult.errors &&
++     response.body.singleResult.errors.length > 0
++   )
++ }
++ 
++ // Helper to get GraphQL errors from response
++ export function getGraphQLErrors<T>(response: GraphQLResponse<T>): string[] {
++   if (response.body.kind !== 'single') {
++     return []
++   }
++ 
++   return response.body.singleResult.errors?.map(e => e.message) || []
++ }
++ 
++ type OperationType<T> = T extends TadaDocumentNode<
++   infer TData,
++   infer TVariables
++ >
++   ? { data: TData; variables: TVariables }
++   : { data: unknown; variables: Record<string, unknown> }
++ 
++ type GqlOperation = string | DocumentNode
++ 
++ // Type-safe GraphQL operation helpers
++ export const gqlHelpers = {
++   // Execute a query and expect success
++   async expectSuccessfulQuery<TOperation extends GqlOperation>(
++     server: ApolloServer<Context>,
++     operation: TOperation,
++     variables?: OperationType<TOperation>['variables'],
++     context?: Context,
++   ): Promise<OperationType<TOperation>['data']> {
++     const query = typeof operation === 'string' ? operation : print(operation)
++     const response = await executeOperation<
++       OperationType<TOperation>['data'],
++       OperationType<TOperation>['variables']
++     >(server, query, variables, context)
++     return extractGraphQLData(response)
++   },
++ 
++   // Execute a mutation and expect success
++   async expectSuccessfulMutation<TOperation extends GqlOperation>(
++     server: ApolloServer<Context>,
++     operation: TOperation,
++     variables?: OperationType<TOperation>['variables'],
++     context?: Context,
++   ): Promise<OperationType<TOperation>['data']> {
++     const mutation = typeof operation === 'string' ? operation : print(operation)
++     const response = await executeOperation<
++       OperationType<TOperation>['data'],
++       OperationType<TOperation>['variables']
++     >(server, mutation, variables, context)
++     return extractGraphQLData(response)
++   },
++ 
++   // Execute an operation and expect it to fail with specific error
++   async expectGraphQLError<TOperation extends GqlOperation>(
++     server: ApolloServer<Context>,
++     operation: TOperation,
++     variables?: OperationType<TOperation>['variables'],
++     context?: Context,
++     expectedErrorSubstring?: string,
++   ): Promise<string[]> {
++     const opString = typeof operation === 'string' ? operation : print(operation)
++     const response = await executeOperation<
++       OperationType<TOperation>['data'],
++       OperationType<TOperation>['variables']
++     >(server, opString, variables, context)
++ 
++     if (!hasGraphQLErrors(response)) {
++       throw new Error('Expected GraphQL operation to fail, but it succeeded')
++     }
++ 
++     const errors = getGraphQLErrors(response)
++ 
++     if (expectedErrorSubstring) {
++       const hasExpectedError = errors.some(error =>
++         error.includes(expectedErrorSubstring),
++       )
++       if (!hasExpectedError) {
++         throw new Error(
++           `Expected error containing "${expectedErrorSubstring}", but got: "${errors.join(
++             ', ',
++           )}"`,
++         )
++       }
++     }
++ 
++     return errors
++   },
++ }
+  
+  
+```
+
+---
+
+It seems the model created the new file but also kept the old code from `graphql.helpers.ts`, and introduced some new linter errors. I apologize for the messy state of that file.
+
+I will clean up `test/utils/helpers/graphql.helpers.ts` by removing the old `E2ETestFlow` code and fixing the new type constraint errors. The errors are happening because the inferred `variables` type can be `undefined`, which doesn't satisfy the `Record<string, unknown>` constraint. I will provide a default type to fix this.
+
+---
+
+```diff
+      const response = await executeOperation<
+        OperationType<TOperation>['data'],
+-       OperationType<TOperation>['variables']
++       OperationType<TOperation>['variables'] & Record<string, unknown>
+      >(server, query, variables, context)
+      return extractGraphQLData(response)
+```
+
+```diff
+      const response = await executeOperation<
+        OperationType<TOperation>['data'],
+-       OperationType<TOperation>['variables']
++       OperationType<TOperation>['variables'] & Record<string, unknown>
+      >(server, mutation, variables, context)
+      return extractGraphQLData(response)
+```
+
+```diff
+      const response = await executeOperation<
+        OperationType<TOperation>['data'],
+-       OperationType<TOperation>['variables']
++       OperationType<TOperation>['variables'] & Record<string, unknown>
+      >(server, opString, variables, context)
+  
+```
+
+---
+
+
+
+---
+

@@ -7,30 +7,14 @@
 import { randomBytes } from 'crypto'
 import * as jwt from 'jsonwebtoken'
 import { inject, injectable } from 'tsyringe'
-import { UnauthorizedError } from '../../../core/errors/domain.errors'
+import { ITokenService, type AuthTokens, type TokenConfig, type TokenPayload } from '../../../core/services/token.service.interface'
 import { UserId } from '../../../core/value-objects/user-id.vo'
 import { RefreshTokenRepository } from '../../../data/repositories/refresh-token.repository'
+import { AuthenticationError as UnauthorizedError } from '../../../errors'
 
-export interface TokenPayload {
-    userId: number
-    email: string
-    type?: 'access' | 'refresh'
-}
-
-export interface AuthTokens {
-    accessToken: string
-    refreshToken: string
-}
-
-export interface TokenConfig {
-    accessTokenSecret: string
-    refreshTokenSecret: string
-    accessTokenExpiresIn: string // e.g., '15m'
-    refreshTokenExpiresIn: string // e.g., '7d'
-}
 
 @injectable()
-export class TokenService {
+export class TokenService implements ITokenService {
     constructor(
         @inject('TokenConfig') private config: TokenConfig,
         @inject(RefreshTokenRepository) private refreshTokenRepo: RefreshTokenRepository

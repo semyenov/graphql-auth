@@ -5,7 +5,7 @@
 
 import { RateLimiterMemory } from 'rate-limiter-flexible'
 import { config } from '../config'
-import { RateLimitError } from '../../core/errors'
+import { RateLimitError } from '../../errors'
 
 /**
  * Create rate limiter instance

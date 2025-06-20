@@ -2,20 +2,20 @@
  * Re-export input types for easier imports
  */
 
-export { 
-  StringFilter,
-  IntFilter,
+export {
   BooleanFilter,
   DateTimeFilter,
-  PostWhereInput,
+  IntFilter,
+  PostCreateInput,
   PostOrderByInput,
   PostOrderByUpdatedAtInput,
-  UserUniqueInput,
-  PostCreateInput,
   PostUpdateInput,
-  UserWhereInput,
+  PostWhereInput,
+  StringFilter,
+  UserOrderByInput,
   UserSearchInput,
-  UserOrderByInput
+  UserUniqueInput,
+  UserWhereInput
 } from './inputs'
 
 // Re-export from posts-direct.resolver for consistency

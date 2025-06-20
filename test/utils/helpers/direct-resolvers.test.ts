@@ -5,11 +5,11 @@
  */
 
 import bcrypt from 'bcryptjs'
-import { graphql, ResultOf, VariablesOf } from 'gql.tada'
-import { print } from 'graphql'
+import { graphql } from 'gql.tada'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { prisma } from '../../setup'
-import { createMockContext, createTestServer, gqlHelpers } from './database.helpers'
+import { createMockContext, createTestServer } from './context.helpers'
+import { gqlHelpers } from './graphql.helpers'
 
 describe('Direct Resolvers', () => {
     const server = createTestServer()
@@ -37,9 +37,9 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-            const data = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof mutation>, VariablesOf<typeof mutation>>(
+            const data = await gqlHelpers.expectSuccessfulMutation(
                 server,
-                print(mutation),
+                mutation,
                 {
                     email: 'newuser@example.com',
                     password: 'password123',
@@ -66,9 +66,9 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-            const data = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof mutation>, VariablesOf<typeof mutation>>(
+            const data = await gqlHelpers.expectSuccessfulMutation(
                 server,
-                print(mutation),
+                mutation,
                 {
                     email: 'test@example.com',
                     password: 'password123',
@@ -97,9 +97,9 @@ describe('Direct Resolvers', () => {
                 security: { isAuthenticated: true, userId: 1, roles: [], permissions: [] }
             }
 
-            const data = await gqlHelpers.expectSuccessfulQuery<ResultOf<typeof query>, VariablesOf<typeof query>>(
+            const data = await gqlHelpers.expectSuccessfulQuery(
                 server,
-                print(query),
+                query,
                 {},
                 authContext
             )
@@ -133,9 +133,9 @@ describe('Direct Resolvers', () => {
                 security: { isAuthenticated: true, userId: 1, roles: [], permissions: [] }
             }
 
-            const data = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof mutation>, VariablesOf<typeof mutation>>(
+            const data = await gqlHelpers.expectSuccessfulMutation(
                 server,
-                print(mutation),
+                mutation,
                 {
                     input: {
                         title: 'Test Post',
@@ -177,9 +177,9 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-            const data = await gqlHelpers.expectSuccessfulQuery<ResultOf<typeof query>, VariablesOf<typeof query>>(
+            const data = await gqlHelpers.expectSuccessfulQuery(
                 server,
-                print(query),
+                query,
                 {},
                 createMockContext()
             )
@@ -219,9 +219,9 @@ describe('Direct Resolvers', () => {
                 security: { isAuthenticated: true, userId: 1, roles: [], permissions: [] }
             }
 
-            const data = await gqlHelpers.expectSuccessfulQuery<ResultOf<typeof query>, VariablesOf<typeof query>>(
+            const data = await gqlHelpers.expectSuccessfulQuery(
                 server,
-                print(query),
+                query,
                 {},
                 authContext
             )
@@ -255,9 +255,9 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-            const data = await gqlHelpers.expectSuccessfulQuery<ResultOf<typeof query>, VariablesOf<typeof query>>(
+            const data = await gqlHelpers.expectSuccessfulQuery(
                 server,
-                print(query),
+                query,
                 { search: 'john@example.com' },
                 createMockContext()
             )

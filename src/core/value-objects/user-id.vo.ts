@@ -4,14 +4,14 @@
  * Represents a user identifier in the domain.
  */
 
-import { ValueObjectValidationError } from '../errors/domain.errors'
+import { ValidationError as ValueObjectValidationError } from '../../errors'
 
 export class UserId {
   private constructor(private readonly _value: number) { }
 
   static create(value: number): UserId {
     if (!Number.isInteger(value) || value <= 0) {
-      throw new ValueObjectValidationError('UserId must be a positive integer')
+      throw new ValueObjectValidationError(['UserId must be a positive integer'])
     }
     return new UserId(value)
   }

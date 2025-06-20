@@ -135,6 +135,11 @@ export function hasErrorCode(
   )
 }
 
+// Aliases for domain errors
+export { ValidationError as EntityValidationError } from './index'
+export { NotFoundError as EntityNotFoundError } from './index'
+export { AuthorizationError as ForbiddenError } from './index'
+
 /**
  * Convert unknown errors to BaseError instances
  */

@@ -5,7 +5,7 @@
  */
 
 import { VALIDATION_LIMITS, VALIDATION_MESSAGES } from '../../constants/validation'
-import { EntityValidationError } from '../errors/domain.errors'
+import { EntityValidationError } from '../../errors'
 import { PostId } from '../value-objects/post-id.vo'
 import { UserId } from '../value-objects/user-id.vo'
 
@@ -30,15 +30,15 @@ export class Post {
     authorId: UserId | null
   }): Post {
     if (!props.title || props.title.trim().length === 0) {
-      throw new EntityValidationError(VALIDATION_MESSAGES.TITLE_REQUIRED)
+      throw new EntityValidationError([], VALIDATION_MESSAGES.TITLE_REQUIRED)
     }
 
     if (props.title.length > VALIDATION_LIMITS.TITLE_MAX_LENGTH) {
-      throw new EntityValidationError(VALIDATION_MESSAGES.TITLE_TOO_LONG)
+      throw new EntityValidationError([], VALIDATION_MESSAGES.TITLE_TOO_LONG)
     }
 
     if (props.content && props.content.length > VALIDATION_LIMITS.CONTENT_MAX_LENGTH) {
-      throw new EntityValidationError(VALIDATION_MESSAGES.CONTENT_TOO_LONG)
+      throw new EntityValidationError([], VALIDATION_MESSAGES.CONTENT_TOO_LONG)
     }
 
     return new Post({

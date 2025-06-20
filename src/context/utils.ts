@@ -1,7 +1,7 @@
 import { HTTPMethod } from 'fetchdts'
 import { DEFAULT_VALUES, HEADER_KEYS } from '../constants/context'
 import { RequestMetadata, SecurityContext } from '../types.d'
-import { getUserIdFromAuthHeader } from '../utils/jwt'
+import { getUserIdFromAuthHeader } from '../core/utils/jwt'
 import type { Context, GraphQLIncomingMessage } from './types.d'
 
 /**

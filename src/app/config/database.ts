@@ -19,16 +19,15 @@ const DatabaseConfigSchema = z.object({
  * Parse database configuration from environment
  */
 function parseDatabaseConfig() {
-  const isDevelopment = process.env.NODE_ENV === 'development'
   const isProduction = process.env.NODE_ENV === 'production'
-  
+
   const config = {
     url: process.env.DATABASE_URL || 'file:./dev.db',
     logLevel: isProduction ? ['error', 'warn'] : ['query', 'info', 'warn', 'error'],
     connectionLimit: parseInt(process.env.DATABASE_CONNECTION_LIMIT || '10', 10),
     poolTimeout: parseInt(process.env.DATABASE_POOL_TIMEOUT || '2000', 10),
   }
-  
+
   return DatabaseConfigSchema.parse(config)
 }
 

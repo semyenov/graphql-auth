@@ -4,14 +4,14 @@
  * Represents a post identifier in the domain.
  */
 
-import { ValueObjectValidationError } from '../errors/domain.errors'
+import { ValidationError as ValueObjectValidationError } from '../../errors'
 
 export class PostId {
   private constructor(private readonly _value: number) { }
 
   static create(value: number): PostId {
     if (!Number.isInteger(value) || value <= 0) {
-      throw new ValueObjectValidationError('PostId must be a positive integer')
+      throw new ValueObjectValidationError(['PostId must be a positive integer'])
     }
     return new PostId(value)
   }

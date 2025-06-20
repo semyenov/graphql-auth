@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { AUTH, ERROR_MESSAGES, VALIDATION } from '../constants'
-import { ValidationError } from '../errors'
+import { AUTH, ERROR_MESSAGES, VALIDATION } from '../../constants'
+import { ValidationError } from '../../errors'
 
 /**
  * Email validation schema

@@ -12,6 +12,7 @@ import { prisma } from '../../data/database/client'
 // Core interfaces
 import { ILogger } from '../../core/services/logger.interface'
 import { IPasswordService } from '../../core/services/password.service.interface'
+import { ITokenService } from '../../core/services/token.service.interface'
 
 // Infrastructure implementations
 import { BcryptPasswordService } from '../../modules/auth/services/password.service'
@@ -53,7 +54,7 @@ export function configureContainer(): void {
   })
 
   // Register feature-based services (for refresh tokens)
-  container.register<TokenService>(TokenService, {
+  container.register<ITokenService>('ITokenService', {
     useClass: TokenService,
   })
   container.register<RefreshTokenRepository>(RefreshTokenRepository, {

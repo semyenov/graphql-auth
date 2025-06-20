@@ -7,7 +7,7 @@
 import Redis from 'ioredis'
 import { RateLimiterMemory, RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible'
 import { RateLimitError } from '../../errors'
-import { logger } from '../../utils/logger'
+import { logger } from '../../core/utils/logger'
 
 export interface RateLimiterOptions {
     points: number // Number of requests

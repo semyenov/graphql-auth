@@ -8,13 +8,13 @@ import { container } from 'tsyringe'
 import { z } from 'zod'
 import type { ILogger } from '../../../core/services/logger.interface'
 import type { IPasswordService } from '../../../core/services/password.service.interface'
+import { signToken } from '../../../core/utils/jwt'
 import { AuthenticationError, ConflictError } from '../../../errors'
 import { builder } from '../../../graphql/schema/builder'
 import { commonValidations } from '../../../graphql/schema/helpers'
 import { applyRateLimit, createRateLimitConfig } from '../../../graphql/schema/plugins/rate-limit.plugin'
 import { RateLimitPresets } from '../../../infrastructure/services/rate-limiter.service'
 import { prisma } from '../../../prisma'
-import { signToken } from '../../../utils/jwt'
 
 // Get services from container
 const getPasswordService = () => container.resolve<IPasswordService>('IPasswordService')

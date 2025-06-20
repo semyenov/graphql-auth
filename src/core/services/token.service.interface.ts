@@ -9,22 +9,50 @@ import { UserId } from '../value-objects/user-id.vo'
 export interface TokenPayload {
   userId: number
   email: string
+  type?: 'access' | 'refresh'
+}
+
+export interface AuthTokens {
+  accessToken: string
+  refreshToken: string
+}
+
+export interface TokenConfig {
+  accessTokenSecret: string
+  refreshTokenSecret: string
+  accessTokenExpiresIn: string // e.g., '15m'
+  refreshTokenExpiresIn: string // e.g., '7d'
 }
 
 export interface ITokenService {
   /**
-   * Generate a JWT token for a user.
+   * Generate both access and refresh tokens for a user.
    * 
    * @param payload - The token payload containing user information
-   * @returns The generated JWT token
+   * @returns The generated access and refresh tokens
    */
-  generateToken(payload: TokenPayload): Promise<string>
+  generateTokens(user: { id: number; email: string }): Promise<AuthTokens>
 
   /**
-   * Verify a JWT token and extract the user ID.
+   * Verify an access token and extract the user ID.
    * 
-   * @param token - The JWT token to verify
+   * @param token - The access token to verify
    * @returns The user ID if the token is valid, null otherwise
    */
-  verifyToken(token: string): Promise<UserId | null>
-}
+  verifyAccessToken(token: string): Promise<UserId | null>
+
+  /**
+   * Refresh an access token using a refresh token.
+   * 
+   * @param refreshToken - The refresh token to use for refresh
+   * @returns The new access token
+   */
+  refreshTokens(refreshToken: string): Promise<AuthTokens>
+
+  /**
+   * Revoke all tokens for a user.
+   * 
+   * @param userId - The user ID to revoke tokens for
+   */
+  revokeAllTokens(userId: number): Promise<void>
+} 

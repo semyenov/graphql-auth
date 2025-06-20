@@ -5,7 +5,7 @@
  * It's independent of any infrastructure concerns.
  */
 
-import { EntityValidationError } from '../errors/domain.errors'
+import { EntityValidationError } from '../../errors'
 import { Email } from '../value-objects/email.vo'
 import { UserId } from '../value-objects/user-id.vo'
 
@@ -83,7 +83,7 @@ export class User {
 
   updatePassword(newPasswordHash: string): void {
     if (!newPasswordHash || newPasswordHash.length < 6) {
-      throw new EntityValidationError('Password hash is invalid')
+      throw new EntityValidationError([], 'Password hash is invalid')
     }
     this.props.passwordHash = newPasswordHash
     this.props.updatedAt = new Date()

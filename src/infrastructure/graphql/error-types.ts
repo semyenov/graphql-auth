@@ -20,8 +20,6 @@ const BaseErrorInterface = builder.interfaceRef<BaseError>('BaseError').implemen
     fields: (t) => ({
         message: t.exposeString('message'),
         code: t.exposeString('code'),
-        identifier: t.exposeString('identifier', { nullable: true }),
-        resource: t.exposeString('resource', { nullable: true }),
         statusCode: t.exposeInt('statusCode', { nullable: true }),
     }),
 });

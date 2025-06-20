@@ -10,7 +10,7 @@ import type { ILogger } from '../../../core/services/logger.interface'
 import { AuthorizationError, NotFoundError, RateLimitError } from '../../../errors'
 import { builder } from '../../../graphql/schema/builder'
 import { prisma } from '../../../prisma'
-import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
+import { parseGlobalId } from '../../../core/utils/relay-helpers'
 import { requireAuthentication } from '../../auth/guards/auth.guards'
 
 // Get logger from container

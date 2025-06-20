@@ -8,6 +8,7 @@ import { container } from 'tsyringe'
 import { z } from 'zod'
 import type { ILogger } from '../../../core/services/logger.interface'
 import type { IPasswordService } from '../../../core/services/password.service.interface'
+import type { ITokenService } from '../../../core/services/token.service.interface'
 import { AuthenticationError, normalizeError } from '../../../errors'
 import { builder } from '../../../graphql/schema/builder'
 import { commonValidations } from '../../../graphql/schema/helpers'
@@ -15,12 +16,12 @@ import { applyRateLimit, createRateLimitConfig } from '../../../graphql/schema/p
 import { RateLimitPresets } from '../../../infrastructure/services/rate-limiter.service'
 import { prisma } from '../../../prisma'
 import { requireAuthentication } from '../guards/auth.guards'
-import { TokenService } from '../services/token.service'
 import { AuthTokensType } from '../types/auth.types'
 
 // Get services from container
 const getPasswordService = () => container.resolve<IPasswordService>('IPasswordService')
 const getLogger = () => container.resolve<ILogger>('ILogger')
+const getTokenService = () => container.resolve<ITokenService>('ITokenService')
 
 // Login with tokens mutation (direct implementation)
 builder.mutationField('loginWithTokens', (t) =>
@@ -77,7 +78,7 @@ builder.mutationField('loginWithTokens', (t) =>
         }
 
         // Generate tokens
-        const tokenService = container.resolve(TokenService)
+        const tokenService = getTokenService()
         const tokens = await tokenService.generateTokens({
           id: user.id,
           email: user.email,
@@ -116,7 +117,7 @@ builder.mutationField('refreshToken', (t) =>
       logger.info('Token refresh attempt')
 
       try {
-        const tokenService = container.resolve(TokenService)
+        const tokenService = getTokenService()
         const tokens = await tokenService.refreshTokens(args.refreshToken)
 
         logger.info('Token refresh successful')
@@ -142,7 +143,7 @@ builder.mutationField('logout', (t) =>
         const userId = requireAuthentication(context)
         logger.info('Logout attempt', { userId })
 
-        const tokenService = container.resolve(TokenService)
+        const tokenService = getTokenService()
 
         // Revoke all refresh tokens for the user (extract numeric value)
         await tokenService.revokeAllTokens(userId.value)
