@@ -10,9 +10,9 @@ import { createServer, IncomingMessage, ServerResponse } from 'http'
 import 'reflect-metadata'
 
 // Import configuration and DI
-import { createContext } from './context/creation'
-import { getConfigInstance } from './infrastructure/config/configuration'
-import { configureContainer } from './infrastructure/config/container'
+import { createContext } from './graphql/context'
+import { getConfigInstance } from './app/config/configuration-legacy'
+import { configureContainer } from './app/config/container'
 
 // Import schema
 import { getSchema } from './graphql/schema'

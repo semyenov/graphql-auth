@@ -413,11 +413,11 @@ src/
 │   ├── types/                 # GraphQL type definitions
 │   ├── inputs.ts              # Input types & filters
 │   └── index.ts               # Schema assembly
-├── infrastructure/            
-│   └── graphql/
-│       ├── resolvers/         # Direct Pothos resolvers
-│       ├── authorization/     # Enhanced auth scopes
-│       └── validation/        # Input validation
+├── app/                       # Application layer
+│   ├── config/               # Configuration
+│   ├── database/            # Database utilities
+│   ├── graphql/             # GraphQL utilities
+│   └── services/            # Application services
 ├── context/                   # Request context & auth
 ├── errors/                    # Error hierarchy
 ├── permissions/               # GraphQL Shield rules
@@ -1055,7 +1055,7 @@ Available scopes:
 - `postOwner(postId)` - User owns the post
 - And more...
 
-See [Enhanced Authorization](./src/infrastructure/graphql/authorization/enhanced-scopes.ts) for full scope implementation.
+See [Enhanced Authorization](./src/core/auth/scopes.ts) for full scope implementation.
 
 ## Advanced Features
 
@@ -1106,7 +1106,7 @@ mutation CreatePost($title: String!, $content: String!) {
 graphql-auth/
 ├── src/
 │   ├── schema/                 # GraphQL schema definition
-│   ├── infrastructure/         # Technical infrastructure
+│   ├── app/                   # Application layer
 │   ├── context/               # Request context
 │   ├── errors/                # Error classes
 │   ├── permissions/           # Authorization rules
@@ -1142,7 +1142,7 @@ graphql-auth/
 
 3. **Create Resolver**:
    ```typescript
-   // src/infrastructure/graphql/resolvers/feature.resolver.ts
+   // src/modules/feature/resolvers/feature.resolver.ts
    builder.mutationField('createFeature', (t) =>
      t.prismaField({
        type: 'Feature',

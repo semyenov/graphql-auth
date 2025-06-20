@@ -5,7 +5,6 @@
 
 import { RateLimiterMemory } from 'rate-limiter-flexible'
 import { config } from '../config'
-import { RateLimitError } from '../../errors'
 
 /**
  * Create rate limiter instance
@@ -27,22 +26,22 @@ export async function rateLimitMiddleware(
   try {
     // Use IP address as key
     const key = req.ip || req.connection?.remoteAddress || 'unknown'
-    
+
     // Consume 1 point for this request
     await rateLimiter.consume(key)
-    
+
     // Continue to next middleware
     await next()
   } catch (rateLimiterRes: any) {
     // Rate limit exceeded
     const retryAfter = Math.round(rateLimiterRes.msBeforeNext / 1000) || 60
-    
+
     // Set rate limit headers
     res.setHeader('Retry-After', retryAfter)
     res.setHeader('X-RateLimit-Limit', config.rateLimit.maxRequests)
     res.setHeader('X-RateLimit-Remaining', rateLimiterRes.remainingPoints || 0)
     res.setHeader('X-RateLimit-Reset', new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString())
-    
+
     // Send error response
     res.status(429).json({
       error: 'Too Many Requests',
@@ -84,7 +83,7 @@ export const RATE_LIMIT_PRESETS = {
     points: 3,
     duration: 3600, // 1 hour
   },
-  
+
   // API operations
   read: {
     points: 100,

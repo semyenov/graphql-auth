@@ -95,17 +95,17 @@ export class Post {
   update(props: { title?: string; content?: string | null }): void {
     if (props.title !== undefined) {
       if (!props.title || props.title.trim().length === 0) {
-        throw new EntityValidationError(VALIDATION_MESSAGES.TITLE_REQUIRED)
+        throw new EntityValidationError([], VALIDATION_MESSAGES.TITLE_REQUIRED)
       }
       if (props.title.length > VALIDATION_LIMITS.TITLE_MAX_LENGTH) {
-        throw new EntityValidationError(VALIDATION_MESSAGES.TITLE_TOO_LONG)
+        throw new EntityValidationError([], VALIDATION_MESSAGES.TITLE_TOO_LONG)
       }
       this.props.title = props.title.trim()
     }
 
     if (props.content !== undefined) {
       if (props.content && props.content.length > VALIDATION_LIMITS.CONTENT_MAX_LENGTH) {
-        throw new EntityValidationError(VALIDATION_MESSAGES.CONTENT_TOO_LONG)
+        throw new EntityValidationError([], VALIDATION_MESSAGES.CONTENT_TOO_LONG)
       }
       this.props.content = props.content
     }
@@ -115,7 +115,7 @@ export class Post {
 
   publish(): void {
     if (this.props.published) {
-      throw new EntityValidationError('Post is already published')
+      throw new EntityValidationError([], 'Post is already published')
     }
     this.props.published = true
     this.props.updatedAt = new Date()
@@ -123,7 +123,7 @@ export class Post {
 
   unpublish(): void {
     if (!this.props.published) {
-      throw new EntityValidationError('Post is already unpublished')
+      throw new EntityValidationError([], 'Post is already unpublished')
     }
     this.props.published = false
     this.props.updatedAt = new Date()

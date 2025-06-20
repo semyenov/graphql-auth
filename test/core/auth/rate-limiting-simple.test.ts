@@ -5,7 +5,7 @@
  */
 
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
-import { rateLimiter, RateLimitPresets } from '../../../src/infrastructure/services/rate-limiter.service'
+import { rateLimiter, RateLimitPresets } from '../../../src/app/services/rate-limiter.service'
 
 describe('Rate Limiter Service', () => {
     beforeEach(async () => {

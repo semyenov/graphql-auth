@@ -5,8 +5,8 @@
  */
 
 import type { FieldRef, SchemaTypes } from '@pothos/core'
+import { rateLimiter, type RateLimiterOptions } from '../../../app/services/rate-limiter.service'
 import type { Context } from '../../../context/context-direct'
-import { rateLimiter, type RateLimiterOptions } from '../../../infrastructure/services/rate-limiter.service'
 
 /**
  * Rate limit configuration for a field

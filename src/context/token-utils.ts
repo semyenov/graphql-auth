@@ -5,7 +5,7 @@
  */
 
 import { container } from 'tsyringe'
-import { TokenService } from '../features/auth/infrastructure/services/token.service'
+import { TokenService } from '../modules/auth/services/token.service'
 import { UserId } from '../core/value-objects/user-id.vo'
 
 /**

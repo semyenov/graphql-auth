@@ -6,8 +6,8 @@
 
 import bcrypt from 'bcryptjs'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { createDataLoaders } from '../src/data/loaders'
-import { prisma } from './setup'
+import { createDataLoaders } from '../../src/data/loaders'
+import { prisma } from '../setup'
 
 describe('DataLoaders', () => {
     let loaders: ReturnType<typeof createDataLoaders>

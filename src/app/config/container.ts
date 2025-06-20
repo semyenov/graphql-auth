@@ -27,7 +27,7 @@ import { IUserRepository } from '../../core/repositories/user.repository.interfa
 import { PrismaUserRepository } from '../../data/repositories/prisma-user.repository'
 
 // Configuration
-import { getConfig } from './configuration'
+import { getConfig } from './configuration-legacy'
 
 export function configureContainer(): void {
   const config = getConfig()

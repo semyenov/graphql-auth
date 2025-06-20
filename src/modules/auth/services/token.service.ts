@@ -12,6 +12,7 @@ import { UserId } from '../../../core/value-objects/user-id.vo'
 import { RefreshTokenRepository } from '../../../data/repositories/refresh-token.repository'
 import { AuthenticationError as UnauthorizedError } from '../../../errors'
 
+export type { TokenConfig } from '../../../core/services/token.service.interface'
 
 @injectable()
 export class TokenService implements ITokenService {

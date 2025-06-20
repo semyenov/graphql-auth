@@ -9,7 +9,7 @@ import { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { LoginMutation, SignupMutation } from '../../../src/gql/mutations'
-import { rateLimiter } from '../../../src/infrastructure/services/rate-limiter.service'
+import { rateLimiter } from '../../../src/app/services/rate-limiter.service'
 import { prisma } from '../../setup'
 import { createMockContext, createTestServer, executeOperation, gqlHelpers } from '../../utils/helpers/database.helpers'
 

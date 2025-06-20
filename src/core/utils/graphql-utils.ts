@@ -1,8 +1,6 @@
 import { print } from 'graphql'
-import type {
-  GraphQLError,
-  GraphQLResponse
-} from './context'
+import { GraphQLError, GraphQLResponse } from '../../context'
+
 
 // =============================================================================
 // ADVANCED QUERY UTILITIES
