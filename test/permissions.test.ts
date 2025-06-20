@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { UserId } from '../src/core/value-objects/user-id.vo'
 import { DeletePostMutation, LoginMutation } from '../src/gql/mutations'
 import { FeedQuery, MeQuery, PostQuery } from '../src/gql/queries'
-import { PermissionUtils } from '../src/permissions'
+import { PermissionUtils } from '../src/graphql/middleware/utils-clean'
 import { toPostId, toUserId } from './relay-utils'
 import { prisma } from './setup'
 import {

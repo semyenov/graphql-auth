@@ -9,7 +9,7 @@ import type PrismaTypes from '@pothos/plugin-prisma/generated';
 import { z } from 'zod';
 import type { Context } from '../../context/context-direct';
 import { AuthenticationError } from '../../errors';
-import { builder } from '../../schema/builder';
+import { builder } from '../../graphql/schema/builder';
 
 /**
  * Creates a mutation field that requires authentication

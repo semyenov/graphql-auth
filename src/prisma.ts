@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { DATABASE } from './constants'
-import { env } from './environment'
+import { env } from './app/config/environment'
 
 /**
  * Type alias for PrismaClient to improve readability

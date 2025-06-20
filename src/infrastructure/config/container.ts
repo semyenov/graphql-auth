@@ -18,8 +18,8 @@ import { BcryptPasswordService } from '../auth/bcrypt-password.service'
 import { LoggerFactory } from '../logging/logger-factory'
 
 // Feature-based implementations (for refresh tokens)
-import { RefreshTokenRepository } from '../../features/auth/infrastructure/repositories/refresh-token.repository'
-import { TokenConfig, TokenService } from '../../features/auth/infrastructure/services/token.service'
+import { RefreshTokenRepository } from '../../modules/auth/repositories/refresh-token.repository'
+import { TokenConfig, TokenService } from '../../modules/auth/services/token.service'
 
 // Repositories (for refresh tokens)
 import { IUserRepository } from '../../core/repositories/user.repository.interface'

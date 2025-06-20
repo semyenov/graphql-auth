@@ -340,8 +340,40 @@ All operations support:
 5. **Modern Standards**: Following current GraphQL and Pothos best practices
 6. **Maintainability**: Clear separation with fewer abstraction layers
 
+## Proposed Improved File Structure
+
+The current file structure has some organizational challenges. See [IMPROVED-FILE-STRUCTURE.md](./IMPROVED-FILE-STRUCTURE.md) for a detailed proposal for a better modular organization that includes:
+
+### Key Improvements
+- **Module-Based Organization**: Each feature is a self-contained module
+- **Consistent File Naming**: `{module}.{type}.ts` pattern throughout
+- **Clear Separation of Concerns**: Distinct layers for app, modules, graphql, core, data, lib
+- **Better Test Organization**: Tests mirror source structure with utilities
+- **Improved Scalability**: Easy to add new modules without affecting existing code
+
+### Proposed Structure Overview
+```
+src/
+├── app/                    # Application entry points and config
+├── modules/                # Feature modules (auth, posts, users)
+├── graphql/                # GraphQL infrastructure
+├── core/                   # Shared business logic
+├── data/                   # Data access layer
+├── lib/                    # External library adapters
+├── types/                  # Global type definitions
+└── constants/              # Application constants
+
+test/
+├── modules/                # Feature tests
+├── core/                   # Core functionality tests
+├── utils/                  # Test utilities and factories
+├── performance/            # Performance tests
+└── setup/                  # Test configuration
+```
+
 ## Future Considerations
 
+- **File Structure Migration**: Implement the improved modular structure
 - **Horizontal Scaling**: DataLoader patterns ready for distributed systems
 - **Advanced Authorization**: Role-based access control with policy engines
 - **Real-time Features**: GraphQL subscriptions with Redis

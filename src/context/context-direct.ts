@@ -7,9 +7,9 @@
  */
 
 import { prisma } from '../prisma'
-import { createDataLoaders, type DataLoaders } from '../infrastructure/graphql/dataloaders'
-import { createEnhancedLoaders, type Loaders } from '../infrastructure/graphql/dataloaders/loaders'
-import { createEnhancedAuthScopes, type EnhancedAuthScopes } from '../infrastructure/graphql/authorization/enhanced-scopes'
+import { createDataLoaders, type DataLoaders } from '../graphql/dataloaders'
+import { createEnhancedLoaders, type Loaders } from '../graphql/dataloaders/loaders'
+import { createEnhancedAuthScopes, type EnhancedAuthScopes } from '../core/auth/scopes'
 import type { Context as BaseContext } from './types.d'
 
 export interface Context extends BaseContext {

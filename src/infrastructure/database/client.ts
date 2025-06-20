@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { DATABASE } from '../../constants'
-import { env } from '../../environment'
+import { env } from '../../app/config/environment'
 
 /**
  * Database client configuration type

@@ -29,8 +29,8 @@ import jwt from 'jsonwebtoken'
 import { enhanceContext } from '../src/context/context-direct'
 import type { Context } from '../src/context/types.d'
 import { UserId } from '../src/core/value-objects/user-id.vo'
-import { env } from '../src/environment'
-import { getSchema } from '../src/schema'
+import { env } from '../src/app/config/environment'
+import { getSchema } from '../src/graphql/schema'
 
 // Create test context
 export function createMockContext(overrides?: Partial<Context>): Context {
