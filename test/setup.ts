@@ -1,13 +1,12 @@
 import { PrismaClient } from '@prisma/client'
 import { execSync } from 'child_process'
 import { rm } from 'fs/promises'
-import { dirname } from 'path'
-import { fileURLToPath } from 'url'
 import { afterAll, beforeAll, beforeEach } from 'vitest'
+import { configureContainer } from '../src/infrastructure/config/container'
 import { DatabaseClient } from '../src/infrastructure/database/client'
+import { rateLimiter } from '../src/infrastructure/services/rate-limiter.service'
 import { setTestPrismaClient } from '../src/prisma'
 import { TEST_DATABASE_URL } from './test-database-url'
-import { configureContainer } from '../src/infrastructure/config/container'
 
 // Create a test database client
 export const prisma = new PrismaClient({
@@ -18,8 +17,8 @@ export const prisma = new PrismaClient({
   },
 })
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+// const __filename = fileURLToPath(import.meta.url)
+// const __dirname = dirname(__filename)
 
 const dbFilePath = TEST_DATABASE_URL.replace('file:', '')
 
@@ -73,6 +72,7 @@ beforeAll(async () => {
 afterAll(async () => {
   try {
     await prisma.$disconnect()
+    await rateLimiter.resetAll()
 
     // Clean up the temporary database file
     try {

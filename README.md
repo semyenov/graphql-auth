@@ -1,21 +1,43 @@
 # GraphQL Server with Authentication & Permissions
 
-This example shows how to implement a **GraphQL server with TypeScript** with the following stack:
+A production-ready **GraphQL server with TypeScript** demonstrating enterprise-grade patterns and best practices.
 
-- [**Apollo Server**](https://github.com/apollographql/apollo-server): HTTP server for GraphQL APIs
-- [**Pothos**](https://pothos-graphql.dev/): GraphQL schema definition and resolver implementation
-- [**GraphQL Shield**](https://github.com/maticzav/graphql-shield): Authorization/permission layer for GraphQL schemas
-- [**Prisma Client**](https://www.prisma.io/docs/concepts/components/prisma-client): Databases access (ORM)
-- [**Prisma Migrate**](https://www.prisma.io/docs/concepts/components/prisma-migrate): Database migrations
-- [**SQLite**](https://www.sqlite.org/index.html): Local, file-based SQL database
+## 🚀 Tech Stack
 
-## Contents
+- [**Bun**](https://bun.sh/): Fast all-in-one JavaScript runtime & toolkit
+- [**Apollo Server 4**](https://www.apollographql.com/docs/apollo-server/): Modern GraphQL server with H3 integration
+- [**Pothos GraphQL**](https://pothos-graphql.dev/): Type-safe, code-first GraphQL schema builder
+- [**Prisma ORM**](https://www.prisma.io/): Next-generation TypeScript ORM with migrations
+- [**GraphQL Shield**](https://github.com/maticzav/graphql-shield): Declarative permission layer
+- [**JWT Authentication**](https://jwt.io/): Secure token-based authentication with refresh tokens
+- [**SQLite**](https://www.sqlite.org/): Local database (easily switchable to PostgreSQL/MySQL)
+
+## ✨ Key Features
+
+### Advanced Pothos Integration
+- **10 Pothos Plugins**: Prisma, Relay, Errors, ScopeAuth, Validation, DataLoader, and more
+- **N+1 Query Prevention**: Automatic query batching with DataLoader
+- **Type Safety**: End-to-end type safety without code generation
+- **Performance Optimized**: Field-level query optimization with Prisma
+
+### Production Features
+- **JWT Authentication**: Access & refresh token implementation
+- **Authorization**: Role-based and resource-based permissions
+- **Error Handling**: Comprehensive error types with descriptive messages
+- **Rate Limiting**: Built-in rate limiting for API protection
+- **Relay Pagination**: Cursor-based pagination with connections
+- **Input Validation**: Zod schema validation with async refinements
+
+## 📚 Documentation
 
 - [Getting Started](#getting-started)
-- [Using the GraphQL API](#using-the-graphql-api)
-- [Evolving the app](#evolving-the-app)
-- [Switch to another database (e.g. PostgreSQL, MySQL, SQL Server)](#switch-to-another-database-eg-postgresql-mysql-sql-server)
-- [Next steps](#next-steps)
+- [Architecture Overview](#architecture-overview)
+- [GraphQL Schema & Operations](#graphql-schema--operations)
+- [Authentication & Authorization](#authentication--authorization)
+- [Advanced Features](#advanced-features)
+- [Development Guide](#development-guide)
+- [Testing](#testing)
+- [Deployment](#deployment)
 
 ## Installation
 
@@ -380,40 +402,147 @@ Seeding finished.
 ✓ Database reset completed
 ```
 
+## Architecture Overview
+
+This project implements a modern GraphQL architecture with clean separation of concerns:
+
+```
+src/
+├── schema/                     # GraphQL Schema (Pothos)
+│   ├── builder.ts             # Schema builder with plugins
+│   ├── types/                 # GraphQL type definitions
+│   ├── inputs.ts              # Input types & filters
+│   └── index.ts               # Schema assembly
+├── infrastructure/            
+│   └── graphql/
+│       ├── resolvers/         # Direct Pothos resolvers
+│       ├── authorization/     # Enhanced auth scopes
+│       └── validation/        # Input validation
+├── context/                   # Request context & auth
+├── errors/                    # Error hierarchy
+├── permissions/               # GraphQL Shield rules
+└── prisma/                    # Database schema & migrations
+```
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed architecture documentation.
+
 ## GraphQL Schema & Operations
 
-The GraphQL schema is automatically generated and maintained in [`_docs/schema.graphql`](./_docs/schema.graphql). You can regenerate it at any time using:
-
-```bash
-bun run gen:schema
-```
+The GraphQL schema is automatically generated and maintained in [`_docs/schema.graphql`](./_docs/schema.graphql).
 
 ### Schema Overview
 
-The API provides the following main types:
-
 #### **Queries**
 
-- `allUsers` - Retrieve all users
 - `me` - Get current authenticated user profile
+- `user` - Get user by ID (Relay global ID)
+- `users` - List all users
+- `searchUsers` - Search users by name or email
 - `feed` - Get published posts with filtering and pagination
-- `postById` - Get a specific post by ID
-- `draftsByUser` - Get unpublished posts by user
+- `post` - Get a specific post by ID
+- `drafts` - Get user's unpublished posts
+- `enhancedFeed` - Advanced feed with metadata and performance tracking
+- `enhancedUserSearch` - User search with aggregated data
+- `postAnalytics` - Aggregated post analytics
 
 #### **Mutations**
 
+##### Authentication
 - `signup` - Register a new user account
 - `login` - Authenticate and get JWT token
-- `createDraft` - Create a new unpublished post
+- `loginWithTokens` - Login with refresh token support
+- `refreshToken` - Refresh access token
+- `logout` - Revoke all refresh tokens
+
+##### Posts
+- `createPost` - Create a new post (draft by default)
+- `updatePost` - Update existing post
+- `deletePost` - Remove a post
 - `togglePublishPost` - Publish/unpublish a post
 - `incrementPostViewCount` - Track post views
-- `deletePost` - Remove a post
 
 #### **Types**
 
-- `User` - User account with id, name, email, posts
-- `Post` - Blog post with metadata, content, author relationship
-- `DateTime` - ISO 8601 timestamp scalar
+- `User` - User account with posts connection
+- `Post` - Blog post with author relationship
+- `PageInfo` - Relay pagination info
+- `UserConnection/PostConnection` - Relay connections
+- `EnhancedPostConnection` - Connection with metadata
+- `PostAnalytics` - Aggregated analytics data
+
+### Advanced Features
+
+#### Relay-Style Pagination
+
+```graphql
+query GetFeed($first: Int!, $after: String) {
+  feed(first: $first, after: $after) {
+    edges {
+      node {
+        id
+        title
+        author {
+          name
+        }
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+      totalCount
+    }
+  }
+}
+```
+
+#### Advanced Filtering
+
+```graphql
+query FilteredFeed($where: PostWhereInput) {
+  feed(where: $where) {
+    id
+    title
+    content
+    createdAt
+  }
+}
+
+# Variables:
+{
+  "where": {
+    "title": {
+      "contains": "GraphQL"
+    },
+    "published": true,
+    "createdAt": {
+      "gte": "2024-01-01T00:00:00Z"
+    }
+  }
+}
+```
+
+#### Enhanced Queries with Metadata
+
+```graphql
+query EnhancedFeed($search: String) {
+  enhancedFeed(searchTerm: $search, first: 10) {
+    totalCount
+    searchMetadata {
+      query
+      searchTime
+      matchedFields
+    }
+    edges {
+      node {
+        id
+        title
+        viewCount
+      }
+    }
+  }
+}
+```
 
 ### Example Operations
 
@@ -852,21 +981,253 @@ As mentioned before, you can set HTTP headers in the bottom-left corner of the G
 
 ![](https://imgur.com/ToRcCTj.png)
 
-### Authorization rules
+## Authentication & Authorization
 
-The following [authorization rules](./src/permissions/index.ts) are defined for the GraphQL API via GraphQL Shield:
+### JWT Authentication
 
-| Operation name           | Operation type | Rule                  | Description                                                                              |
-| :----------------------- | :------------- | :-------------------- | :--------------------------------------------------------------------------------------- |
-| `me`                     | Query          | `isAuthenticatedUser` | Requires a user to be authenticated                                                      |
-| `draftsByUser`           | Query          | `isAuthenticatedUser` | Requires a user to be authenticated                                                      |
-| `postById`               | Query          | `isAuthenticatedUser` | Requires a user to be authenticated                                                      |
-| `createDraft`            | Mutation       | `isAuthenticatedUser` | Requires a user to be authenticated                                                      |
-| `deletePost`             | Mutation       | `isPostOwner`         | Requires the authenticated user to be the author of the post to be deleted               |
-| `incrementPostViewCount` | Mutation       | `isAuthenticatedUser` | Requires a user to be authenticated                                                      |
-| `togglePublishPost`      | Mutation       | `isPostOwner`         | Requires the authenticated user to be the author of the post to be published/unpublished |
+The API uses JWT tokens for authentication with support for refresh tokens:
 
-The `isAuthenticatedUser` rule requires you to send a valid authentication token. The `isPostOwner` rule additionaly requires the user to whom this authentication token belongs to be the author of the post on which the operation is applied.
+```typescript
+// Login response includes both tokens
+{
+  "data": {
+    "loginWithTokens": {
+      "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+      "refreshToken": "550e8400-e29b-41d4-a716-446655440000",
+      "user": {
+        "id": "VXNlcjox",
+        "email": "user@example.com"
+      }
+    }
+  }
+}
+```
+
+### Authorization System
+
+The project implements two authorization layers:
+
+#### 1. GraphQL Shield Rules
+
+Declarative permission rules for operations:
+
+| Rule                | Description                                    |
+| :------------------ | :--------------------------------------------- |
+| `isAuthenticatedUser` | Requires valid JWT token                     |
+| `isPostOwner`       | Requires user to be the post author           |
+| `isAdmin`           | Requires admin role (future use)              |
+
+#### 2. Pothos Scope Auth Plugin
+
+Dynamic, context-aware authorization:
+
+```typescript
+// Field-level authorization
+builder.queryField('adminData', (t) =>
+  t.field({
+    type: 'AdminData',
+    authScopes: {
+      authenticated: true,
+      hasPermission: 'admin:read',
+    },
+    resolve: () => getAdminData(),
+  })
+)
+
+// Resource-based authorization
+builder.mutationField('updatePost', (t) =>
+  t.field({
+    type: 'Post',
+    authScopes: (parent, args, context) => ({
+      canEditContent: ['Post', args.id],
+    }),
+    resolve: (parent, args) => updatePost(args),
+  })
+)
+```
+
+Available scopes:
+- `authenticated` - User is logged in
+- `hasPermission(permission)` - User has specific permission
+- `canViewContent(type, id)` - Can view specific content
+- `canEditContent(type, id)` - Can edit specific content
+- `withinTimeLimit(action, limit)` - Time-based restrictions
+- `postOwner(postId)` - User owns the post
+- And more...
+
+See [Enhanced Authorization](./src/infrastructure/graphql/authorization/enhanced-scopes.ts) for full scope implementation.
+
+## Advanced Features
+
+### Performance Optimizations
+
+1. **N+1 Query Prevention**: DataLoader automatically batches and caches database queries
+2. **Field-Level Optimization**: Prisma only selects fields requested by GraphQL
+3. **Query Complexity Limiting**: Prevents resource-intensive queries
+4. **Rate Limiting**: Configurable rate limits per operation
+
+### Error Handling
+
+Comprehensive error hierarchy with descriptive messages:
+
+```typescript
+// Error types with proper HTTP status codes
+- AuthenticationError (401): "Authentication required"
+- AuthorizationError (403): "You can only modify your own posts"
+- ValidationError (400): Field-specific validation errors
+- NotFoundError (404): "Post with ID 'xyz' not found"
+- ConflictError (409): "Email already exists"
+- RateLimitError (429): "Too many requests"
+```
+
+### Input Validation
+
+Zod-based validation with async refinements:
+
+```graphql
+mutation CreatePost($title: String!, $content: String!) {
+  createPost(title: $title, content: $content) {
+    id
+    title
+  }
+}
+
+# Validation rules:
+# - Title: 3-100 characters, unique per user
+# - Content: Minimum 10 characters
+# - Async check for duplicate titles
+```
+
+## Development Guide
+
+### Project Structure
+
+```
+graphql-auth/
+├── src/
+│   ├── schema/                 # GraphQL schema definition
+│   ├── infrastructure/         # Technical infrastructure
+│   ├── context/               # Request context
+│   ├── errors/                # Error classes
+│   ├── permissions/           # Authorization rules
+│   └── utils/                 # Utilities
+├── prisma/
+│   ├── schema.prisma          # Database schema
+│   ├── migrations/            # Database migrations
+│   └── seed.ts                # Seed data
+├── test/                      # Test suite
+└── _docs/                     # Generated docs
+```
+
+### Common Development Tasks
+
+#### Adding a New Feature
+
+1. **Update Database Schema**:
+   ```bash
+   # Edit prisma/schema.prisma
+   bunx prisma migrate dev --name add-feature
+   ```
+
+2. **Define GraphQL Types**:
+   ```typescript
+   // src/schema/types/feature.ts
+   builder.prismaObject('Feature', {
+     fields: (t) => ({
+       id: t.exposeID('id'),
+       name: t.exposeString('name'),
+     }),
+   });
+   ```
+
+3. **Create Resolver**:
+   ```typescript
+   // src/infrastructure/graphql/resolvers/feature.resolver.ts
+   builder.mutationField('createFeature', (t) =>
+     t.prismaField({
+       type: 'Feature',
+       args: {
+         name: t.arg.string({ required: true }),
+       },
+       resolve: async (query, parent, args, context) => {
+         return prisma.feature.create({
+           ...query,
+           data: args,
+         });
+       },
+     })
+   );
+   ```
+
+4. **Add Permissions**:
+   ```typescript
+   // src/permissions/shield-config.ts
+   Mutation: {
+     createFeature: isAuthenticatedUser,
+   }
+   ```
+
+### Environment Variables
+
+```bash
+# .env
+DATABASE_URL="file:./dev.db"     # SQLite database
+JWT_SECRET="your-secret-key"      # JWT signing secret
+BCRYPT_ROUNDS=10                  # Password hashing rounds
+NODE_ENV="development"            # Environment mode
+```
+
+## Testing
+
+Comprehensive test suite with:
+
+- **Unit Tests**: Business logic and utilities
+- **Integration Tests**: GraphQL operations
+- **E2E Tests**: Complete user flows
+- **Performance Tests**: Query complexity and response times
+
+```bash
+# Run all tests
+bun test
+
+# Run specific test file
+bun test auth.test.ts
+
+# Run with coverage
+bun test --coverage
+
+# Run tests in watch mode
+bun test --watch
+```
+
+See [Test Documentation](./test/README.md) for detailed testing guide.
+
+## Deployment
+
+### Production Build
+
+```bash
+# Build for production
+bun run build
+
+# Start production server
+bun run start
+```
+
+### Database Migration
+
+```bash
+# Apply migrations in production
+bunx prisma migrate deploy
+```
+
+### Environment Setup
+
+1. Set production environment variables
+2. Configure database connection (PostgreSQL recommended)
+3. Set up reverse proxy (nginx/caddy)
+4. Enable HTTPS
+5. Configure monitoring (APM, logs)
 
 ## Evolving the app
 
@@ -1134,13 +1495,46 @@ datasource db {
 
 </details>
 
-## Next steps
+## 📖 Additional Documentation
 
-- Check out the [Prisma docs](https://www.prisma.io/docs)
-- [Join our community on Discord](https://pris.ly/discord?utm_source=github&utm_medium=prisma_examples&utm_content=next_steps_section) to share feedback and interact with other users.
-- [Subscribe to our YouTube channel](https://pris.ly/youtube?utm_source=github&utm_medium=prisma_examples&utm_content=next_steps_section) for live demos and video tutorials.
-- [Follow us on X](https://pris.ly/x?utm_source=github&utm_medium=prisma_examples&utm_content=next_steps_section) for the latest updates.
-- Report issues or ask [questions on GitHub](https://pris.ly/github?utm_source=github&utm_medium=prisma_examples&utm_content=next_steps_section).
+- [**POTHOS_INTEGRATION_GUIDE.md**](./POTHOS_INTEGRATION_GUIDE.md) - Comprehensive Pothos patterns and plugins
+- [**ARCHITECTURE.md**](./ARCHITECTURE.md) - Detailed architecture documentation
+- [**CLAUDE.md**](./CLAUDE.md) - AI assistant integration guide
+- [**NAMING-CONVENTIONS.md**](./NAMING-CONVENTIONS.md) - Code style and naming standards
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Follow the coding standards
+4. Add tests for new features
+5. Submit a pull request
+
+## 📚 Resources
+
+### Documentation
+- [Pothos GraphQL Documentation](https://pothos-graphql.dev/)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [Apollo Server Documentation](https://www.apollographql.com/docs/apollo-server/)
+- [GraphQL Best Practices](https://graphql.org/learn/best-practices/)
+
+### Community
+- [Pothos Discord](https://discord.gg/mYjxFuTW)
+- [Prisma Discord](https://pris.ly/discord)
+- [GraphQL Discord](https://discord.graphql.org/)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Pothos GraphQL](https://github.com/hayes/pothos) by Michael Hayes
+- [Prisma](https://github.com/prisma/prisma) team for the amazing ORM
+- [Apollo GraphQL](https://github.com/apollographql) for the server framework
+- All contributors and maintainers of the dependencies
 
 ## AI Development Assistance
 

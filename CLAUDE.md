@@ -47,7 +47,7 @@ bun run graphql:examples                # Run GraphQL query examples
   - **Relay Plugin**: Global IDs, connections with metadata, cursor pagination
   - **Errors Plugin**: Union result types for comprehensive error handling
   - **Scope Auth Plugin**: Dynamic authorization with 14+ scope types
-  - **DataLoader Plugin**: Loadable objects for N+1 prevention
+  - **DataLoader Plugin**: Automatic batch loading for N+1 prevention
   - **Validation Plugin**: Zod integration with async refinements
 - **Database**: Prisma ORM with SQLite (dev.db) - accessed directly, not through context
 - **Authentication**: JWT tokens with bcryptjs + refresh token rotation
@@ -199,9 +199,7 @@ errors: {
 ```
 
 **Enhanced Features:**
-- **Loadable Objects**: `LoadableUser` and `LoadablePost` for automatic batch loading with DataLoader
 - **Enhanced Connections**: `EnhancedPostConnection` and `EnhancedUserConnection` with metadata (totalCount, searchMetadata, filterSummary)
-- **Safe Mutations**: Union result types (`AuthResult`, `PostResult`, `UserResult`, `DeleteResult`) for comprehensive error handling
 - **Dynamic Scopes**: 14+ authorization scopes including `hasPermission`, `canViewContent`, `withinTimeLimit`
 - **Advanced DataLoaders**: Entity loaders, count loaders, and relation loaders with configurable batching
 - **Enhanced Validation**: Async refinements with database checks, contextual validation, field dependencies
@@ -215,7 +213,7 @@ The codebase implements business logic directly in Pothos resolvers with direct 
 import { prisma } from '../../../prisma'
 
 // Direct resolver pattern - business logic in resolver
-builder.mutationField('signupDirect', (t) =>
+builder.mutationField('signup', (t) =>
   t.string({
     description: 'Create a new user account',
     grantScopes: ['public'],
@@ -380,8 +378,6 @@ The following operations are available and fully tested:
 - `signup` - Create new user account with email/password
 - `login` - Authenticate user and return JWT token  
 - `me` - Get current authenticated user profile
-- `safeSignup` - Safe signup with union result type (AuthResult)
-- `safeLogin` - Safe login with comprehensive error handling
 
 ### Authentication with Refresh Tokens
 - `loginWithTokens` - Login and receive access + refresh tokens
@@ -394,18 +390,11 @@ The following operations are available and fully tested:
 - `deletePost` - Delete post (owner only)
 - `togglePublishPost` - Toggle post publish status (owner only)
 - `incrementPostViewCount` - Increment post view count (public)
-- `safeCreatePost` - Safe post creation with union result type (PostResult)
-- `safeUpdatePost` - Safe post update with comprehensive error handling
-- `safeDeletePost` - Safe post deletion with union result type (DeleteResult)
 
 ### Enhanced Query Operations
 - `enhancedFeed` - Advanced feed with metadata, search, and filtering
 - `enhancedUserSearch` - User search with aggregated metadata
-- `loadablePost` - Efficient post loading via DataLoader
-- `loadableUser` - Efficient user loading via DataLoader
-- `batchUsers` - Load multiple users efficiently with DataLoader
 - `postAnalytics` - Get aggregated analytics for posts
-- `optimizedFeed` - Optimized feed query with proper Prisma integration
 
 ### Post Queries
 - `feed` - Get published posts with search and pagination
@@ -414,12 +403,10 @@ The following operations are available and fully tested:
 
 ### User Operations
 - `searchUsers` - Search users by name or email with pagination
-- `safeUpdateProfile` - Safe profile update with union result type (UserResult)
+- `updateUserProfile` - Update the current user profile
 
 ### Enhanced Features
-- **Loadable Objects**: `LoadableUser` and `LoadablePost` for N+1 prevention
 - **Enhanced Connections**: Rich metadata including totalCount, searchMetadata, filterSummary
-- **Safe Mutations**: Union result types for comprehensive error handling
 - **Advanced Search**: Multi-field search with complex filtering options
 - **Dynamic Authorization**: Content-based and permission-based access control
 - **Performance Tracking**: Built-in performance monitoring with PerformanceTracker
@@ -431,8 +418,8 @@ All operations support:
 - Enhanced authentication and authorization with dynamic scopes
 - Advanced input validation with Zod schemas and async refinements
 - Rate limiting protection with time-based controls
-- Comprehensive error handling with union result types
-- DataLoader optimization with loadable objects and enhanced loaders
+- Comprehensive error handling with descriptive error messages
+- DataLoader optimization for N+1 query prevention
 - Rich metadata and performance information
 - Field-level Prisma optimizations for minimal database queries
 
@@ -668,9 +655,9 @@ The project uses GraphQL Tada for type-safe GraphQL operations:
 
 ```typescript
 // src/gql/ directory contains:
-- queries-direct.ts           # Direct resolver queries (meDirect, feedDirect, etc.)
-- mutations-direct.ts         # Direct resolver mutations (signupDirect, createPostDirect, etc.)
-- mutations-auth-tokens-direct.ts # Token-based auth mutations (loginWithTokensDirect, etc.)
+- queries.ts                  # GraphQL queries (me, feed, etc.)
+- mutations.ts                # GraphQL mutations (signup, createPost, etc.)
+- mutations-auth-tokens.ts    # Token-based auth mutations (loginWithTokens, etc.)
 ```
 
 All operations use `gql` template literals and are tested with the `print()` function from graphql package.
@@ -695,15 +682,15 @@ Follow the established patterns from NAMING-CONVENTIONS.md:
 - **Constants**: UPPER_SNAKE_CASE: `MAX_PASSWORD_LENGTH`
 - **Interfaces**: PascalCase: `User`, `EnhancedContext`
 
-### Direct Resolver Conventions
+### Resolver Conventions
 ```typescript
-// Direct mutations: [action][Entity]Direct
-export const signupDirect = builder.mutationField('signupDirect', ...)
-export const createPostDirect = builder.mutationField('createPostDirect', ...)
+// Mutations: [action][Entity]
+export const signup = builder.mutationField('signup', ...)
+export const createPost = builder.mutationField('createPost', ...)
 
-// Direct queries: [query][Entity]Direct  
-export const meDirect = builder.queryField('meDirect', ...)
-export const searchUsersDirect = builder.queryField('searchUsersDirect', ...)
+// Queries: [query][Entity]  
+export const me = builder.queryField('me', ...)
+export const searchUsers = builder.queryField('searchUsers', ...)
 ```
 
 ## Debugging Tips

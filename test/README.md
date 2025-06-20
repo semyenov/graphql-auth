@@ -36,8 +36,8 @@ All tests use typed GraphQL operations from `src/gql/` for type safety:
 
 ```typescript
 import { print } from 'graphql'
-import { LoginMutation, SignupMutation } from '../src/gql/relay-mutations'
-import { GetFeedQuery, GetMeQuery } from '../src/gql/relay-queries'
+import { LoginMutation, SignupMutation } from '../src/gql/mutations'
+import { FeedQuery, MeQuery } from '../src/gql/queries'
 
 // Use with test helpers
 const data = await gqlHelpers.expectSuccessfulMutation(
@@ -207,8 +207,8 @@ Always use typed queries from `src/gql/`:
 
 ```typescript
 // ✅ Good
-import { GetFeedQuery } from '../src/gql/relay-queries'
-executeOperation(server, print(GetFeedQuery), variables, context)
+import { FeedQuery } from '../src/gql/queries'
+executeOperation(server, print(FeedQuery), variables, context)
 
 // ❌ Bad
 executeOperation(server, 'query { feed { id } }', variables, context)
@@ -253,7 +253,7 @@ Include performance tests for critical paths:
 
 ```typescript
 it('should meet performance SLA', async () => {
-  const report = await benchmark(server, GetFeedQuery, { first: 20 }, context)
+  const report = await benchmark(server, FeedQuery, { first: 20 }, context)
   assertPerformance(report, { maxP95Time: 100 })
 })
 ```

@@ -4,7 +4,7 @@ import 'reflect-metadata';
 import { mkdirSync, writeFileSync } from 'fs';
 import { printSchema } from 'graphql';
 import path from 'path';
-import { schema } from '../src/schema';
+import { getSchema } from '../src/schema';
 
 // Ensure _docs directory exists
 const docsDir = path.join(process.cwd(), '_docs');
@@ -15,7 +15,8 @@ try {
 }
 
 // Generate SDL schema
-const sdl = printSchema(schema());
+const schema = getSchema();
+const sdl = printSchema(schema);
 
 // Save to _docs/schema.graphql
 const schemaPath = path.join(docsDir, 'schema.graphql');

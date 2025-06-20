@@ -7,14 +7,13 @@
 import { container } from 'tsyringe'
 import { z } from 'zod'
 import { requireAuthentication } from '../../../context/auth'
-import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import type { ILogger } from '../../../core/services/logger.interface'
 import { ConflictError } from '../../../errors'
+import { prisma } from '../../../prisma'
 import { builder } from '../../../schema/builder'
 import { UserOrderByInput, UserWhereInput } from '../../../schema/inputs'
 import { transformOrderBy, transformUserWhereInput } from '../../../schema/utils/filter-transform'
 import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
-import { prisma } from '../../../prisma'
 
 // Get logger from container
 const getLogger = () => container.resolve<ILogger>('ILogger')
@@ -29,7 +28,7 @@ builder.queryField('user', (t) =>
     args: {
       id: t.arg.id({ required: true }),
     },
-    resolve: async (query, _parent, args, context: EnhancedContext) => {
+    resolve: async (query, _parent, args, context) => {
       const logger = getLogger().child({ resolver: 'user' })
       const userId = parseGlobalId(args.id.toString(), 'User')
 
@@ -174,7 +173,7 @@ builder.mutationField('updateUserProfile', (t) =>
         required: true,
       }),
     },
-    resolve: async (query, _parent, args, context: EnhancedContext) => {
+    resolve: async (query, _parent, args, context) => {
       const logger = getLogger().child({ resolver: 'updateUserProfile' })
       const userId = requireAuthentication(context)
 

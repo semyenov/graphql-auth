@@ -15,7 +15,7 @@ import { getConfigInstance } from './infrastructure/config/configuration'
 import { configureContainer } from './infrastructure/config/container'
 
 // Import schema
-import { schema } from './schema'
+import { getSchema } from './schema'
 
 async function bootstrap() {
   try {
@@ -34,7 +34,7 @@ async function bootstrap() {
 
     // Create Apollo Server
     const apolloServer = new ApolloServer({
-      schema: schema(),
+      schema: getSchema(),
       introspection: config.server.environment !== 'production',
       plugins: [
         ApolloServerPluginDrainHttpServer({ httpServer }),

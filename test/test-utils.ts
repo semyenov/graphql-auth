@@ -30,7 +30,7 @@ import { enhanceContext, type EnhancedContext } from '../src/context/enhanced-co
 import type { Context } from '../src/context/types.d'
 import { UserId } from '../src/core/value-objects/user-id.vo'
 import { env } from '../src/environment'
-import { schema } from '../src/schema'
+import { getSchema } from '../src/schema'
 
 // Create test context
 export function createMockContext(overrides?: Partial<Context>): EnhancedContext {
@@ -99,7 +99,7 @@ export function createAuthContext(userId: number | UserId): EnhancedContext {
 // Create test server
 export function createTestServer() {
   return new ApolloServer<EnhancedContext>({
-    schema: schema(),
+    schema: getSchema(),
     introspection: true,
   })
 }

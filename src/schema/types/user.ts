@@ -1,6 +1,5 @@
-import type { EnhancedContext } from '../../context/enhanced-context-direct';
-import { builder } from '../builder'
 import { prisma } from '../../prisma';
+import { builder } from '../builder';
 
 // Define User object type using Relay Node pattern with DataLoader optimizations
 builder.prismaNode('User', {
@@ -35,7 +34,7 @@ builder.prismaNode('User', {
         // Use DataLoader for drafts count (fallback to direct query)
         draftsCount: t.int({
             description: 'Number of unpublished posts by this user',
-            resolve: async (user, _args, context: EnhancedContext) => {
+            resolve: async (user, _args, context) => {
                 if (context.loaders) {
                     return context.loaders.draftPostsCountByAuthor.load(user.id);
                 }
@@ -48,7 +47,7 @@ builder.prismaNode('User', {
         // Use DataLoader for published posts count (fallback to direct query)
         publishedPostsCount: t.int({
             description: 'Number of published posts by this user',
-            resolve: async (user, _args, context: EnhancedContext) => {
+            resolve: async (user, _args, context) => {
                 if (context.loaders) {
                     return context.loaders.publishedPostsCountByAuthor.load(user.id);
                 }

@@ -1,8 +1,9 @@
 import { rule } from 'graphql-shield'
 import { ERROR_MESSAGES } from '../constants'
-import type { EnhancedContext } from '../context/enhanced-context-direct'
 import { requireAuthentication } from '../context/auth'
+import type { EnhancedContext } from '../context/enhanced-context-direct'
 import { AuthorizationError, NotFoundError } from '../errors'
+import { prisma } from '../prisma'
 import {
   createAuthenticationCheck,
   createPermissionCheck,
@@ -11,14 +12,13 @@ import {
   parseAndValidateGlobalId,
   validateResourceId,
 } from './rule-utils-clean'
-import { prisma } from '../prisma'
 
 /**
  * Basic authentication rule
  * Ensures the user is authenticated
  */
 export const isAuthenticatedUser = rule({ cache: 'contextual' })(
-  (_parent, _args, context: EnhancedContext) => createAuthenticationCheck(context)
+  (_parent, _args, context) => createAuthenticationCheck(context)
 )
 
 /**
@@ -33,7 +33,7 @@ export const isPostOwner = rule({ cache: 'strict' })(
 
       // Ensure user is authenticated
       const userId = requireAuthentication(context)
-      
+
       // Parse the global ID
       const postId = await parseAndValidateGlobalId(args.id, 'Post')
 
@@ -94,7 +94,7 @@ export const isUserOwner = rule({ cache: 'strict' })(
  * Ensures the user has admin privileges
  */
 export const isAdmin = rule({ cache: 'contextual' })(
-  (_parent, _args, context: EnhancedContext) => createRoleCheck(context, 'admin')
+  (_parent, _args, context) => createRoleCheck(context, 'admin')
 )
 
 /**
@@ -102,14 +102,14 @@ export const isAdmin = rule({ cache: 'contextual' })(
  * Ensures the user has moderator or admin privileges
  */
 export const isModerator = rule({ cache: 'contextual' })(
-  (_parent, _args, context: EnhancedContext) => {
+  (_parent, _args, context) => {
     // Check for either moderator or admin role
     const moderatorCheck = createRoleCheck(context, 'moderator', 'Moderator privileges required')
     if (moderatorCheck === true) return true
-    
+
     const adminCheck = createRoleCheck(context, 'admin', 'Moderator privileges required')
     if (adminCheck === true) return true
-    
+
     return moderatorCheck // Return the first error
   }
 )
@@ -131,7 +131,7 @@ export const rateLimitSensitiveOperations = rule({ cache: 'no_cache' })(
  * Ensures the user has permission to create posts
  */
 export const hasCreatePostPermission = rule({ cache: 'contextual' })(
-  (_parent, _args, context: EnhancedContext) => 
+  (_parent, _args, context) =>
     createPermissionCheck(context, 'write:posts', 'Permission denied: cannot create posts')
 )
 
@@ -140,7 +140,7 @@ export const hasCreatePostPermission = rule({ cache: 'contextual' })(
  * Ensures the user can create draft posts
  */
 export const canCreateDraft = rule({ cache: 'contextual' })(
-  (_parent, _args, context: EnhancedContext) => createAuthenticationCheck(context)
+  (_parent, _args, context) => createAuthenticationCheck(context)
 )
 
 /**

@@ -7,12 +7,11 @@
 import { container } from 'tsyringe'
 import { z } from 'zod'
 import { requireAuthentication } from '../../../context/auth'
-import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import type { ILogger } from '../../../core/services/logger.interface'
 import { AuthorizationError, NotFoundError } from '../../../errors'
+import { prisma } from '../../../prisma'
 import { builder } from '../../../schema/builder'
 import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
-import { prisma } from '../../../prisma'
 
 // Get logger from container
 const getLogger = () => container.resolve<ILogger>('ILogger')
@@ -71,7 +70,7 @@ builder.mutationField('createPost', (t) =>
         required: true,
       }),
     },
-    resolve: async (query, _parent, args, context: EnhancedContext) => {
+    resolve: async (query, _parent, args, context) => {
       const logger = getLogger().child({ resolver: 'createPost' })
       const userId = requireAuthentication(context)
 
@@ -115,7 +114,7 @@ builder.mutationField('updatePost', (t) =>
         required: true,
       }),
     },
-    resolve: async (query, _parent, args, context: EnhancedContext) => {
+    resolve: async (query, _parent, args, context) => {
       const logger = getLogger().child({ resolver: 'updatePost' })
       const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
@@ -163,7 +162,7 @@ builder.mutationField('deletePost', (t) =>
     args: {
       id: t.arg.id({ required: true }),
     },
-    resolve: async (_parent, args, context: EnhancedContext) => {
+    resolve: async (_parent, args, context) => {
       const logger = getLogger().child({ resolver: 'deletePost' })
       const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
@@ -204,7 +203,7 @@ builder.mutationField('togglePublishPost', (t) =>
     args: {
       id: t.arg.id({ required: true }),
     },
-    resolve: async (query, _parent, args, context: EnhancedContext) => {
+    resolve: async (query, _parent, args, context) => {
       const logger = getLogger().child({ resolver: 'togglePublishPost' })
       const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
@@ -253,7 +252,7 @@ builder.mutationField('incrementPostViewCount', (t) =>
     args: {
       id: t.arg.id({ required: true }),
     },
-    resolve: async (query, _parent, args, context: EnhancedContext) => {
+    resolve: async (query, _parent, args, context) => {
       const logger = getLogger().child({ resolver: 'incrementPostViewCount' })
       const postId = parseGlobalId(args.id.toString(), 'Post')
 

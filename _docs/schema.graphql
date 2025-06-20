@@ -8,21 +8,6 @@ type AuthResponse {
   token: String
 }
 
-"""Result of authentication operations (signup/login)"""
-union AuthResult = AuthSuccess | AuthenticationError | ConflictError | RateLimitError | ValidationError
-
-"""Successful authentication result"""
-type AuthSuccess {
-  """Token expiration time"""
-  expiresAt: DateTime
-
-  """JWT authentication token"""
-  token: String
-
-  """The authenticated user"""
-  user: User
-}
-
 """Authentication tokens response"""
 type AuthTokens {
   """JWT access token for API requests"""
@@ -98,21 +83,6 @@ input DateTimeFilter {
 
   """Date on or before this value"""
   lte: DateTime
-}
-
-"""Result of delete operations"""
-union DeleteResult = AuthenticationError | AuthorizationError | DeleteSuccess | NotFoundError
-
-"""Successful deletion result"""
-type DeleteSuccess {
-  """ID of the deleted resource"""
-  deletedId: String
-
-  """Deletion confirmation message"""
-  message: String
-
-  """Whether the deletion was successful"""
-  success: Boolean
 }
 
 input EnhancedCreatePostInput {
@@ -221,37 +191,6 @@ input IntFilter {
 
 scalar JSON
 
-"""Post with automatic batch loading and caching"""
-type LoadablePost {
-  author: User
-  content: String
-  createdAt: DateTime
-  id: ID
-  metadata: PostMetadata
-  published: Boolean
-  title: String
-  updatedAt: DateTime
-  viewCount: Int
-}
-
-"""User with automatic batch loading and caching"""
-type LoadableUser {
-  createdAt: DateTime
-
-  """Number of draft posts"""
-  draftCount: Int
-  email: String
-  name: String
-
-  """Total number of posts by this user"""
-  postCount: Int
-  posts(
-    """Filter posts by published status"""
-    published: Boolean
-  ): [Post!]
-  updatedAt: DateTime
-}
-
 type Mutation {
   """Create a new post"""
   createPost(input: CreatePostInput!): Post
@@ -273,21 +212,6 @@ type Mutation {
 
   """Refresh access token using a refresh token"""
   refreshToken(refreshToken: String!): AuthTokens
-
-  """Create a post with comprehensive error handling"""
-  safeCreatePost(input: CreatePostInput!): PostResult
-
-  """Delete a post with comprehensive error handling"""
-  safeDeletePost(id: ID!): DeleteResult
-
-  """Authenticate with comprehensive error handling"""
-  safeLogin(email: String!, password: String!): AuthResult
-
-  """Create a new user account with comprehensive error handling"""
-  safeSignup(email: String!, name: String, password: String!): AuthResult
-
-  """Update a post with comprehensive error handling"""
-  safeUpdatePost(id: ID!, input: UpdatePostInput!): PostResult
 
   """Create a new user account"""
   signup(email: String!, name: String, password: String!): String
@@ -383,18 +307,6 @@ input PostCreateInput {
   title: String!
 }
 
-"""Computed metadata for a post"""
-type PostMetadata {
-  """Whether the post has any content"""
-  hasContent: Boolean
-
-  """Estimated reading time in minutes"""
-  readingTime: Int
-
-  """Number of words in the post content"""
-  wordCount: Int
-}
-
 input PostOrderByInput {
   """Order by creation date"""
   createdAt: SortOrder
@@ -417,18 +329,6 @@ input PostOrderByInput {
 
 input PostOrderByUpdatedAtInput {
   updatedAt: SortOrder!
-}
-
-"""Result of post mutations"""
-union PostResult = AuthenticationError | AuthorizationError | NotFoundError | PostSuccess | ValidationError
-
-"""Successful post operation result"""
-type PostSuccess {
-  """Success message"""
-  message: String
-
-  """The post that was created/updated"""
-  post: Post
 }
 
 """Summary information about a post"""
@@ -478,9 +378,6 @@ input PostWhereInput {
 }
 
 type Query {
-  """Load multiple users efficiently with DataLoader"""
-  batchUsers(ids: [ID!]!): [LoadableUser!]
-
   """Get draft posts for the authenticated user"""
   drafts(after: String, before: String, first: Int, last: Int): QueryDraftsConnection
 
@@ -510,29 +407,8 @@ type Query {
   """Get published posts with optional search"""
   feed(after: String, before: String, first: Int, last: Int, searchString: String): QueryFeedConnection
 
-  """Get a post using DataLoader for efficient loading"""
-  loadablePost(id: ID!): LoadablePost
-
-  """Get a user using DataLoader for efficient loading"""
-  loadableUser(id: ID!): LoadableUser
-
   """Get the currently authenticated user"""
   me: User
-
-  """Optimized feed query with proper Prisma integration"""
-  optimizedFeed(
-    after: String
-    before: String
-    first: Int
-    last: Int
-    limit: Int
-    offset: Int
-    orderBy: PostOrderByInput
-
-    """Search posts by title or content"""
-    searchString: String
-    where: PostWhereInput
-  ): QueryOptimizedFeedConnection
 
   """Get a post by ID"""
   post(id: ID!): Post
@@ -574,17 +450,6 @@ type QueryFeedConnection {
 }
 
 type QueryFeedConnectionEdge {
-  cursor: String!
-  node: Post
-}
-
-type QueryOptimizedFeedConnection {
-  edges: [QueryOptimizedFeedConnectionEdge]
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type QueryOptimizedFeedConnectionEdge {
   cursor: String!
   node: Post
 }
@@ -652,21 +517,6 @@ input StringFilter {
   startsWith: String
 }
 
-"""Result of token refresh operations"""
-union TokenRefreshResult = AuthenticationError | TokenRefreshSuccess | ValidationError
-
-"""Successful token refresh result"""
-type TokenRefreshSuccess {
-  """New JWT access token"""
-  accessToken: String
-
-  """Access token expiration time"""
-  expiresAt: DateTime
-
-  """New refresh token"""
-  refreshToken: String
-}
-
 scalar UUID
 
 input UpdatePostInput {
@@ -731,21 +581,9 @@ type UserPostsConnectionEdge {
   node: Post
 }
 
-"""Result of user mutations"""
-union UserResult = AuthenticationError | ConflictError | UserSuccess | ValidationError
-
 input UserSearchInput {
   """Search query"""
   query: String
-}
-
-"""Successful user operation result"""
-type UserSuccess {
-  """Success message"""
-  message: String
-
-  """The user that was created/updated"""
-  user: User
 }
 
 input UserUniqueInput {

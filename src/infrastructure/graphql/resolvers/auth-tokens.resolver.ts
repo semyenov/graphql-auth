@@ -7,17 +7,16 @@
 import { container } from 'tsyringe'
 import { z } from 'zod'
 import { requireAuthentication } from '../../../context/auth'
-import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import type { ILogger } from '../../../core/services/logger.interface'
 import type { IPasswordService } from '../../../core/services/password.service.interface'
 import { AuthenticationError, normalizeError } from '../../../errors'
 import { TokenService } from '../../../features/auth/infrastructure/services/token.service'
+import { prisma } from '../../../prisma'
 import { builder } from '../../../schema/builder'
 import { RateLimitPresets } from '../../services/rate-limiter.service'
 import { commonValidations } from '../pothos-helpers'
 import { applyRateLimit, createRateLimitConfig } from '../rate-limit-plugin'
 import { AuthTokensType } from '../types/auth.types'
-import { prisma } from '../../../prisma'
 
 // Get services from container
 const getPasswordService = () => container.resolve<IPasswordService>('IPasswordService')
@@ -43,7 +42,7 @@ builder.mutationField('loginWithTokens', (t) =>
         },
       }),
     },
-    resolve: async (_parent, args, context: EnhancedContext) => {
+    resolve: async (_parent, args, context) => {
       const logger = getLogger().child({ resolver: 'loginWithTokens' })
       logger.info('Login with tokens attempt', { email: args.email })
 
@@ -112,7 +111,7 @@ builder.mutationField('refreshToken', (t) =>
         },
       }),
     },
-    resolve: async (_parent, args, context: EnhancedContext) => {
+    resolve: async (_parent, args, context) => {
       const logger = getLogger().child({ resolver: 'refreshToken' })
       logger.info('Token refresh attempt')
 
@@ -136,7 +135,7 @@ builder.mutationField('logout', (t) =>
   t.boolean({
     description: 'Logout user and revoke all refresh tokens',
     grantScopes: ['authenticated'],
-    resolve: async (_parent, _args, context: EnhancedContext) => {
+    resolve: async (_parent, _args, context) => {
       const logger = getLogger().child({ resolver: 'logout' })
 
       try {

@@ -9,13 +9,11 @@
  */
 
 import { requireAuthentication } from '../../../context/auth'
-import type { EnhancedContext } from '../../../context/enhanced-context-direct'
+import { prisma } from '../../../prisma'
 import { builder } from '../../../schema/builder'
 import { createEnhancedConnection, EnhancedPostConnection, EnhancedUserConnection, PerformanceTracker } from '../../../schema/enhanced-connections'
-import { LoadablePost, LoadableUser } from '../../../schema/loadable-objects'
 import { transformOrderBy, transformPostWhereInput } from '../../../schema/utils/filter-transform'
 import { parseAndValidateGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
-import { prisma } from '../../../prisma'
 
 // Enhanced feed query with metadata and performance tracking
 builder.queryField('enhancedFeed', (t) =>
@@ -32,7 +30,7 @@ builder.queryField('enhancedFeed', (t) =>
         description: 'Search posts by title or content'
       }),
     },
-    resolve: async (_parent, args, context: EnhancedContext) => {
+    resolve: async (_parent, args, context) => {
       const tracker = new PerformanceTracker()
 
       // Build where clause
@@ -118,7 +116,7 @@ builder.queryField('enhancedUserSearch', (t) =>
         defaultValue: false
       }),
     },
-    resolve: async (_parent, args, context: EnhancedContext) => {
+    resolve: async (_parent, args, context) => {
       requireAuthentication(context)
       const tracker = new PerformanceTracker()
 
@@ -167,63 +165,6 @@ builder.queryField('enhancedUserSearch', (t) =>
   })
 )
 
-// Loadable post query - demonstrates DataLoader usage
-builder.queryField('loadablePost', (t) =>
-  t.field({
-    type: LoadablePost,
-    nullable: true,
-    description: 'Get a post using DataLoader for efficient loading',
-    grantScopes: ['public'],
-    args: {
-      id: t.arg.id({ required: true }),
-    },
-    resolve: async (_parent, args, context: EnhancedContext) => {
-      const numericId = await parseAndValidateGlobalId(args.id, 'Post')
-      return numericId
-    },
-  })
-)
-
-// Loadable user query
-builder.queryField('loadableUser', (t) =>
-  t.field({
-    type: LoadableUser,
-    nullable: true,
-    description: 'Get a user using DataLoader for efficient loading',
-    grantScopes: ['authenticated'],
-    args: {
-      id: t.arg.id({ required: true }),
-    },
-    resolve: async (_parent, args, context: EnhancedContext) => {
-      requireAuthentication(context)
-      const numericId = await parseAndValidateGlobalId(args.id, 'User')
-      return numericId
-    },
-  })
-)
-
-// Batch user query - demonstrates loading multiple users efficiently
-builder.queryField('batchUsers', (t) =>
-  t.field({
-    type: [LoadableUser],
-    description: 'Load multiple users efficiently with DataLoader',
-    grantScopes: ['authenticated'],
-    args: {
-      ids: t.arg.idList({ required: true }),
-    },
-    resolve: async (_parent, args, context: EnhancedContext) => {
-      requireAuthentication(context)
-
-      // Parse all IDs
-      const numericIds = await Promise.all(
-        args.ids.map(id => parseAndValidateGlobalId(id, 'User'))
-      )
-
-      return numericIds
-    },
-  })
-)
-
 // Advanced post analytics query
 builder.queryField('postAnalytics', (t) =>
   t.field({
@@ -238,7 +179,7 @@ builder.queryField('postAnalytics', (t) =>
         description: 'Filter by date range'
       }),
     },
-    resolve: async (_parent, args, context: EnhancedContext) => {
+    resolve: async (_parent, args, context) => {
       requireAuthentication(context)
 
       const where: any = {}

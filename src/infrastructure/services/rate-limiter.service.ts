@@ -4,8 +4,8 @@
  * Provides rate limiting functionality for GraphQL operations
  */
 
-import { RateLimiterMemory, RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible'
 import Redis from 'ioredis'
+import { RateLimiterMemory, RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible'
 import { RateLimitError } from '../../errors'
 import { logger } from '../../utils/logger'
 
@@ -28,12 +28,12 @@ export class RateLimiterService {
                     enableOfflineQueue: false,
                     maxRetriesPerRequest: 1,
                 })
-                
+
                 this.redis.on('error', (err) => {
                     logger.warn('Redis connection error, falling back to memory rate limiting', { error: err.message })
                     this.redis = undefined
                 })
-                
+
                 logger.info('Rate limiter using Redis backend')
             } catch (error) {
                 logger.warn('Failed to connect to Redis, using memory rate limiting')
@@ -56,7 +56,7 @@ export class RateLimiterService {
     private getRateLimiter(key: string, options: RateLimiterOptions) {
         // Create a unique key based on all options to ensure different limits use different instances
         const limiterKey = `${key}:${options.points}:${options.duration}:${options.blockDuration || 0}`
-        
+
         if (!this.limiters.has(limiterKey)) {
             const limiterOptions = {
                 keyPrefix: key,
@@ -82,13 +82,13 @@ export class RateLimiterService {
      * Consumes points for a specific key and identifier
      */
     async consume(
-        key: string, 
-        identifier: string, 
+        key: string,
+        identifier: string,
         options: RateLimiterOptions,
         points: number = 1
     ): Promise<void> {
         const limiter = this.getRateLimiter(key, options)
-        
+
         try {
             await limiter.consume(identifier, points)
         } catch (error) {
@@ -135,6 +135,27 @@ export class RateLimiterService {
     }
 
     /**
+     * Resets all in-memory limiters.
+     * Primarily for use in testing environments.
+     */
+    async resetAll(): Promise<void> {
+        if (this.redis) {
+            // In a real scenario with Redis, you might want a more sophisticated
+            // approach, like deleting keys with a specific prefix.
+            // For in-memory, clearing the map is sufficient.
+            logger.warn('RateLimiterService.resetAll() called with Redis. This is not fully implemented for Redis and may not clear all keys.');
+            // A simple flush for testing purposes if redis is used.
+            try {
+                await this.redis.flushdb();
+            } catch (error) {
+                logger.error('Failed to flush Redis DB in resetAll', { error });
+            }
+        }
+        this.limiters.clear()
+        logger.info('All in-memory rate limiters have been reset.')
+    }
+
+    /**
      * Cleanup resources
      */
     async cleanup(): Promise<void> {
@@ -163,13 +184,13 @@ export const RateLimitPresets = {
         duration: 60 * 60, // per hour
         blockDuration: 60 * 60, // block for 1 hour
     },
-    
+
     // General API endpoints
     generalApi: {
         points: 100, // 100 requests
         duration: 60, // per minute
     },
-    
+
     // Expensive operations
     expensiveOperation: {
         points: 10, // 10 requests

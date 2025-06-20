@@ -15,11 +15,11 @@ import type { Context } from './context/types'
 import { env, isDevelopment } from './environment'
 import { isBaseError } from './errors'
 import { disconnectPrisma } from './prisma'
-import { schema } from './schema'
+import { getSchema } from './schema'
 
 // Enhanced Apollo Server with better typing
 const server = new ApolloServer<Context>({
-    schema: schema(),
+    schema: getSchema(),
     plugins: [
         ApolloServerPluginInlineTrace(),
         // Custom plugin for request/response logging with fetchdts types

@@ -185,7 +185,7 @@ try {
 
 With Context7 MCP, AI assistants will:
 
-1. **Understand Pothos Patterns**: Know when to use `prismaConnection`, `loadableObject`, etc.
+1. **Understand Pothos Patterns**: Know when to use `prismaConnection`, `prismaField`, etc.
 2. **Follow Prisma Best Practices**: Always spread `query` parameter, use proper typing
 3. **Maintain Error Consistency**: Use the established error hierarchy
 4. **Apply DataLoader Patterns**: Prevent N+1 queries automatically

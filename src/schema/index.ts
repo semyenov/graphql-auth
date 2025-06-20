@@ -12,8 +12,8 @@ import './enums';
 import './scalars';
 
 // Import types BEFORE inputs (as inputs might reference types)
-import './types/user';
 import './types/post';
+import './types/user';
 
 // Import inputs after types
 import './inputs';
@@ -22,8 +22,6 @@ import './inputs';
 import './error-types';
 
 // Import enhanced schema components
-import './loadable-objects';
-import './result-types';
 import './enhanced-connections';
 
 // OLD: Clean architecture resolvers with use cases (commented out - using direct resolvers now)
@@ -33,14 +31,13 @@ import './enhanced-connections';
 
 
 // NEW: Direct Pothos resolvers (without use cases)
+import '../infrastructure/graphql/resolvers/auth-tokens.resolver';
 import '../infrastructure/graphql/resolvers/auth.resolver';
 import '../infrastructure/graphql/resolvers/posts.resolver';
 import '../infrastructure/graphql/resolvers/users.resolver';
-import '../infrastructure/graphql/resolvers/auth-tokens.resolver';
 
 // NEW: Enhanced resolvers with advanced Pothos features
 import '../infrastructure/graphql/resolvers/enhanced-queries.resolver';
-import '../infrastructure/graphql/resolvers/posts-safe.resolver';
 
 // Import enhanced validation examples
 import '../infrastructure/graphql/validation/enhanced-validations';
@@ -57,6 +54,3 @@ export function getSchema() {
   }
   return _schema;
 }
-
-// Export a getter that builds the schema on first access
-export const schema = getSchema; 

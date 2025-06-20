@@ -4,9 +4,8 @@
  * Implements enhanced connection features with custom fields, metadata, and optimizations
  */
 
-import type { EnhancedContext } from '../../../context/enhanced-context-direct'
-import { builder } from '../../../schema/builder'
 import { prisma } from '../../../prisma'
+import { builder } from '../../../schema/builder'
 
 // Enhanced PageInfo with additional metadata
 export const EnhancedPageInfo = builder.objectType('EnhancedPageInfo', {
@@ -48,47 +47,47 @@ export const EnhancedPostConnection = builder.connectionObject({
   name: 'EnhancedPostConnection',
   fields: (t) => ({
     // Standard connection fields are added automatically
-    
+
     // Custom aggregate fields
     totalCount: t.int({
       description: 'Total number of posts in this connection',
-      resolve: async (connection, _args, context: EnhancedContext) => {
+      resolve: async (connection, _args, context) => {
         // This should be provided by the resolver that creates the connection
         return (connection as any).totalCount || 0
       },
     }),
-    
+
     totalViewCount: t.int({
       description: 'Sum of view counts for all posts in this connection',
-      resolve: async (connection, _args, context: EnhancedContext) => {
+      resolve: async (connection, _args, context) => {
         const posts = connection.edges.map(edge => edge.node)
         return posts.reduce((sum, post) => sum + (post.viewCount || 0), 0)
       },
     }),
-    
+
     publishedCount: t.int({
       description: 'Number of published posts in this connection',
-      resolve: async (connection, _args, context: EnhancedContext) => {
+      resolve: async (connection, _args, context) => {
         const posts = connection.edges.map(edge => edge.node)
         return posts.filter(post => post.published).length
       },
     }),
-    
+
     draftCount: t.int({
       description: 'Number of draft posts in this connection',
-      resolve: async (connection, _args, context: EnhancedContext) => {
+      resolve: async (connection, _args, context) => {
         const posts = connection.edges.map(edge => edge.node)
         return posts.filter(post => !post.published).length
       },
     }),
-    
+
     // Metadata about the query
     searchTerm: t.string({
       nullable: true,
       description: 'Search term used to filter this connection',
       resolve: (connection) => (connection as any).searchTerm || null,
     }),
-    
+
     filters: t.field({
       type: 'JSON',
       nullable: true,
@@ -105,17 +104,17 @@ export const EnhancedUserConnection = builder.connectionObject({
   fields: (t) => ({
     totalCount: t.int({
       description: 'Total number of users in this connection',
-      resolve: async (connection, _args, context: EnhancedContext) => {
+      resolve: async (connection, _args, context) => {
         return (connection as any).totalCount || 0
       },
     }),
-    
+
     totalPostCount: t.int({
       description: 'Total number of posts by all users in this connection',
-      resolve: async (connection, _args, context: EnhancedContext) => {
+      resolve: async (connection, _args, context) => {
         const users = connection.edges.map(edge => edge.node)
         const userIds = users.map(user => user.id)
-        
+
         // Use enhanced loader for efficient counting
         if (context.enhancedLoaders?.postCountByAuthor) {
           const counts = await Promise.all(
@@ -123,7 +122,7 @@ export const EnhancedUserConnection = builder.connectionObject({
           )
           return counts.reduce((sum, count) => sum + count, 0)
         }
-        
+
         // Fallback to direct query
         const result = await prisma.post.aggregate({
           where: { authorId: { in: userIds } },
@@ -132,13 +131,13 @@ export const EnhancedUserConnection = builder.connectionObject({
         return result._count.id || 0
       },
     }),
-    
+
     activeUsersCount: t.int({
       description: 'Number of users with at least one published post',
-      resolve: async (connection, _args, context: EnhancedContext) => {
+      resolve: async (connection, _args, context) => {
         const users = connection.edges.map(edge => edge.node)
         const userIds = users.map(user => user.id)
-        
+
         // Use enhanced loader for efficient counting
         if (context.enhancedLoaders?.publishedPostCountByAuthor) {
           const counts = await Promise.all(
@@ -146,7 +145,7 @@ export const EnhancedUserConnection = builder.connectionObject({
           )
           return counts.filter(count => count > 0).length
         }
-        
+
         // Fallback to direct query
         const activeUsers = await prisma.user.findMany({
           where: {
@@ -202,14 +201,14 @@ export function buildAdvancedConnectionQuery(args: {
   filters?: Record<string, any>
 }) {
   const { first, last, before, after, searchTerm, filters } = args
-  
+
   // Calculate pagination parameters
   const limit = first || last || 20
   const isForward = first !== null && first !== undefined
-  
+
   // Build where clause
   let where: any = {}
-  
+
   // Add search functionality
   if (searchTerm) {
     where.OR = [
@@ -217,25 +216,25 @@ export function buildAdvancedConnectionQuery(args: {
       { content: { contains: searchTerm, mode: 'insensitive' } },
     ]
   }
-  
+
   // Add filters
   if (filters) {
     where = { ...where, ...filters }
   }
-  
+
   // Add cursor-based pagination
   if (before || after) {
     const cursor = before || after
     const decodedCursor = Buffer.from(cursor!, 'base64').toString('ascii')
     const cursorId = parseInt(decodedCursor.split(':')[1])
-    
+
     if (before) {
       where.id = { lt: cursorId }
     } else if (after) {
       where.id = { gt: cursorId }
     }
   }
-  
+
   return {
     where,
     take: limit + 1, // Take one extra to determine hasNextPage/hasPreviousPage
