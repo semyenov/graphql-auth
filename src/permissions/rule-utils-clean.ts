@@ -1,4 +1,4 @@
-import type { EnhancedContext } from '../context/enhanced-context-direct'
+import type { Context } from '../context/context-direct'
 import { AuthenticationError, AuthorizationError, ValidationError } from '../errors'
 
 /**
@@ -36,7 +36,7 @@ export async function parseAndValidateGlobalId(
  * @param context - The GraphQL context
  * @returns True if authenticated, AuthenticationError otherwise
  */
-export function createAuthenticationCheck(context: EnhancedContext): true | AuthenticationError {
+export function createAuthenticationCheck(context: Context): true | AuthenticationError {
   if (!context.userId) {
     return new AuthenticationError()
   }
@@ -52,7 +52,7 @@ export function createAuthenticationCheck(context: EnhancedContext): true | Auth
  * @returns True if has role, AuthorizationError otherwise
  */
 export function createRoleCheck(
-  context: EnhancedContext,
+  context: Context,
   requiredRole: string,
   errorMessage?: string
 ): true | AuthenticationError | AuthorizationError {
@@ -80,7 +80,7 @@ export function createRoleCheck(
  * @returns True if has permission, error otherwise
  */
 export function createPermissionCheck(
-  context: EnhancedContext,
+  context: Context,
   requiredPermission: string,
   errorMessage?: string
 ): true | AuthenticationError | AuthorizationError {

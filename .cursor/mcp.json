@@ -6,18 +6,10 @@
         "~/.console-ninja/mcp/"
       ]
     },
-    "context7": {
-      "command": "context7-mcp",
-      "args": [
-        "--project",
-        "/Users/aleksandrsemenov/Projects/graphql-auth"
-      ]
-    },
     "sequential-thinking": {
       "type": "stdio",
-      "command": "npx",
+      "command": "bunx",
       "args": [
-        "-y",
         "@modelcontextprotocol/server-sequential-thinking"
       ]
     }

@@ -7,7 +7,7 @@
 import type { FieldRef, InputFieldMap, InputFieldRef, SchemaTypes } from '@pothos/core';
 import type PrismaTypes from '@pothos/plugin-prisma/generated';
 import { z } from 'zod';
-import type { EnhancedContext } from '../../context/enhanced-context-direct';
+import type { Context } from '../../context/context-direct';
 import { AuthenticationError } from '../../errors';
 import { builder } from '../../schema/builder';
 
@@ -18,7 +18,7 @@ export function createAuthenticatedMutation<TArgs extends Record<string, unknown
     name: string,
     config: {
         description?: string;
-        resolve: (args: TArgs, context: EnhancedContext) => Promise<TReturn> | TReturn;
+        resolve: (args: TArgs, context: Context) => Promise<TReturn> | TReturn;
         type: string | FieldRef<SchemaTypes>;
         errors?: Array<typeof Error>;
         args: (t: typeof builder['args']) => InputFieldMap;
@@ -33,7 +33,7 @@ export function createAuthenticatedMutation<TArgs extends Record<string, unknown
             },
             errors: config.errors ? { types: config.errors } : undefined,
             args: config.args(t.arg),
-            resolve: async (_root, args: TArgs, context: EnhancedContext) => {
+            resolve: async (_root, args: TArgs, context: Context) => {
                 if (!context.userId) {
                     throw new AuthenticationError('You must be logged in to perform this action');
                 }
@@ -64,7 +64,7 @@ export function createPrismaConnection<TModel extends keyof PrismaTypes>(
             authScopes: options.authScopes,
             totalCount: true,
             args: options.additionalArgs?.(t.arg),
-            resolve: (query: any, _root: any, args: any, ctx: EnhancedContext) => {
+            resolve: (query: any, _root: any, args: any, ctx: Context) => {
                 const where = { ...options.defaultWhere, ...args.where };
                 const orderBy = args.orderBy || options.defaultOrderBy || { createdAt: 'desc' };
 
@@ -100,7 +100,7 @@ export function createComputedField<TParent, TReturn>(
     config: {
         description?: string;
         type: string | FieldRef<SchemaTypes>;
-        resolve: (parent: TParent, context: EnhancedContext) => Promise<TReturn> | TReturn;
+        resolve: (parent: TParent, context: Context) => Promise<TReturn> | TReturn;
         nullable?: boolean;
     }
 ) {
@@ -109,7 +109,7 @@ export function createComputedField<TParent, TReturn>(
             type: config.type as any,
             nullable: config.nullable,
             description: config.description,
-            resolve: async (parent: TParent, _args: any, context: EnhancedContext) => {
+            resolve: async (parent: TParent, _args: any, context: Context) => {
                 return config.resolve(parent, context);
             },
         });
@@ -185,12 +185,12 @@ export function createTimestampedInterface() {
  * Helper for creating field-level authorization
  */
 export function withFieldAuth<TParent, TReturn>(
-    authCheck: (parent: TParent, context: EnhancedContext) => boolean | Promise<boolean>,
+    authCheck: (parent: TParent, context: Context) => boolean | Promise<boolean>,
     field: {
         type: string | FieldRef<SchemaTypes>;
         nullable?: boolean;
         description?: string;
-        resolve: (parent: TParent, context: EnhancedContext) => Promise<TReturn> | TReturn;
+        resolve: (parent: TParent, context: Context) => Promise<TReturn> | TReturn;
     }
 ) {
     return (t: any) =>
@@ -198,7 +198,7 @@ export function withFieldAuth<TParent, TReturn>(
             type: field.type as any,
             nullable: field.nullable ?? true,
             description: field.description,
-            resolve: async (parent: TParent, _args: any, context: EnhancedContext) => {
+            resolve: async (parent: TParent, _args: any, context: Context) => {
                 const hasAuth = await authCheck(parent, context);
                 if (!hasAuth) {
                     return field.nullable ? null : undefined;
@@ -213,7 +213,7 @@ export function withFieldAuth<TParent, TReturn>(
  */
 export function createBatchLoader<TKey, TResult>(
     name: string,
-    loadFn: (keys: readonly TKey[], context: EnhancedContext) => Promise<(TResult | Error)[]>
+    loadFn: (keys: readonly TKey[], context: Context) => Promise<(TResult | Error)[]>
 ) {
     return {
         [name]: loadFn,

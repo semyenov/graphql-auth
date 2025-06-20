@@ -1,7 +1,3 @@
-input AdvancedSearchInput {
-  query: String!
-}
-
 """Legacy authentication response"""
 type AuthResponse {
   """JWT access token (deprecated, use AuthTokens instead)"""
@@ -51,21 +47,6 @@ input CreatePostInput {
 
 scalar DID
 
-"""Date range"""
-type DateRange {
-  """End date"""
-  end: DateTime
-
-  """Start date"""
-  start: DateTime
-}
-
-"""Date range for filtering"""
-input DateRangeInput {
-  end: DateTime!
-  start: DateTime!
-}
-
 scalar DateTime
 
 input DateTimeFilter {
@@ -83,87 +64,6 @@ input DateTimeFilter {
 
   """Date on or before this value"""
   lte: DateTime
-}
-
-input EnhancedCreatePostInput {
-  content: String
-  publishAt: DateTime
-  tags: [String!]
-  title: String!
-}
-
-"""Post connection with enhanced metadata"""
-type EnhancedPostConnection {
-  """Number of draft posts in this connection"""
-  draftCount: Int
-  edges: [EnhancedPostEdge]
-
-  """Summary of applied filters"""
-  filterSummary: FilterSummary
-  pageInfo: PageInfo!
-
-  """Number of published posts in this connection"""
-  publishedCount: Int
-
-  """Metadata about the search query if applicable"""
-  searchMetadata: SearchMetadata
-
-  """Total number of posts matching the query"""
-  totalCount: Int
-
-  """Total views across all posts in this connection"""
-  totalViews: Int
-}
-
-type EnhancedPostEdge {
-  cursor: String!
-  node: Post
-}
-
-"""User connection with enhanced metadata"""
-type EnhancedUserConnection {
-  """Number of users with at least one post"""
-  activeUsers: Int
-  edges: [EnhancedUserEdge]
-  pageInfo: PageInfo!
-
-  """Metadata about the search query if applicable"""
-  searchMetadata: SearchMetadata
-
-  """Total number of users matching the query"""
-  totalCount: Int
-
-  """Total posts by all users in this connection"""
-  totalPosts: Int
-}
-
-type EnhancedUserEdge {
-  cursor: String!
-  node: User
-}
-
-"""Information about an applied filter"""
-type FilterInfo {
-  """The field being filtered"""
-  field: String
-
-  """The filter operator (e.g., equals, contains)"""
-  operator: String
-
-  """The filter value as a string"""
-  value: String
-}
-
-"""Summary of filters applied to a query"""
-type FilterSummary {
-  """List of active filters"""
-  activeFilters: [FilterInfo!]
-
-  """Number of active filters"""
-  filterCount: Int
-
-  """Whether any filters are applied"""
-  hasFilters: Boolean
 }
 
 input IntFilter {
@@ -192,6 +92,9 @@ input IntFilter {
 scalar JSON
 
 type Mutation {
+  """Create a comment on a post with rate limiting"""
+  createComment(content: String!, postId: ID!): String
+
   """Create a new post"""
   createPost(input: CreatePostInput!): Post
 
@@ -209,6 +112,9 @@ type Mutation {
 
   """Logout user and revoke all refresh tokens"""
   logout: Boolean
+
+  """Moderate a post (approve, reject, or flag)"""
+  moderatePost(action: String!, id: ID!, reason: String): Boolean
 
   """Refresh access token using a refresh token"""
   refreshToken(refreshToken: String!): AuthTokens
@@ -281,24 +187,6 @@ type Post implements Node {
   wordCount: Int
 }
 
-"""Aggregated post analytics"""
-type PostAnalytics {
-  """Average views per post"""
-  averageViews: Int
-
-  """The date range for this analytics data"""
-  dateRange: DateRange
-
-  """Top posts by view count"""
-  topPostsByViews: [PostSummary!]
-
-  """Total number of posts"""
-  totalPosts: Int
-
-  """Total views across all posts"""
-  totalViews: Int
-}
-
 input PostCreateInput {
   """The content/body of the post"""
   content: String
@@ -329,18 +217,6 @@ input PostOrderByInput {
 
 input PostOrderByUpdatedAtInput {
   updatedAt: SortOrder!
-}
-
-"""Summary information about a post"""
-type PostSummary {
-  """Post ID"""
-  id: ID
-
-  """Post title"""
-  title: String
-
-  """Number of views"""
-  viewCount: Int
 }
 
 input PostUpdateInput {
@@ -381,29 +257,6 @@ type Query {
   """Get draft posts for the authenticated user"""
   drafts(after: String, before: String, first: Int, last: Int): QueryDraftsConnection
 
-  """Advanced feed with metadata, search, and filtering"""
-  enhancedFeed(
-    after: String
-    first: Int
-    orderBy: [PostOrderByInput!]
-
-    """Search posts by title or content"""
-    searchTerm: String
-    where: PostWhereInput
-  ): EnhancedPostConnection
-
-  """User search with aggregated metadata"""
-  enhancedUserSearch(
-    after: String
-    first: Int
-
-    """Include post statistics in results"""
-    includePostStats: Boolean = false
-
-    """Search users by name or email"""
-    searchTerm: String!
-  ): EnhancedUserConnection
-
   """Get published posts with optional search"""
   feed(after: String, before: String, first: Int, last: Int, searchString: String): QueryFeedConnection
 
@@ -412,15 +265,6 @@ type Query {
 
   """Get a post by ID"""
   post(id: ID!): Post
-
-  """Get aggregated analytics for posts"""
-  postAnalytics(
-    authorId: ID
-
-    """Filter by date range"""
-    dateRange: DateRangeInput
-    published: Boolean
-  ): PostAnalytics
 
   """Search users by name or email"""
   searchUsers(after: String, before: String, first: Int, last: Int, search: String!): QuerySearchUsersConnection
@@ -481,18 +325,6 @@ type RateLimitError {
   message: String
   retryAfter: Int
   statusCode: Int
-}
-
-"""Metadata about a search query"""
-type SearchMetadata {
-  """Fields that were searched"""
-  matchedFields: [String!]
-
-  """The search query string"""
-  query: String
-
-  """Time taken to execute the search in milliseconds"""
-  searchTime: Float
 }
 
 enum SortOrder {

@@ -7,7 +7,7 @@
 import type { PrismaClient } from '@prisma/client'
 import DataLoader from 'dataloader'
 
-export interface EnhancedLoaders {
+export interface Loaders {
   // Entity loaders
   user: DataLoader<number, any | null>
   post: DataLoader<number, any | null>
@@ -23,7 +23,7 @@ export interface EnhancedLoaders {
   draftPostsByAuthor: DataLoader<number, any[]>
 }
 
-export function createEnhancedLoaders(prisma: PrismaClient): EnhancedLoaders {
+export function createEnhancedLoaders(prisma: PrismaClient): Loaders {
   // Entity loaders
   const user = new DataLoader<number, any | null>(
     async (userIds) => {

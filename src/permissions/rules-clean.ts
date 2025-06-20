@@ -1,7 +1,7 @@
 import { rule } from 'graphql-shield'
 import { ERROR_MESSAGES } from '../constants'
 import { requireAuthentication } from '../context/auth'
-import type { EnhancedContext } from '../context/enhanced-context-direct'
+import type { Context } from '../context/context-direct'
 import { AuthorizationError, NotFoundError } from '../errors'
 import { prisma } from '../prisma'
 import {
@@ -26,7 +26,7 @@ export const isAuthenticatedUser = rule({ cache: 'contextual' })(
  * Ensures the user owns the post they're trying to modify
  */
 export const isPostOwner = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, context: EnhancedContext) => {
+  async (_parent, args: { id: string }, context: Context) => {
     try {
       // Validate the post ID
       validateResourceId(args.id, 'post')
@@ -64,7 +64,7 @@ export const isPostOwner = rule({ cache: 'strict' })(
  * Ensures users can only access their own data
  */
 export const isUserOwner = rule({ cache: 'strict' })(
-  async (_parent, args: { userUniqueInput?: { id?: number; email?: string }; userId?: string }, context: EnhancedContext) => {
+  async (_parent, args: { userUniqueInput?: { id?: number; email?: string }; userId?: string }, context: Context) => {
     try {
       const currentUserId = requireAuthentication(context)
 
@@ -119,7 +119,7 @@ export const isModerator = rule({ cache: 'contextual' })(
  * Placeholder for rate limiting implementation
  */
 export const rateLimitSensitiveOperations = rule({ cache: 'no_cache' })(
-  async (_parent, _args, _context: EnhancedContext) => {
+  async (_parent, _args, _context: Context) => {
     // TODO: Implement actual rate limiting
     // This would check against a rate limiting store (Redis, etc.)
     return true

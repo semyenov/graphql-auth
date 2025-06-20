@@ -1,4 +1,5 @@
 import { shield } from 'graphql-shield'
+import { Context } from '../context/context-direct'
 import { isDevelopment } from '../environment'
 import { AuthorizationError } from '../errors'
 import * as rules from './rules-clean'
@@ -7,7 +8,7 @@ import * as rules from './rules-clean'
  * GraphQL Shield permissions configuration
  * Maps GraphQL operations to permission rules
  */
-export const permissions = shield({
+export const permissions = shield<any, Context, any>({
   Query: {
     // User-related queries
     me: rules.isAuthenticatedUser,
@@ -37,7 +38,7 @@ export const permissions = shield({
     deletePost: rules.isPostOwner,
     togglePublishPost: rules.isPostOwner,
     incrementPostViewCount: rules.isPublic,
-    
+
     // User mutations
     updateUserProfile: rules.isAuthenticatedUser,
   },

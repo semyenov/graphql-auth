@@ -8,30 +8,35 @@
 
 import { prisma } from '../prisma'
 import { createDataLoaders, type DataLoaders } from '../infrastructure/graphql/dataloaders'
-import { createEnhancedLoaders, type EnhancedLoaders } from '../infrastructure/graphql/dataloaders/enhanced-loaders'
-import type { Context } from './types.d'
+import { createEnhancedLoaders, type Loaders } from '../infrastructure/graphql/dataloaders/loaders'
+import { createEnhancedAuthScopes, type EnhancedAuthScopes } from '../infrastructure/graphql/authorization/enhanced-scopes'
+import type { Context as BaseContext } from './types.d'
 
-export interface EnhancedContext extends Context {
+export interface Context extends BaseContext {
   // Original DataLoaders for batch loading (optional for tests)
   loaders?: DataLoaders
   // Enhanced DataLoaders for Pothos loadable objects
-  enhancedLoaders?: EnhancedLoaders
+  enhancedLoaders?: Loaders
+  // Method to create enhanced auth scopes
+  createScopes?: () => EnhancedAuthScopes
 }
 
 /**
  * Create enhanced context for direct Pothos resolvers
  */
-export function enhanceContext(baseContext: Context): EnhancedContext {
+export function enhanceContext(baseContext: BaseContext): Context {
   try {
     // Create enhanced context without Prisma
-    const enhancedContext: EnhancedContext = {
+    const enhancedContext: Context = {
       ...baseContext,
+      // Add method to create enhanced auth scopes
+      createScopes: () => createEnhancedAuthScopes(enhancedContext),
     }
     
     // Create DataLoaders (only if available)
     try {
-      // Pass enhanced context for loaders that need user context
-      enhancedContext.loaders = createDataLoaders(enhancedContext)
+      // Create data loaders
+      enhancedContext.loaders = createDataLoaders()
       // Create enhanced loaders with direct Prisma reference
       enhancedContext.enhancedLoaders = createEnhancedLoaders(prisma)
     } catch (error) {

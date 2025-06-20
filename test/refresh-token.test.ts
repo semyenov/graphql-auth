@@ -5,17 +5,17 @@
  */
 
 import bcrypt from 'bcryptjs'
-import { graphql, ResultOf, VariablesOf } from 'gql.tada'
+import { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { prisma } from './setup'
 import { createMockContext, createTestServer, gqlHelpers } from './test-utils'
 
 // Import direct mutations
-import { 
-  LoginWithTokensMutation, 
-  RefreshTokenMutation, 
-  LogoutMutation 
+import {
+    LoginWithTokensMutation,
+    LogoutMutation,
+    RefreshTokenMutation
 } from '../src/gql/mutations-auth-tokens'
 
 describe('Refresh Token', () => {

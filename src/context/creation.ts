@@ -1,7 +1,7 @@
 import { ContextFunction } from '@apollo/server'
 import { IncomingMessage, ServerResponse } from 'http'
 import { ValidationError } from '../errors'
-import { enhanceContext, type EnhancedContext } from './enhanced-context-direct'
+import { enhanceContext } from './context-direct'
 import { getUserIdFromAuthHeaderAsync } from './token-utils'
 import type { Context, GraphQLIncomingMessage } from './types.d'
 import {
@@ -41,7 +41,7 @@ import {
  * });
  * ```
  */
-export const createContext: ContextFunction<[{ req: IncomingMessage; res: ServerResponse }], EnhancedContext> = async ({ req }) => {
+export const createContext: ContextFunction<[{ req: IncomingMessage; res: ServerResponse }], Context> = async ({ req }) => {
     // Cast to our extended type for body access
     const graphqlReq = req as GraphQLIncomingMessage
 

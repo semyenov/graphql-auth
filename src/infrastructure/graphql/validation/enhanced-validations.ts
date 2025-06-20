@@ -9,7 +9,7 @@
  */
 
 import { z } from 'zod'
-import type { EnhancedContext } from '../../../context/enhanced-context-direct'
+import type { Context } from '../../../context/context-direct'
 import { prisma } from '../../../prisma'
 import { builder } from '../../../schema/builder'
 
@@ -256,10 +256,10 @@ builder.inputType('AdvancedSearchInput', {
  * Helper to create contextual validation
  */
 export function createContextualValidation<T>(
-  validationFn: (value: T, context: EnhancedContext) => Promise<boolean> | boolean,
+  validationFn: (value: T, context: Context) => Promise<boolean> | boolean,
   errorMessage: string
 ) {
-  return (context: EnhancedContext) => {
+  return (context: Context) => {
     return z.custom<T>(
       async (value) => {
         const isValid = await validationFn(value, context)

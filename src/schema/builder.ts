@@ -6,7 +6,7 @@ import type PrismaTypes from '@pothos/plugin-prisma/generated';
 import RelayPlugin from '@pothos/plugin-relay';
 import ScopeAuthPlugin from '@pothos/plugin-scope-auth';
 import ValidationPlugin from '@pothos/plugin-validation';
-import type { EnhancedContext } from '../context/enhanced-context-direct';
+import type { Context } from '../context/context-direct';
 import { isProduction } from '../environment';
 import {
     AuthenticationError,
@@ -16,17 +16,20 @@ import {
     RateLimitError,
     ValidationError
 } from '../errors';
-import { prisma } from '../prisma';
-import { decodeGlobalId, encodeGlobalId, parseGlobalId } from '../shared/infrastructure/graphql/relay-helpers';
 import { createEnhancedAuthScopes } from '../infrastructure/graphql/authorization/enhanced-scopes';
+import * as rules from '../permissions/rules-clean';
+import { prisma } from '../prisma';
+import { decodeGlobalId, encodeGlobalId } from '../shared/infrastructure/graphql/relay-helpers';
+// import ShieldPlugin from './plugins/shield';
+
 /**
- * SchemaBuilder configuration for Pothos with Prisma and Relay plugins
- * 
- * The Relay plugin configuration uses the same ID encoding/decoding
- * as the test utilities to ensure consistency across the codebase.
- */
+* SchemaBuilder configuration for Pothos with Prisma and Relay plugins
+* 
+* The Relay plugin configuration uses the same ID encoding/decoding
+* as the test utilities to ensure consistency across the codebase.
+*/
 export const builder = new SchemaBuilder<{
-    Context: EnhancedContext;
+    Context: Context;
     PrismaTypes: PrismaTypes;
     // Error types for the errors plugin
     Errors: {
@@ -54,6 +57,9 @@ export const builder = new SchemaBuilder<{
         withinRateLimit: (action: string, limit: number, window: number) => boolean | Promise<boolean>;
         canAccessIfPublic: (resourceType: string, resourceId: string | number) => boolean | Promise<boolean>;
         canAccessIfOwnerOrPublic: (resourceType: string, resourceId: string | number) => boolean | Promise<boolean>;
+    };
+    Shield: {
+        rules: typeof rules;
     };
     Scalars: {
         ID: {
@@ -85,7 +91,15 @@ export const builder = new SchemaBuilder<{
         };
     };
 }>({
-    plugins: [PrismaPlugin, RelayPlugin, ErrorsPlugin, ScopeAuthPlugin, DataloaderPlugin, ValidationPlugin],
+    plugins: [
+        PrismaPlugin,
+        RelayPlugin,
+        ErrorsPlugin,
+        ScopeAuthPlugin,
+        DataloaderPlugin,
+        ValidationPlugin,
+        // ShieldPlugin, // Temporarily disabled
+    ],
     prisma: {
         client: prisma,
         // Enable field-level selection optimization and descriptions
@@ -94,9 +108,6 @@ export const builder = new SchemaBuilder<{
         // Validation handled by Pothos automatically
         // Error handling for unused queries in development
         onUnusedQuery: isProduction ? null : 'warn',
-        // Advanced optimizations
-        // dmmf: prisma._runtimeDataModel, // Pre-load DMMF for faster startup
-        neverScalarize: ['Json'], // Prevent JSON fields from being treated as scalars
     },
     relay: {
         // Use the same ID encoding as our test utilities
@@ -129,7 +140,7 @@ export const builder = new SchemaBuilder<{
     },
     // Enhanced authorization plugin configuration
     scopeAuth: {
-        authScopes(context: EnhancedContext) {
+        authScopes(context) {
             return createEnhancedAuthScopes(context)
         },
     },

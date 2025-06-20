@@ -5,7 +5,7 @@
 import { ApolloServer, type GraphQLResponse } from '@apollo/server'
 import type { Post, User } from '@prisma/client'
 import { print } from 'graphql'
-import { EnhancedContext } from '../src/context/enhanced-context-direct'
+import { Context } from '../src/context/context-direct'
 import { measureOperation, type PerformanceMetrics } from './performance-utils'
 import { GraphQLSnapshotTester, type SnapshotResult } from './snapshot-utils'
 import { createSubscriptionHelper, type SubscriptionTestHelper } from './subscription-utils'
@@ -13,7 +13,7 @@ import { createBlogScenario, createPermissionScenario } from './test-fixtures'
 import { createTestServer } from './test-utils'
 
 export interface IntegrationTestContext {
-  server: ApolloServer<EnhancedContext>
+  server: ApolloServer<Context>
   snapshotTester: GraphQLSnapshotTester
   scenarios: {
     blog?: Awaited<ReturnType<typeof createBlogScenario>>
@@ -85,7 +85,7 @@ export class E2ETestFlow {
     name: string,
     operation: string | DocumentNode,
     variables: Record<string, any> = {},
-    authContext?: EnhancedContext,
+    authContext?: Context,
   ): E2ETestFlow {
     this.steps.push(async () => {
       const operationStr = typeof operation === 'string' ? operation : print(operation)
@@ -121,7 +121,7 @@ export class E2ETestFlow {
     name: string,
     operation: string | DocumentNode,
     variables: Record<string, any> = {},
-    authContext?: EnhancedContext,
+    authContext?: Context,
   ): E2ETestFlow {
     this.steps.push(async () => {
       const operationStr = typeof operation === 'string' ? operation : print(operation)
@@ -157,7 +157,7 @@ export class E2ETestFlow {
     name: string,
     operation: string | DocumentNode,
     variables: Record<string, any> = {},
-    authContext?: EnhancedContext,
+    authContext?: Context,
   ): E2ETestFlow {
     let helper: SubscriptionTestHelper | null = null
 
@@ -311,14 +311,14 @@ export const commonScenarios = {
    */
   async postCrudFlow(
     context: IntegrationTestContext,
-    authContext: EnhancedContext,
+    authContext: Context,
   ): Promise<{ posts: Post[] }> {
     const flow = new E2ETestFlow(context)
 
     const { results } = await flow
       .mutation(
         'create-draft',
-        CreateDraftMutation,
+        CreatePostMutation,
         {
           data: {
             title: 'Test Post',
@@ -333,7 +333,7 @@ export const commonScenarios = {
           throw new Error('Failed to create draft')
         }
       })
-      .query('my-drafts', GetDraftsQuery, { first: 10 }, authContext)
+      .query('my-drafts', DraftsQuery, { first: 10 }, authContext)
       .assert('drafts-fetched', (results) => {
         const response = results.get('my-drafts')
         if (response.body.kind !== 'single' || !response.body.singleResult.data?.drafts) {
@@ -352,7 +352,7 @@ export const commonScenarios = {
         },
         authContext,
       )
-      .query('feed', GetFeedQuery, { first: 10 })
+      .query('feed', FeedQuery, { first: 10 })
       .assert('post-in-feed', (results) => {
         const response = results.get('feed')
         if (response.body.kind !== 'single') {
@@ -375,14 +375,14 @@ export const commonScenarios = {
    */
   async permissionBoundariesFlow(
     context: IntegrationTestContext,
-    users: { owner: EnhancedContext; other: EnhancedContext },
+    users: { owner: Context; other: Context },
     postId: string,
   ): Promise<void> {
     const flow = new E2ETestFlow(context)
 
     await flow
       // Owner can access their post
-      .query('owner-access', GetPostQuery, { id: postId }, users.owner)
+      .query('owner-access', PostQuery, { id: postId }, users.owner)
       .assert('owner-can-access', (results) => {
         const response = results.get('owner-access')
         if (response.body.kind !== 'single' || response.body.singleResult.errors) {
@@ -390,7 +390,7 @@ export const commonScenarios = {
         }
       })
       // Other user cannot delete owner's post
-      .mutation('other-delete-attempt', DeletePostMutation, { id: postId }, users.other)
+      .mutation('other-delete-attempt', DeletePostMutation, { id: postId, }, users.other)
       .assert('other-cannot-delete', (results) => {
         const response = results.get('other-delete-attempt')
         if (
@@ -402,7 +402,7 @@ export const commonScenarios = {
         }
       })
       // Owner can delete their post
-      .mutation('owner-delete', DeletePostMutation, { id: postId }, users.owner)
+      .mutation('owner-delete', DeletePostMutation, { id: postId, }, users.owner)
       .assert('owner-can-delete', (results) => {
         const response = results.get('owner-delete')
         if (response.body.kind !== 'single' || response.body.singleResult.errors) {
@@ -415,8 +415,8 @@ export const commonScenarios = {
 
 // Import required operations
 import type { DocumentNode } from 'graphql'
-import { CreateDraftMutation, DeletePostMutation, LoginMutation, SignupMutation, TogglePublishPostMutation } from '../src/gql/relay-mutations'
-import { GetDraftsQuery, GetFeedQuery, GetPostQuery } from '../src/gql/relay-queries'
+import { CreatePostMutation, DeletePostMutation, LoginMutation, SignupMutation, TogglePublishPostMutation } from '../src/gql/mutations'
+import { DraftsQuery, FeedQuery, PostQuery } from '../src/gql/queries'
 import { commonNormalizers } from './snapshot-utils'
 import { createMockContext } from './test-utils'
 

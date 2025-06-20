@@ -26,14 +26,14 @@ import './test-env'
 
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import jwt from 'jsonwebtoken'
-import { enhanceContext, type EnhancedContext } from '../src/context/enhanced-context-direct'
+import { enhanceContext } from '../src/context/context-direct'
 import type { Context } from '../src/context/types.d'
 import { UserId } from '../src/core/value-objects/user-id.vo'
 import { env } from '../src/environment'
 import { getSchema } from '../src/schema'
 
 // Create test context
-export function createMockContext(overrides?: Partial<Context>): EnhancedContext {
+export function createMockContext(overrides?: Partial<Context>): Context {
   const defaultContext: Context = {
     req: {
       url: '/graphql',
@@ -67,7 +67,7 @@ export function createMockContext(overrides?: Partial<Context>): EnhancedContext
 }
 
 // Create authenticated context
-export function createAuthContext(userId: number | UserId): EnhancedContext {
+export function createAuthContext(userId: number | UserId): Context {
   const userIdObject = typeof userId === 'number' ? UserId.create(userId) : userId
   const token = generateTestToken(userIdObject)
 
@@ -98,7 +98,7 @@ export function createAuthContext(userId: number | UserId): EnhancedContext {
 
 // Create test server
 export function createTestServer() {
-  return new ApolloServer<EnhancedContext>({
+  return new ApolloServer<Context>({
     schema: getSchema(),
     introspection: true,
   })
@@ -113,10 +113,10 @@ export type VariableValues = { [name: string]: unknown }
 
 // GraphQL query helper with improved error handling
 export async function executeOperation<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-  server: ApolloServer<EnhancedContext>,
+  server: ApolloServer<Context>,
   query: string,
   variables?: TVariables,
-  context?: EnhancedContext,
+  context?: Context,
 ): Promise<GraphQLResponse<TData>> {
   const response = await server.executeOperation<TData, TVariables>(
     {
@@ -170,10 +170,10 @@ export function getGraphQLErrors<T>(response: GraphQLResponse<T>): string[] {
 export const gqlHelpers = {
   // Execute a query and expect success
   async expectSuccessfulQuery<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-    server: ApolloServer<EnhancedContext>,
+    server: ApolloServer<Context>,
     query: string,
     variables?: TVariables,
-    context?: EnhancedContext,
+    context?: Context,
   ): Promise<TData> {
     const response = await executeOperation<TData, TVariables>(server, query, variables, context)
     return extractGraphQLData(response)
@@ -181,10 +181,10 @@ export const gqlHelpers = {
 
   // Execute a mutation and expect success
   async expectSuccessfulMutation<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-    server: ApolloServer<EnhancedContext>,
+    server: ApolloServer<Context>,
     mutation: string,
     variables?: TVariables,
-    context?: EnhancedContext,
+    context?: Context,
   ): Promise<TData> {
     const response = await executeOperation<TData, TVariables>(server, mutation, variables, context)
     return extractGraphQLData(response)
@@ -192,10 +192,10 @@ export const gqlHelpers = {
 
   // Execute an operation and expect it to fail with specific error
   async expectGraphQLError<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-    server: ApolloServer<EnhancedContext>,
+    server: ApolloServer<Context>,
     operation: string,
     variables?: TVariables,
-    context?: EnhancedContext,
+    context?: Context,
     expectedErrorSubstring?: string,
   ): Promise<string[]> {
     const response = await executeOperation<TData, TVariables>(server, operation, variables, context)

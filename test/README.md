@@ -44,7 +44,7 @@ const data = await gqlHelpers.expectSuccessfulMutation(
   server,
   print(LoginMutation),
   { email: 'test@example.com', password: 'password' },
-  context
+  context,
 )
 ```
 
@@ -58,8 +58,19 @@ const mockContext = createMockContext()
 const authContext = createAuthContext('userId')
 
 // Execute operations with helpers
-const data = await gqlHelpers.expectSuccessfulQuery(server, query, variables, context)
-const error = await gqlHelpers.expectGraphQLError(server, query, variables, context, 'Expected error')
+const data = await gqlHelpers.expectSuccessfulQuery(
+  server,
+  query,
+  variables,
+  context,
+)
+const error = await gqlHelpers.expectGraphQLError(
+  server,
+  query,
+  variables,
+  context,
+  'Expected error',
+)
 ```
 
 ### 3. Test Data Factories (`test-data.ts`, `test-fixtures.ts`)
@@ -82,19 +93,24 @@ Measure and benchmark GraphQL operations:
 
 ```typescript
 // Measure single operation
-const { result, metrics } = await measureOperation(server, operation, variables, context)
+const { result, metrics } = await measureOperation(
+  server,
+  operation,
+  variables,
+  context,
+)
 
 // Run benchmarks
 const report = await benchmark(server, operation, variables, context, {
   iterations: 100,
-  warmup: 10
+  warmup: 10,
 })
 
 // Assert performance requirements
 assertPerformance(report, {
-  maxAverageTime: 50,    // 50ms average
-  maxP95Time: 100,       // 100ms for 95th percentile
-  maxMemory: 10 * 1024 * 1024  // 10MB max
+  maxAverageTime: 50, // 50ms average
+  maxP95Time: 100, // 100ms for 95th percentile
+  maxMemory: 10 * 1024 * 1024, // 10MB max
 })
 ```
 
@@ -108,11 +124,11 @@ const snapshotTester = new GraphQLSnapshotTester()
 const result = await snapshotTester.testSnapshot(response, {
   name: 'feed-query',
   normalizers: [
-    commonNormalizers.timestamps,  // Replace timestamps
-    commonNormalizers.ids,         // Replace IDs
-    commonNormalizers.cursors      // Replace cursors
+    commonNormalizers.timestamps, // Replace timestamps
+    commonNormalizers.ids, // Replace IDs
+    commonNormalizers.cursors, // Replace cursors
   ],
-  redactFields: ['email', 'password']
+  redactFields: ['email', 'password'],
 })
 ```
 
@@ -139,7 +155,12 @@ await flow
 Test GraphQL subscriptions (when implemented):
 
 ```typescript
-const helper = await createSubscriptionHelper(server, subscription, variables, context)
+const helper = await createSubscriptionHelper(
+  server,
+  subscription,
+  variables,
+  context,
+)
 
 // Get events
 const event = await helper.getNext()
@@ -151,7 +172,7 @@ await subscriptionTester.expectSubscriptionEvent(
   variables,
   context,
   triggerFn,
-  validator
+  validator,
 )
 ```
 
@@ -235,7 +256,7 @@ it('should handle authentication', async () => {
   // Test success
   const data = await gqlHelpers.expectSuccessfulMutation(...)
   expect(data.login).toBeDefined()
-  
+
   // Test failure
   await gqlHelpers.expectGraphQLError(
     server,
@@ -266,7 +287,7 @@ Use snapshots for API stability:
 it('should maintain consistent response shape', async () => {
   const result = await snapshotTester.testSnapshot(response, {
     name: 'user-query',
-    normalizers: [commonNormalizers.timestamps]
+    normalizers: [commonNormalizers.timestamps],
   })
   expect(result.passed).toBe(true)
 })
@@ -280,7 +301,7 @@ it('should maintain consistent response shape', async () => {
 const { user, token } = await commonScenarios.authenticationFlow(context, {
   email: 'test@example.com',
   password: 'password123',
-  name: 'Test User'
+  name: 'Test User',
 })
 ```
 
@@ -290,7 +311,7 @@ const { user, token } = await commonScenarios.authenticationFlow(context, {
 await commonScenarios.permissionBoundariesFlow(
   context,
   { owner: ownerContext, other: otherContext },
-  postId
+  postId,
 )
 ```
 
@@ -334,4 +355,3 @@ When adding new tests:
 4. Add performance tests for new critical operations
 5. Update snapshots when API changes are intentional
 6. Document complex test scenarios
-

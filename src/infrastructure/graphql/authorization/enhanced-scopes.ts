@@ -4,7 +4,7 @@
  * Implements dynamic scopes, scope loaders, and complex authorization patterns
  */
 
-import type { EnhancedContext } from '../../../context/enhanced-context-direct'
+import type { Context } from '../../../context/context-direct'
 import { prisma } from '../../../prisma'
 import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
 
@@ -41,7 +41,7 @@ export interface EnhancedAuthScopes {
 }
 
 // Enhanced scope auth configuration
-export function createEnhancedAuthScopes(context: EnhancedContext): EnhancedAuthScopes {
+export function createEnhancedAuthScopes(context: Context): EnhancedAuthScopes {
   return {
     // Basic scopes
     public: true,
@@ -52,20 +52,25 @@ export function createEnhancedAuthScopes(context: EnhancedContext): EnhancedAuth
     postOwner: async (postId: string | number) => {
       if (!context.userId) return false
 
-      const numericPostId = typeof postId === 'string' ? parseGlobalId(postId, 'Post') : postId
+      try {
+        const numericPostId = typeof postId === 'string' ? parseGlobalId(postId, 'Post') : postId
 
-      // Use enhanced loader if available for better performance
-      if (context.enhancedLoaders?.post) {
-        const post = await context.enhancedLoaders.post.load(numericPostId)
+        // Use enhanced loader if available for better performance
+        if (context.enhancedLoaders?.post) {
+          const post = await context.enhancedLoaders.post.load(numericPostId)
+          return post?.authorId === context.userId.value
+        }
+
+        // Fallback to direct query
+        const post = await prisma.post.findUnique({
+          where: { id: numericPostId },
+          select: { authorId: true },
+        })
         return post?.authorId === context.userId.value
+      } catch (error) {
+        // If there's an error parsing the ID or finding the post, return false
+        return false
       }
-
-      // Fallback to direct query
-      const post = await prisma.post.findUnique({
-        where: { id: numericPostId },
-        select: { authorId: true },
-      })
-      return post?.authorId === context.userId.value
     },
 
     userOwner: async (userId: string | number) => {
@@ -222,10 +227,10 @@ export function createEnhancedAuthScopes(context: EnhancedContext): EnhancedAuth
 
 // Scope loader for batch authorization checks
 export class ScopeLoader {
-  private context: EnhancedContext
+  private context: Context
   private cache: Map<string, any> = new Map()
 
-  constructor(context: EnhancedContext) {
+  constructor(context: Context) {
     this.context = context
   }
 

@@ -5,7 +5,7 @@
  */
 
 import type { FieldRef } from '@pothos/core'
-import type { EnhancedContext } from '../../context/enhanced-context-direct'
+import type { Context } from '../../context/context-direct'
 import { rateLimiter, type RateLimiterOptions } from '../services/rate-limiter.service'
 import { RateLimitError } from '../../errors'
 import { builder } from '../../schema/builder'
@@ -15,10 +15,10 @@ import { builder } from '../../schema/builder'
  */
 export interface RateLimitConfig {
     key: string // Rate limit key (e.g., 'login', 'signup')
-    identifier?: (args: any, context: EnhancedContext) => string // Custom identifier function
+    identifier?: (args: any, context: Context) => string // Custom identifier function
     points?: number // Override default points
     options?: Partial<RateLimiterOptions> // Override default options
-    skipIf?: (args: any, context: EnhancedContext) => boolean | Promise<boolean> // Skip rate limiting conditionally
+    skipIf?: (args: any, context: Context) => boolean | Promise<boolean> // Skip rate limiting conditionally
 }
 
 /**
@@ -27,7 +27,7 @@ export interface RateLimitConfig {
 function getRateLimitIdentifier(
     config: RateLimitConfig,
     args: any,
-    context: EnhancedContext
+    context: Context
 ): string {
     if (config.identifier) {
         return config.identifier(args, context)
@@ -54,7 +54,7 @@ export function rateLimitedField<TReturn>(
     config: RateLimitConfig & {
         type: string | FieldRef<unknown>
         description?: string
-        resolve: (args: any, context: EnhancedContext) => Promise<TReturn> | TReturn
+        resolve: (args: any, context: Context) => Promise<TReturn> | TReturn
         args?: any
         authScopes?: any
         nullable?: boolean
@@ -67,7 +67,7 @@ export function rateLimitedField<TReturn>(
             nullable: config.nullable,
             authScopes: config.authScopes,
             args: config.args,
-            resolve: async (root: any, args: any, context: EnhancedContext, info: any) => {
+            resolve: async (root: any, args: any, context: Context, info: any) => {
                 // Check if rate limiting should be skipped
                 if (config.skipIf && await config.skipIf(args, context)) {
                     return config.resolve(args, context)
@@ -98,7 +98,7 @@ export function rateLimitedField<TReturn>(
 export async function applyRateLimit(
     config: RateLimitConfig,
     args: any,
-    context: EnhancedContext
+    context: Context
 ): Promise<void> {
     // Check if rate limiting should be skipped
     if (config.skipIf && await config.skipIf(args, context)) {

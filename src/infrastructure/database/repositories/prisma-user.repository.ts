@@ -21,9 +21,9 @@ export class PrismaUserRepository implements IUserRepository {
     const data = await this.prisma.user.findUnique({
       where: { id: id.value },
     })
-    
+
     if (!data) return null
-    
+
     // Map database fields to entity properties
     return User.fromPersistence({
       id: UserId.from(data.id),
@@ -39,9 +39,9 @@ export class PrismaUserRepository implements IUserRepository {
     const data = await this.prisma.user.findUnique({
       where: { email: email.value },
     })
-    
+
     if (!data) return null
-    
+
     // Map database fields to entity properties
     return User.fromPersistence({
       id: UserId.from(data.id),
@@ -59,7 +59,7 @@ export class PrismaUserRepository implements IUserRepository {
         id: { in: ids.map(id => id.value) },
       },
     })
-    
+
     return data.map(user => User.fromPersistence({
       id: UserId.from(user.id),
       email: Email.create(user.email),
@@ -117,9 +117,9 @@ export class PrismaUserRepository implements IUserRepository {
     const data = await this.prisma.user.delete({
       where: { id: id.value },
     })
-    
+
     if (!data) return null
-    
+
     return User.fromPersistence({
       id: UserId.from(data.id),
       email: Email.create(data.email),

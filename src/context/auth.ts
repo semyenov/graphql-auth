@@ -1,7 +1,7 @@
 import { ERROR_MESSAGES } from '../constants'
 import { UserId } from '../core/value-objects/user-id.vo'
 import { AuthenticationError } from '../errors'
-import type { EnhancedContext } from './enhanced-context-direct'
+import type { Context } from './context-direct'
 
 /**
  * Authentication and authorization utilities for GraphQL context
@@ -25,8 +25,8 @@ import type { EnhancedContext } from './enhanced-context-direct'
  * ```
  */
 export function isAuthenticated(
-    context: EnhancedContext
-): context is EnhancedContext & { userId: UserId } {
+    context: Context
+): context is Context & { userId: UserId } {
     return context.security.isAuthenticated && Boolean(context.userId)
 }
 
@@ -44,7 +44,7 @@ export function isAuthenticated(
  * ```
  */
 export function requireAuthentication(
-    context: EnhancedContext
+    context: Context
 ): UserId {
     if (!isAuthenticated(context)) {
         throw new AuthenticationError(ERROR_MESSAGES.AUTHENTICATION_REQUIRED)
@@ -69,7 +69,7 @@ export function requireAuthentication(
  * ```
  */
 export function hasPermission(
-    context: EnhancedContext,
+    context: Context,
     permission: string
 ): boolean {
     if (!permission || typeof permission !== 'string') {
@@ -95,7 +95,7 @@ export function hasPermission(
  * ```
  */
 export function hasRole(
-    context: EnhancedContext,
+    context: Context,
     role: string
 ): boolean {
     if (!role || typeof role !== 'string') {
@@ -121,7 +121,7 @@ export function hasRole(
  * ```
  */
 export function hasAnyPermission(
-    context: EnhancedContext,
+    context: Context,
     permissions: string[]
 ): boolean {
     if (!Array.isArray(permissions) || permissions.length === 0) {
@@ -146,7 +146,7 @@ export function hasAnyPermission(
  * ```
  */
 export function hasAllPermissions(
-    context: EnhancedContext,
+    context: Context,
     permissions: string[]
 ): boolean {
     if (!Array.isArray(permissions) || permissions.length === 0) {

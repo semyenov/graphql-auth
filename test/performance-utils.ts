@@ -4,7 +4,7 @@
 
 import type { GraphQLResponse } from '@apollo/server'
 import { ApolloServer } from '@apollo/server'
-import { EnhancedContext } from '../src/context/enhanced-context-direct'
+import { Context } from '../src/context/context-direct'
 import { executeOperation } from './test-utils'
 
 export interface PerformanceMetrics {
@@ -34,10 +34,10 @@ export interface PerformanceReport {
  * Measure the performance of a GraphQL operation
  */
 export async function measureOperation<T = any>(
-  server: ApolloServer<EnhancedContext>,
+  server: ApolloServer<Context>,
   operation: string,
   variables: Record<string, any>,
-  context: EnhancedContext,
+  context: Context,
 ): Promise<{ result: GraphQLResponse<T>; metrics: PerformanceMetrics }> {
   const startMemory = process.memoryUsage().heapUsed
   const startTime = performance.now()
@@ -62,10 +62,10 @@ export async function measureOperation<T = any>(
  * Run a performance benchmark for an operation
  */
 export async function benchmark<T = any>(
-  server: ApolloServer<EnhancedContext>,
+  server: ApolloServer<Context>,
   operation: string,
   variables: Record<string, any>,
-  context: EnhancedContext,
+  context: Context,
   options: {
     iterations?: number
     warmup?: number
@@ -99,11 +99,11 @@ export async function benchmark<T = any>(
  * Benchmark multiple operations concurrently
  */
 export async function benchmarkConcurrent<T = any>(
-  server: ApolloServer<EnhancedContext>,
+  server: ApolloServer<Context>,
   operations: Array<{
     operation: string
     variables: Record<string, any>
-    context: EnhancedContext
+    context: Context
   }>,
   options: {
     concurrency?: number
@@ -128,9 +128,9 @@ export async function benchmarkConcurrent<T = any>(
     for (let j = 0; j < concurrency && i + j < iterations; j++) {
       const op = operations[(i + j) % operations.length]
       batch.push(
-        measureOperation(server, op.operation, op.variables, op.context).then(
+        measureOperation(server, op!.operation, op!.variables, op!.context).then(
           ({ metrics }) => {
-            const name = extractOperationName(op.operation)
+            const name = extractOperationName(op!.operation)
             results.get(name)!.push(metrics)
           },
         ),
@@ -153,10 +153,10 @@ export async function benchmarkConcurrent<T = any>(
  * Load test with gradually increasing concurrency
  */
 export async function loadTest<T = any>(
-  server: ApolloServer<EnhancedContext>,
+  server: ApolloServer<Context>,
   operation: string,
   variables: Record<string, any>,
-  context: EnhancedContext,
+  context: Context,
   options: {
     maxConcurrency?: number
     step?: number
@@ -175,7 +175,7 @@ export async function loadTest<T = any>(
 
     // Run operations for the specified duration
     while (Date.now() < endTime) {
-      const batch: Promise<{ result: GraphQLResponse<T>; metrics: PerformanceMetrics } | void>[] = []
+      const batch: Promise<void>[] = []
 
       for (let i = 0; i < concurrency; i++) {
         batch.push(
@@ -230,9 +230,9 @@ function generateReport(metrics: PerformanceMetrics[]): PerformanceReport {
     averageTime: avg(times),
     minTime: Math.min(...times),
     maxTime: Math.max(...times),
-    p50Time: percentile(times, 50),
-    p95Time: percentile(times, 95),
-    p99Time: percentile(times, 99),
+    p50Time: percentile(times, 50) ?? 0,
+    p95Time: percentile(times, 95) ?? 0,
+    p99Time: percentile(times, 99) ?? 0,
     memoryStats: {
       average: avg(memories),
       peak: Math.max(...memories),

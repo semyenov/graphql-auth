@@ -21,26 +21,10 @@ import './inputs';
 // Import error types for Pothos Errors plugin
 import './error-types';
 
-// Import enhanced schema components
-import './enhanced-connections';
-
-// OLD: Clean architecture resolvers with use cases (commented out - using direct resolvers now)
-// import '../infrastructure/graphql/resolvers/auth.resolver';
-// import '../infrastructure/graphql/resolvers/posts.resolver';
-// import '../infrastructure/graphql/resolvers/users.resolver';
-
-
-// NEW: Direct Pothos resolvers (without use cases)
 import '../infrastructure/graphql/resolvers/auth-tokens.resolver';
 import '../infrastructure/graphql/resolvers/auth.resolver';
 import '../infrastructure/graphql/resolvers/posts.resolver';
 import '../infrastructure/graphql/resolvers/users.resolver';
-
-// NEW: Enhanced resolvers with advanced Pothos features
-import '../infrastructure/graphql/resolvers/enhanced-queries.resolver';
-
-// Import enhanced validation examples
-import '../infrastructure/graphql/validation/enhanced-validations';
 
 // Lazy load schema to ensure all types are registered first
 let _schema: ReturnType<typeof applyMiddleware> | null = null;

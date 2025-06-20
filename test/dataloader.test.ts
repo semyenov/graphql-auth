@@ -8,15 +8,13 @@ import bcrypt from 'bcryptjs'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createDataLoaders } from '../src/infrastructure/graphql/dataloaders'
 import { prisma } from './setup'
-import { createMockContext } from './test-utils'
 
 describe('DataLoaders', () => {
     let loaders: ReturnType<typeof createDataLoaders>
     let hashedPassword: string
 
     beforeEach(async () => {
-        const context = createMockContext()
-        loaders = createDataLoaders(context as any)
+        loaders = createDataLoaders()
         hashedPassword = await bcrypt.hash('password123', 10)
     })
 

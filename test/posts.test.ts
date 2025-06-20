@@ -10,7 +10,7 @@ import {
 import {
   FeedQuery
 } from '../src/gql/queries'
-import { extractNumericId, toPostId } from './relay-utils'
+import { toPostId } from './relay-utils'
 import { prisma } from './setup'
 import {
   createAuthContext,
@@ -313,7 +313,7 @@ describe('Posts', () => {
 
       const variables = { id: toPostId(post.id) }
 
-      await gqlHelpers.expectGraphQLError<DeletePostResponse>(
+      await gqlHelpers.expectGraphQLError<{ deletePost: boolean }>(
         server,
         print(DeletePostMutation),
         variables,
@@ -341,7 +341,7 @@ describe('Posts', () => {
 
       const variables = { id: toPostId(post.id) }
 
-      await gqlHelpers.expectGraphQLError<DeletePostResponse>(
+      await gqlHelpers.expectGraphQLError<{ deletePost: boolean }>(
         server,
         print(DeletePostMutation),
         variables,

@@ -1,4 +1,4 @@
-import { CONTEXT_ERROR_MESSAGES, OPERATION_NAMES } from './constants'
+import { CONTEXT_ERROR_MESSAGES, OPERATION_NAMES } from '../constants/context'
 import type { Context } from './types.d'
 
 /**

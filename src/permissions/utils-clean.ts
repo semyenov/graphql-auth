@@ -1,23 +1,23 @@
 import { ROLE_HIERARCHY } from '../constants'
 import { hasPermission, hasRole, isAuthenticated, requireAuthentication } from '../context/auth'
-import type { EnhancedContext } from '../context/enhanced-context-direct'
+import type { Context } from '../context/context-direct'
 import { prisma } from '../prisma'
 
 /**
  * Permission utility type definition
  */
 export type PermissionUtilsType = {
-  canAccessUserData: (context: EnhancedContext, targetUserId: number) => boolean
-  canModifyPost: (context: EnhancedContext, postId: number) => Promise<boolean>
-  canPublishPost: (context: EnhancedContext) => boolean
-  hasRoleOrHigher: (context: EnhancedContext, role: keyof typeof ROLE_HIERARCHY | string) => boolean
-  validateOperation: (context: EnhancedContext, operation: string) => boolean
+  canAccessUserData: (context: Context, targetUserId: number) => boolean
+  canModifyPost: (context: Context, postId: number) => Promise<boolean>
+  canPublishPost: (context: Context) => boolean
+  hasRoleOrHigher: (context: Context, role: keyof typeof ROLE_HIERARCHY | string) => boolean
+  validateOperation: (context: Context, operation: string) => boolean
 }
 
 /**
  * Check if user can access specific user data
  */
-function canAccessUserData(context: EnhancedContext, targetUserId: number): boolean {
+function canAccessUserData(context: Context, targetUserId: number): boolean {
   if (!context.userId) return false
   return context.userId.value === targetUserId || hasRole(context, 'admin')
 }
@@ -25,7 +25,7 @@ function canAccessUserData(context: EnhancedContext, targetUserId: number): bool
 /**
  * Check if user can modify specific post
  */
-async function canModifyPost(context: EnhancedContext, postId: number): Promise<boolean> {
+async function canModifyPost(context: Context, postId: number): Promise<boolean> {
   try {
     const userId = requireAuthentication(context)
 
@@ -46,7 +46,7 @@ async function canModifyPost(context: EnhancedContext, postId: number): Promise<
 /**
  * Check if user can publish posts
  */
-function canPublishPost(context: EnhancedContext): boolean {
+function canPublishPost(context: Context): boolean {
   return isAuthenticated(context) &&
     (hasPermission(context, 'write:posts') || hasRole(context, 'admin'))
 }
@@ -54,7 +54,7 @@ function canPublishPost(context: EnhancedContext): boolean {
 /**
  * Enhanced role checking with hierarchy
  */
-function hasRoleOrHigher(context: EnhancedContext, role: keyof typeof ROLE_HIERARCHY | string): boolean {
+function hasRoleOrHigher(context: Context, role: keyof typeof ROLE_HIERARCHY | string): boolean {
   const normalizedRole = role.toUpperCase() as keyof typeof ROLE_HIERARCHY
   const requiredLevel = ROLE_HIERARCHY[normalizedRole]
 
@@ -75,7 +75,7 @@ function hasRoleOrHigher(context: EnhancedContext, role: keyof typeof ROLE_HIERA
 /**
  * Operation-specific permission checks
  */
-function validateOperation(context: EnhancedContext, operation: string): boolean {
+function validateOperation(context: Context, operation: string): boolean {
   switch (operation) {
     case 'createPost':
       return isAuthenticated(context)

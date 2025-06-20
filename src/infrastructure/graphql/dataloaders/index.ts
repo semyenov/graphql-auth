@@ -6,13 +6,12 @@
 
 import type { Post, User } from '@prisma/client';
 import DataLoader from 'dataloader';
-import type { EnhancedContext } from '../../../context/enhanced-context-direct';
 import { prisma } from '../../../prisma';
 
 /**
  * Creates DataLoaders for the context
  */
-export function createDataLoaders(context: EnhancedContext) {
+export function createDataLoaders() {
     return {
         // User loader by ID
         userById: new DataLoader<number, User | null>(
