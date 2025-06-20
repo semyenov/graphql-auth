@@ -1,27 +1,20 @@
 import bcrypt from 'bcryptjs'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { UserId } from '../src/core/value-objects/user-id.vo'
-import { DeletePostMutation, LoginMutation } from '../src/gql/mutations'
-import { FeedQuery, MeQuery, PostQuery } from '../src/gql/queries'
-import { PermissionUtils } from '../src/graphql/middleware/utils-clean'
-import { prisma } from './setup'
+import { UserId } from '../../../src/core/value-objects/user-id.vo'
+import { DeletePostMutation, LoginMutation } from '../../../src/gql/mutations'
+import { FeedQuery, MeQuery, PostQuery } from '../../../src/gql/queries'
+import { PermissionUtils } from '../../../src/graphql/middleware/utils-clean'
+import { prisma } from '../../setup'
 import {
     createAuthContext,
     createMockContext,
     createTestServer,
-    executeOperation,
-} from './utils/helpers/database.helpers'
-import { toPostId, toUserId } from './utils/helpers/relay.helpers'
+    executeOperation
+} from '../../utils/helpers/database.helpers'
+import { toPostId, toUserId } from '../../utils/helpers/relay.helpers'
 
 describe('Enhanced Permissions System', () => {
-    // TODO: This test is not working as expected. It is not testing the permissions system correctly.
-    // TODO: It is not testing the rate limiting system correctly.
-    // TODO: It is not testing the fallback rules correctly.
-    // TODO: It is not testing the public access to published posts correctly.
-    // TODO: It is not testing the public access to login correctly.
-    // TODO: It is not testing the public access to signup correctly.   
-
     const server = createTestServer()
     let testUserId: number
     let otherUserId: number

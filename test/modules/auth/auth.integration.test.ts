@@ -1,13 +1,13 @@
 import bcrypt from 'bcryptjs'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { LoginMutation, SignupMutation } from '../src/gql/mutations'
-import { prisma } from './setup'
+import { LoginMutation, SignupMutation } from '../../../src/gql/mutations'
+import { prisma } from '../../setup'
 import {
   createMockContext,
   createTestServer,
   gqlHelpers,
-} from './utils/helpers/database.helpers'
+} from '../../utils/helpers/database.helpers'
 
 interface AuthMutationResponse {
   signup?: string

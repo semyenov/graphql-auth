@@ -5,12 +5,10 @@
 import { ApolloServer, type GraphQLResponse } from '@apollo/server'
 import type { Post, User } from '@prisma/client'
 import { print } from 'graphql'
-import { Context } from '../src/context/context-direct'
-import { createBlogScenario, createPermissionScenario } from './utils/fixtures/graphql.fixtures'
-import { createTestServer } from './utils/helpers/database.helpers'
-import { measureOperation, type PerformanceMetrics } from './utils/helpers/performance.helpers'
-import { GraphQLSnapshotTester, type SnapshotResult } from './utils/helpers/snapshot.helpers'
-import { createSubscriptionHelper, type SubscriptionTestHelper } from './utils/helpers/subscription.helpers'
+import { Context } from '../../../src/context/context-direct'
+import { measureOperation, type PerformanceMetrics } from './performance.helpers'
+import { GraphQLSnapshotTester, type SnapshotResult } from './snapshot.helpers'
+import { createSubscriptionHelper, type SubscriptionTestHelper } from './subscription.helpers'
 
 export interface IntegrationTestContext {
   server: ApolloServer<Context>
@@ -415,9 +413,9 @@ export const commonScenarios = {
 
 // Import required operations
 import type { DocumentNode } from 'graphql'
-import { CreatePostMutation, DeletePostMutation, LoginMutation, SignupMutation, TogglePublishPostMutation } from '../src/gql/mutations'
-import { DraftsQuery, FeedQuery, PostQuery } from '../src/gql/queries'
-import { createMockContext } from './utils/helpers/database.helpers'
-import { commonNormalizers } from './utils/helpers/snapshot.helpers'
-
+import { CreatePostMutation, DeletePostMutation, LoginMutation, SignupMutation, TogglePublishPostMutation } from '../../../src/gql/mutations'
+import { DraftsQuery, FeedQuery, PostQuery } from '../../../src/gql/queries'
+import { createBlogScenario, createPermissionScenario } from '../fixtures/graphql.fixtures'
+import { createMockContext, createTestServer } from './database.helpers'
+import { commonNormalizers } from './snapshot.helpers'
 

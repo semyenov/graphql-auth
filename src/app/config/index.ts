@@ -3,15 +3,15 @@
  * Centralizes all configuration values and environment variables
  */
 
-import { 
-  APP_CONFIG, 
-  AUTH_CONFIG, 
-  DATABASE_CONFIG, 
-  PAGINATION_CONFIG, 
-  RATE_LIMIT_CONFIG, 
-  SERVER_CONFIG 
-} from '../constants/config'
-import { VALIDATION } from '../constants'
+import { VALIDATION } from '../../constants'
+import {
+  APP_CONFIG,
+  AUTH_CONFIG,
+  DATABASE_CONFIG,
+  PAGINATION_CONFIG,
+  RATE_LIMIT_CONFIG,
+  SERVER_CONFIG
+} from '../../constants/config'
 
 export const config = {
   app: {

@@ -15,7 +15,7 @@ import { getConfigInstance } from './infrastructure/config/configuration'
 import { configureContainer } from './infrastructure/config/container'
 
 // Import schema
-import { getSchema } from './schema'
+import { getSchema } from './graphql/schema'
 
 async function bootstrap() {
   try {

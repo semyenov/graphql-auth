@@ -8,15 +8,15 @@ import bcrypt from 'bcryptjs'
 import { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { prisma } from './setup'
-import { createMockContext, createTestServer, gqlHelpers } from './utils/helpers/database.helpers'
+import { prisma } from '../../setup'
+import { createMockContext, createTestServer, gqlHelpers } from '../../utils/helpers/database.helpers'
 
 // Import direct mutations
 import {
     LoginWithTokensMutation,
     LogoutMutation,
     RefreshTokenMutation
-} from '../src/gql/mutations-auth-tokens'
+} from '../../../src/gql/mutations-auth-tokens'
 
 describe('Refresh Token', () => {
     const server = createTestServer()

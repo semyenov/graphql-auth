@@ -8,8 +8,8 @@ import bcrypt from 'bcryptjs'
 import { graphql, ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { prisma } from './setup'
-import { createMockContext, createTestServer, gqlHelpers } from './utils/helpers/database.helpers'
+import { prisma } from '../../setup'
+import { createMockContext, createTestServer, gqlHelpers } from './database.helpers'
 
 describe('Direct Resolvers', () => {
     const server = createTestServer()

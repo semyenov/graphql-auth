@@ -1,6 +1,6 @@
 // Import test environment first to ensure environment variables are set
 import 'reflect-metadata'
-import './test-env'
+import '../../test-env'
 
 // =============================================================================
 // TEST UTILITIES - UPDATED FOR GRAPHQL ARCHITECTURE GUIDE
@@ -26,11 +26,11 @@ import './test-env'
 
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import jwt from 'jsonwebtoken'
-import { env } from '../src/app/config/environment'
-import { enhanceContext } from '../src/context/context-direct'
-import type { Context } from '../src/context/types.d'
-import { UserId } from '../src/core/value-objects/user-id.vo'
-import { getSchema } from '../src/graphql/schema'
+import { env } from '../../../src/app/config/environment'
+import { enhanceContext } from '../../../src/context/context-direct'
+import type { Context } from '../../../src/context/types.d'
+import { UserId } from '../../../src/core/value-objects/user-id.vo'
+import { getSchema } from '../../../src/graphql/schema'
 
 // Create test context
 export function createMockContext(overrides?: Partial<Context>): Context {

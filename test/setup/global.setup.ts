@@ -2,13 +2,13 @@ import { PrismaClient } from '@prisma/client'
 import { execSync } from 'child_process'
 import { rm } from 'fs/promises'
 import { afterAll, beforeAll, beforeEach } from 'vitest'
-import { configureContainer } from '../src/infrastructure/config/container'
-import { DatabaseClient } from '../src/infrastructure/database/client'
-import { rateLimiter } from '../src/infrastructure/services/rate-limiter.service'
-import { setTestPrismaClient } from '../src/prisma'
-import { TEST_DATABASE_URL } from './test-database-url'
+import { configureContainer } from '../../src/infrastructure/config/container'
+import { DatabaseClient } from '../../src/infrastructure/database/client'
+import { rateLimiter } from '../../src/infrastructure/services/rate-limiter.service'
+import { setTestPrismaClient } from '../../src/prisma'
+import { TEST_DATABASE_URL } from './database.setup'
 
-// Create a test database client  
+// Create a test database client
 export const prisma = new PrismaClient({
   datasources: {
     db: {

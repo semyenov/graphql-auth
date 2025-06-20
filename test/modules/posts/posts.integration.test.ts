@@ -1,23 +1,23 @@
 import bcrypt from 'bcryptjs'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { UserId } from '../src/core/value-objects/user-id.vo'
+import { UserId } from '../../../src/core/value-objects/user-id.vo'
 import {
   CreatePostMutation,
   DeletePostMutation,
   IncrementPostViewCountMutation
-} from '../src/gql/mutations'
+} from '../../../src/gql/mutations'
 import {
   FeedQuery
-} from '../src/gql/queries'
-import { prisma } from './setup'
+} from '../../../src/gql/queries'
+import { prisma } from '../../setup'
 import {
   createAuthContext,
   createMockContext,
   createTestServer,
   gqlHelpers
-} from './utils/helpers/database.helpers'
-import { toPostId } from './utils/helpers/relay.helpers'
+} from '../../utils/helpers/database.helpers'
+import { toPostId } from '../../utils/helpers/relay.helpers'
 
 // Type definitions for GraphQL responses
 interface Post {

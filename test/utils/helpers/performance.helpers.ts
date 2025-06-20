@@ -4,8 +4,8 @@
 
 import type { GraphQLResponse } from '@apollo/server'
 import { ApolloServer } from '@apollo/server'
-import { Context } from '../src/context/context-direct'
-import { executeOperation } from './utils/helpers/database.helpers'
+import { Context } from '../../../src/context/context-direct'
+import { executeOperation } from './database.helpers'
 
 export interface PerformanceMetrics {
   operationName: string

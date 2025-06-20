@@ -4,7 +4,7 @@ import 'reflect-metadata';
 import { mkdirSync, writeFileSync } from 'fs';
 import { printSchema } from 'graphql';
 import path from 'path';
-import { getSchema } from '../src/schema';
+import { getSchema } from '../src/graphql/schema';
 
 // Ensure _docs directory exists
 const docsDir = path.join(process.cwd(), '_docs');

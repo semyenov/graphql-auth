@@ -8,10 +8,10 @@ import bcrypt from 'bcryptjs'
 import { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
-import { LoginMutation, SignupMutation } from '../src/gql/mutations'
-import { rateLimiter } from '../src/infrastructure/services/rate-limiter.service'
-import { prisma } from './setup'
-import { createMockContext, createTestServer, executeOperation, gqlHelpers } from './utils/helpers/database.helpers'
+import { LoginMutation, SignupMutation } from '../../../src/gql/mutations'
+import { rateLimiter } from '../../../src/infrastructure/services/rate-limiter.service'
+import { prisma } from '../../setup'
+import { createMockContext, createTestServer, executeOperation, gqlHelpers } from '../../utils/helpers/database.helpers'
 
 describe('Rate Limiting', () => {
     const server = createTestServer()
@@ -50,7 +50,7 @@ describe('Rate Limiting', () => {
 
             // Should allow 5 attempts (as per RateLimitPresets.login)
             for (let i = 0; i < 5; i++) {
-                const response = await executeOperation(
+                const response = await executeOperation<ResultOf<typeof LoginMutation>, VariablesOf<typeof LoginMutation>>(
                     server,
                     print(LoginMutation),
                     variables,
@@ -72,7 +72,7 @@ describe('Rate Limiting', () => {
 
             // Exhaust rate limit (5 attempts)
             for (let i = 0; i < 5; i++) {
-                await executeOperation(
+                await executeOperation<ResultOf<typeof LoginMutation>, VariablesOf<typeof LoginMutation>>(
                     server,
                     print(LoginMutation),
                     variables,
@@ -137,7 +137,8 @@ describe('Rate Limiting', () => {
                 const data = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof SignupMutation>, VariablesOf<typeof SignupMutation>>(
                     server,
                     print(SignupMutation),
-                    variables
+                    variables,
+                    createMockContext()
                 )
 
                 expect(data.signup).toBeDefined()
@@ -250,7 +251,7 @@ describe('Rate Limiting', () => {
             )
 
             expect(response.body.kind === 'single' && response.body.singleResult.errors).toBeDefined()
-            const error = response.body.kind === 'single' && response.body.singleResult.errors![0]!
+            const error = response.body.kind === 'single' && response.body.singleResult.errors![0]
             if (error) {
                 expect(error.message).toContain('Too many requests')
                 expect(error.message).toMatch(/retry after \d+ seconds/)
