@@ -9,7 +9,7 @@ import * as jwt from 'jsonwebtoken'
 import { inject, injectable } from 'tsyringe'
 import { UnauthorizedError } from '../../../core/errors/domain.errors'
 import { UserId } from '../../../core/value-objects/user-id.vo'
-import { RefreshTokenRepository } from '../../../data/repositories/refresh-token.repository'
+import { RefreshTokenRepository } from '../repositories/refresh-token.repository'
 
 export interface TokenPayload {
     userId: number

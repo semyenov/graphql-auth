@@ -5,7 +5,7 @@ import { afterAll, beforeAll, beforeEach } from 'vitest'
 import { configureContainer } from '../src/infrastructure/config/container'
 import { DatabaseClient } from '../src/infrastructure/database/client'
 import { rateLimiter } from '../src/infrastructure/services/rate-limiter.service'
-import { setTestPrismaClient } from '../src/prisma'
+import { setTestPrismaClient } from '../src/data/database/client'
 import { TEST_DATABASE_URL } from './test-database-url'
 
 // Create a test database client

@@ -6,7 +6,7 @@
 
 import type { Post, User } from '@prisma/client';
 import DataLoader from 'dataloader';
-import { prisma } from '../../prisma';
+import { prisma } from '../database/client';
 
 /**
  * Creates DataLoaders for the context

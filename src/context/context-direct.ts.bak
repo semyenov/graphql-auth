@@ -6,7 +6,7 @@
  * to improve TypeScript performance and developer experience.
  */
 
-import { prisma } from '../prisma'
+import { prisma } from '../data/database/client'
 import { createDataLoaders, type DataLoaders } from '../data/loaders'
 import { createEnhancedLoaders, type Loaders } from '../data/loaders/loaders'
 import { createEnhancedAuthScopes, type EnhancedAuthScopes } from '../core/auth/scopes'

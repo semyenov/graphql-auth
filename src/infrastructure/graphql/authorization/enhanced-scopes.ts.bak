@@ -4,9 +4,9 @@
  * Implements dynamic scopes, scope loaders, and complex authorization patterns
  */
 
-import type { Context } from '../../context/context-direct'
-import { prisma } from '../../data/database/client'
-import { parseGlobalId } from '../utils/relay-helpers'
+import type { Context } from '../../../context/context-direct'
+import { prisma } from '../../../prisma'
+import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
 
 // Enhanced scope types for better type safety
 export interface EnhancedAuthScopes {

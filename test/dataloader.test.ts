@@ -6,7 +6,7 @@
 
 import bcrypt from 'bcryptjs'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { createDataLoaders } from '../src/graphql/dataloaders'
+import { createDataLoaders } from '../src/data/loaders'
 import { prisma } from './setup'
 
 describe('DataLoaders', () => {
