@@ -6,10 +6,10 @@
  */
 
 import { container } from 'tsyringe'
+import { AuthorizationError, NotFoundError } from '../../core/errors/types'
 import type { ILogger } from '../../core/services/logger.interface'
-import { parseGlobalId } from '../../core/utils/relay-helpers'
+import { parseGlobalId } from '../../core/utils/relay'
 import { UserId } from '../../core/value-objects/user-id.vo'
-import { AuthorizationError, NotFoundError } from '../../core/errors'
 import { prisma } from '../../prisma'
 
 // Get services from container

@@ -79,7 +79,6 @@ export function decodeCursor(cursor: string): CursorData {
     const decoded = Buffer.from(cursor, 'base64').toString('utf-8')
     return JSON.parse(decoded)
   } catch (error) {
-    console.error('Error decoding cursor:', error)
     throw new Error('Invalid cursor')
   }
 }

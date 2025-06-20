@@ -1,8 +1,8 @@
 import { ApolloServer } from '@apollo/server'
 import jwt from 'jsonwebtoken'
 import { env } from '../../../src/app/config/environment'
-import { enhanceContext } from '../../../src/context/context-direct'
-import type { Context } from '../../../src/context/types.d'
+import { enhanceContext } from '../../../src/graphql/context/context.utils'
+import type { Context } from '../../../src/graphql/context/context.types'
 import { UserId } from '../../../src/core/value-objects/user-id.vo'
 import { getSchema } from '../../../src/graphql/schema'
 

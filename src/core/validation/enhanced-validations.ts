@@ -9,7 +9,7 @@
  */
 
 import { z } from 'zod'
-import type { Context } from '../../context/context-direct'
+import type { Context } from '../../graphql/context/context.types'
 import { builder } from '../../graphql/schema/builder'
 import { prisma } from '../../prisma'
 

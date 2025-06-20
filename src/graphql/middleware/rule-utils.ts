@@ -1,5 +1,5 @@
-import type { Context } from '../../context/context-direct'
-import { AuthenticationError, AuthorizationError, ValidationError } from '../../errors'
+import { AuthenticationError, AuthorizationError, ValidationError } from '../../core/errors/types'
+import type { Context } from '../context/context.types'
 
 /**
  * Validates that a resource ID is valid
@@ -10,7 +10,7 @@ import { AuthenticationError, AuthorizationError, ValidationError } from '../../
  */
 export function validateResourceId(id: unknown, resourceType: string): asserts id is string {
   if (!id || typeof id !== 'string') {
-    throw new ValidationError([], `Valid ${resourceType} ID is required`)
+    throw new ValidationError({ id: [`Valid ${resourceType} ID is required`] })
   }
 }
 
@@ -26,7 +26,7 @@ export async function parseAndValidateGlobalId(
   globalId: string,
   expectedType: string
 ): Promise<number> {
-  const { parseGlobalId } = await import('../../core/utils/relay-helpers')
+  const { parseGlobalId } = await import('../../core/utils/relay')
   return parseGlobalId(globalId, expectedType)
 }
 

@@ -1,6 +1,6 @@
 import { ROLE_HIERARCHY } from '../../constants'
 import { hasPermission, hasRole, isAuthenticated, requireAuthentication } from '../../modules/auth/guards/auth.guards'
-import type { Context } from '../../context/context-direct'
+import type { Context } from '../../graphql/context/context.types'
 import { prisma } from '../../prisma'
 
 /**

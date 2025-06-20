@@ -7,9 +7,9 @@ import RelayPlugin from '@pothos/plugin-relay';
 import ScopeAuthPlugin from '@pothos/plugin-scope-auth';
 import ValidationPlugin from '@pothos/plugin-validation';
 import { isProduction } from '../../app/config/environment';
-import type { Context } from '../../context/context-direct';
+import type { Context } from '../context/context.types';
 import { createEnhancedAuthScopes } from '../../core/auth/scopes';
-import { decodeGlobalId, encodeGlobalId } from '../../core/utils/relay-helpers';
+import { decodeGlobalId, encodeGlobalId } from '../../core/utils/relay';
 import {
     AuthenticationError,
     AuthorizationError,
@@ -17,9 +17,9 @@ import {
     NotFoundError,
     RateLimitError,
     ValidationError
-} from '../../errors';
+} from '../../core/errors/types';
 import { prisma } from '../../prisma';
-import * as rules from '../middleware/rules-clean';
+import * as rules from '../middleware/rules';
 // import ShieldPlugin from './plugins/shield';
 
 /**

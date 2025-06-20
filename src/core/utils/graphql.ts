@@ -1,5 +1,5 @@
 import { print } from 'graphql'
-import { GraphQLError, GraphQLResponse } from '../../context'
+import { GraphQLError, GraphQLResponse } from '../../graphql/context/context.types'
 
 
 // =============================================================================

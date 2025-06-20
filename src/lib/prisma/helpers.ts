@@ -212,7 +212,7 @@ export async function getOrCreate<T>(
 export async function bulkCreateWithConflictHandling<T>(
   model: any,
   data: any[],
-  conflictFields: string[]
+  _conflictFields: string[]
 ): Promise<T[]> {
   try {
     return await model.createMany({

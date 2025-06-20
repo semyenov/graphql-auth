@@ -8,7 +8,7 @@
 
 import { ContextFunction } from '@apollo/server'
 import { IncomingMessage, ServerResponse } from 'http'
-import { ValidationError } from '../../core/errors'
+import { ValidationError } from '../../core/errors/types'
 import { enhanceContext } from './context.utils'
 import { getUserIdFromAuthHeaderAsync } from './context.auth'
 import type { Context, GraphQLIncomingMessage } from './context.types'

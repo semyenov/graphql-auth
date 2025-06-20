@@ -11,7 +11,7 @@ import {
     ConflictError,
     NotFoundError,
     ValidationError
-} from '../../errors';
+} from '../../core/errors/types';
 import { builder } from '../../graphql/schema/builder';
 
 // Base error interface

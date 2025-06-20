@@ -91,6 +91,7 @@ input IntFilter {
 
 scalar JSON
 
+"""The root mutation type"""
 type Mutation {
   """Create a comment on a post with rate limiting"""
   createComment(content: String!, postId: ID!): String
@@ -253,6 +254,7 @@ input PostWhereInput {
   viewCount: IntFilter
 }
 
+"""The root query type"""
 type Query {
   """Get draft posts for the authenticated user"""
   drafts(after: String, before: String, first: Int, last: Int): QueryDraftsConnection

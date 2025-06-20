@@ -5,7 +5,7 @@
  */
 
 import type { ApolloServerPlugin, GraphQLRequestListener } from '@apollo/server'
-import type { Context } from '../../context/context-direct'
+import type { Context } from '../../graphql/context/context.types'
 
 /**
  * Logging plugin

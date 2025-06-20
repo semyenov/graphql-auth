@@ -9,7 +9,7 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 import type { Server } from 'http'
 import type { GraphQLSchema } from 'graphql'
-import type { Context } from '../../context/context-direct'
+import type { Context } from '../../graphql/context/context.types'
 
 /**
  * Apollo Server configuration options

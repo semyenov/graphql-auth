@@ -1,8 +1,8 @@
 import { rule } from 'graphql-shield'
 import { ERROR_MESSAGES } from '../../constants'
-import { requireAuthentication } from '../../modules/auth/guards/auth.guards'
-import type { Context } from '../../context/context-direct'
-import { AuthorizationError, NotFoundError } from '../../errors'
+import { requireAuthentication } from '../context/context.auth'
+import type { Context } from '../context/context.types'
+import { AuthorizationError, NotFoundError } from '../../core/errors/types'
 import { prisma } from '../../prisma'
 import {
   createAuthenticationCheck,
@@ -11,7 +11,7 @@ import {
   handleRuleError,
   parseAndValidateGlobalId,
   validateResourceId,
-} from './rule-utils-clean'
+} from './rule-utils'
 
 /**
  * Basic authentication rule
@@ -32,7 +32,7 @@ export const isPostOwner = rule({ cache: 'strict' })(
       validateResourceId(args.id, 'post')
 
       // Ensure user is authenticated
-      const userId = requireAuthentication(context)
+      const userId = requireAuthentication(context.userId)
 
       // Parse the global ID
       const postId = await parseAndValidateGlobalId(args.id, 'Post')
@@ -66,7 +66,7 @@ export const isPostOwner = rule({ cache: 'strict' })(
 export const isUserOwner = rule({ cache: 'strict' })(
   async (_parent, args: { userUniqueInput?: { id?: number; email?: string }; userId?: string }, context: Context) => {
     try {
-      const currentUserId = requireAuthentication(context)
+      const currentUserId = requireAuthentication(context.userId)
 
       // Handle drafts query with userId parameter
       if (args.userId) {

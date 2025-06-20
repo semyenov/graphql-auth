@@ -11,7 +11,7 @@ import { type GraphQLSchema, isObjectType } from 'graphql';
 
 import { applyMiddleware } from 'graphql-middleware';
 import { type IRule, type IRules, shield } from 'graphql-shield';
-import { Context } from '../../../context/context-direct';
+import { Context } from '../../context/context.types';
 
 type ShieldRule = IRule;
 

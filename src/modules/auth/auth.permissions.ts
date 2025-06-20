@@ -4,9 +4,10 @@
  * Defines authorization rules and permission checks for authentication operations
  */
 
-import { rule, shield, allow } from 'graphql-shield'
-import type { Context } from '../../context/context-direct'
-import { AuthenticationError, AuthorizationError } from '../../errors'
+import { UserStatus } from '@prisma/client'
+import { allow, rule, shield } from 'graphql-shield'
+import { AuthenticationError, AuthorizationError } from '../../core/errors/types'
+import type { Context } from '../../graphql/context/context.types'
 import { prisma } from '../../prisma'
 
 /**
@@ -33,12 +34,12 @@ export const isNotAuthenticated = rule({ cache: 'contextual' })(
 export const isAdmin = rule({ cache: 'contextual' })(
   async (_parent, _args, context: Context) => {
     if (!context.userId) return false
-    
+
     const user = await prisma.user.findUnique({
       where: { id: context.userId.value },
       select: { role: true },
     })
-    
+
     return user?.role === 'admin'
   }
 )
@@ -49,12 +50,12 @@ export const isAdmin = rule({ cache: 'contextual' })(
 export const isModerator = rule({ cache: 'contextual' })(
   async (_parent, _args, context: Context) => {
     if (!context.userId) return false
-    
+
     const user = await prisma.user.findUnique({
       where: { id: context.userId.value },
       select: { role: true },
     })
-    
+
     return user?.role === 'admin' || user?.role === 'moderator'
   }
 )
@@ -67,12 +68,12 @@ export const isAccountOwner = rule({ cache: 'strict' })(
     if (!context.userId) {
       return new AuthenticationError('You must be logged in')
     }
-    
+
     const targetUserId = parseInt(args.userId, 10)
     if (context.userId.value !== targetUserId) {
       return new AuthorizationError('You can only modify your own account')
     }
-    
+
     return true
   }
 )
@@ -84,24 +85,24 @@ export const hasPermission = (permission: string) =>
   rule({ cache: 'contextual' })(
     async (_parent, _args, context: Context) => {
       if (!context.userId) return false
-      
+
       const user = await prisma.user.findUnique({
         where: { id: context.userId.value },
-        select: { role: true, permissions: true },
+        select: { role: true },
       })
-      
+
       if (!user) return false
-      
+
       // Admin has all permissions
       if (user.role === 'admin') return true
-      
+
       // Check specific permissions (assuming permissions field exists)
       // This is a simplified example - in real app, you'd have a proper permission system
       const rolePermissions: Record<string, string[]> = {
         moderator: ['user:suspend', 'post:moderate', 'comment:moderate'],
         user: ['profile:edit', 'post:create', 'comment:create'],
       }
-      
+
       const userPermissions = rolePermissions[user.role || 'user'] || []
       return userPermissions.includes(permission)
     }
@@ -125,20 +126,20 @@ export const withinRateLimit = (operation: string) =>
 export const isActiveAccount = rule({ cache: 'contextual' })(
   async (_parent, _args, context: Context) => {
     if (!context.userId) return false
-    
+
     const user = await prisma.user.findUnique({
       where: { id: context.userId.value },
       select: { status: true },
     })
-    
-    if (user?.status === 'banned') {
+
+    if (user?.status === UserStatus.BANNED) {
       return new AuthorizationError('Your account has been banned')
     }
-    
-    if (user?.status === 'suspended') {
+
+    if (user?.status === UserStatus.SUSPENDED) {
       return new AuthorizationError('Your account is suspended')
     }
-    
+
     return true
   }
 )
@@ -149,16 +150,16 @@ export const isActiveAccount = rule({ cache: 'contextual' })(
 export const isEmailVerified = rule({ cache: 'contextual' })(
   async (_parent, _args, context: Context) => {
     if (!context.userId) return false
-    
+
     const user = await prisma.user.findUnique({
       where: { id: context.userId.value },
       select: { emailVerified: true },
     })
-    
+
     if (!user?.emailVerified) {
       return new AuthorizationError('Please verify your email address')
     }
-    
+
     return true
   }
 )
@@ -179,27 +180,27 @@ export const authPermissions = {
     loginWithTokens: isNotAuthenticated,
     forgotPassword: isNotAuthenticated,
     resetPassword: isNotAuthenticated,
-    
+
     // Authenticated operations
     logout: isAuthenticated,
     refreshToken: allow, // Handled by token validation
     updateProfile: isAuthenticated,
     changePassword: isAuthenticated,
     deleteAccount: isAuthenticated,
-    
+
     // Email verification
     sendVerificationEmail: isAuthenticated,
     verifyEmail: allow, // Token-based
-    
+
     // Two-factor auth
     enableTwoFactor: isAuthenticated,
     disableTwoFactor: isAuthenticated,
     verifyTwoFactor: allow, // During login
-    
+
     // Session management
     revokeSession: isAuthenticated,
     revokeAllSessions: isAuthenticated,
-    
+
     // Admin operations
     updateUserRole: isAdmin,
     suspendUser: isModerator,

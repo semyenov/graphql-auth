@@ -4,7 +4,7 @@
  */
 
 import type { ApolloServerPlugin } from '@apollo/server'
-import type { Context } from '../../context/context-direct'
+import type { Context } from '../../graphql/context/context.types'
 import { createLogger } from '../../core/logging'
 
 const logger = createLogger('middleware')

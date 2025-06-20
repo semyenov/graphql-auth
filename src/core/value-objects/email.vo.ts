@@ -5,24 +5,24 @@
  */
 
 import { VALIDATION_LIMITS, VALIDATION_MESSAGES, VALIDATION_PATTERNS } from '../../constants/validation'
-import { ValidationError as ValueObjectValidationError } from '../../errors'
+import { ValidationError } from '../../core/errors/types'
 
 export class Email {
   private constructor(private readonly _value: string) { }
 
   static create(value: string): Email {
     if (!value || value.trim().length === 0) {
-      throw new ValueObjectValidationError([VALIDATION_MESSAGES.EMAIL_REQUIRED])
+      throw new ValidationError([VALIDATION_MESSAGES.EMAIL_REQUIRED])
     }
 
     const normalizedEmail = value.trim().toLowerCase()
 
     if (!VALIDATION_PATTERNS.EMAIL.test(normalizedEmail)) {
-      throw new ValueObjectValidationError([VALIDATION_MESSAGES.EMAIL_INVALID])
+      throw new ValidationError([VALIDATION_MESSAGES.EMAIL_INVALID])
     }
 
     if (normalizedEmail.length > VALIDATION_LIMITS.EMAIL_MAX_LENGTH) {
-      throw new ValueObjectValidationError([VALIDATION_MESSAGES.EMAIL_TOO_LONG])
+      throw new ValidationError([VALIDATION_MESSAGES.EMAIL_TOO_LONG])
     }
 
     return new Email(normalizedEmail)

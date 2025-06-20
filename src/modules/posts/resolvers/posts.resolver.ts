@@ -6,11 +6,11 @@
 
 import { container } from 'tsyringe'
 import { z } from 'zod'
+import { AuthorizationError, NotFoundError, RateLimitError } from '../../../core/errors/types'
 import type { ILogger } from '../../../core/services/logger.interface'
-import { AuthorizationError, NotFoundError, RateLimitError } from '../../../core/errors'
+import { parseGlobalId } from '../../../core/utils/relay'
 import { builder } from '../../../graphql/schema/builder'
 import { prisma } from '../../../prisma'
-import { parseGlobalId } from '../../../core/utils/relay-helpers'
 import { requireAuthentication } from '../../auth/guards/auth.guards'
 
 // Get logger from container

@@ -5,7 +5,7 @@
  * It's independent of any infrastructure concerns.
  */
 
-import { EntityValidationError } from '../../errors'
+import { EntityValidationError } from '../../core/errors/types'
 import { Email } from '../value-objects/email.vo'
 import { UserId } from '../value-objects/user-id.vo'
 

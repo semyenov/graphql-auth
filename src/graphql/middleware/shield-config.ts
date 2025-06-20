@@ -1,8 +1,8 @@
 import { shield } from 'graphql-shield'
-import { Context } from '../../context/context-direct'
 import { isDevelopment } from '../../app/config/environment'
-import { AuthorizationError } from '../../errors'
-import * as rules from './rules-clean'
+import { AuthorizationError } from '../../core/errors/types'
+import { Context } from '../context/context.types'
+import * as rules from './rules'
 
 /**
  * GraphQL Shield permissions configuration

@@ -3,6 +3,6 @@
  */
 
 export * from './context-utils'
-export * from './token-utils'
-export * from './graphql-utils'
-export * from './relay-helpers'
+export * from './graphql'
+export * from './relay'
+export * from './token'

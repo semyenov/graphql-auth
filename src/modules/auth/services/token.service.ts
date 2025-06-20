@@ -7,10 +7,10 @@
 import { randomBytes } from 'crypto'
 import * as jwt from 'jsonwebtoken'
 import { inject, injectable } from 'tsyringe'
+import { AuthenticationError } from '../../../core/errors/types'
 import { ITokenService, type AuthTokens, type TokenConfig, type TokenPayload } from '../../../core/services/token.service.interface'
 import { UserId } from '../../../core/value-objects/user-id.vo'
 import { RefreshTokenRepository } from '../../../data/repositories/refresh-token.repository'
-import { AuthenticationError as UnauthorizedError } from '../../../errors'
 
 export type { TokenConfig } from '../../../core/services/token.service.interface'
 
@@ -89,20 +89,20 @@ export class TokenService implements ITokenService {
             const decoded = jwt.verify(refreshToken, this.config.refreshTokenSecret) as TokenPayload & { jti: string }
 
             if (decoded.type !== 'refresh') {
-                throw new UnauthorizedError('Invalid token type')
+                throw new AuthenticationError('Invalid token type')
             }
 
             // Check if refresh token exists in database
             const storedToken = await this.refreshTokenRepo.findByToken(decoded.jti)
 
             if (!storedToken) {
-                throw new UnauthorizedError('Invalid refresh token')
+                throw new AuthenticationError('Invalid refresh token')
             }
 
             // Check if token is expired
             if (new Date() > storedToken.expiresAt) {
                 await this.refreshTokenRepo.delete(storedToken.id)
-                throw new UnauthorizedError('Refresh token expired')
+                throw new AuthenticationError('Refresh token expired')
             }
 
             // Delete old refresh token (rotation)
@@ -114,10 +114,10 @@ export class TokenService implements ITokenService {
                 email: decoded.email
             })
         } catch (error) {
-            if (error instanceof UnauthorizedError) {
+            if (error instanceof AuthenticationError) {
                 throw error
             }
-            throw new UnauthorizedError('Invalid refresh token')
+            throw new AuthenticationError('Invalid refresh token')
         }
     }
 

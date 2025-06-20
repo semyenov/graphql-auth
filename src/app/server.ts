@@ -10,12 +10,12 @@ import type { HTTPMethod, MimeType } from 'fetchdts'
 import { GraphQLError, type GraphQLFormattedError } from 'graphql'
 import 'reflect-metadata'
 import { SERVER } from '../constants'
-import { createContext } from '../context/creation'
-import type { Context } from '../context/types'
-import { env, isDevelopment } from './config/environment'
-import { isBaseError } from '../errors'
-import { disconnectPrisma } from '../prisma'
+import { createContext } from '../graphql/context/context.factory'
+import type { Context } from '../graphql/context/context.types'
+import { isBaseError } from '../core/errors/handlers'
 import { getSchema } from '../graphql/schema'
+import { disconnectPrisma } from '../prisma'
+import { env, isDevelopment } from './config/environment'
 
 // Enhanced Apollo Server with better typing
 const server = new ApolloServer<Context>({

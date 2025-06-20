@@ -1,17 +1,61 @@
 /**
- * Permissions module
+ * GraphQL Middleware Index
  * 
- * This module provides GraphQL Shield-based authorization for the API.
- * It's organized into:
- * - rules.ts: Individual permission rules
- * - utils.ts: Helper functions for permission checks
- * - shield-config.ts: Shield configuration mapping rules to operations
+ * Central export point for all GraphQL middleware
+ * as specified in IMPROVED-FILE-STRUCTURE.md
  */
 
-export * as rules from './rules-clean'
-export { permissions } from './shield-config'
-export { PermissionUtils } from './utils-clean'
-export type { PermissionUtilsType } from './utils-clean'
+import { authMiddleware } from './auth.middleware'
 
-// Export rule types for external use
-export type { IRule as Rule } from 'graphql-shield'
+// Export individual middleware
+export { authMiddleware } from './auth.middleware'
+export { rateLimitMiddleware } from './rate-limit.middleware'
+export { validationMiddleware } from './validation.middleware'
+
+// Export individual rules for composition
+export {
+    isAdminRule,
+    isAuthenticatedRule,
+    isResourceOwnerRule,
+    requireAuthenticationRule
+} from './auth.middleware'
+
+export {
+    authRateLimitRule,
+    createRateLimitRule,
+    mutationRateLimitRule,
+    queryRateLimitRule,
+    RATE_LIMIT_CONFIGS,
+    strictRateLimitRule
+} from './rate-limit.middleware'
+
+export {
+    emailValidationRule,
+    paginationValidationRule,
+    passwordValidationRule,
+    postContentValidationRule,
+    postTitleValidationRule,
+    userNameValidationRule
+} from './validation.middleware'
+
+/**
+ * Combined middleware that applies all security and validation rules
+ * For now, we use the auth middleware as the primary middleware
+ * Individual middleware can be composed as needed
+ */
+export const combinedMiddleware = authMiddleware
+
+/**
+ * Minimal middleware for development (auth only)
+ */
+export const developmentMiddleware = authMiddleware
+
+/**
+ * Production middleware with all security features
+ */
+export const productionMiddleware = combinedMiddleware
+
+/**
+ * Legacy permissions export for backward compatibility
+ */
+export { permissions } from './shield-config'

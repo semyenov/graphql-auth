@@ -4,9 +4,9 @@
  * Implements dynamic scopes, scope loaders, and complex authorization patterns
  */
 
-import type { Context } from '../../context/context-direct'
 import { prisma } from '../../data/database/client'
-import { parseGlobalId } from '../utils/relay-helpers'
+import type { Context } from '../../graphql/context/context.types'
+import { parseGlobalId } from '../utils/relay'
 
 // Enhanced scope types for better type safety
 export interface EnhancedAuthScopes {
@@ -54,12 +54,6 @@ export function createEnhancedAuthScopes(context: Context): EnhancedAuthScopes {
 
       try {
         const numericPostId = typeof postId === 'string' ? parseGlobalId(postId, 'Post') : postId
-
-        // Use enhanced loader if available for better performance
-        if (context.enhancedLoaders?.post) {
-          const post = await context.enhancedLoaders.post.load(numericPostId)
-          return post?.authorId === context.userId.value
-        }
 
         // Fallback to direct query
         const post = await prisma.post.findUnique({

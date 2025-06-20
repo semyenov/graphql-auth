@@ -8,6 +8,8 @@
 import { container } from 'tsyringe'
 import { TokenService } from '../../modules/auth/services/token.service'
 import { UserId } from '../../core/value-objects/user-id.vo'
+import { AuthenticationError } from '../../core/errors/types'
+import { ERROR_MESSAGES } from '../../constants'
 
 /**
  * Extract Bearer token from Authorization header
@@ -54,7 +56,7 @@ export function isAuthenticated(userId?: UserId): boolean {
  */
 export function requireAuthentication(userId?: UserId): UserId {
     if (!userId) {
-        throw new Error('Authentication required')
+        throw new AuthenticationError(ERROR_MESSAGES.AUTHENTICATION_REQUIRED)
     }
     return userId
 }

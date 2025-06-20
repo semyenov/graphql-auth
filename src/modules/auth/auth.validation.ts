@@ -12,9 +12,9 @@ import { AUTH, ERROR_MESSAGES, VALIDATION } from '../../constants'
  */
 export const emailSchema = z
   .string()
-  .min(1, ERROR_MESSAGES.EMAIL_REQUIRED)
-  .email(ERROR_MESSAGES.EMAIL_INVALID)
-  .max(VALIDATION.EMAIL_MAX_LENGTH, ERROR_MESSAGES.EMAIL_TOO_LONG)
+  .min(1, ERROR_MESSAGES.INVALID_EMAIL)
+  .email(ERROR_MESSAGES.INVALID_EMAIL)
+  .max(VALIDATION.MAX_EMAIL_LENGTH, ERROR_MESSAGES.INVALID_EMAIL)
   .transform(email => email.toLowerCase().trim())
 
 /**
@@ -53,7 +53,7 @@ export const signupSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
   name: z.string()
-    .max(VALIDATION.NAME_MAX_LENGTH, 'Name is too long')
+    .max(VALIDATION.MAX_NAME_LENGTH, ERROR_MESSAGES.NAME_TOO_LONG)
     .optional()
     .transform(name => name?.trim())
 })
@@ -71,8 +71,8 @@ export const loginSchema = z.object({
  */
 export const refreshTokenSchema = z.object({
   refreshToken: z.string()
-    .min(1, 'Refresh token is required')
-    .regex(/^[A-Za-z0-9+/=]+$/, 'Invalid refresh token format')
+    .min(1, ERROR_MESSAGES.REFRESH_TOKEN_REQUIRED)
+    .regex(/^[A-Za-z0-9+/=]+$/, ERROR_MESSAGES.INVALID_REFRESH_TOKEN)
 })
 
 /**
@@ -80,8 +80,7 @@ export const refreshTokenSchema = z.object({
  */
 export const updateProfileSchema = z.object({
   name: z.string()
-    .min(VALIDATION.NAME_MIN_LENGTH, 'Name is too short')
-    .max(VALIDATION.NAME_MAX_LENGTH, 'Name is too long')
+    .max(VALIDATION.MAX_NAME_LENGTH, ERROR_MESSAGES.NAME_TOO_LONG)
     .optional()
     .transform(name => name?.trim()),
   email: emailSchema.optional(),
@@ -96,7 +95,7 @@ export const updateProfileSchema = z.object({
     return true
   },
   {
-    message: 'Current password is required to change password',
+    message: ERROR_MESSAGES.CURRENT_PASSWORD_REQUIRED,
     path: ['currentPassword'],
   }
 )
@@ -112,7 +111,7 @@ export const passwordResetRequestSchema = z.object({
  * Password reset validation
  */
 export const passwordResetSchema = z.object({
-  token: z.string().min(1, 'Reset token is required'),
+  token: z.string().min(1, ERROR_MESSAGES.INVALID_RESET_TOKEN),
   newPassword: passwordSchema,
 })
 
@@ -121,8 +120,8 @@ export const passwordResetSchema = z.object({
  */
 export const twoFactorSchema = z.object({
   code: z.string()
-    .length(6, 'Code must be 6 digits')
-    .regex(/^\d+$/, 'Code must contain only numbers'),
+    .length(6, ERROR_MESSAGES.INVALID_CODE)
+    .regex(/^\d+$/, ERROR_MESSAGES.INVALID_CODE),
 })
 
 /**

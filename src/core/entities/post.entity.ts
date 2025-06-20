@@ -5,7 +5,7 @@
  */
 
 import { VALIDATION_LIMITS, VALIDATION_MESSAGES } from '../../constants/validation'
-import { EntityValidationError } from '../../errors'
+import { EntityValidationError } from '../../core/errors/types'
 import { PostId } from '../value-objects/post-id.vo'
 import { UserId } from '../value-objects/user-id.vo'
 

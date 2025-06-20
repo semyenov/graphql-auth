@@ -6,12 +6,12 @@
  */
 
 import { container } from 'tsyringe'
+import { AuthorizationError, ConflictError, NotFoundError } from '../../core/errors/types'
 import type { ILogger } from '../../core/services/logger.interface'
 import type { IPasswordService } from '../../core/services/password.service.interface'
-import { AuthorizationError, NotFoundError, ConflictError } from '../../core/errors'
-import { parseGlobalId } from '../../core/utils/relay-helpers'
-import { prisma } from '../../prisma'
+import { parseGlobalId } from '../../core/utils/relay'
 import { UserId } from '../../core/value-objects/user-id.vo'
+import { prisma } from '../../prisma'
 
 // Get services from container
 const getLogger = () => container.resolve<ILogger>('ILogger')
@@ -114,7 +114,7 @@ export class UsersService {
    */
   async getUserById(userId: string): Promise<any | null> {
     const numericUserId = parseGlobalId(userId, 'User')
-    
+
     this.logger.debug('Getting user by ID', { userId: numericUserId })
 
     return prisma.user.findUnique({
@@ -179,7 +179,7 @@ export class UsersService {
     adminUserId: UserId
   ): Promise<any> {
     const numericTargetUserId = parseGlobalId(targetUserId, 'User')
-    
+
     this.logger.info('Admin updating user', {
       targetUserId: numericTargetUserId,
       adminUserId: adminUserId.value
@@ -306,7 +306,7 @@ export class UsersService {
 
     // Hash new password and update
     const hashedNewPassword = await passwordService.hash(newPassword)
-    
+
     await prisma.user.update({
       where: { id: userId.value },
       data: { password: hashedNewPassword }
@@ -341,7 +341,7 @@ export class UsersService {
     for (const userId of userIds) {
       try {
         const numericUserId = parseGlobalId(userId, 'User')
-        
+
         // Check if user exists
         const user = await prisma.user.findUnique({
           where: { id: numericUserId },
@@ -375,7 +375,7 @@ export class UsersService {
             this.logger.info('User unbanned', { userId: numericUserId })
             break
         }
-        
+
         success++
       } catch (error) {
         failed++
@@ -403,7 +403,7 @@ export class UsersService {
 
     // In a real implementation, you might want to soft delete or archive the user
     // and handle related data (posts, comments, etc.)
-    
+
     const user = await prisma.user.findUnique({
       where: { id: userId.value }
     })

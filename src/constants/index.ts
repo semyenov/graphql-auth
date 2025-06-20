@@ -84,11 +84,19 @@ export const ERROR_MESSAGES = {
   AUTHENTICATION_REQUIRED: 'You must be logged in to perform this action. Please authenticate and try again.',
   INVALID_TOKEN: 'The provided authentication token is invalid or malformed. Please sign in again.',
   TOKEN_EXPIRED: 'Your authentication token has expired. Please sign in again to continue.',
-
-  // Validation
-  INVALID_EMAIL: 'Please provide a valid email address (e.g., user@example.com)',
+  CURRENT_PASSWORD_REQUIRED: 'Current password is required to change password',
+  NEW_PASSWORD_REQUIRED: 'New password is required to change password',
+  PASSWORD_MISMATCH: 'The provided passwords do not match',
   PASSWORD_TOO_SHORT: `Password must be at least ${AUTH_CONFIG.MIN_PASSWORD_LENGTH} characters long for security`,
   PASSWORD_TOO_LONG: `Password cannot exceed ${AUTH_CONFIG.MAX_PASSWORD_LENGTH} characters`,
+  REFRESH_TOKEN_REQUIRED: 'Refresh token is required to refresh authentication',
+  INVALID_REFRESH_TOKEN: 'The provided refresh token is invalid or malformed. Please request a new refresh token.',
+  INVALID_RESET_TOKEN: 'The provided reset token is invalid or malformed. Please request a new reset token.',
+  INVALID_CODE: 'The provided code is invalid or malformed. Please request a new code.',
+  INVALID_EMAIL: 'Please provide a valid email address (e.g., user@example.com)',
+  INVALID_INPUT: 'Invalid input provided',
+
+  // Validation
   TITLE_REQUIRED: 'Post title is required and cannot be empty',
   TITLE_TOO_LONG: `Post title must not exceed ${VALIDATION_LIMITS.TITLE_MAX_LENGTH} characters`,
   CONTENT_TOO_LONG: `Post content must not exceed ${VALIDATION_LIMITS.CONTENT_MAX_LENGTH} characters`,
@@ -101,7 +109,6 @@ export const ERROR_MESSAGES = {
 
   // Generic
   INTERNAL_ERROR: 'An internal error occurred',
-  INVALID_INPUT: 'Invalid input provided',
 } as const
 
 /**
