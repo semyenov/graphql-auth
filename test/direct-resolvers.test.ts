@@ -32,8 +32,8 @@ describe('Direct Resolvers', () => {
     describe('Authentication', () => {
         it('should signup a new user', async () => {
             const mutation = graphql(`
-                mutation SignupDirect($email: String!, $password: String!, $name: String) {
-                    signupDirect(email: $email, password: $password, name: $name)
+                mutation Signup($email: String!, $password: String!, $name: String) {
+                    signup(email: $email, password: $password, name: $name)
                 }
             `)
 
@@ -48,8 +48,8 @@ describe('Direct Resolvers', () => {
                 createMockContext()
             )
 
-            expect(data.signupDirect).toBeDefined()
-            expect(typeof data.signupDirect).toBe('string')
+            expect(data.signup).toBeDefined()
+            expect(typeof data.signup).toBe('string')
 
             // Verify user was created
             const user = await prisma.user.findUnique({
@@ -61,8 +61,8 @@ describe('Direct Resolvers', () => {
 
         it('should login with valid credentials', async () => {
             const mutation = graphql(`
-                mutation LoginDirect($email: String!, $password: String!) {
-                    loginDirect(email: $email, password: $password)
+                mutation Login($email: String!, $password: String!) {
+                    login(email: $email, password: $password)
                 }
             `)
 
@@ -76,14 +76,14 @@ describe('Direct Resolvers', () => {
                 createMockContext()
             )
 
-            expect(data.loginDirect).toBeDefined()
-            expect(typeof data.loginDirect).toBe('string')
+            expect(data.login).toBeDefined()
+            expect(typeof data.login).toBe('string')
         })
 
         it('should get current user', async () => {
             const query = graphql(`
-                query MeDirect {
-                    meDirect {
+                query Me {
+                    me {
                         id
                         email
                         name
@@ -104,17 +104,17 @@ describe('Direct Resolvers', () => {
                 authContext
             )
 
-            expect(data.meDirect).toBeDefined()
-            expect(data.meDirect?.email).toBe('test@example.com')
-            expect(data.meDirect?.name).toBe('Test User')
+            expect(data.me).toBeDefined()
+            expect(data.me?.email).toBe('test@example.com')
+            expect(data.me?.name).toBe('Test User')
         })
     })
 
     describe('Posts', () => {
         it('should create a post', async () => {
             const mutation = graphql(`
-                mutation CreatePostDirect($input: CreatePostInput!) {
-                    createPostDirect(input: $input) {
+                mutation CreatePost($input: CreatePostInput!) {
+                    createPost(input: $input) {
                         id
                         title
                         content
@@ -146,11 +146,11 @@ describe('Direct Resolvers', () => {
                 authContext
             )
 
-            expect(data.createPostDirect).toBeDefined()
-            expect(data.createPostDirect?.title).toBe('Test Post')
-            expect(data.createPostDirect?.content).toBe('This is a test post')
-            expect(data.createPostDirect?.published).toBe(false)
-            expect(data.createPostDirect?.author?.email).toBe('test@example.com')
+            expect(data.createPost).toBeDefined()
+            expect(data.createPost?.title).toBe('Test Post')
+            expect(data.createPost?.content).toBe('This is a test post')
+            expect(data.createPost?.published).toBe(false)
+            expect(data.createPost?.author?.email).toBe('test@example.com')
         })
 
         it('should get posts feed', async () => {
@@ -164,8 +164,8 @@ describe('Direct Resolvers', () => {
             })
 
             const query = graphql(`
-                query FeedDirect {
-                    feedDirect {
+                query Feed {
+                    feed {
                         edges {
                             node {
                                 id
@@ -185,9 +185,9 @@ describe('Direct Resolvers', () => {
                 createMockContext()
             )
 
-            expect(data.feedDirect?.edges?.length).toBe(2)
-            expect(data.feedDirect?.totalCount).toBe(2)
-            expect(data.feedDirect?.edges?.every(edge => edge?.node?.published)).toBe(true)
+            expect(data.feed?.edges?.length).toBe(2)
+            expect(data.feed?.totalCount).toBe(2)
+            expect(data.feed?.edges?.every(edge => edge?.node?.published)).toBe(true)
         })
 
         it('should get user drafts', async () => {
@@ -201,8 +201,8 @@ describe('Direct Resolvers', () => {
             })
 
             const query = graphql(`
-                query DraftsDirect {
-                    draftsDirect {
+                query Drafts {
+                    drafts {
                         edges {
                             node {
                                 id
@@ -228,9 +228,9 @@ describe('Direct Resolvers', () => {
                 authContext
             )
 
-            expect(data.draftsDirect?.edges?.length).toBe(2)
-            expect(data.draftsDirect?.totalCount).toBe(2)
-            expect(data.draftsDirect?.edges?.every(edge => !edge?.node?.published)).toBe(true)
+            expect(data.drafts?.edges?.length).toBe(2)
+            expect(data.drafts?.totalCount).toBe(2)
+            expect(data.drafts?.edges?.every(edge => !edge?.node?.published)).toBe(true)
         })
     })
 
@@ -245,8 +245,8 @@ describe('Direct Resolvers', () => {
             })
 
             const query = graphql(`
-                query SearchUsersDirect($search: String!) {
-                    searchUsersDirect(search: $search) {
+                query SearchUsers($search: String!) {
+                    searchUsers(search: $search) {
                         edges {
                             node {
                                 id
@@ -266,8 +266,8 @@ describe('Direct Resolvers', () => {
                 createMockContext()
             )
 
-            expect(data.searchUsersDirect?.edges?.length).toBe(1)
-            expect(data.searchUsersDirect?.edges?.[0]?.node?.email).toBe('john@example.com')
+            expect(data.searchUsers?.edges?.length).toBe(1)
+            expect(data.searchUsers?.edges?.[0]?.node?.email).toBe('john@example.com')
         })
     })
 })

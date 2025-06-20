@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { LoginDirectMutation, SignupDirectMutation } from '../src/gql/mutations-direct'
+import { LoginMutation, SignupMutation } from '../src/gql/mutations'
 import { prisma } from './setup'
 import {
   createMockContext,
@@ -10,8 +10,8 @@ import {
 } from './test-utils'
 
 interface AuthMutationResponse {
-  signupDirect?: string
-  loginDirect?: string
+  signup?: string
+  login?: string
 }
 
 describe('Authentication', () => {
@@ -32,13 +32,13 @@ describe('Authentication', () => {
       // Using the new helper for cleaner test code
       const data = await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse>(
         server,
-        print(SignupDirectMutation),
+        print(SignupMutation),
         variables,
         createMockContext()
       )
 
-      expect(data.signupDirect).toBeDefined()
-      expect(data.signupDirect).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/)
+      expect(data.signup).toBeDefined()
+      expect(data.signup).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/)
 
       // Verify user was created in database
       const user = await prisma.user.findUnique({
@@ -68,7 +68,7 @@ describe('Authentication', () => {
       // Using the new helper to expect and verify errors
       const errors = await gqlHelpers.expectGraphQLError<AuthMutationResponse>(
         server,
-        print(SignupDirectMutation),
+        print(SignupMutation),
         variables,
         createMockContext(),
         'An account with this email already exists'
@@ -100,12 +100,12 @@ describe('Authentication', () => {
       // Using the new helper for cleaner success case
       const data = await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse>(
         server,
-        print(LoginDirectMutation),
+        print(LoginMutation),
         variables,
         createMockContext()
       )
 
-      expect(data.loginDirect).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/)
+      expect(data.login).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/)
     })
 
     it('should fail with invalid password', async () => {
@@ -130,7 +130,7 @@ describe('Authentication', () => {
       // Using the new helper to expect specific error
       await gqlHelpers.expectGraphQLError<AuthMutationResponse>(
         server,
-        print(LoginDirectMutation),
+        print(LoginMutation),
         variables,
         createMockContext(),
         'Invalid email or password'
@@ -149,7 +149,7 @@ describe('Authentication', () => {
       // Using the new helper to expect specific error
       await gqlHelpers.expectGraphQLError<AuthMutationResponse>(
         server,
-        print(LoginDirectMutation),
+        print(LoginMutation),
         variables,
         createMockContext(),
         'Invalid email or password'

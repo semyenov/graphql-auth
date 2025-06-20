@@ -31,14 +31,12 @@ import './enhanced-connections';
 // import '../infrastructure/graphql/resolvers/posts.resolver';
 // import '../infrastructure/graphql/resolvers/users.resolver';
 
-// OLD: auth-tokens.resolver (keep for backward compatibility during migration)
-import '../infrastructure/graphql/resolvers/auth-tokens.resolver';
 
 // NEW: Direct Pothos resolvers (without use cases)
-import '../infrastructure/graphql/resolvers/auth-direct.resolver';
-import '../infrastructure/graphql/resolvers/posts-direct.resolver';
-import '../infrastructure/graphql/resolvers/users-direct.resolver';
-import '../infrastructure/graphql/resolvers/auth-tokens-direct.resolver';
+import '../infrastructure/graphql/resolvers/auth.resolver';
+import '../infrastructure/graphql/resolvers/posts.resolver';
+import '../infrastructure/graphql/resolvers/users.resolver';
+import '../infrastructure/graphql/resolvers/auth-tokens.resolver';
 
 // NEW: Enhanced resolvers with advanced Pothos features
 import '../infrastructure/graphql/resolvers/enhanced-queries.resolver';

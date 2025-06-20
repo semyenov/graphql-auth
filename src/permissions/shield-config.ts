@@ -10,36 +10,33 @@ import * as rules from './rules-clean'
 export const permissions = shield({
   Query: {
     // User-related queries
-    meDirect: rules.isAuthenticatedUser,
-    userDirect: rules.isPublic,
-    usersDirect: rules.isPublic,
-    searchUsersDirect: rules.isPublic,
+    me: rules.isAuthenticatedUser,
+    user: rules.isPublic,
+    users: rules.isPublic,
+    searchUsers: rules.isPublic,
 
     // Post-related queries
-    feedDirect: rules.isPublic,
-    postDirect: rules.isPublic,
-    draftsDirect: rules.isAuthenticatedUser,
+    feed: rules.isPublic,
+    post: rules.isPublic,
+    drafts: rules.isAuthenticatedUser,
 
     // Node queries disabled in builder config
   },
 
   Mutation: {
     // Authentication mutations (public)
-    loginDirect: rules.isPublic,
-    signupDirect: rules.rateLimitSensitiveOperations,
+    login: rules.isPublic,
+    signup: rules.rateLimitSensitiveOperations,
     loginWithTokens: rules.isPublic,
-    loginWithTokensDirect: rules.isPublic,
     refreshToken: rules.isPublic,
-    refreshTokenDirect: rules.isPublic,
     logout: rules.isAuthenticatedUser,
-    logoutDirect: rules.isAuthenticatedUser,
 
     // Post mutations
-    createPostDirect: rules.canCreateDraft,
-    updatePostDirect: rules.isPostOwner,
-    deletePostDirect: rules.isPostOwner,
-    togglePublishPostDirect: rules.isPostOwner,
-    incrementPostViewCountDirect: rules.isPublic,
+    createPost: rules.canCreateDraft,
+    updatePost: rules.isPostOwner,
+    deletePost: rules.isPostOwner,
+    togglePublishPost: rules.isPostOwner,
+    incrementPostViewCount: rules.isPublic,
     
     // User mutations
     updateUserProfile: rules.isAuthenticatedUser,

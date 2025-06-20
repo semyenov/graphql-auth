@@ -7,22 +7,22 @@
 import { graphql } from 'gql.tada'
 
 // Authentication mutations
-export const SignupDirectMutation = graphql(`
-  mutation SignupDirect($email: String!, $password: String!, $name: String) {
-    signupDirect(email: $email, password: $password, name: $name)
+export const SignupMutation = graphql(`
+  mutation Signup($email: String!, $password: String!, $name: String) {
+    signup(email: $email, password: $password, name: $name)
   }
 `)
 
-export const LoginDirectMutation = graphql(`
-  mutation LoginDirect($email: String!, $password: String!) {
-    loginDirect(email: $email, password: $password)
+export const LoginMutation = graphql(`
+  mutation Login($email: String!, $password: String!) {
+    login(email: $email, password: $password)
   }
 `)
 
 // Post mutations
-export const CreatePostDirectMutation = graphql(`
-  mutation CreatePostDirect($input: CreatePostInput!) {
-    createPostDirect(input: $input) {
+export const CreatePostMutation = graphql(`
+  mutation CreatePost($input: CreatePostInput!) {
+    createPost(input: $input) {
       id
       title
       content
@@ -39,9 +39,9 @@ export const CreatePostDirectMutation = graphql(`
   }
 `)
 
-export const UpdatePostDirectMutation = graphql(`
-  mutation UpdatePostDirect($id: ID!, $input: UpdatePostInput!) {
-    updatePostDirect(id: $id, input: $input) {
+export const UpdatePostMutation = graphql(`
+  mutation UpdatePost($id: ID!, $input: UpdatePostInput!) {
+    updatePost(id: $id, input: $input) {
       id
       title
       content
@@ -58,15 +58,15 @@ export const UpdatePostDirectMutation = graphql(`
   }
 `)
 
-export const DeletePostDirectMutation = graphql(`
-  mutation DeletePostDirect($id: ID!) {
-    deletePostDirect(id: $id)
+export const DeletePostMutation = graphql(`
+  mutation DeletePost($id: ID!) {
+    deletePost(id: $id)
   }
 `)
 
-export const TogglePublishPostDirectMutation = graphql(`
-  mutation TogglePublishPostDirect($id: ID!) {
-    togglePublishPostDirect(id: $id) {
+export const TogglePublishPostMutation = graphql(`
+  mutation TogglePublishPost($id: ID!) {
+    togglePublishPost(id: $id) {
       id
       title
       content
@@ -83,9 +83,9 @@ export const TogglePublishPostDirectMutation = graphql(`
   }
 `)
 
-export const IncrementPostViewCountDirectMutation = graphql(`
-  mutation IncrementPostViewCountDirect($id: ID!) {
-    incrementPostViewCountDirect(id: $id) {
+export const IncrementPostViewCountMutation = graphql(`
+  mutation IncrementPostViewCount($id: ID!) {
+    incrementPostViewCount(id: $id) {
       id
       title
       content

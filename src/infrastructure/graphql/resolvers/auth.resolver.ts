@@ -25,7 +25,7 @@ const getTokenService = () => container.resolve<ITokenService>('ITokenService')
 const getLogger = () => container.resolve<ILogger>('ILogger')
 
 // Signup mutation with direct implementation
-builder.mutationField('signupDirect', (t) =>
+builder.mutationField('signup', (t) =>
   t.string({
     description: 'Create a new user account',
     grantScopes: ['public'],
@@ -50,7 +50,7 @@ builder.mutationField('signupDirect', (t) =>
       }),
     },
     resolve: async (_parent, args, context: EnhancedContext) => {
-      const logger = getLogger().child({ resolver: 'signupDirect' })
+      const logger = getLogger().child({ resolver: 'signup' })
       logger.info('Signup attempt', { email: args.email })
 
       // Apply rate limiting
@@ -97,7 +97,7 @@ builder.mutationField('signupDirect', (t) =>
 )
 
 // Login mutation with direct implementation
-builder.mutationField('loginDirect', (t) =>
+builder.mutationField('login', (t) =>
   t.string({
     description: 'Authenticate and receive a token',
     grantScopes: ['public'],
@@ -116,7 +116,7 @@ builder.mutationField('loginDirect', (t) =>
       }),
     },
     resolve: async (_parent, args, context: EnhancedContext) => {
-      const logger = getLogger().child({ resolver: 'loginDirect' })
+      const logger = getLogger().child({ resolver: 'login' })
       logger.info('Login attempt', { email: args.email })
 
       // Apply rate limiting
@@ -159,7 +159,7 @@ builder.mutationField('loginDirect', (t) =>
 )
 
 // Me query with direct implementation
-builder.queryField('meDirect', (t) =>
+builder.queryField('me', (t) =>
   t.prismaField({
     type: 'User',
     nullable: true,

@@ -7,9 +7,9 @@
 import { graphql } from 'gql.tada'
 
 // Authentication queries
-export const MeDirectQuery = graphql(`
-  query MeDirect {  
-    meDirect {
+export const MeQuery = graphql(`
+  query Me {  
+    me {
       id
       email
       name
@@ -18,9 +18,9 @@ export const MeDirectQuery = graphql(`
 `)
 
 // Post queries
-export const FeedDirectQuery = graphql(`
-  query FeedDirect($first: Int, $after: String, $searchString: String) {
-    feedDirect(first: $first, after: $after, searchString: $searchString) {
+export const FeedQuery = graphql(`
+  query Feed($first: Int, $after: String, $searchString: String) {
+    feed(first: $first, after: $after, searchString: $searchString) {
       edges {
         cursor
         node {
@@ -49,9 +49,9 @@ export const FeedDirectQuery = graphql(`
   }
 `)
 
-export const DraftsDirectQuery = graphql(`
-  query DraftsDirect($first: Int, $after: String) {
-    draftsDirect(first: $first, after: $after) {
+export const DraftsQuery = graphql(`
+  query Drafts($first: Int, $after: String) {
+    drafts(first: $first, after: $after) {
       edges {
         cursor
         node {
@@ -80,9 +80,9 @@ export const DraftsDirectQuery = graphql(`
   }
 `)
 
-export const PostDirectQuery = graphql(`
-  query PostDirect($id: ID!) {
-    postDirect(id: $id) {
+export const PostQuery = graphql(`
+  query Post($id: ID!) {
+    post(id: $id) {
       id
       title
       content
@@ -100,9 +100,9 @@ export const PostDirectQuery = graphql(`
 `)
 
 // User queries
-export const UserDirectQuery = graphql(`
-  query UserDirect($id: ID!) {
-    userDirect(id: $id) {
+export const UserQuery = graphql(`
+  query User($id: ID!) {
+    user(id: $id) {
       id
       email
       name
@@ -112,9 +112,9 @@ export const UserDirectQuery = graphql(`
   }
 `)
 
-export const UsersDirectQuery = graphql(`
-  query UsersDirect($first: Int, $after: String, $where: UserWhereInput, $orderBy: UserOrderByInput) {
-    usersDirect(first: $first, after: $after, where: $where, orderBy: $orderBy) {
+export const UsersQuery = graphql(`
+  query Users($first: Int, $after: String, $where: UserWhereInput, $orderBy: UserOrderByInput) {
+    users(first: $first, after: $after, where: $where, orderBy: $orderBy) {
       edges {
         cursor
         node {
@@ -136,9 +136,9 @@ export const UsersDirectQuery = graphql(`
   }
 `)
 
-export const SearchUsersDirectQuery = graphql(`
-  query SearchUsersDirect($search: String!, $first: Int, $after: String) {
-    searchUsersDirect(search: $search, first: $first, after: $after) {
+export const SearchUsersQuery = graphql(`
+  query SearchUsers($search: String!, $first: Int, $after: String) {
+    searchUsers(search: $search, first: $first, after: $after) {
       edges {
         cursor
         node {

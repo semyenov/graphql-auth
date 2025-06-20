@@ -60,7 +60,7 @@ const UpdatePostInput = builder.inputType('UpdatePostInput', {
 })
 
 // Create post mutation
-builder.mutationField('createPostDirect', (t) =>
+builder.mutationField('createPost', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Create a new post',
@@ -72,7 +72,7 @@ builder.mutationField('createPostDirect', (t) =>
       }),
     },
     resolve: async (query, _parent, args, context: EnhancedContext) => {
-      const logger = getLogger().child({ resolver: 'createPostDirect' })
+      const logger = getLogger().child({ resolver: 'createPost' })
       const userId = requireAuthentication(context)
 
       logger.info('Creating new post', {
@@ -103,7 +103,7 @@ builder.mutationField('createPostDirect', (t) =>
 )
 
 // Update post mutation
-builder.mutationField('updatePostDirect', (t) =>
+builder.mutationField('updatePost', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Update an existing post',
@@ -116,7 +116,7 @@ builder.mutationField('updatePostDirect', (t) =>
       }),
     },
     resolve: async (query, _parent, args, context: EnhancedContext) => {
-      const logger = getLogger().child({ resolver: 'updatePostDirect' })
+      const logger = getLogger().child({ resolver: 'updatePost' })
       const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
@@ -156,7 +156,7 @@ builder.mutationField('updatePostDirect', (t) =>
 )
 
 // Delete post mutation
-builder.mutationField('deletePostDirect', (t) =>
+builder.mutationField('deletePost', (t) =>
   t.boolean({
     description: 'Delete a post',
     grantScopes: ['authenticated'],
@@ -164,7 +164,7 @@ builder.mutationField('deletePostDirect', (t) =>
       id: t.arg.id({ required: true }),
     },
     resolve: async (_parent, args, context: EnhancedContext) => {
-      const logger = getLogger().child({ resolver: 'deletePostDirect' })
+      const logger = getLogger().child({ resolver: 'deletePost' })
       const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
@@ -196,7 +196,7 @@ builder.mutationField('deletePostDirect', (t) =>
 )
 
 // Toggle publish post mutation
-builder.mutationField('togglePublishPostDirect', (t) =>
+builder.mutationField('togglePublishPost', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Toggle the publish status of a post',
@@ -205,7 +205,7 @@ builder.mutationField('togglePublishPostDirect', (t) =>
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, context: EnhancedContext) => {
-      const logger = getLogger().child({ resolver: 'togglePublishPostDirect' })
+      const logger = getLogger().child({ resolver: 'togglePublishPost' })
       const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
@@ -245,7 +245,7 @@ builder.mutationField('togglePublishPostDirect', (t) =>
 )
 
 // Increment view count mutation
-builder.mutationField('incrementPostViewCountDirect', (t) =>
+builder.mutationField('incrementPostViewCount', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Increment the view count of a post',
@@ -254,7 +254,7 @@ builder.mutationField('incrementPostViewCountDirect', (t) =>
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, context: EnhancedContext) => {
-      const logger = getLogger().child({ resolver: 'incrementPostViewCountDirect' })
+      const logger = getLogger().child({ resolver: 'incrementPostViewCount' })
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
       // Check if post exists
@@ -286,7 +286,7 @@ builder.mutationField('incrementPostViewCountDirect', (t) =>
 )
 
 // Feed query
-builder.queryField('feedDirect', (t) =>
+builder.queryField('feed', (t) =>
   t.prismaConnection({
     type: 'Post',
     cursor: 'id',
@@ -331,7 +331,7 @@ builder.queryField('feedDirect', (t) =>
 )
 
 // User drafts query
-builder.queryField('draftsDirect', (t) =>
+builder.queryField('drafts', (t) =>
   t.prismaConnection({
     type: 'Post',
     cursor: 'id',
@@ -363,7 +363,7 @@ builder.queryField('draftsDirect', (t) =>
 )
 
 // Get post by ID query
-builder.queryField('postDirect', (t) =>
+builder.queryField('post', (t) =>
   t.prismaField({
     type: 'Post',
     nullable: true,

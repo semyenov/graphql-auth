@@ -20,7 +20,7 @@ import { prisma } from '../../../prisma'
 const getLogger = () => container.resolve<ILogger>('ILogger')
 
 // Get user by ID query
-builder.queryField('userDirect', (t) =>
+builder.queryField('user', (t) =>
   t.prismaField({
     type: 'User',
     nullable: true,
@@ -30,7 +30,7 @@ builder.queryField('userDirect', (t) =>
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, context: EnhancedContext) => {
-      const logger = getLogger().child({ resolver: 'userDirect' })
+      const logger = getLogger().child({ resolver: 'user' })
       const userId = parseGlobalId(args.id.toString(), 'User')
 
       logger.info('Fetching user by ID', { userId })
@@ -51,7 +51,7 @@ builder.queryField('userDirect', (t) =>
 )
 
 // Get all users query with filtering and pagination
-builder.queryField('usersDirect', (t) =>
+builder.queryField('users', (t) =>
   t.prismaConnection({
     type: 'User',
     cursor: 'id',
@@ -76,7 +76,7 @@ builder.queryField('usersDirect', (t) =>
 )
 
 // Search users query
-builder.queryField('searchUsersDirect', (t) =>
+builder.queryField('searchUsers', (t) =>
   t.prismaConnection({
     type: 'User',
     cursor: 'id',
@@ -91,7 +91,7 @@ builder.queryField('searchUsersDirect', (t) =>
       }),
     },
     resolve: (query, _parent, args, context) => {
-      const logger = getLogger().child({ resolver: 'searchUsersDirect' })
+      const logger = getLogger().child({ resolver: 'searchUsers' })
       logger.info('Searching users', { searchTerm: args.search })
 
       return prisma.user.findMany({
@@ -119,23 +119,6 @@ builder.queryField('searchUsersDirect', (t) =>
 )
 
 // User type field resolvers
-builder.prismaObjectField('User', 'postsDirect', (t) =>
-  t.relatedConnection('posts', {
-    cursor: 'id',
-    description: 'Posts created by this user',
-    args: {
-      published: t.arg.boolean({
-        required: false,
-        description: 'Filter by published status',
-      }),
-    },
-    query: (args, _context) => ({
-      where: { published: args.published ?? true },
-      orderBy: { createdAt: 'desc' },
-    }),
-    totalCount: true,
-  })
-)
 
 builder.prismaObjectField('User', 'postCount', (t) =>
   t.int({

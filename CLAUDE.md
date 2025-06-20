@@ -372,28 +372,28 @@ async findByEmail(email: Email): Promise<User | null> {
 }
 ```
 
-## Current Direct Resolver Operations
+## Current Resolver Operations
 
 The following operations are available and fully tested:
 
 ### Authentication Operations
-- `signupDirect` - Create new user account with email/password
-- `loginDirect` - Authenticate user and return JWT token  
-- `meDirect` - Get current authenticated user profile
+- `signup` - Create new user account with email/password
+- `login` - Authenticate user and return JWT token  
+- `me` - Get current authenticated user profile
 - `safeSignup` - Safe signup with union result type (AuthResult)
 - `safeLogin` - Safe login with comprehensive error handling
 
 ### Authentication with Refresh Tokens
-- `loginWithTokensDirect` - Login and receive access + refresh tokens
-- `refreshTokenDirect` - Refresh access token using refresh token 
-- `logoutDirect` - Revoke all refresh tokens for user
+- `loginWithTokens` - Login and receive access + refresh tokens
+- `refreshToken` - Refresh access token using refresh token 
+- `logout` - Revoke all refresh tokens for user
 
 ### Post Operations
-- `createPostDirect` - Create new post (draft by default)
-- `updatePostDirect` - Update existing post (owner only)
-- `deletePostDirect` - Delete post (owner only)
-- `togglePublishPostDirect` - Toggle post publish status (owner only)
-- `incrementPostViewCountDirect` - Increment post view count (public)
+- `createPost` - Create new post (draft by default)
+- `updatePost` - Update existing post (owner only)
+- `deletePost` - Delete post (owner only)
+- `togglePublishPost` - Toggle post publish status (owner only)
+- `incrementPostViewCount` - Increment post view count (public)
 - `safeCreatePost` - Safe post creation with union result type (PostResult)
 - `safeUpdatePost` - Safe post update with comprehensive error handling
 - `safeDeletePost` - Safe post deletion with union result type (DeleteResult)
@@ -408,12 +408,12 @@ The following operations are available and fully tested:
 - `optimizedFeed` - Optimized feed query with proper Prisma integration
 
 ### Post Queries
-- `feedDirect` - Get published posts with search and pagination
-- `draftsDirect` - Get user's draft posts (authenticated)
-- `postDirect` - Get individual post by global ID
+- `feed` - Get published posts with search and pagination
+- `drafts` - Get user's draft posts (authenticated)
+- `post` - Get individual post by global ID
 
 ### User Operations
-- `searchUsersDirect` - Search users by name or email with pagination
+- `searchUsers` - Search users by name or email with pagination
 - `safeUpdateProfile` - Safe profile update with union result type (UserResult)
 
 ### Enhanced Features

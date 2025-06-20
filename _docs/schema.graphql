@@ -254,34 +254,25 @@ type LoadableUser {
 
 type Mutation {
   """Create a new post"""
-  createPostDirect(input: CreatePostInput!): Post
+  createPost(input: CreatePostInput!): Post
 
   """Delete a post"""
-  deletePostDirect(id: ID!): Boolean
+  deletePost(id: ID!): Boolean
 
   """Increment the view count of a post"""
-  incrementPostViewCountDirect(id: ID!): Post
+  incrementPostViewCount(id: ID!): Post
 
   """Authenticate and receive a token"""
-  loginDirect(email: String!, password: String!): String
+  login(email: String!, password: String!): String
 
   """Authenticate and receive access and refresh tokens"""
   loginWithTokens(email: String!, password: String!): AuthTokens
 
-  """Authenticate and receive access and refresh tokens"""
-  loginWithTokensDirect(email: String!, password: String!): AuthTokens
-
   """Logout user and revoke all refresh tokens"""
   logout: Boolean
 
-  """Logout user and revoke all refresh tokens"""
-  logoutDirect: Boolean
-
   """Refresh access token using a refresh token"""
   refreshToken(refreshToken: String!): AuthTokens
-
-  """Refresh access token using a refresh token"""
-  refreshTokenDirect(refreshToken: String!): AuthTokens
 
   """Create a post with comprehensive error handling"""
   safeCreatePost(input: CreatePostInput!): PostResult
@@ -299,13 +290,13 @@ type Mutation {
   safeUpdatePost(id: ID!, input: UpdatePostInput!): PostResult
 
   """Create a new user account"""
-  signupDirect(email: String!, name: String, password: String!): String
+  signup(email: String!, name: String, password: String!): String
 
   """Toggle the publish status of a post"""
-  togglePublishPostDirect(id: ID!): Post
+  togglePublishPost(id: ID!): Post
 
   """Update an existing post"""
-  updatePostDirect(id: ID!, input: UpdatePostInput!): Post
+  updatePost(id: ID!, input: UpdatePostInput!): Post
 
   """Update the current user profile"""
   updateUserProfile(input: UpdateUserInput!): User
@@ -491,7 +482,7 @@ type Query {
   batchUsers(ids: [ID!]!): [LoadableUser!]
 
   """Get draft posts for the authenticated user"""
-  draftsDirect(after: String, before: String, first: Int, last: Int): QueryDraftsDirectConnection
+  drafts(after: String, before: String, first: Int, last: Int): QueryDraftsConnection
 
   """Advanced feed with metadata, search, and filtering"""
   enhancedFeed(
@@ -517,7 +508,7 @@ type Query {
   ): EnhancedUserConnection
 
   """Get published posts with optional search"""
-  feedDirect(after: String, before: String, first: Int, last: Int, searchString: String): QueryFeedDirectConnection
+  feed(after: String, before: String, first: Int, last: Int, searchString: String): QueryFeedConnection
 
   """Get a post using DataLoader for efficient loading"""
   loadablePost(id: ID!): LoadablePost
@@ -526,7 +517,7 @@ type Query {
   loadableUser(id: ID!): LoadableUser
 
   """Get the currently authenticated user"""
-  meDirect: User
+  me: User
 
   """Optimized feed query with proper Prisma integration"""
   optimizedFeed(
@@ -543,6 +534,9 @@ type Query {
     where: PostWhereInput
   ): QueryOptimizedFeedConnection
 
+  """Get a post by ID"""
+  post(id: ID!): Post
+
   """Get aggregated analytics for posts"""
   postAnalytics(
     authorId: ID
@@ -552,37 +546,34 @@ type Query {
     published: Boolean
   ): PostAnalytics
 
-  """Get a post by ID"""
-  postDirect(id: ID!): Post
-
   """Search users by name or email"""
-  searchUsersDirect(after: String, before: String, first: Int, last: Int, search: String!): QuerySearchUsersDirectConnection
+  searchUsers(after: String, before: String, first: Int, last: Int, search: String!): QuerySearchUsersConnection
 
   """Get a user by ID"""
-  userDirect(id: ID!): User
+  user(id: ID!): User
 
   """Get all users with optional filtering"""
-  usersDirect(after: String, before: String, first: Int, last: Int, orderBy: UserOrderByInput, where: UserWhereInput): QueryUsersDirectConnection
+  users(after: String, before: String, first: Int, last: Int, orderBy: UserOrderByInput, where: UserWhereInput): QueryUsersConnection
 }
 
-type QueryDraftsDirectConnection {
-  edges: [QueryDraftsDirectConnectionEdge]
+type QueryDraftsConnection {
+  edges: [QueryDraftsConnectionEdge]
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type QueryDraftsDirectConnectionEdge {
+type QueryDraftsConnectionEdge {
   cursor: String!
   node: Post
 }
 
-type QueryFeedDirectConnection {
-  edges: [QueryFeedDirectConnectionEdge]
+type QueryFeedConnection {
+  edges: [QueryFeedConnectionEdge]
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type QueryFeedDirectConnectionEdge {
+type QueryFeedConnectionEdge {
   cursor: String!
   node: Post
 }
@@ -598,24 +589,24 @@ type QueryOptimizedFeedConnectionEdge {
   node: Post
 }
 
-type QuerySearchUsersDirectConnection {
-  edges: [QuerySearchUsersDirectConnectionEdge]
+type QuerySearchUsersConnection {
+  edges: [QuerySearchUsersConnectionEdge]
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type QuerySearchUsersDirectConnectionEdge {
+type QuerySearchUsersConnectionEdge {
   cursor: String!
   node: User
 }
 
-type QueryUsersDirectConnection {
-  edges: [QueryUsersDirectConnectionEdge]
+type QueryUsersConnection {
+  edges: [QueryUsersConnectionEdge]
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type QueryUsersDirectConnectionEdge {
+type QueryUsersConnectionEdge {
   cursor: String!
   node: User
 }
@@ -710,17 +701,6 @@ type User implements Node {
     published: Boolean
   ): UserPostsConnection
 
-  """Posts created by this user"""
-  postsDirect(
-    after: String
-    before: String
-    first: Int
-    last: Int
-
-    """Filter by published status"""
-    published: Boolean
-  ): UserPostsDirectConnection
-
   """Number of published posts by this user"""
   publishedPostCount: Int
 
@@ -747,17 +727,6 @@ type UserPostsConnection {
 }
 
 type UserPostsConnectionEdge {
-  cursor: String!
-  node: Post
-}
-
-type UserPostsDirectConnection {
-  edges: [UserPostsDirectConnectionEdge]
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type UserPostsDirectConnectionEdge {
   cursor: String!
   node: Post
 }

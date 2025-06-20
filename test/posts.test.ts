@@ -3,13 +3,13 @@ import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { UserId } from '../src/core/value-objects/user-id.vo'
 import {
-  CreatePostDirectMutation,
-  DeletePostDirectMutation,
-  IncrementPostViewCountDirectMutation
-} from '../src/gql/mutations-direct'
+  CreatePostMutation,
+  DeletePostMutation,
+  IncrementPostViewCountMutation
+} from '../src/gql/mutations'
 import {
-  FeedDirectQuery
-} from '../src/gql/queries-direct'
+  FeedQuery
+} from '../src/gql/queries'
 import { extractNumericId, toPostId } from './relay-utils'
 import { prisma } from './setup'
 import {
@@ -48,20 +48,20 @@ interface PostConnection {
 }
 
 interface GetFeedResponse {
-  feedDirect: PostConnection
+  feed: PostConnection
 }
 
 interface GetDraftsResponse {
-  draftsDirect: PostConnection | null
+  drafts: PostConnection | null
 }
 
 interface CreatePostResponse {
-  createPostDirect: Post
+  createPost: Post
 }
 
 
 interface IncrementPostViewCountResponse {
-  incrementPostViewCountDirect: Post
+  incrementPostViewCount: Post
 }
 
 describe('Posts', () => {
@@ -110,13 +110,13 @@ describe('Posts', () => {
 
       const data = await gqlHelpers.expectSuccessfulQuery<GetFeedResponse>(
         server,
-        print(FeedDirectQuery),
+        print(FeedQuery),
         { first: 10 },
         createMockContext()
       )
 
-      expect(data.feedDirect.edges).toHaveLength(2)
-      expect(data.feedDirect.edges.every(edge => edge.node.published)).toBe(true)
+      expect(data.feed.edges).toHaveLength(2)
+      expect(data.feed.edges.every(edge => edge.node.published)).toBe(true)
     })
 
     it('should fetch user drafts when authenticated', async () => {
@@ -140,7 +140,7 @@ describe('Posts', () => {
 
       const query = `
         query GetDrafts($first: Int, $after: String) {
-          draftsDirect(first: $first, after: $after) {
+          drafts(first: $first, after: $after) {
             edges {
               cursor
               node {
@@ -172,14 +172,14 @@ describe('Posts', () => {
         createAuthContext(testUserId)
       )
 
-      expect(data.draftsDirect?.edges).toHaveLength(2)
-      expect(data.draftsDirect?.edges.every(edge => !edge.node.published)).toBe(true)
+      expect(data.drafts?.edges).toHaveLength(2)
+      expect(data.drafts?.edges.every(edge => !edge.node.published)).toBe(true)
     })
 
     it('should require authentication for drafts', async () => {
       const query = `
         query GetDrafts($first: Int, $after: String) {
-          draftsDirect(first: $first, after: $after) {
+          drafts(first: $first, after: $after) {
             edges {
               cursor
               node {
@@ -225,14 +225,14 @@ describe('Posts', () => {
 
       const data = await gqlHelpers.expectSuccessfulMutation<CreatePostResponse>(
         server,
-        print(CreatePostDirectMutation),
+        print(CreatePostMutation),
         variables,
         createAuthContext(testUserId)
       )
 
-      expect(data.createPostDirect).toBeDefined()
-      expect(data.createPostDirect.title).toBe(variables.input.title)
-      expect(data.createPostDirect.published).toBe(false)
+      expect(data.createPost).toBeDefined()
+      expect(data.createPost.title).toBe(variables.input.title)
+      expect(data.createPost.published).toBe(false)
       // Author might not be included in the response due to Prisma query optimization
 
       // Verify in database
@@ -253,7 +253,7 @@ describe('Posts', () => {
 
       await gqlHelpers.expectGraphQLError<CreatePostResponse>(
         server,
-        print(CreatePostDirectMutation),
+        print(CreatePostMutation),
         variables,
         createMockContext(), // No auth
         'Authentication required'
@@ -275,14 +275,14 @@ describe('Posts', () => {
 
       const variables = { id: toPostId(post.id) }
 
-      const data = await gqlHelpers.expectSuccessfulMutation<{ deletePostDirect: boolean }>(
+      const data = await gqlHelpers.expectSuccessfulMutation<{ deletePost: boolean }>(
         server,
-        print(DeletePostDirectMutation),
+        print(DeletePostMutation),
         variables,
         createAuthContext(testUserId),
       )
 
-      expect(data.deletePostDirect).toBe(true)
+      expect(data.deletePost).toBe(true)
 
       // Verify deletion
       const deletedPost = await prisma.post.findUnique({
@@ -315,7 +315,7 @@ describe('Posts', () => {
 
       await gqlHelpers.expectGraphQLError<DeletePostResponse>(
         server,
-        print(DeletePostDirectMutation),
+        print(DeletePostMutation),
         variables,
         createAuthContext(testUserId), // Different user
         'You can only modify posts that you have created'
@@ -343,7 +343,7 @@ describe('Posts', () => {
 
       await gqlHelpers.expectGraphQLError<DeletePostResponse>(
         server,
-        print(DeletePostDirectMutation),
+        print(DeletePostMutation),
         variables,
         createMockContext(), // No authentication
         'You must be logged in to perform this action. Please authenticate and try again.'
@@ -375,22 +375,22 @@ describe('Posts', () => {
       // First increment
       const data1 = await gqlHelpers.expectSuccessfulMutation<IncrementPostViewCountResponse>(
         server,
-        print(IncrementPostViewCountDirectMutation),
+        print(IncrementPostViewCountMutation),
         variables,
         createMockContext() // No auth required
       )
 
-      expect(data1.incrementPostViewCountDirect.viewCount).toBe(1)
+      expect(data1.incrementPostViewCount.viewCount).toBe(1)
 
       // Second increment
       const data2 = await gqlHelpers.expectSuccessfulMutation<IncrementPostViewCountResponse>(
         server,
-        print(IncrementPostViewCountDirectMutation),
+        print(IncrementPostViewCountMutation),
         variables,
         createMockContext()
       )
 
-      expect(data2.incrementPostViewCountDirect.viewCount).toBe(2)
+      expect(data2.incrementPostViewCount.viewCount).toBe(2)
 
       // Verify in database
       const updatedPost = await prisma.post.findUnique({
@@ -404,7 +404,7 @@ describe('Posts', () => {
 
       await gqlHelpers.expectGraphQLError<IncrementPostViewCountResponse>(
         server,
-        print(IncrementPostViewCountDirectMutation),
+        print(IncrementPostViewCountMutation),
         variables,
         createMockContext(),
         'Post with identifier'

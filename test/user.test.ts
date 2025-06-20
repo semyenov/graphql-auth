@@ -2,8 +2,8 @@ import bcrypt from 'bcryptjs'
 import { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { TogglePublishPostDirectMutation } from '../src/gql/mutations-direct'
-import { MeDirectQuery } from '../src/gql/queries-direct'
+import { TogglePublishPostMutation } from '../src/gql/mutations'
+import { MeQuery } from '../src/gql/queries'
 import { extractNumericId, toPostId } from './relay-utils'
 import { prisma } from './setup'
 import {
@@ -52,20 +52,20 @@ describe('User queries', () => {
   describe('me query', () => {
     it('should return current user when authenticated', async () => {
       try {
-        const data = await gqlHelpers.expectSuccessfulQuery<ResultOf<typeof MeDirectQuery>, VariablesOf<typeof MeDirectQuery>>(
+        const data = await gqlHelpers.expectSuccessfulQuery<ResultOf<typeof MeQuery>, VariablesOf<typeof MeQuery>>(
           server,
-          print(MeDirectQuery),
+          print(MeQuery),
           {},
           createAuthContext(testUserId)
         )
 
-        expect(data.meDirect).toBeDefined()
-        if (data.meDirect) {
-          expect(data.meDirect.email).toBe(testUserEmail)
-          expect(data.meDirect.name).toBe('Me Test User')
+        expect(data.me).toBeDefined()
+        if (data.me) {
+          expect(data.me.email).toBe(testUserEmail)
+          expect(data.me.name).toBe('Me Test User')
           // Check that the ID is a global ID
-          expect(data.meDirect.id).toMatch(/^[A-Za-z0-9+/=]+$/)
-          const numericId = extractNumericId(data.meDirect.id)
+          expect(data.me.id).toMatch(/^[A-Za-z0-9+/=]+$/)
+          const numericId = extractNumericId(data.me.id)
           expect(numericId).toBe(testUserId)
         }
       } catch (error) {
@@ -75,9 +75,9 @@ describe('User queries', () => {
     })
 
     it('should return null when not authenticated', async () => {
-      await gqlHelpers.expectGraphQLError<ResultOf<typeof MeDirectQuery>, VariablesOf<typeof MeDirectQuery>>(
+      await gqlHelpers.expectGraphQLError<ResultOf<typeof MeQuery>, VariablesOf<typeof MeQuery>>(
         server,
-        print(MeDirectQuery),
+        print(MeQuery),
         {},
         createMockContext(), // No auth
         'Authentication required'
@@ -100,24 +100,24 @@ describe('User queries', () => {
       const variables = { id: toPostId(post.id) }
 
       // First toggle - should publish
-      const data1 = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof TogglePublishPostDirectMutation>, VariablesOf<typeof TogglePublishPostDirectMutation>>(
+      const data1 = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof TogglePublishPostMutation>, VariablesOf<typeof TogglePublishPostMutation>>(
         server,
-        print(TogglePublishPostDirectMutation),
+        print(TogglePublishPostMutation),
         variables,
         createAuthContext(testUserId)
       )
 
-      expect(data1.togglePublishPostDirect?.published).toBe(true)
+      expect(data1.togglePublishPost?.published).toBe(true)
 
       // Second toggle - should unpublish
-      const data2 = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof TogglePublishPostDirectMutation>, VariablesOf<typeof TogglePublishPostDirectMutation>>(
+      const data2 = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof TogglePublishPostMutation>, VariablesOf<typeof TogglePublishPostMutation>>(
         server,
-        print(TogglePublishPostDirectMutation),
+        print(TogglePublishPostMutation),
         variables,
         createAuthContext(testUserId)
       )
 
-      expect(data2.togglePublishPostDirect?.published).toBe(false)
+      expect(data2.togglePublishPost?.published).toBe(false)
 
       // Verify in database
       const updatedPost = await prisma.post.findUnique({
@@ -150,7 +150,7 @@ describe('User queries', () => {
 
       await gqlHelpers.expectGraphQLError(
         server,
-        print(TogglePublishPostDirectMutation),
+        print(TogglePublishPostMutation),
         variables,
         createAuthContext(testUserId), // Different user
         'You can only modify posts that you have created'
@@ -168,7 +168,7 @@ describe('User queries', () => {
 
       await gqlHelpers.expectGraphQLError(
         server,
-        print(TogglePublishPostDirectMutation),
+        print(TogglePublishPostMutation),
         variables,
         createAuthContext(testUserId),
         'Post with identifier'

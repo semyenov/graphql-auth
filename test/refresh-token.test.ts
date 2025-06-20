@@ -13,10 +13,10 @@ import { createMockContext, createTestServer, gqlHelpers } from './test-utils'
 
 // Import direct mutations
 import { 
-  LoginWithTokensDirectMutation, 
-  RefreshTokenDirectMutation, 
-  LogoutDirectMutation 
-} from '../src/gql/mutations-auth-tokens-direct'
+  LoginWithTokensMutation, 
+  RefreshTokenMutation, 
+  LogoutMutation 
+} from '../src/gql/mutations-auth-tokens'
 
 describe('Refresh Token', () => {
     const server = createTestServer()
@@ -33,25 +33,25 @@ describe('Refresh Token', () => {
         })
     })
 
-    describe('loginWithTokensDirect mutation', () => {
+    describe('loginWithTokens mutation', () => {
         it('should return both access and refresh tokens on successful login', async () => {
             const variables = {
                 email: 'test@example.com',
                 password: 'password123',
             }
 
-            const data = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof LoginWithTokensDirectMutation>, VariablesOf<typeof LoginWithTokensDirectMutation>>(
+            const data = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof LoginWithTokensMutation>, VariablesOf<typeof LoginWithTokensMutation>>(
                 server,
-                print(LoginWithTokensDirectMutation),
+                print(LoginWithTokensMutation),
                 variables,
                 createMockContext()
             )
 
-            expect(data.loginWithTokensDirect).toBeDefined()
-            expect(data.loginWithTokensDirect?.accessToken).toBeDefined()
-            expect(data.loginWithTokensDirect?.refreshToken).toBeDefined()
-            expect(typeof data.loginWithTokensDirect?.accessToken).toBe('string')
-            expect(typeof data.loginWithTokensDirect?.refreshToken).toBe('string')
+            expect(data.loginWithTokens).toBeDefined()
+            expect(data.loginWithTokens?.accessToken).toBeDefined()
+            expect(data.loginWithTokens?.refreshToken).toBeDefined()
+            expect(typeof data.loginWithTokens?.accessToken).toBe('string')
+            expect(typeof data.loginWithTokens?.refreshToken).toBe('string')
         })
 
         it('should fail with invalid credentials', async () => {
@@ -60,9 +60,9 @@ describe('Refresh Token', () => {
                 password: 'wrongpassword',
             }
 
-            await gqlHelpers.expectGraphQLError<ResultOf<typeof LoginWithTokensDirectMutation>, VariablesOf<typeof LoginWithTokensDirectMutation>>(
+            await gqlHelpers.expectGraphQLError<ResultOf<typeof LoginWithTokensMutation>, VariablesOf<typeof LoginWithTokensMutation>>(
                 server,
-                print(LoginWithTokensDirectMutation),
+                print(LoginWithTokensMutation),
                 variables,
                 createMockContext(),
                 'Invalid email or password'
@@ -70,39 +70,39 @@ describe('Refresh Token', () => {
         })
     })
 
-    describe('refreshTokenDirect mutation', () => {
+    describe('refreshToken mutation', () => {
         it('should return new tokens with valid refresh token', async () => {
             // First login to get tokens
-            const loginData = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof LoginWithTokensDirectMutation>, VariablesOf<typeof LoginWithTokensDirectMutation>>(
+            const loginData = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof LoginWithTokensMutation>, VariablesOf<typeof LoginWithTokensMutation>>(
                 server,
-                print(LoginWithTokensDirectMutation),
+                print(LoginWithTokensMutation),
                 { email: 'test@example.com', password: 'password123' },
                 createMockContext()
             )
 
-            const refreshToken = loginData.loginWithTokensDirect?.refreshToken ?? ''
+            const refreshToken = loginData.loginWithTokens?.refreshToken ?? ''
 
             // Use refresh token to get new tokens
-            const refreshData = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof RefreshTokenDirectMutation>, VariablesOf<typeof RefreshTokenDirectMutation>>(
+            const refreshData = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof RefreshTokenMutation>, VariablesOf<typeof RefreshTokenMutation>>(
                 server,
-                print(RefreshTokenDirectMutation),
+                print(RefreshTokenMutation),
                 { refreshToken },
                 createMockContext()
             )
 
-            expect(refreshData.refreshTokenDirect).toBeDefined()
-            expect(refreshData.refreshTokenDirect?.accessToken).toBeDefined()
-            expect(refreshData.refreshTokenDirect?.refreshToken).toBeDefined()
+            expect(refreshData.refreshToken).toBeDefined()
+            expect(refreshData.refreshToken?.accessToken).toBeDefined()
+            expect(refreshData.refreshToken?.refreshToken).toBeDefined()
 
             // New tokens should be different from old ones
-            expect(refreshData.refreshTokenDirect?.accessToken).not.toBe(loginData.loginWithTokensDirect?.accessToken)
-            expect(refreshData.refreshTokenDirect?.refreshToken).not.toBe(loginData.loginWithTokensDirect?.refreshToken)
+            expect(refreshData.refreshToken?.accessToken).not.toBe(loginData.loginWithTokens?.accessToken)
+            expect(refreshData.refreshToken?.refreshToken).not.toBe(loginData.loginWithTokens?.refreshToken)
         })
 
         it('should fail with invalid refresh token', async () => {
             await gqlHelpers.expectGraphQLError(
                 server,
-                print(RefreshTokenDirectMutation),
+                print(RefreshTokenMutation),
                 { refreshToken: 'invalid-token' },
                 createMockContext(),
                 'Invalid refresh token'
@@ -111,27 +111,27 @@ describe('Refresh Token', () => {
 
         it('should fail when using same refresh token twice (rotation)', async () => {
             // First login to get tokens
-            const loginData = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof LoginWithTokensDirectMutation>, VariablesOf<typeof LoginWithTokensDirectMutation>>(
+            const loginData = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof LoginWithTokensMutation>, VariablesOf<typeof LoginWithTokensMutation>>(
                 server,
-                print(LoginWithTokensDirectMutation),
+                print(LoginWithTokensMutation),
                 { email: 'test@example.com', password: 'password123' },
                 createMockContext()
             )
 
-            const refreshToken = loginData.loginWithTokensDirect?.refreshToken ?? ''
+            const refreshToken = loginData.loginWithTokens?.refreshToken ?? ''
 
             // Use refresh token once
-            await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof RefreshTokenDirectMutation>, VariablesOf<typeof RefreshTokenDirectMutation>>(
+            await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof RefreshTokenMutation>, VariablesOf<typeof RefreshTokenMutation>>(
                 server,
-                print(RefreshTokenDirectMutation),
+                print(RefreshTokenMutation),
                 { refreshToken },
                 createMockContext()
             )
 
             // Try to use the same refresh token again
-            await gqlHelpers.expectGraphQLError<ResultOf<typeof RefreshTokenDirectMutation>, VariablesOf<typeof RefreshTokenDirectMutation>>(
+            await gqlHelpers.expectGraphQLError<ResultOf<typeof RefreshTokenMutation>, VariablesOf<typeof RefreshTokenMutation>>(
                 server,
-                print(RefreshTokenDirectMutation),
+                print(RefreshTokenMutation),
                 { refreshToken },
                 createMockContext(),
                 'Invalid refresh token'
@@ -139,12 +139,12 @@ describe('Refresh Token', () => {
         })
     })
 
-    describe('logoutDirect mutation', () => {
+    describe('logout mutation', () => {
         it('should revoke all refresh tokens for the user', async () => {
             // First login to get tokens
-            const loginData = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof LoginWithTokensDirectMutation>, VariablesOf<typeof LoginWithTokensDirectMutation>>(
+            const loginData = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof LoginWithTokensMutation>, VariablesOf<typeof LoginWithTokensMutation>>(
                 server,
-                print(LoginWithTokensDirectMutation),
+                print(LoginWithTokensMutation),
                 { email: 'test@example.com', password: 'password123' },
                 createMockContext()
             )
@@ -162,29 +162,29 @@ describe('Refresh Token', () => {
             }
 
             // Logout
-            const logoutResult = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof LogoutDirectMutation>, VariablesOf<typeof LogoutDirectMutation>>(
+            const logoutResult = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof LogoutMutation>, VariablesOf<typeof LogoutMutation>>(
                 server,
-                print(LogoutDirectMutation),
+                print(LogoutMutation),
                 {},
                 authContext
             )
 
-            expect(logoutResult.logoutDirect).toBe(true)
+            expect(logoutResult.logout).toBe(true)
 
             // Try to use refresh token after logout
             await gqlHelpers.expectGraphQLError(
                 server,
-                print(RefreshTokenDirectMutation),
-                { refreshToken: loginData.loginWithTokensDirect?.refreshToken ?? '' },
+                print(RefreshTokenMutation),
+                { refreshToken: loginData.loginWithTokens?.refreshToken ?? '' },
                 createMockContext(),
                 'Invalid refresh token'
             )
         })
 
         it('should require authentication', async () => {
-            await gqlHelpers.expectGraphQLError<ResultOf<typeof LogoutDirectMutation>, VariablesOf<typeof LogoutDirectMutation>>(
+            await gqlHelpers.expectGraphQLError<ResultOf<typeof LogoutMutation>, VariablesOf<typeof LogoutMutation>>(
                 server,
-                print(LogoutDirectMutation),
+                print(LogoutMutation),
                 {},
                 createMockContext(),
                 'Authentication required'
