@@ -9,29 +9,35 @@ The EnhancedAuthScopes provide a powerful authorization system with dynamic scop
 ## Available Scopes
 
 ### Basic Scopes
+
 - `public`: Always true
 - `authenticated`: True if user is logged in
 - `admin`: True if user has admin role
 
 ### Resource Ownership Scopes
+
 - `postOwner(postId)`: Check if user owns a specific post
 - `userOwner(userId)`: Check if user ID matches current user
 
 ### Permission-Based Scopes
+
 - `hasPermission(permission)`: Check if user has specific permission
 - `hasAnyPermission(permissions[])`: Check if user has any of the permissions
 - `hasAllPermissions(permissions[])`: Check if user has all permissions
 
 ### Content-Based Scopes
+
 - `canViewContent(type, id)`: Check if user can view content
 - `canEditContent(type, id)`: Check if user can edit content
 - `canDeleteContent(type, id)`: Check if user can delete content
 
 ### Time-Based Scopes
+
 - `withinTimeLimit(action, timeLimit)`: Check if action is within time limit
 - `withinRateLimit(action, limit, window)`: Check rate limiting
 
 ### Conditional Scopes
+
 - `canAccessIfPublic(type, id)`: Check if resource is public
 - `canAccessIfOwnerOrPublic(type, id)`: Check if public or owned
 
@@ -48,7 +54,7 @@ builder.mutationField('createPost', (t) =>
       const userId = requireAuthentication(context)
       // ... resolver logic
     },
-  })
+  }),
 )
 ```
 
@@ -62,16 +68,16 @@ builder.mutationField('updatePost', (t) =>
     resolve: async (query, _parent, args, context) => {
       const userId = requireAuthentication(context)
       const scopes = createEnhancedAuthScopes(context)
-      
+
       // Use enhanced scope for ownership check
       const isOwner = await scopes.postOwner(args.id)
       if (!isOwner) {
         throw new AuthorizationError('You can only modify your own posts')
       }
-      
+
       // ... update logic
     },
-  })
+  }),
 )
 ```
 
@@ -83,16 +89,16 @@ builder.mutationField('moderatePost', (t) =>
     grantScopes: ['authenticated'],
     resolve: async (_parent, args, context) => {
       const scopes = createEnhancedAuthScopes(context)
-      
+
       // Check for moderation permission
       const canModerate = await scopes.hasPermission('post:moderate')
       if (!canModerate) {
         throw new AuthorizationError('You need moderation permission')
       }
-      
+
       // ... moderation logic
     },
-  })
+  }),
 )
 ```
 
@@ -105,20 +111,20 @@ builder.queryField('post', (t) =>
     nullable: true,
     resolve: async (query, _parent, args, context) => {
       const scopes = createEnhancedAuthScopes(context)
-      
+
       // Check if user can view this post
       const canView = await scopes.canViewContent('Post', args.id)
       if (!canView) {
         return null // Or throw error
       }
-      
+
       const postId = parseGlobalId(args.id.toString(), 'Post')
       return prisma.post.findUnique({
         ...query,
         where: { id: postId },
       })
     },
-  })
+  }),
 )
 ```
 
@@ -131,29 +137,29 @@ builder.mutationField('publishPost', (t) =>
     grantScopes: ['authenticated'],
     resolve: async (query, _parent, args, context) => {
       const scopes = createEnhancedAuthScopes(context)
-      
+
       // Admin can publish any post
       if (scopes.admin) {
         return publishPost(args.id)
       }
-      
+
       // Otherwise must be owner with publish permission
       const [isOwner, hasPublishPerm] = await Promise.all([
         scopes.postOwner(args.id),
-        scopes.hasPermission('post:publish')
+        scopes.hasPermission('post:publish'),
       ])
-      
+
       if (!isOwner) {
         throw new AuthorizationError('You can only publish your own posts')
       }
-      
+
       if (!hasPublishPerm) {
         throw new AuthorizationError('You need publish permission')
       }
-      
+
       return publishPost(args.id)
     },
-  })
+  }),
 )
 ```
 
@@ -165,21 +171,21 @@ builder.mutationField('createComment', (t) =>
     grantScopes: ['authenticated'],
     resolve: async (_parent, args, context) => {
       const scopes = createEnhancedAuthScopes(context)
-      
+
       // Check rate limit
       const withinLimit = await scopes.withinRateLimit(
-        'createComment', 
-        10,      // max 10 comments
-        3600000  // per hour
+        'createComment',
+        10, // max 10 comments
+        3600000, // per hour
       )
-      
+
       if (!withinLimit) {
         throw new RateLimitError('Too many comments. Please try again later.')
       }
-      
+
       // ... create comment
     },
-  })
+  }),
 )
 ```
 
@@ -198,6 +204,7 @@ builder.mutationField('createComment', (t) =>
 ## Migration from Manual Checks
 
 ### Before (Manual Check):
+
 ```typescript
 const existingPost = await prisma.post.findUnique({
   where: { id: postId },
@@ -210,6 +217,7 @@ if (existingPost.authorId !== userId.value) {
 ```
 
 ### After (Using Scopes):
+
 ```typescript
 const scopes = createEnhancedAuthScopes(context)
 const isOwner = await scopes.postOwner(postId)

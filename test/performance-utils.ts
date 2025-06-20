@@ -61,7 +61,7 @@ export async function measureOperation<T = any>(
 /**
  * Run a performance benchmark for an operation
  */
-export async function benchmark<T = any>(
+export async function benchmark(
   server: ApolloServer<Context>,
   operation: string,
   variables: Record<string, any>,
@@ -98,7 +98,7 @@ export async function benchmark<T = any>(
 /**
  * Benchmark multiple operations concurrently
  */
-export async function benchmarkConcurrent<T = any>(
+export async function benchmarkConcurrent(
   server: ApolloServer<Context>,
   operations: Array<{
     operation: string
@@ -152,7 +152,7 @@ export async function benchmarkConcurrent<T = any>(
 /**
  * Load test with gradually increasing concurrency
  */
-export async function loadTest<T = any>(
+export async function loadTest(
   server: ApolloServer<Context>,
   operation: string,
   variables: Record<string, any>,

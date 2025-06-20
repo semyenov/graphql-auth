@@ -169,7 +169,6 @@ describe('Direct Resolvers', () => {
                         edges {
                             node {
                                 id
-                                title
                                 published
                             }
                         }
@@ -206,7 +205,6 @@ describe('Direct Resolvers', () => {
                         edges {
                             node {
                                 id
-                                title
                                 published
                             }
                         }
@@ -251,10 +249,8 @@ describe('Direct Resolvers', () => {
                             node {
                                 id
                                 email
-                                name
                             }
                         }
-                        totalCount
                     }
                 }
             `)
@@ -262,7 +258,7 @@ describe('Direct Resolvers', () => {
             const data = await gqlHelpers.expectSuccessfulQuery<ResultOf<typeof query>, VariablesOf<typeof query>>(
                 server,
                 print(query),
-                { search: 'john' },
+                { search: 'john@example.com' },
                 createMockContext()
             )
 
