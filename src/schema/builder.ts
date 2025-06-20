@@ -94,6 +94,9 @@ export const builder = new SchemaBuilder<{
         // Validation handled by Pothos automatically
         // Error handling for unused queries in development
         onUnusedQuery: isProduction ? null : 'warn',
+        // Advanced optimizations
+        // dmmf: prisma._runtimeDataModel, // Pre-load DMMF for faster startup
+        neverScalarize: ['Json'], // Prevent JSON fields from being treated as scalars
     },
     relay: {
         // Use the same ID encoding as our test utilities

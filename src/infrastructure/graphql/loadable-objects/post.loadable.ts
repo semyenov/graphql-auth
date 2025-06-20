@@ -9,6 +9,7 @@ import { builder } from '../../../schema/builder'
 
 // Loadable Post object using Pothos DataLoader plugin
 export const LoadablePost = builder.loadableObject('LoadablePost', {
+  name: 'LoadablePost',
   description: 'Post loaded via DataLoader for optimal performance',
   load: async (ids: number[], context: EnhancedContext) => {
     // Batch load posts by IDs
@@ -27,31 +28,33 @@ export const LoadablePost = builder.loadableObject('LoadablePost', {
     })
 
     // Return posts in the same order as requested IDs
-    return ids.map(id => posts.find(post => post.id === id) || null)
+    return ids.map(id => posts.find(post => post.id === id)!)
+  },
+  toKey(value) {
+    return value.id
   },
   fields: (t) => ({
-    id: t.exposeID('id'),
     title: t.exposeString('title'),
     content: t.exposeString('content', { nullable: true }),
     published: t.exposeBoolean('published'),
     viewCount: t.exposeInt('viewCount'),
     createdAt: t.expose('createdAt', { type: 'DateTime' }),
     updatedAt: t.expose('updatedAt', { type: 'DateTime' }),
-    
+
     // Loadable author relation with enhanced loaders
     author: t.loadable({
       type: 'LoadableUser',
-      load: (post: { authorId: number | null }, context: EnhancedContext) => {
-        if (!post.authorId) return null
-        
+      load: async (ids: number[], context: EnhancedContext) => {
+        if (!ids) return null
+
         // Use enhanced loader first, then fallback to original loader
         if (context.enhancedLoaders?.user) {
-          return context.enhancedLoaders.user.load(post.authorId)
+          return context.enhancedLoaders.user.load(ids)
         }
-        
+
         // Fallback to original loader or direct query
-        return context.loaders?.user?.load(post.authorId) || 
-               context.prisma.user.findUnique({ where: { id: post.authorId } })
+        return context.loaders?.userById?.load(id) ||
+          context.prisma.user.findUnique({ where: { id } })
       },
       resolve: (author) => author,
     }),
@@ -62,7 +65,7 @@ export const LoadablePost = builder.loadableObject('LoadablePost', {
       nullable: true,
       resolve: (post) => {
         if (!post.content) return null
-        return post.content.length > 150 
+        return post.content.length > 150
           ? post.content.substring(0, 150) + '...'
           : post.content
       },
@@ -79,7 +82,7 @@ export const LoadablePost = builder.loadableObject('LoadablePost', {
 
     isOwnedBy: t.boolean({
       description: 'Whether the current user owns this post',
-      authScopes: ['authenticated'],
+      grantScopes: ['authenticated'],
       resolve: (post, _args, context: EnhancedContext) => {
         return context.userId?.value === post.authorId
       },

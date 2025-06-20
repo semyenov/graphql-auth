@@ -6,12 +6,12 @@
 
 import { container } from 'tsyringe'
 import { z } from 'zod'
+import { requireAuthentication } from '../../../context/auth'
 import type { EnhancedContext } from '../../../context/enhanced-context-direct'
-import { AuthorizationError, NotFoundError, ValidationError } from '../../../errors'
+import type { ILogger } from '../../../core/services/logger.interface'
+import { AuthorizationError, NotFoundError } from '../../../errors'
 import { builder } from '../../../schema/builder'
 import { parseGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
-import { requireAuthentication } from '../../../context/auth'
-import type { ILogger } from '../../../core/services/logger.interface'
 
 // Get logger from container
 const getLogger = () => container.resolve<ILogger>('ILogger')
@@ -28,7 +28,7 @@ const CreatePostInput = builder.inputType('CreatePostInput', {
     content: t.string({
       required: false,
       validate: {
-        schema: z.string().max(10000).optional(),
+        schema: z.string().max(10000),
       },
     }),
     published: t.boolean({
@@ -73,11 +73,11 @@ builder.mutationField('createPostDirect', (t) =>
     resolve: async (query, _parent, args, context: EnhancedContext) => {
       const logger = getLogger().child({ resolver: 'createPostDirect' })
       const userId = requireAuthentication(context)
-      
-      logger.info('Creating new post', { 
-        authorId: userId.value, 
+
+      logger.info('Creating new post', {
+        authorId: userId.value,
         title: args.input.title,
-        published: args.input.published 
+        published: args.input.published
       })
 
       const post = await context.prisma.post.create({
@@ -90,10 +90,10 @@ builder.mutationField('createPostDirect', (t) =>
         },
       })
 
-      logger.info('Post created successfully', { 
-        postId: post.id, 
+      logger.info('Post created successfully', {
+        postId: post.id,
         authorId: userId.value,
-        published: post.published 
+        published: post.published
       })
 
       return post
@@ -222,9 +222,9 @@ builder.mutationField('togglePublishPostDirect', (t) =>
         throw new AuthorizationError('You can only modify posts that you have created')
       }
 
-      logger.info('Toggling post publish status', { 
-        postId, 
-        currentStatus: existingPost.published 
+      logger.info('Toggling post publish status', {
+        postId,
+        currentStatus: existingPost.published
       })
 
       const post = await context.prisma.post.update({
@@ -233,9 +233,9 @@ builder.mutationField('togglePublishPostDirect', (t) =>
         data: { published: !existingPost.published },
       })
 
-      logger.info('Post publish status toggled', { 
-        postId, 
-        newStatus: post.published 
+      logger.info('Post publish status toggled', {
+        postId,
+        newStatus: post.published
       })
 
       return post
@@ -274,9 +274,9 @@ builder.mutationField('incrementPostViewCountDirect', (t) =>
         data: { viewCount: { increment: 1 } },
       })
 
-      logger.info('Post view count incremented', { 
-        postId, 
-        newCount: post.viewCount 
+      logger.info('Post view count incremented', {
+        postId,
+        newCount: post.viewCount
       })
 
       return post
@@ -300,7 +300,7 @@ builder.queryField('feedDirect', (t) =>
     },
     resolve: (query, _parent, args, context) => {
       const whereClause: any = { published: true }
-      
+
       if (args.searchString) {
         whereClause.OR = [
           { title: { contains: args.searchString, mode: 'insensitive' } },
@@ -316,7 +316,7 @@ builder.queryField('feedDirect', (t) =>
     },
     totalCount: (_parent, args, context) => {
       const whereClause: any = { published: true }
-      
+
       if (args.searchString) {
         whereClause.OR = [
           { title: { contains: args.searchString, mode: 'insensitive' } },
@@ -338,7 +338,7 @@ builder.queryField('draftsDirect', (t) =>
     grantScopes: ['authenticated'],
     resolve: (query, _parent, _args, context) => {
       const userId = requireAuthentication(context)
-      
+
       return context.prisma.post.findMany({
         ...query,
         where: {
@@ -350,7 +350,7 @@ builder.queryField('draftsDirect', (t) =>
     },
     totalCount: (_parent, _args, context) => {
       const userId = requireAuthentication(context)
-      
+
       return context.prisma.post.count({
         where: {
           authorId: userId.value,
@@ -372,7 +372,7 @@ builder.queryField('postDirect', (t) =>
     },
     resolve: async (query, _parent, args, context) => {
       const postId = parseGlobalId(args.id.toString(), 'Post')
-      
+
       return context.prisma.post.findUnique({
         ...query,
         where: { id: postId },

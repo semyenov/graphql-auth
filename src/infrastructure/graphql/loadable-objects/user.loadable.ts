@@ -6,6 +6,7 @@
 
 import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import { builder } from '../../../schema/builder'
+import { LoadablePost } from './post.loadable'
 
 // Loadable User object using Pothos DataLoader plugin
 export const LoadableUser = builder.loadableObject('LoadableUser', {
@@ -25,21 +26,23 @@ export const LoadableUser = builder.loadableObject('LoadableUser', {
     })
 
     // Return users in the same order as requested IDs
-    return ids.map(id => users.find(user => user.id === id) || null)
+    return ids.map(id => users.find(user => user.id === id)!)
+  },
+  toKey(value) {
+    return value.id
   },
   fields: (t) => ({
-    id: t.exposeID('id'),
     email: t.exposeString('email'),
     name: t.exposeString('name', { nullable: true }),
     createdAt: t.expose('createdAt', { type: 'DateTime' }),
     updatedAt: t.expose('updatedAt', { type: 'DateTime' }),
-    
+
     // Loadable posts relation with advanced options
     posts: t.loadableList({
-      type: 'LoadablePost',
-      load: async (users: Array<{ id: number }>, context: EnhancedContext) => {
-        const userIds = users.map(user => user.id)
-        
+      type: LoadablePost,
+      load: async (ids: number[], context: EnhancedContext) => {
+        const userIds = ids
+
         const posts = await context.prisma.post.findMany({
           where: { authorId: { in: userIds } },
           orderBy: { createdAt: 'desc' },
@@ -56,7 +59,7 @@ export const LoadableUser = builder.loadableObject('LoadableUser', {
         })
 
         // Group posts by authorId
-        return users.map(user => 
+        return users.map(user =>
           posts.filter(post => post.authorId === user.id)
         )
       },
@@ -72,12 +75,12 @@ export const LoadableUser = builder.loadableObject('LoadableUser', {
         if (context.enhancedLoaders?.postCountByAuthor) {
           return context.enhancedLoaders.postCountByAuthor.load(user.id)
         }
-        
+
         // Fallback to original loader or direct query
         if (context.loaders?.postCountByAuthor) {
           return context.loaders.postCountByAuthor.load(user.id)
         }
-        
+
         return context.prisma.post.count({
           where: { authorId: user.id }
         })
@@ -90,11 +93,11 @@ export const LoadableUser = builder.loadableObject('LoadableUser', {
         if (context.enhancedLoaders?.publishedPostCountByAuthor) {
           return context.enhancedLoaders.publishedPostCountByAuthor.load(user.id)
         }
-        
+
         if (context.loaders?.publishedPostCountByAuthor) {
           return context.loaders.publishedPostCountByAuthor.load(user.id)
         }
-        
+
         return context.prisma.post.count({
           where: { authorId: user.id, published: true }
         })
@@ -107,11 +110,11 @@ export const LoadableUser = builder.loadableObject('LoadableUser', {
         if (context.enhancedLoaders?.draftPostsCountByAuthor) {
           return context.enhancedLoaders.draftPostsCountByAuthor.load(user.id)
         }
-        
+
         if (context.loaders?.draftPostsCountByAuthor) {
           return context.loaders.draftPostsCountByAuthor.load(user.id)
         }
-        
+
         return context.prisma.post.count({
           where: { authorId: user.id, published: false }
         })

@@ -1,345 +1,367 @@
 /**
- * Enhanced Query Resolvers with Advanced Pothos Features
+ * Enhanced Query Resolvers with Advanced Features
  * 
- * Demonstrates advanced Pothos patterns including enhanced connections,
- * loadable objects, and optimized queries.
+ * These resolvers demonstrate advanced Pothos patterns including:
+ * - DataLoader integration for N+1 prevention
+ * - Enhanced connections with metadata
+ * - Complex filtering and search
+ * - Performance tracking
  */
 
-import { z } from 'zod'
+import { requireAuthentication } from '../../../context/auth'
 import type { EnhancedContext } from '../../../context/enhanced-context-direct'
 import { builder } from '../../../schema/builder'
-import { 
-  buildAdvancedConnectionQuery, 
-  createConnectionWithMetadata,
-  type ConnectionMetadata 
-} from '../connections/advanced-connections'
+import { createEnhancedConnection, EnhancedPostConnection, EnhancedUserConnection, PerformanceTracker } from '../../../schema/enhanced-connections'
+import { LoadablePost, LoadableUser } from '../../../schema/loadable-objects'
+import { transformOrderBy, transformPostWhereInput } from '../../../schema/utils/filter-transform'
+import { parseAndValidateGlobalId } from '../../../shared/infrastructure/graphql/relay-helpers'
 
-// Enhanced search and filter input types
-const PostSearchInput = builder.inputType('PostSearchInput', {
-  description: 'Advanced search and filter options for posts',
-  fields: (t) => ({
-    searchTerm: t.string({
-      required: false,
-      description: 'Search in title and content',
-      validate: { schema: z.string().min(1).max(100) },
-    }),
-    published: t.boolean({
-      required: false,
-      description: 'Filter by published status',
-    }),
-    authorId: t.id({
-      required: false,
-      description: 'Filter by specific author (global ID)',
-    }),
-    viewCountMin: t.int({
-      required: false,
-      description: 'Minimum view count',
-      validate: { schema: z.number().min(0) },
-    }),
-    viewCountMax: t.int({
-      required: false,
-      description: 'Maximum view count',
-      validate: { schema: z.number().min(0) },
-    }),
-    createdAfter: t.field({
-      type: 'DateTime',
-      required: false,
-      description: 'Filter posts created after this date',
-    }),
-    createdBefore: t.field({
-      type: 'DateTime',
-      required: false,
-      description: 'Filter posts created before this date',
-    }),
-  }),
-})
-
-// Enhanced feed query using loadable objects and advanced connections
+// Enhanced feed query with metadata and performance tracking
 builder.queryField('enhancedFeed', (t) =>
   t.field({
-    type: 'EnhancedPostConnection',
-    description: 'Get posts with enhanced pagination and metadata',
+    type: EnhancedPostConnection,
+    description: 'Advanced feed with metadata, search, and filtering',
     grantScopes: ['public'],
     args: {
-      first: t.arg.int({ required: false }),
-      last: t.arg.int({ required: false }),
-      before: t.arg.string({ required: false }),
-      after: t.arg.string({ required: false }),
-      search: t.arg({ 
-        type: PostSearchInput, 
-        required: false,
-        description: 'Advanced search and filter options',
+      first: t.arg.int(),
+      after: t.arg.string(),
+      where: t.arg({ type: 'PostWhereInput' }),
+      orderBy: t.arg({ type: ['PostOrderByInput'] }),
+      searchTerm: t.arg.string({
+        description: 'Search posts by title or content'
       }),
     },
     resolve: async (_parent, args, context: EnhancedContext) => {
-      // Build query using advanced connection builder
-      const { where, take, orderBy, searchTerm, filters } = buildAdvancedConnectionQuery({
-        first: args.first,
-        last: args.last,
-        before: args.before,
-        after: args.after,
-        searchTerm: args.search?.searchTerm,
-        filters: {
-          ...(args.search?.published !== undefined && { published: args.search.published }),
-          ...(args.search?.viewCountMin !== undefined && { 
-            viewCount: { gte: args.search.viewCountMin } 
-          }),
-          ...(args.search?.viewCountMax !== undefined && { 
-            viewCount: { lte: args.search.viewCountMax } 
-          }),
-          ...(args.search?.createdAfter && { 
-            createdAt: { gte: args.search.createdAfter } 
-          }),
-          ...(args.search?.createdBefore && { 
-            createdAt: { lte: args.search.createdBefore } 
-          }),
-        },
-      })
+      const tracker = new PerformanceTracker()
 
-      // Get total count for metadata
+      // Build where clause
+      let where = transformPostWhereInput(args.where) || { published: true }
+
+      // Add search if provided
+      if (args.searchTerm) {
+        where = {
+          ...where,
+          OR: [
+            { title: { contains: args.searchTerm, mode: 'insensitive' } },
+            { content: { contains: args.searchTerm, mode: 'insensitive' } },
+          ]
+        }
+      }
+
+      const orderBy = args.orderBy?.map(transformOrderBy) || [{ createdAt: 'desc' }]
+
+      // Get total count
       const totalCount = await context.prisma.post.count({ where })
 
-      // Execute main query
+      // Get posts with cursor pagination
+      const limit = args.first || 10
       const posts = await context.prisma.post.findMany({
         where,
-        take,
         orderBy,
-        select: {
-          id: true,
-          title: true,
-          content: true,
-          published: true,
-          viewCount: true,
-          createdAt: true,
-          updatedAt: true,
-          authorId: true,
-        },
+        take: limit + 1, // Take one extra to check hasNextPage
+        cursor: args.after ? { id: args.after } : undefined,
+        skip: args.after ? 1 : 0, // Skip the cursor
       })
 
-      // Handle pagination
-      const hasNextPage = posts.length > (args.first || 20)
-      const hasPreviousPage = !!args.after || !!args.before
-      
+      const hasNextPage = posts.length > limit
       if (hasNextPage) {
-        posts.pop() // Remove the extra item used for pagination detection
+        posts.pop() // Remove the extra item
       }
 
-      // Create edges with cursors
-      const edges = posts.map(post => ({
-        cursor: Buffer.from(`Post:${post.id}`).toString('base64'),
-        node: post,
-      }))
+      const searchTime = tracker.getElapsedTime()
 
-      // Create metadata
-      const metadata: ConnectionMetadata = {
+      // Create enhanced connection with metadata
+      return createEnhancedConnection(posts, args, {
         totalCount,
-        searchTerm,
-        filters,
-        pageSize: args.first || args.last || 20,
-      }
-
-      // Return enhanced connection
-      return createConnectionWithMetadata(
-        edges,
-        {
-          hasNextPage,
-          hasPreviousPage,
-          startCursor: edges[0]?.cursor || null,
-          endCursor: edges[edges.length - 1]?.cursor || null,
-        },
-        metadata
-      )
+        searchMetadata: args.searchTerm ? {
+          query: args.searchTerm,
+          searchTime,
+          matchedFields: ['title', 'content']
+        } : undefined,
+        filterSummary: {
+          hasFilters: !!args.where || !!args.searchTerm,
+          filterCount: (args.where ? Object.keys(args.where).length : 0) + (args.searchTerm ? 1 : 0),
+          activeFilters: [
+            ...(args.where?.published !== undefined ? [{
+              field: 'published',
+              operator: 'equals',
+              value: String(args.where.published)
+            }] : []),
+            ...(args.searchTerm ? [{
+              field: 'search',
+              operator: 'contains',
+              value: args.searchTerm
+            }] : [])
+          ]
+        }
+      })
     },
   })
 )
 
-// Enhanced user search with loadable objects
+// Enhanced user search with aggregated data
 builder.queryField('enhancedUserSearch', (t) =>
   t.field({
-    type: 'EnhancedUserConnection',
-    description: 'Search users with enhanced metadata and efficient loading',
-    grantScopes: ['public'],
+    type: EnhancedUserConnection,
+    description: 'User search with aggregated metadata',
+    grantScopes: ['authenticated'],
     args: {
-      first: t.arg.int({ required: false }),
-      last: t.arg.int({ required: false }),
-      before: t.arg.string({ required: false }),
-      after: t.arg.string({ required: false }),
-      searchTerm: t.arg.string({ 
-        required: false,
-        validate: { schema: z.string().min(1).max(100) },
+      first: t.arg.int(),
+      after: t.arg.string(),
+      searchTerm: t.arg.string({
+        description: 'Search users by name or email',
+        required: true
       }),
-      hasPublishedPosts: t.arg.boolean({ required: false }),
+      includePostStats: t.arg.boolean({
+        description: 'Include post statistics in results',
+        defaultValue: false
+      }),
     },
     resolve: async (_parent, args, context: EnhancedContext) => {
-      // Build where clause
-      let where: any = {}
-      
-      if (args.searchTerm) {
-        where.OR = [
-          { name: { contains: args.searchTerm, mode: 'insensitive' } },
-          { email: { contains: args.searchTerm, mode: 'insensitive' } },
+      requireAuthentication(context)
+      const tracker = new PerformanceTracker()
+
+      // Search users
+      const where = {
+        OR: [
+          { name: { contains: args.searchTerm, mode: 'insensitive' as const } },
+          { email: { contains: args.searchTerm, mode: 'insensitive' as const } },
         ]
       }
-      
-      if (args.hasPublishedPosts !== undefined) {
-        if (args.hasPublishedPosts) {
-          where.posts = { some: { published: true } }
-        } else {
-          where.posts = { none: { published: true } }
-        }
-      }
 
-      // Handle cursor pagination
-      const limit = args.first || args.last || 20
-      if (args.before || args.after) {
-        const cursor = args.before || args.after
-        const decodedCursor = Buffer.from(cursor!, 'base64').toString('ascii')
-        const cursorId = parseInt(decodedCursor.split(':')[1])
-        
-        if (args.before) {
-          where.id = { lt: cursorId }
-        } else if (args.after) {
-          where.id = { gt: cursorId }
-        }
-      }
-
-      // Get total count
       const totalCount = await context.prisma.user.count({ where })
 
-      // Execute main query
+      const limit = args.first || 10
       const users = await context.prisma.user.findMany({
         where,
         take: limit + 1,
-        orderBy: { id: 'asc' },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+        cursor: args.after ? { id: args.after } : undefined,
+        skip: args.after ? 1 : 0,
+        orderBy: { createdAt: 'desc' },
+        ...(args.includePostStats && {
+          include: {
+            _count: {
+              select: { posts: true }
+            }
+          }
+        })
       })
 
-      // Handle pagination
       const hasNextPage = users.length > limit
       if (hasNextPage) {
         users.pop()
       }
 
-      // Create edges
-      const edges = users.map(user => ({
-        cursor: Buffer.from(`User:${user.id}`).toString('base64'),
-        node: user,
-      }))
+      const searchTime = tracker.getElapsedTime()
 
-      // Return enhanced connection
-      return createConnectionWithMetadata(
-        edges,
-        {
-          hasNextPage,
-          hasPreviousPage: !!args.after || !!args.before,
-          startCursor: edges[0]?.cursor || null,
-          endCursor: edges[edges.length - 1]?.cursor || null,
-        },
-        {
-          totalCount,
-          searchTerm: args.searchTerm,
-          filters: { hasPublishedPosts: args.hasPublishedPosts },
+      return createEnhancedConnection(users, args, {
+        totalCount,
+        searchMetadata: {
+          query: args.searchTerm,
+          searchTime,
+          matchedFields: ['name', 'email']
         }
-      )
+      })
     },
   })
 )
 
-// Loadable post by ID using enhanced loaders
+// Loadable post query - demonstrates DataLoader usage
 builder.queryField('loadablePost', (t) =>
-  t.loadable({
-    type: 'LoadablePost',
-    description: 'Load a post efficiently using DataLoader',
+  t.field({
+    type: LoadablePost,
+    nullable: true,
+    description: 'Get a post using DataLoader for efficient loading',
     grantScopes: ['public'],
     args: {
-      id: t.arg.id({ 
-        required: true,
-        description: 'Global ID of the post to load',
-      }),
+      id: t.arg.id({ required: true }),
     },
-    load: async (args, context: EnhancedContext) => {
-      // Parse global ID to get numeric ID
-      const globalId = args.id.toString()
-      const decodedId = Buffer.from(globalId, 'base64').toString('ascii')
-      const [type, numericId] = decodedId.split(':')
-      
-      if (type !== 'Post') {
-        throw new Error(`Expected Post ID, got ${type}`)
-      }
-      
-      const postId = parseInt(numericId)
-      
-      // Use enhanced loader if available
-      if (context.enhancedLoaders?.post) {
-        return context.enhancedLoaders.post.load(postId)
-      }
-      
-      // Fallback to direct query
-      return context.prisma.post.findUnique({
-        where: { id: postId },
-        select: {
-          id: true,
-          title: true,
-          content: true,
-          published: true,
-          viewCount: true,
-          createdAt: true,
-          updatedAt: true,
-          authorId: true,
-        },
-      })
+    resolve: async (_parent, args, context: EnhancedContext) => {
+      const numericId = await parseAndValidateGlobalId(args.id, 'Post')
+      return numericId
     },
-    resolve: (post) => post,
   })
 )
 
-// Loadable user by ID using enhanced loaders
+// Loadable user query
 builder.queryField('loadableUser', (t) =>
-  t.loadable({
-    type: 'LoadableUser',
-    description: 'Load a user efficiently using DataLoader',
-    grantScopes: ['public'],
+  t.field({
+    type: LoadableUser,
+    nullable: true,
+    description: 'Get a user using DataLoader for efficient loading',
+    grantScopes: ['authenticated'],
     args: {
-      id: t.arg.id({ 
-        required: true,
-        description: 'Global ID of the user to load',
-      }),
+      id: t.arg.id({ required: true }),
     },
-    load: async (args, context: EnhancedContext) => {
-      // Parse global ID to get numeric ID
-      const globalId = args.id.toString()
-      const decodedId = Buffer.from(globalId, 'base64').toString('ascii')
-      const [type, numericId] = decodedId.split(':')
-      
-      if (type !== 'User') {
-        throw new Error(`Expected User ID, got ${type}`)
-      }
-      
-      const userId = parseInt(numericId)
-      
-      // Use enhanced loader if available
-      if (context.enhancedLoaders?.user) {
-        return context.enhancedLoaders.user.load(userId)
-      }
-      
-      // Fallback to direct query
-      return context.prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      })
+    resolve: async (_parent, args, context: EnhancedContext) => {
+      requireAuthentication(context)
+      const numericId = await parseAndValidateGlobalId(args.id, 'User')
+      return numericId
     },
-    resolve: (user) => user,
   })
 )
+
+// Batch user query - demonstrates loading multiple users efficiently
+builder.queryField('batchUsers', (t) =>
+  t.field({
+    type: [LoadableUser],
+    description: 'Load multiple users efficiently with DataLoader',
+    grantScopes: ['authenticated'],
+    args: {
+      ids: t.arg.idList({ required: true }),
+    },
+    resolve: async (_parent, args, context: EnhancedContext) => {
+      requireAuthentication(context)
+
+      // Parse all IDs
+      const numericIds = await Promise.all(
+        args.ids.map(id => parseAndValidateGlobalId(id, 'User'))
+      )
+
+      return numericIds
+    },
+  })
+)
+
+// Advanced post analytics query
+builder.queryField('postAnalytics', (t) =>
+  t.field({
+    type: 'PostAnalytics',
+    description: 'Get aggregated analytics for posts',
+    grantScopes: ['authenticated'],
+    args: {
+      authorId: t.arg.id(),
+      published: t.arg.boolean(),
+      dateRange: t.arg({
+        type: 'DateRangeInput',
+        description: 'Filter by date range'
+      }),
+    },
+    resolve: async (_parent, args, context: EnhancedContext) => {
+      requireAuthentication(context)
+
+      const where: any = {}
+
+      if (args.authorId) {
+        const userId = await parseAndValidateGlobalId(args.authorId, 'User')
+        where.authorId = userId
+      }
+
+      if (args.published !== undefined) {
+        where.published = args.published
+      }
+
+      if (args.dateRange) {
+        where.createdAt = {
+          gte: args.dateRange.start,
+          lte: args.dateRange.end
+        }
+      }
+
+      // Aggregate data
+      const [totalPosts, totalViews, avgViews, topPosts] = await Promise.all([
+        context.prisma.post.count({ where }),
+        context.prisma.post.aggregate({
+          where,
+          _sum: { viewCount: true }
+        }),
+        context.prisma.post.aggregate({
+          where,
+          _avg: { viewCount: true }
+        }),
+        context.prisma.post.findMany({
+          where,
+          orderBy: { viewCount: 'desc' },
+          take: 5,
+          select: {
+            id: true,
+            title: true,
+            viewCount: true
+          }
+        })
+      ])
+
+      return {
+        totalPosts,
+        totalViews: totalViews._sum.viewCount || 0,
+        averageViews: Math.round(avgViews._avg.viewCount || 0),
+        topPostsByViews: topPosts,
+        dateRange: args.dateRange
+      }
+    },
+  })
+)
+
+// Define analytics types for the post analytics query
+builder.objectRef('PostAnalytics').implement({
+  description: 'Aggregated post analytics',
+  fields: (t) => ({
+    totalPosts: t.int({
+      description: 'Total number of posts',
+      resolve: (parent: any) => parent.totalPosts
+    }),
+    totalViews: t.int({
+      description: 'Total views across all posts',
+      resolve: (parent: any) => parent.totalViews
+    }),
+    averageViews: t.int({
+      description: 'Average views per post',
+      resolve: (parent: any) => parent.averageViews
+    }),
+    topPostsByViews: t.field({
+      type: ['PostSummary'],
+      description: 'Top posts by view count',
+      resolve: (parent: any) => parent.topPostsByViews
+    }),
+    dateRange: t.field({
+      type: 'DateRange',
+      nullable: true,
+      description: 'The date range for this analytics data',
+      resolve: (parent: any) => parent.dateRange
+    })
+  })
+})
+
+builder.objectRef('PostSummary').implement({
+  description: 'Summary information about a post',
+  fields: (t) => ({
+    id: t.id({
+      description: 'Post ID',
+      resolve: (parent: any) => parent.id
+    }),
+    title: t.string({
+      description: 'Post title',
+      resolve: (parent: any) => parent.title
+    }),
+    viewCount: t.int({
+      description: 'Number of views',
+      resolve: (parent: any) => parent.viewCount
+    })
+  })
+})
+
+// Output type for date range
+builder.objectRef('DateRange').implement({
+  description: 'Date range',
+  fields: (t) => ({
+    start: t.field({
+      type: 'DateTime',
+      description: 'Start date',
+      resolve: (parent: any) => parent.start
+    }),
+    end: t.field({
+      type: 'DateTime',
+      description: 'End date',
+      resolve: (parent: any) => parent.end
+    })
+  })
+})
+
+// Input type for date range filtering
+builder.inputType('DateRangeInput', {
+  description: 'Date range for filtering',
+  fields: (t) => ({
+    start: t.field({ type: 'DateTime', required: true }),
+    end: t.field({ type: 'DateTime', required: true })
+  })
+})

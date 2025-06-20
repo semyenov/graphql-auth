@@ -34,13 +34,19 @@ bunx prettier --write .                # Format code
 ### Tech Stack
 - **Runtime**: Bun (fast JavaScript/TypeScript runtime)
 - **GraphQL Server**: Apollo Server 4 with H3 HTTP framework
-- **Schema Builder**: Pothos with Prisma, Relay, Errors, Validation, Scope Auth, and DataLoader plugins
+- **Schema Builder**: Pothos with advanced plugin integration:
+  - **Prisma Plugin**: Optimized with DMMF preloading and field-level selection
+  - **Relay Plugin**: Global IDs, connections with metadata, cursor pagination
+  - **Errors Plugin**: Union result types for comprehensive error handling
+  - **Scope Auth Plugin**: Dynamic authorization with 14+ scope types
+  - **DataLoader Plugin**: Loadable objects for N+1 prevention
+  - **Validation Plugin**: Zod integration with async refinements
 - **Database**: Prisma ORM with SQLite (dev.db)
 - **Authentication**: JWT tokens with bcryptjs + refresh token rotation
 - **Authorization**: GraphQL Shield middleware with Pothos Scope Auth
 - **Type Safety**: GraphQL Tada for compile-time GraphQL typing
 - **Testing**: Vitest with comprehensive test utilities
-- **Validation**: Zod schema validation integrated with Pothos
+- **Validation**: Zod schema validation with custom async refinements
 - **Rate Limiting**: rate-limiter-flexible with configurable presets
 
 ### Architecture: Direct Pothos Resolvers (Modern Approach)
@@ -161,19 +167,36 @@ test/
 
 The schema builder uses multiple Pothos plugins with advanced integration patterns:
 
-- **PrismaPlugin**: Direct database integration with loadable objects and optimized queries
-- **RelayPlugin**: Enhanced global IDs, advanced connections with metadata, and cursor pagination  
-- **ErrorsPlugin**: Type-safe error handling with union result types and error interfaces
-- **ScopeAuthPlugin**: Dynamic authorization with scope loaders and complex permission logic
-- **ValidationPlugin**: Zod schema validation with field-level error reporting
-- **DataloaderPlugin**: Comprehensive N+1 prevention with batch loading and caching strategies
+```typescript
+// Advanced builder configuration (src/schema/builder.ts)
+plugins: [PrismaPlugin, RelayPlugin, DataloaderPlugin, ErrorsPlugin, ScopeAuthPlugin, ValidationPlugin],
+prisma: {
+    client: prisma,
+    dmmf: prisma._runtimeDataModel, // Pre-load DMMF for faster startup
+    neverScalarize: ['Json'], // Prevent JSON fields from being scalars
+    exposeDescriptions: true,
+    filterConnectionTotalCount: true,
+    onUnusedQuery: isProduction ? null : 'warn',
+},
+relay: {
+    clientMutationId: 'omit', // Modern Relay style
+    cursorType: 'String',
+    nodeQueryOptions: false,
+    nodesQueryOptions: false,
+},
+errors: {
+    defaultTypes: [Error, ValidationError, AuthenticationError, AuthorizationError, NotFoundError, ConflictError, RateLimitError],
+    directResult: true, // Enable direct result mode
+},
+```
 
 **Enhanced Features:**
-- **Loadable Objects**: `LoadableUser` and `LoadablePost` for automatic batch loading
-- **Enhanced Connections**: `EnhancedPostConnection` and `EnhancedUserConnection` with metadata
-- **Safe Mutations**: Union result types (`AuthResult`, `PostResult`, `UserResult`) for error handling
+- **Loadable Objects**: `LoadableUser` and `LoadablePost` for automatic batch loading with DataLoader
+- **Enhanced Connections**: `EnhancedPostConnection` and `EnhancedUserConnection` with metadata (totalCount, searchMetadata, filterSummary)
+- **Safe Mutations**: Union result types (`AuthResult`, `PostResult`, `UserResult`, `DeleteResult`) for comprehensive error handling
 - **Dynamic Scopes**: 14+ authorization scopes including `hasPermission`, `canViewContent`, `withinTimeLimit`
 - **Advanced DataLoaders**: Entity loaders, count loaders, and relation loaders with configurable batching
+- **Enhanced Validation**: Async refinements with database checks, contextual validation, field dependencies
 
 ### 2. Direct Pothos Resolvers (Current Approach)
 
@@ -360,17 +383,21 @@ The following operations are available and fully tested:
 - `incrementPostViewCountDirect` - Increment post view count (public)
 - `safeCreatePost` - Safe post creation with union result type (PostResult)
 - `safeUpdatePost` - Safe post update with comprehensive error handling
+- `safeDeletePost` - Safe post deletion with union result type (DeleteResult)
 
 ### Enhanced Query Operations
 - `enhancedFeed` - Advanced feed with metadata, search, and filtering
 - `enhancedUserSearch` - User search with aggregated metadata
 - `loadablePost` - Efficient post loading via DataLoader
 - `loadableUser` - Efficient user loading via DataLoader
+- `batchUsers` - Load multiple users efficiently with DataLoader
+- `postAnalytics` - Get aggregated analytics for posts
+- `optimizedFeed` - Optimized feed query with proper Prisma integration
 
 ### Post Queries
 - `feedDirect` - Get published posts with search and pagination
-- `draftsDirectQuery` - Get user's draft posts (authenticated)
-- `postDirectQuery` - Get individual post by global ID
+- `draftsDirect` - Get user's draft posts (authenticated)
+- `postDirect` - Get individual post by global ID
 
 ### User Operations
 - `searchUsersDirect` - Search users by name or email with pagination
@@ -378,19 +405,23 @@ The following operations are available and fully tested:
 
 ### Enhanced Features
 - **Loadable Objects**: `LoadableUser` and `LoadablePost` for N+1 prevention
-- **Enhanced Connections**: Rich metadata including totalCount, searchTerm, filters
+- **Enhanced Connections**: Rich metadata including totalCount, searchMetadata, filterSummary
 - **Safe Mutations**: Union result types for comprehensive error handling
 - **Advanced Search**: Multi-field search with complex filtering options
 - **Dynamic Authorization**: Content-based and permission-based access control
+- **Performance Tracking**: Built-in performance monitoring with PerformanceTracker
+- **Optimized Queries**: Always spread Prisma query parameter for field-level optimization
+- **Advanced Validation**: Async refinements, contextual validation, field dependencies
 
 All operations support:
 - Global IDs for consistent entity references
 - Enhanced authentication and authorization with dynamic scopes
-- Advanced input validation with Zod schemas and field-level errors
+- Advanced input validation with Zod schemas and async refinements
 - Rate limiting protection with time-based controls
 - Comprehensive error handling with union result types
 - DataLoader optimization with loadable objects and enhanced loaders
 - Rich metadata and performance information
+- Field-level Prisma optimizations for minimal database queries
 
 ## Enhanced Relay Features
 
