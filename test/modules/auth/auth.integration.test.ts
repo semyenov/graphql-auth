@@ -1,20 +1,21 @@
-import * as argon2 from 'argon2'
+import { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { LoginMutation, SignupMutation } from '../../../src/gql/mutations'
 import { prisma } from '../../../src/prisma'
-import { createMockContext, createTestServer, gqlHelpers } from '../../utils'
-
-interface AuthMutationResponse {
-  signup?: string
-  login?: string
-}
+import {
+  cleanDatabase,
+  createMockContext,
+  createTestServer,
+  createTestUser,
+  gqlHelpers,
+} from '../../utils'
 
 describe('Authentication', () => {
   const server = createTestServer()
 
   beforeEach(async () => {
-    // Clean database is handled by setup.ts
+    await cleanDatabase()
   })
 
   describe('signup', () => {
@@ -27,7 +28,10 @@ describe('Authentication', () => {
 
       // Using the new helper for cleaner test code
       const data =
-        await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse>(
+        await gqlHelpers.expectSuccessfulMutation<
+          ResultOf<typeof SignupMutation>,
+          VariablesOf<typeof SignupMutation>
+        >(
           server,
           print(SignupMutation),
           variables,
@@ -50,12 +54,9 @@ describe('Authentication', () => {
 
     it('should fail with duplicate email', async () => {
       // Create existing user
-      await prisma.user.create({
-        data: {
-          email: 'existing@example.com',
-          password: await argon2.hash('securePassword123'),
-          name: 'Existing User',
-        },
+      await createTestUser({
+        email: 'existing@example.com',
+        name: 'Existing User',
       })
 
       const variables = {
@@ -65,7 +66,10 @@ describe('Authentication', () => {
       }
 
       // Using the new helper to expect and verify errors
-      await gqlHelpers.expectGraphQLError<AuthMutationResponse>(
+      await gqlHelpers.expectGraphQLError<
+        ResultOf<typeof SignupMutation>,
+        VariablesOf<typeof SignupMutation>
+      >(
         server,
         print(SignupMutation),
         variables,
@@ -81,12 +85,10 @@ describe('Authentication', () => {
       const password = 'myPassword123'
       const email = 'testuser@example.com'
 
-      await prisma.user.create({
-        data: {
-          email,
-          password: await argon2.hash(password),
-          name: 'Test User',
-        },
+      await createTestUser({
+        email,
+        password,
+        name: 'Test User',
       })
 
       const variables = {
@@ -96,7 +98,10 @@ describe('Authentication', () => {
 
       // Using the new helper for cleaner success case
       const data =
-        await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse>(
+        await gqlHelpers.expectSuccessfulMutation<
+          ResultOf<typeof LoginMutation>,
+          VariablesOf<typeof LoginMutation>
+        >(
           server,
           print(LoginMutation),
           variables,
@@ -114,12 +119,10 @@ describe('Authentication', () => {
       const correctPassword = 'correctPassword'
       const wrongPassword = 'wrongPassword'
 
-      await prisma.user.create({
-        data: {
-          email,
-          password: await argon2.hash(correctPassword),
-          name: 'Test User',
-        },
+      await createTestUser({
+        email,
+        password: correctPassword,
+        name: 'Test User',
       })
 
       const variables = {
@@ -128,7 +131,10 @@ describe('Authentication', () => {
       }
 
       // Using the new helper to expect specific error
-      await gqlHelpers.expectGraphQLError<AuthMutationResponse>(
+      await gqlHelpers.expectGraphQLError<
+        ResultOf<typeof LoginMutation>,
+        VariablesOf<typeof LoginMutation>
+      >(
         server,
         print(LoginMutation),
         variables,
@@ -147,7 +153,10 @@ describe('Authentication', () => {
       }
 
       // Using the new helper to expect specific error
-      await gqlHelpers.expectGraphQLError<AuthMutationResponse>(
+      await gqlHelpers.expectGraphQLError<
+        ResultOf<typeof LoginMutation>,
+        VariablesOf<typeof LoginMutation>
+      >(
         server,
         print(LoginMutation),
         variables,

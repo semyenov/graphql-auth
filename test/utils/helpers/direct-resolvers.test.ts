@@ -5,35 +5,39 @@
  */
 
 import type { ApolloServer } from '@apollo/server'
-import * as argon2 from 'argon2'
+import type { User } from '@prisma/client'
 import { type ResultOf, type VariablesOf, graphql } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { UserId } from '../../../src/core/value-objects/user-id.vo'
 import type { Context } from '../../../src/graphql/context/context.types'
 import { prisma } from '../../../src/prisma'
-import { createMockContext, createTestServer, gqlHelpers } from '../../utils'
+import {
+  cleanDatabase,
+  createAuthContext,
+  createMockContext,
+  createTestServer,
+  createTestUser,
+  gqlHelpers,
+} from '../../utils'
 
 describe('Direct Resolvers', () => {
   let server: ApolloServer<Context>
+  let testUser: User
 
   beforeAll(async () => {
     server = createTestServer()
   })
 
   beforeEach(async () => {
-    // Create test data
-    await prisma.user.deleteMany()
-    await prisma.post.deleteMany()
-
-    await prisma.user.create({
-      data: {
-        id: 1,
-        email: 'test@example.com',
-        password: await argon2.hash('password123'),
-        name: 'Test User',
-      },
+    await cleanDatabase()
+    
+    // Create test user and capture the user data
+    const user = await createTestUser({
+      email: 'test@example.com',
+      name: 'Test User',
     })
+    testUser = user
   })
 
   describe('Authentication', () => {
@@ -104,16 +108,7 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-      const authContext = {
-        ...createMockContext(),
-        userId: UserId.create(1),
-        security: {
-          isAuthenticated: true,
-          userId: 1,
-          roles: [],
-          permissions: [],
-        },
-      }
+      const authContext = createAuthContext(UserId.create(testUser.id))
 
       const data = await gqlHelpers.expectSuccessfulQuery<
         ResultOf<typeof query>,
@@ -143,16 +138,7 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-      const authContext = {
-        ...createMockContext(),
-        userId: UserId.create(1),
-        security: {
-          isAuthenticated: true,
-          userId: 1,
-          roles: [],
-          permissions: [],
-        },
-      }
+      const authContext = createAuthContext(UserId.create(testUser.id))
 
       const data = await gqlHelpers.expectSuccessfulMutation<
         ResultOf<typeof mutation>,
@@ -185,26 +171,26 @@ describe('Direct Resolvers', () => {
             title: 'Post 1',
             content: 'Content 1',
             published: true,
-            authorId: 1,
+            authorId: testUser.id,
           },
           {
             title: 'Post 2',
             content: 'Content 2',
             published: true,
-            authorId: 1,
+            authorId: testUser.id,
           },
           {
             title: 'Draft',
             content: 'Draft content',
             published: false,
-            authorId: 1,
+            authorId: testUser.id,
           },
         ],
       })
 
       const query = graphql(`
-                query Feed {
-                    feed {
+                query Feed($first: Int) {
+                    feed(first: $first) {
                         edges {
                             node {
                                 id
@@ -219,7 +205,7 @@ describe('Direct Resolvers', () => {
       const data = await gqlHelpers.expectSuccessfulQuery<
         ResultOf<typeof query>,
         VariablesOf<typeof query>
-      >(server, print(query), {}, createMockContext())
+      >(server, print(query), { first: 10 }, createMockContext())
 
       expect(data.feed?.edges?.length).toBe(2)
       expect(data.feed?.totalCount).toBe(2)
@@ -236,26 +222,26 @@ describe('Direct Resolvers', () => {
             title: 'Draft 1',
             content: 'Draft 1',
             published: false,
-            authorId: 1,
+            authorId: testUser.id,
           },
           {
             title: 'Draft 2',
             content: 'Draft 2',
             published: false,
-            authorId: 1,
+            authorId: testUser.id,
           },
           {
             title: 'Published',
             content: 'Published',
             published: true,
-            authorId: 1,
+            authorId: testUser.id,
           },
         ],
       })
 
       const query = graphql(`
-                query Drafts {
-                    drafts {
+                query Drafts($first: Int) {
+                    drafts(first: $first) {
                         edges {
                             node {
                                 id
@@ -267,21 +253,12 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-      const authContext = {
-        ...createMockContext(),
-        userId: UserId.create(1),
-        security: {
-          isAuthenticated: true,
-          userId: 1,
-          roles: [],
-          permissions: [],
-        },
-      }
+      const authContext = createAuthContext(UserId.create(testUser.id))
 
       const data = await gqlHelpers.expectSuccessfulQuery<
         ResultOf<typeof query>,
         VariablesOf<typeof query>
-      >(server, print(query), {}, authContext)
+      >(server, print(query), { first: 10 }, authContext)
 
       expect(data.drafts?.edges?.length).toBe(2)
       expect(data.drafts?.totalCount).toBe(2)

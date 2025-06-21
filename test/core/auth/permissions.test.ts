@@ -1,4 +1,3 @@
-import * as argon2 from 'argon2'
 import type { ResultOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -8,9 +7,11 @@ import { FeedQuery, MeQuery, PostQuery } from '../../../src/gql/queries'
 import { PermissionUtils } from '../../../src/graphql/middleware/utils-clean'
 import { prisma } from '../../../src/prisma'
 import {
+  cleanDatabase,
   createAuthContext,
   createMockContext,
   createTestServer,
+  createTestUser,
   executeOperation,
 } from '../../utils'
 import { toPostId, toUserId } from '../../utils/helpers/relay.helpers'
@@ -23,27 +24,18 @@ describe('Enhanced Permissions System', () => {
 
   beforeEach(async () => {
     testCounter++
+    await cleanDatabase()
 
-    // Clean up database
-    await prisma.post.deleteMany()
-    await prisma.user.deleteMany()
-
-    // Create test users
-    const user1 = await prisma.user.create({
-      data: {
-        email: `permtest${testCounter}@example.com`,
-        password: await argon2.hash('password123'),
-        name: 'Permission Test User',
-      },
+    // Create test users using helpers
+    const user1 = await createTestUser({
+      email: `permtest${testCounter}@example.com`,
+      name: 'Permission Test User',
     })
     testUserId = user1.id
 
-    const user2 = await prisma.user.create({
-      data: {
-        email: `permtest${testCounter}other@example.com`,
-        password: await argon2.hash('password123'),
-        name: 'Other Permission Test User',
-      },
+    const user2 = await createTestUser({
+      email: `permtest${testCounter}other@example.com`,
+      name: 'Other Permission Test User',
     })
     otherUserId = user2.id
   })

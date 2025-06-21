@@ -18,6 +18,7 @@ export * from './factories'
 export * from './fixtures'
 
 // Specialized helpers
+export * from './helpers/auth.helpers'
 export * from './helpers/performance.helpers'
 export * from './helpers/relay.helpers'
 // export * from './helpers/snapshot.helpers' // Commented out due to missing jest-diff dependency

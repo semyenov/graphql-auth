@@ -4,7 +4,6 @@
  * Tests for rate limiting functionality on authentication endpoints
  */
 
-import * as argon2 from 'argon2'
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
@@ -14,6 +13,7 @@ import { prisma } from '../../../src/prisma'
 import {
   createMockContext,
   createTestServer,
+  createTestUser,
   executeOperation,
   gqlHelpers,
 } from '../../utils'
@@ -45,12 +45,9 @@ describe('Rate Limiting', () => {
       await prisma.user.deleteMany({
         where: { email: 'ratelimit@example.com' },
       })
-      await prisma.user.create({
-        data: {
-          email: 'ratelimit@example.com',
-          password: await argon2.hash('password123'),
-          name: 'Rate Limit Test',
-        },
+      await createTestUser({
+        email: 'ratelimit@example.com',
+        name: 'Rate Limit Test',
       })
     })
 
@@ -109,11 +106,8 @@ describe('Rate Limiting', () => {
 
     it('should use email as identifier for rate limiting', async () => {
       // Create another user
-      await prisma.user.create({
-        data: {
-          email: 'another@example.com',
-          password: await argon2.hash('password123'),
-        },
+      await createTestUser({
+        email: 'another@example.com',
       })
 
       // Exhaust rate limit for first email
@@ -263,12 +257,9 @@ describe('Rate Limiting', () => {
       await prisma.user.deleteMany({
         where: { email: 'ratelimit@example.com' },
       })
-      await prisma.user.create({
-        data: {
-          email: 'ratelimit@example.com',
-          password: await argon2.hash('password123'),
-          name: 'Rate Limit Test',
-        },
+      await createTestUser({
+        email: 'ratelimit@example.com',
+        name: 'Rate Limit Test',
       })
     })
 

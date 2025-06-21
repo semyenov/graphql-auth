@@ -1,4 +1,3 @@
-import * as argon2 from 'argon2'
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -11,9 +10,12 @@ import {
 import { FeedQuery } from '../../../src/gql/queries'
 import { prisma } from '../../../src/prisma'
 import {
+  cleanDatabase,
   createAuthContext,
   createMockContext,
   createTestServer,
+  createTestUser,
+  createUserWithPosts,
   gqlHelpers,
 } from '../../utils'
 import { toPostId } from '../../utils/helpers/relay'
@@ -68,42 +70,23 @@ describe('Posts', () => {
   let testCounter = 0
 
   beforeEach(async () => {
+    await cleanDatabase()
     // Create a test user with unique email
     testCounter++
-    const user = await prisma.user.create({
-      data: {
-        email: `posttest${testCounter}@example.com`,
-        password: await argon2.hash('password123'),
-        name: 'Post Test User',
-      },
+    const user = await createTestUser({
+      email: `posttest${testCounter}@example.com`,
+      name: 'Post Test User',
     })
     testUserId = UserId.create(user.id)
   })
 
   describe('Query posts', () => {
     it('should fetch all published posts in feed', async () => {
-      // Create some posts
-      await prisma.post.createMany({
-        data: [
-          {
-            title: 'Published Post 1',
-            content: 'Content 1',
-            published: true,
-            authorId: testUserId.value,
-          },
-          {
-            title: 'Published Post 2',
-            content: 'Content 2',
-            published: true,
-            authorId: testUserId.value,
-          },
-          {
-            title: 'Draft Post',
-            content: 'Draft content',
-            published: false,
-            authorId: testUserId.value,
-          },
-        ],
+      // Create user with posts
+      const { posts } = await createUserWithPosts({
+        userId: testUserId.value,
+        postCount: 3,
+        publishedPosts: 2,
       })
 
       const data = await gqlHelpers.expectSuccessfulQuery<
@@ -115,10 +98,16 @@ describe('Posts', () => {
       expect(data.feed.edges.length).toBeGreaterThanOrEqual(2)
       expect(data.feed.edges.every((edge) => edge.node.published)).toBe(true)
 
-      // Verify our test posts are included
-      const testPostTitles = ['Published Post 1', 'Published Post 2']
+      // Verify we got posts from our test user
+      const publishedPosts = posts.filter(p => p.published)
+      const publishedTitles = publishedPosts.map(p => p.title)
       const returnedTitles = data.feed.edges.map((edge) => edge.node.title)
-      expect(returnedTitles).toEqual(expect.arrayContaining(testPostTitles))
+      
+      // Check that at least some of our posts are in the feed
+      const ourPostsInFeed = returnedTitles.filter(title => 
+        publishedTitles.includes(title)
+      )
+      expect(ourPostsInFeed.length).toBeGreaterThanOrEqual(2)
     })
 
     it('should fetch user drafts when authenticated', async () => {
@@ -299,13 +288,10 @@ describe('Posts', () => {
     })
 
     it('should not allow deleting posts by other users', async () => {
-      // Create another user
-      const otherUser = await prisma.user.create({
-        data: {
-          email: `deleteother${testCounter}@example.com`,
-          password: await argon2.hash('password'),
-          name: 'Other User',
-        },
+      // Create another user using test helper
+      const otherUser = await createTestUser({
+        email: `deleteother${testCounter}@example.com`,
+        name: 'Other User',
       })
 
       // Create a post by other user
