@@ -31,7 +31,7 @@ describe('Direct Resolvers', () => {
 
   beforeEach(async () => {
     await cleanDatabase()
-    
+
     // Create test user and capture the user data
     const user = await createTestUser({
       email: 'test@example.com',

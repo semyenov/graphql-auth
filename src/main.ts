@@ -12,10 +12,10 @@ import 'reflect-metadata'
 // Import configuration and DI
 import { getConfigInstance } from './app/config/configuration-legacy'
 import { configureContainer } from './app/config/container'
-import { createContext } from './graphql/context'
+import { createContext } from './graphql/context/context.factory'
 
 // Import schema
-import { getSchema } from './graphql/schema'
+import { buildSchema } from './graphql/schema'
 
 async function bootstrap() {
   try {
@@ -34,7 +34,7 @@ async function bootstrap() {
 
     // Create Apollo Server
     const apolloServer = new ApolloServer({
-      schema: getSchema(),
+      schema: buildSchema(),
       introspection: config.server.environment !== 'production',
       plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
       formatError: (error) => {

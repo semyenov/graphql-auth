@@ -60,7 +60,7 @@ bun run demo                            # Run demo script
   - **DataLoader Plugin**: Automatic batch loading for N+1 prevention
   - **Validation Plugin**: Zod integration with async refinements
 - **Database**: Prisma ORM with SQLite (dev.db) - accessed directly, not through context
-- **Authentication**: JWT tokens with argon2 (hybrid bcrypt support) + refresh token rotation
+- **Authentication**: JWT tokens with hybrid password service (argon2 + bcrypt fallback) + refresh token rotation
 - **Authorization**: Dual authorization system using Pothos Scope Auth + GraphQL Shield Plugin
 - **Type Safety**: GraphQL Tada for compile-time GraphQL typing
 - **Testing**: Vitest with comprehensive test utilities
@@ -499,6 +499,44 @@ When working with GraphQL operations:
 8. **Enhanced Security**: Added security headers middleware
 9. **ShieldPlugin Integration**: Migrated from middleware-based Shield to inline plugin approach
 10. **Dual Authorization**: Combined Pothos Scope Auth with GraphQL Shield for flexible permissions
+11. **Test Helper Integration**: Comprehensive `gqlHelpers` utilities for cleaner, type-safe testing
+
+## Test Helper Integration
+
+The project uses comprehensive test utilities for GraphQL operations:
+
+```typescript
+// ✅ CORRECT - Use gqlHelpers for clean test code
+import { gqlHelpers } from '../utils'
+
+// Successful operations
+const data = await gqlHelpers.expectSuccessfulQuery(
+  server,
+  print(FeedQuery),
+  { first: 10 },
+  context
+)
+
+// Expected errors
+await gqlHelpers.expectGraphQLError(
+  server,
+  print(LoginMutation),
+  { email: 'invalid', password: 'wrong' },
+  context,
+  'Invalid email or password'
+)
+```
+
+Available test helpers:
+- `gqlHelpers.expectSuccessfulQuery()` - Execute and expect success
+- `gqlHelpers.expectSuccessfulMutation()` - Execute mutation and expect success  
+- `gqlHelpers.expectGraphQLError()` - Execute and expect specific error
+- `createTestServer()` - Create test Apollo server
+- `createAuthContext()` - Create authenticated context
+- `createMockContext()` - Create unauthenticated context
+- `createTestUser()` - Create test user with unique email
+- `createUserWithPosts()` - Create user with sample posts
+- `cleanDatabase()` - Clean database between tests
 
 ## Critical Rules from .cursor/rules
 
@@ -514,8 +552,9 @@ Based on the Cursor rules in this project:
 ### Testing Patterns (.cursor/rules/02-testing-patterns.mdc)
 - Use typed GraphQL operations from `src/gql/`
 - Test both success and error cases
-- Use comprehensive test utilities
+- Use comprehensive test utilities with `gqlHelpers`
 - Test authorization and authentication flows
+- Never use raw GraphQL strings in tests
 
 ### Error Handling (.cursor/rules/03-error-handling.mdc)
 - Use the centralized error hierarchy

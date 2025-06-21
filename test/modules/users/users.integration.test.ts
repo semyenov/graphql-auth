@@ -54,7 +54,12 @@ describe('User queries', () => {
         const data = await gqlHelpers.expectSuccessfulQuery<
           ResultOf<typeof MeQuery>,
           VariablesOf<typeof MeQuery>
-        >(server, print(MeQuery), {}, createAuthContext(UserId.create(testUserId)))
+        >(
+          server,
+          print(MeQuery),
+          {},
+          createAuthContext(UserId.create(testUserId)),
+        )
 
         expect(data.me).toBeDefined()
         if (data.me) {

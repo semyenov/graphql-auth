@@ -5,6 +5,7 @@
 import { container } from 'tsyringe'
 import { ConsoleLogger } from '../../../src/core/logging/console-logger'
 import type { ILogger } from '../../../src/core/services/logger.interface'
+import { UserId } from '../../../src/core/value-objects/user-id.vo'
 import type { Context } from '../../../src/graphql/context/context.types'
 import { generateTestToken } from './auth'
 
@@ -54,11 +55,15 @@ export function createMockContext(overrides: Partial<Context> = {}): Context {
  * Create an authenticated context for testing
  */
 export function createAuthContext(
-  userIdOrValue: number | { value: number } = 1,
+  userIdOrValue: number | UserId = 1,
   overrides: Partial<Context> = {},
 ): Context {
   const userId =
     typeof userIdOrValue === 'number' ? userIdOrValue : userIdOrValue.value
+  const userIdVO =
+    typeof userIdOrValue === 'number'
+      ? UserId.create(userIdOrValue)
+      : userIdOrValue
   const token = generateTestToken(userId)
   const payload = {
     userId,
@@ -69,12 +74,11 @@ export function createAuthContext(
 
   return createMockContext({
     user: { id: userId, email: payload.email } as unknown as Context['user'],
-    userId:
-      typeof userIdOrValue === 'object' ? userIdOrValue : { value: userId },
+    userId: userIdVO,
     decodedToken: payload,
     security: {
       isAuthenticated: true,
-      userId,
+      userId: userIdVO,
       roles: [],
       permissions: [],
     },

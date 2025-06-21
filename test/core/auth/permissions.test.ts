@@ -21,7 +21,7 @@ import {
   createMockContext,
   createTestServer,
   createTestUser,
-  executeOperation,
+  gqlHelpers,
 } from '../../utils'
 import { toPostId, toUserId } from '../../utils/helpers/relay.helpers'
 
@@ -190,33 +190,27 @@ describe('Enhanced Permissions System', () => {
         ],
       })
 
-      const result = await executeOperation<
+      const data = await gqlHelpers.expectSuccessfulQuery<
         ResultOf<typeof FeedQuery>,
         VariablesOf<typeof FeedQuery>
       >(server, print(FeedQuery), { first: 10 }, createMockContext())
 
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeUndefined()
-        const data = result.body.singleResult.data as ResultOf<typeof FeedQuery>
-        // At least 2 posts should be returned (may include posts from other tests)
-        expect(data?.feed?.edges?.length).toBeGreaterThanOrEqual(2)
-      }
+      // At least 2 posts should be returned (may include posts from other tests)
+      expect(data?.feed?.edges?.length).toBeGreaterThanOrEqual(2)
     })
 
     it('should require authentication for me query', async () => {
       // Test without authentication
-      const unauthResult = await executeOperation<
+      await gqlHelpers.expectGraphQLError<
         ResultOf<typeof MeQuery>,
         VariablesOf<typeof MeQuery>
-      >(server, print(MeQuery), {}, createMockContext())
-      expect(unauthResult.body.kind).toBe('single')
-      if (unauthResult.body.kind === 'single') {
-        expect(unauthResult.body.singleResult.errors).toBeDefined()
-        expect(unauthResult.body.singleResult.errors?.[0]?.message).toContain(
-          'You must be logged in to perform this action. Please authenticate and try again.',
-        )
-      }
+      >(
+        server,
+        print(MeQuery),
+        {},
+        createMockContext(),
+        'You must be logged in to perform this action. Please authenticate and try again.',
+      )
 
       // Verify the test user exists
       const testUser = await prisma.user.findUnique({
@@ -225,7 +219,7 @@ describe('Enhanced Permissions System', () => {
       expect(testUser).toBeTruthy()
 
       // Test with authentication - user should exist
-      const authResult = await executeOperation<
+      const data = await gqlHelpers.expectSuccessfulQuery<
         ResultOf<typeof MeQuery>,
         VariablesOf<typeof MeQuery>
       >(
@@ -234,18 +228,11 @@ describe('Enhanced Permissions System', () => {
         {},
         createAuthContext(UserId.create(testUserId)),
       )
-      expect(authResult.body.kind).toBe('single')
-      if (authResult.body.kind === 'single') {
-        expect(authResult.body.singleResult.errors).toBeUndefined()
-        const data = authResult.body.singleResult.data as ResultOf<
-          typeof MeQuery
-        >
-        // The me query should work since testUserId was created in beforeEach
-        expect(data?.me).toBeTruthy()
-        if (data?.me) {
-          expect(data.me.id).toBe(toUserId(testUserId))
-          expect(data.me.email).toBe(`permtest${testCounter}@example.com`)
-        }
+      // The me query should work since testUserId was created in beforeEach
+      expect(data?.me).toBeTruthy()
+      if (data?.me) {
+        expect(data.me.id).toBe(toUserId(testUserId))
+        expect(data.me.email).toBe(`permtest${testCounter}@example.com`)
       }
     })
 
@@ -269,7 +256,7 @@ describe('Enhanced Permissions System', () => {
       })
 
       // User should be able to access their own drafts
-      const ownDraftsResult = await executeOperation<
+      const ownDraftsData = await gqlHelpers.expectSuccessfulQuery<
         ResultOf<typeof DraftsQuery>,
         VariablesOf<typeof DraftsQuery>
       >(
@@ -279,22 +266,18 @@ describe('Enhanced Permissions System', () => {
         createAuthContext(UserId.create(testUserId)),
       )
 
-      expect(ownDraftsResult.body.kind).toBe('single')
-      if (ownDraftsResult.body.kind === 'single') {
-        expect(ownDraftsResult.body.singleResult.errors).toBeUndefined()
-        const data = ownDraftsResult.body.singleResult.data as {
-          drafts?: {
-            edges: Array<{
-              node: { id: string; title: string; published: boolean }
-            }>
-          }
+      const data = ownDraftsData as {
+        drafts?: {
+          edges: Array<{
+            node: { id: string; title: string; published: boolean }
+          }>
         }
-        expect(data?.drafts?.edges).toHaveLength(1)
-        expect(data?.drafts?.edges?.[0]?.node?.title).toBe('User 1 Draft')
       }
+      expect(data?.drafts?.edges).toHaveLength(1)
+      expect(data?.drafts?.edges?.[0]?.node?.title).toBe('User 1 Draft')
 
       // Other user should see their own drafts
-      const otherDraftsResult = await executeOperation<
+      const otherDraftsData = await gqlHelpers.expectSuccessfulQuery<
         ResultOf<typeof DraftsQuery>,
         VariablesOf<typeof DraftsQuery>
       >(
@@ -304,20 +287,16 @@ describe('Enhanced Permissions System', () => {
         createAuthContext(UserId.create(otherUserId)),
       )
 
-      expect(otherDraftsResult.body.kind).toBe('single')
-      if (otherDraftsResult.body.kind === 'single') {
-        // Should return only their own drafts
-        expect(otherDraftsResult.body.singleResult.errors).toBeUndefined()
-        const data = otherDraftsResult.body.singleResult.data as {
-          drafts?: {
-            edges: Array<{
-              node: { id: string; title: string; published: boolean }
-            }>
-          }
+      // Should return only their own drafts
+      const otherData = otherDraftsData as {
+        drafts?: {
+          edges: Array<{
+            node: { id: string; title: string; published: boolean }
+          }>
         }
-        expect(data?.drafts?.edges).toHaveLength(1)
-        expect(data?.drafts?.edges?.[0]?.node?.title).toBe('User 2 Draft')
       }
+      expect(otherData?.drafts?.edges).toHaveLength(1)
+      expect(otherData?.drafts?.edges?.[0]?.node?.title).toBe('User 2 Draft')
     })
 
     it('should enforce post ownership for mutations', async () => {
@@ -332,7 +311,7 @@ describe('Enhanced Permissions System', () => {
       })
 
       // testUserId should not be able to delete otherUserId's post
-      const result = await executeOperation<
+      await gqlHelpers.expectGraphQLError<
         ResultOf<typeof DeletePostMutation>,
         VariablesOf<typeof DeletePostMutation>
       >(
@@ -340,15 +319,8 @@ describe('Enhanced Permissions System', () => {
         print(DeletePostMutation),
         { id: toPostId(post.id) },
         createAuthContext(UserId.create(testUserId)),
+        'You can only modify posts that you have created',
       )
-
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors?.[0]?.message).toContain(
-          'You can only modify posts that you have created',
-        )
-      }
 
       // Verify post still exists
       const existingPost = await prisma.post.findUnique({
@@ -358,7 +330,7 @@ describe('Enhanced Permissions System', () => {
     })
 
     it('should handle invalid post IDs gracefully', async () => {
-      const result = await executeOperation<
+      await gqlHelpers.expectGraphQLError<
         ResultOf<typeof DeletePostMutation>,
         VariablesOf<typeof DeletePostMutation>
       >(
@@ -366,15 +338,8 @@ describe('Enhanced Permissions System', () => {
         print(DeletePostMutation),
         { id: toPostId(999999) }, // Non-existent ID
         createAuthContext(UserId.create(testUserId)),
+        `Post with identifier '${toPostId(999999)}' not found`,
       )
-
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors?.[0]?.message).toContain(
-          `Post with identifier '${toPostId(999999)}' not found`,
-        )
-      }
     })
   })
 
@@ -387,16 +352,13 @@ describe('Enhanced Permissions System', () => {
       }
 
       // First signup should succeed (rate limiting is placeholder for now)
-      const result = await executeOperation<
+      const data = await gqlHelpers.expectSuccessfulMutation<
         ResultOf<typeof SignupMutation>,
         VariablesOf<typeof SignupMutation>
       >(server, print(SignupMutation), variables, createMockContext())
 
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        // Should succeed since rate limiting is not actually implemented yet
-        expect(result.body.singleResult.data).toBeDefined()
-      }
+      // Should succeed since rate limiting is not actually implemented yet
+      expect(data).toBeDefined()
     })
 
     it('should allow public access to login', async () => {
@@ -405,19 +367,16 @@ describe('Enhanced Permissions System', () => {
         password: 'wrongPassword',
       }
 
-      const result = await executeOperation<
+      await gqlHelpers.expectGraphQLError<
         ResultOf<typeof LoginMutation>,
         VariablesOf<typeof LoginMutation>
-      >(server, print(LoginMutation), variables, createMockContext())
-
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        // Should get an error about invalid credentials, not authentication required
-        expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors?.[0]?.message).toContain(
-          'Invalid email or password',
-        )
-      }
+      >(
+        server,
+        print(LoginMutation),
+        variables,
+        createMockContext(),
+        'Invalid email or password',
+      )
     })
   })
 
@@ -436,7 +395,7 @@ describe('Enhanced Permissions System', () => {
       })
 
       // Without authentication - should succeed for published posts
-      const unauthResult = await executeOperation<
+      const unauthData = await gqlHelpers.expectSuccessfulQuery<
         ResultOf<typeof PostQuery>,
         VariablesOf<typeof PostQuery>
       >(
@@ -446,18 +405,11 @@ describe('Enhanced Permissions System', () => {
         createMockContext(),
       )
 
-      expect(unauthResult.body.kind).toBe('single')
-      if (unauthResult.body.kind === 'single') {
-        expect(unauthResult.body.singleResult.errors).toBeUndefined()
-        const data = unauthResult.body.singleResult.data as ResultOf<
-          typeof PostQuery
-        >
-        expect(data?.post).toBeDefined()
-        expect(data?.post?.id).toBe(toPostId(post.id))
-      }
+      expect(unauthData?.post).toBeDefined()
+      expect(unauthData?.post?.id).toBe(toPostId(post.id))
 
       // With authentication - should succeed
-      const authResult = await executeOperation<
+      const authData = await gqlHelpers.expectSuccessfulQuery<
         ResultOf<typeof PostQuery>,
         VariablesOf<typeof PostQuery>
       >(
@@ -467,15 +419,8 @@ describe('Enhanced Permissions System', () => {
         createAuthContext(UserId.create(testUserId)),
       )
 
-      expect(authResult.body.kind).toBe('single')
-      if (authResult.body.kind === 'single') {
-        expect(authResult.body.singleResult.errors).toBeUndefined()
-        const data = authResult.body.singleResult.data as ResultOf<
-          typeof PostQuery
-        >
-        expect(data?.post).toBeDefined()
-        expect(data?.post?.id).toBe(toPostId(post.id))
-      }
+      expect(authData?.post).toBeDefined()
+      expect(authData?.post?.id).toBe(toPostId(post.id))
     })
   })
 })

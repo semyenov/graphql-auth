@@ -22,12 +22,7 @@ export async function loginTestUser(
   const data = await gqlHelpers.expectSuccessfulMutation<
     ResultOf<typeof LoginMutation>,
     VariablesOf<typeof LoginMutation>
-  >(
-    server,
-    print(LoginMutation),
-    { email, password },
-    createMockContext(),
-  )
+  >(server, print(LoginMutation), { email, password }, createMockContext())
 
   if (!data.login) {
     throw new Error('Login failed')

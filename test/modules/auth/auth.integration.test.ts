@@ -1,4 +1,4 @@
-import { ResultOf, VariablesOf } from 'gql.tada'
+import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { LoginMutation, SignupMutation } from '../../../src/gql/mutations'
@@ -27,16 +27,10 @@ describe('Authentication', () => {
       }
 
       // Using the new helper for cleaner test code
-      const data =
-        await gqlHelpers.expectSuccessfulMutation<
-          ResultOf<typeof SignupMutation>,
-          VariablesOf<typeof SignupMutation>
-        >(
-          server,
-          print(SignupMutation),
-          variables,
-          createMockContext(),
-        )
+      const data = await gqlHelpers.expectSuccessfulMutation<
+        ResultOf<typeof SignupMutation>,
+        VariablesOf<typeof SignupMutation>
+      >(server, print(SignupMutation), variables, createMockContext())
 
       expect(data.signup).toBeDefined()
       expect(data.signup).toMatch(
@@ -97,16 +91,10 @@ describe('Authentication', () => {
       }
 
       // Using the new helper for cleaner success case
-      const data =
-        await gqlHelpers.expectSuccessfulMutation<
-          ResultOf<typeof LoginMutation>,
-          VariablesOf<typeof LoginMutation>
-        >(
-          server,
-          print(LoginMutation),
-          variables,
-          createMockContext(),
-        )
+      const data = await gqlHelpers.expectSuccessfulMutation<
+        ResultOf<typeof LoginMutation>,
+        VariablesOf<typeof LoginMutation>
+      >(server, print(LoginMutation), variables, createMockContext())
 
       expect(data.login).toMatch(
         /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/,
