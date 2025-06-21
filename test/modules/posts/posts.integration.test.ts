@@ -7,7 +7,7 @@ import {
   DeletePostMutation,
   IncrementPostViewCountMutation,
 } from '../../../src/gql/mutations'
-import { FeedQuery } from '../../../src/gql/queries'
+import { DraftsQuery, FeedQuery } from '../../../src/gql/queries'
 import { prisma } from '../../../src/prisma'
 import {
   cleanDatabase,
@@ -99,13 +99,13 @@ describe('Posts', () => {
       expect(data.feed.edges.every((edge) => edge.node.published)).toBe(true)
 
       // Verify we got posts from our test user
-      const publishedPosts = posts.filter(p => p.published)
-      const publishedTitles = publishedPosts.map(p => p.title)
+      const publishedPosts = posts.filter((p) => p.published)
+      const publishedTitles = publishedPosts.map((p) => p.title)
       const returnedTitles = data.feed.edges.map((edge) => edge.node.title)
-      
+
       // Check that at least some of our posts are in the feed
-      const ourPostsInFeed = returnedTitles.filter(title => 
-        publishedTitles.includes(title)
+      const ourPostsInFeed = returnedTitles.filter((title) =>
+        publishedTitles.includes(title),
       )
       expect(ourPostsInFeed.length).toBeGreaterThanOrEqual(2)
     })
@@ -129,39 +129,14 @@ describe('Posts', () => {
         ],
       })
 
-      const query = `
-        query GetDrafts($first: Int, $after: String) {
-          drafts(first: $first, after: $after) {
-            edges {
-              cursor
-              node {
-                id
-                title
-                content
-                published
-                viewCount
-                createdAt
-                updatedAt
-              }
-            }
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-          }
-        }
-      `
-
       const variables = {
         first: 10,
       }
 
-      const data = await gqlHelpers.expectSuccessfulQuery<GetDraftsResponse>(
-        server,
-        query,
-        variables,
-        createAuthContext(testUserId),
-      )
+      const data = await gqlHelpers.expectSuccessfulQuery<
+        ResultOf<typeof DraftsQuery>,
+        VariablesOf<typeof DraftsQuery>
+      >(server, print(DraftsQuery), variables, createAuthContext(testUserId))
 
       expect(data.drafts?.edges).toHaveLength(2)
       expect(data.drafts?.edges.every((edge) => !edge.node.published)).toBe(
@@ -170,36 +145,16 @@ describe('Posts', () => {
     })
 
     it('should require authentication for drafts', async () => {
-      const query = `
-        query GetDrafts($first: Int, $after: String) {
-          drafts(first: $first, after: $after) {
-            edges {
-              cursor
-              node {
-                id
-                title
-                content
-                published
-                viewCount
-                createdAt
-                updatedAt
-              }
-            }
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-          }
-        }
-      `
-
       const variables = {
         first: 10,
       }
 
-      await gqlHelpers.expectGraphQLError(
+      await gqlHelpers.expectGraphQLError<
+        ResultOf<typeof DraftsQuery>,
+        VariablesOf<typeof DraftsQuery>
+      >(
         server,
-        query,
+        print(DraftsQuery),
         variables,
         createMockContext(), // No auth
         'You must be logged in to perform this action. Please authenticate and try again.',
@@ -216,13 +171,15 @@ describe('Posts', () => {
         },
       }
 
-      const data =
-        await gqlHelpers.expectSuccessfulMutation<CreatePostResponse>(
-          server,
-          print(CreatePostMutation),
-          variables,
-          createAuthContext(testUserId),
-        )
+      const data = await gqlHelpers.expectSuccessfulMutation<
+        ResultOf<typeof CreatePostMutation>,
+        VariablesOf<typeof CreatePostMutation>
+      >(
+        server,
+        print(CreatePostMutation),
+        variables,
+        createAuthContext(testUserId),
+      )
 
       expect(data.createPost).toBeDefined()
       expect(data.createPost.title).toBe(variables.input.title)
@@ -245,7 +202,10 @@ describe('Posts', () => {
         },
       }
 
-      await gqlHelpers.expectGraphQLError<CreatePostResponse>(
+      await gqlHelpers.expectGraphQLError<
+        ResultOf<typeof CreatePostMutation>,
+        VariablesOf<typeof CreatePostMutation>
+      >(
         server,
         print(CreatePostMutation),
         variables,
@@ -269,9 +229,10 @@ describe('Posts', () => {
 
       const variables = { id: toPostId(post.id) }
 
-      const data = await gqlHelpers.expectSuccessfulMutation<{
-        deletePost: boolean
-      }>(
+      const data = await gqlHelpers.expectSuccessfulMutation<
+        ResultOf<typeof DeletePostMutation>,
+        VariablesOf<typeof DeletePostMutation>
+      >(
         server,
         print(DeletePostMutation),
         variables,
@@ -306,7 +267,10 @@ describe('Posts', () => {
 
       const variables = { id: toPostId(post.id) }
 
-      await gqlHelpers.expectGraphQLError<{ deletePost: boolean }>(
+      await gqlHelpers.expectGraphQLError<
+        ResultOf<typeof DeletePostMutation>,
+        VariablesOf<typeof DeletePostMutation>
+      >(
         server,
         print(DeletePostMutation),
         variables,
@@ -334,7 +298,10 @@ describe('Posts', () => {
 
       const variables = { id: toPostId(post.id) }
 
-      await gqlHelpers.expectGraphQLError<{ deletePost: boolean }>(
+      await gqlHelpers.expectGraphQLError<
+        ResultOf<typeof DeletePostMutation>,
+        VariablesOf<typeof DeletePostMutation>
+      >(
         server,
         print(DeletePostMutation),
         variables,
@@ -366,24 +333,28 @@ describe('Posts', () => {
       const variables = { id: toPostId(post.id) }
 
       // First increment
-      const data1 =
-        await gqlHelpers.expectSuccessfulMutation<IncrementPostViewCountResponse>(
-          server,
-          print(IncrementPostViewCountMutation),
-          variables,
-          createMockContext(), // No auth required
-        )
+      const data1 = await gqlHelpers.expectSuccessfulMutation<
+        ResultOf<typeof IncrementPostViewCountMutation>,
+        VariablesOf<typeof IncrementPostViewCountMutation>
+      >(
+        server,
+        print(IncrementPostViewCountMutation),
+        variables,
+        createMockContext(), // No auth required
+      )
 
       expect(data1.incrementPostViewCount.viewCount).toBe(1)
 
       // Second increment
-      const data2 =
-        await gqlHelpers.expectSuccessfulMutation<IncrementPostViewCountResponse>(
-          server,
-          print(IncrementPostViewCountMutation),
-          variables,
-          createMockContext(),
-        )
+      const data2 = await gqlHelpers.expectSuccessfulMutation<
+        ResultOf<typeof IncrementPostViewCountMutation>,
+        VariablesOf<typeof IncrementPostViewCountMutation>
+      >(
+        server,
+        print(IncrementPostViewCountMutation),
+        variables,
+        createMockContext(),
+      )
 
       expect(data2.incrementPostViewCount.viewCount).toBe(2)
 
@@ -397,7 +368,10 @@ describe('Posts', () => {
     it('should fail for non-existent post', async () => {
       const variables = { id: toPostId(999999) } // Non-existent ID
 
-      await gqlHelpers.expectGraphQLError<IncrementPostViewCountResponse>(
+      await gqlHelpers.expectGraphQLError<
+        ResultOf<typeof IncrementPostViewCountMutation>,
+        VariablesOf<typeof IncrementPostViewCountMutation>
+      >(
         server,
         print(IncrementPostViewCountMutation),
         variables,

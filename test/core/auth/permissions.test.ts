@@ -1,9 +1,18 @@
-import type { ResultOf } from 'gql.tada'
+import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { UserId } from '../../../src/core/value-objects/user-id.vo'
-import { DeletePostMutation, LoginMutation } from '../../../src/gql/mutations'
-import { FeedQuery, MeQuery, PostQuery } from '../../../src/gql/queries'
+import {
+  DeletePostMutation,
+  LoginMutation,
+  SignupMutation,
+} from '../../../src/gql/mutations'
+import {
+  DraftsQuery,
+  FeedQuery,
+  MeQuery,
+  PostQuery,
+} from '../../../src/gql/queries'
 import { PermissionUtils } from '../../../src/graphql/middleware/utils-clean'
 import { prisma } from '../../../src/prisma'
 import {
@@ -181,12 +190,10 @@ describe('Enhanced Permissions System', () => {
         ],
       })
 
-      const result = await executeOperation(
-        server,
-        print(FeedQuery),
-        { first: 10 },
-        createMockContext(),
-      )
+      const result = await executeOperation<
+        ResultOf<typeof FeedQuery>,
+        VariablesOf<typeof FeedQuery>
+      >(server, print(FeedQuery), { first: 10 }, createMockContext())
 
       expect(result.body.kind).toBe('single')
       if (result.body.kind === 'single') {
@@ -199,12 +206,10 @@ describe('Enhanced Permissions System', () => {
 
     it('should require authentication for me query', async () => {
       // Test without authentication
-      const unauthResult = await executeOperation(
-        server,
-        print(MeQuery),
-        {},
-        createMockContext(),
-      )
+      const unauthResult = await executeOperation<
+        ResultOf<typeof MeQuery>,
+        VariablesOf<typeof MeQuery>
+      >(server, print(MeQuery), {}, createMockContext())
       expect(unauthResult.body.kind).toBe('single')
       if (unauthResult.body.kind === 'single') {
         expect(unauthResult.body.singleResult.errors).toBeDefined()
@@ -220,7 +225,10 @@ describe('Enhanced Permissions System', () => {
       expect(testUser).toBeTruthy()
 
       // Test with authentication - user should exist
-      const authResult = await executeOperation(
+      const authResult = await executeOperation<
+        ResultOf<typeof MeQuery>,
+        VariablesOf<typeof MeQuery>
+      >(
         server,
         print(MeQuery),
         {},
@@ -260,30 +268,13 @@ describe('Enhanced Permissions System', () => {
         ],
       })
 
-      // Create custom query without userId
-      const draftsQuery = `
-                query GetDrafts($first: Int, $after: String) {
-                    drafts(first: $first, after: $after) {
-                        edges {
-                            cursor
-                            node {
-                                id
-                                title
-                                published
-                            }
-                        }
-                        pageInfo {
-                            hasNextPage
-                            endCursor
-                        }
-                    }
-                }
-            `
-
       // User should be able to access their own drafts
-      const ownDraftsResult = await executeOperation(
+      const ownDraftsResult = await executeOperation<
+        ResultOf<typeof DraftsQuery>,
+        VariablesOf<typeof DraftsQuery>
+      >(
         server,
-        draftsQuery,
+        print(DraftsQuery),
         { first: 10 },
         createAuthContext(UserId.create(testUserId)),
       )
@@ -303,9 +294,12 @@ describe('Enhanced Permissions System', () => {
       }
 
       // Other user should see their own drafts
-      const otherDraftsResult = await executeOperation(
+      const otherDraftsResult = await executeOperation<
+        ResultOf<typeof DraftsQuery>,
+        VariablesOf<typeof DraftsQuery>
+      >(
         server,
-        draftsQuery,
+        print(DraftsQuery),
         { first: 10 },
         createAuthContext(UserId.create(otherUserId)),
       )
@@ -338,7 +332,10 @@ describe('Enhanced Permissions System', () => {
       })
 
       // testUserId should not be able to delete otherUserId's post
-      const result = await executeOperation(
+      const result = await executeOperation<
+        ResultOf<typeof DeletePostMutation>,
+        VariablesOf<typeof DeletePostMutation>
+      >(
         server,
         print(DeletePostMutation),
         { id: toPostId(post.id) },
@@ -361,7 +358,10 @@ describe('Enhanced Permissions System', () => {
     })
 
     it('should handle invalid post IDs gracefully', async () => {
-      const result = await executeOperation(
+      const result = await executeOperation<
+        ResultOf<typeof DeletePostMutation>,
+        VariablesOf<typeof DeletePostMutation>
+      >(
         server,
         print(DeletePostMutation),
         { id: toPostId(999999) }, // Non-existent ID
@@ -380,12 +380,6 @@ describe('Enhanced Permissions System', () => {
 
   describe('Rate Limiting and Security', () => {
     it('should apply rate limiting rules to signup', async () => {
-      const signupMutation = `
-        mutation Signup($email: String!, $password: String!, $name: String) {
-          signup(email: $email, password: $password, name: $name)
-        }
-      `
-
       const variables = {
         email: `ratelimit${testCounter}@example.com`,
         password: 'securePassword123',
@@ -393,12 +387,10 @@ describe('Enhanced Permissions System', () => {
       }
 
       // First signup should succeed (rate limiting is placeholder for now)
-      const result = await executeOperation(
-        server,
-        signupMutation,
-        variables,
-        createMockContext(),
-      )
+      const result = await executeOperation<
+        ResultOf<typeof SignupMutation>,
+        VariablesOf<typeof SignupMutation>
+      >(server, print(SignupMutation), variables, createMockContext())
 
       expect(result.body.kind).toBe('single')
       if (result.body.kind === 'single') {
@@ -413,12 +405,10 @@ describe('Enhanced Permissions System', () => {
         password: 'wrongPassword',
       }
 
-      const result = await executeOperation(
-        server,
-        print(LoginMutation),
-        variables,
-        createMockContext(),
-      )
+      const result = await executeOperation<
+        ResultOf<typeof LoginMutation>,
+        VariablesOf<typeof LoginMutation>
+      >(server, print(LoginMutation), variables, createMockContext())
 
       expect(result.body.kind).toBe('single')
       if (result.body.kind === 'single') {
@@ -446,7 +436,10 @@ describe('Enhanced Permissions System', () => {
       })
 
       // Without authentication - should succeed for published posts
-      const unauthResult = await executeOperation(
+      const unauthResult = await executeOperation<
+        ResultOf<typeof PostQuery>,
+        VariablesOf<typeof PostQuery>
+      >(
         server,
         print(PostQuery),
         { id: toPostId(post.id) },
@@ -464,7 +457,10 @@ describe('Enhanced Permissions System', () => {
       }
 
       // With authentication - should succeed
-      const authResult = await executeOperation(
+      const authResult = await executeOperation<
+        ResultOf<typeof PostQuery>,
+        VariablesOf<typeof PostQuery>
+      >(
         server,
         print(PostQuery),
         { id: toPostId(post.id) },
