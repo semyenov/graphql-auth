@@ -6,7 +6,6 @@ import type { IContext } from '../../../src/graphql/context/context.types'
 import { UserId } from '../../../src/value-objects/user-id.vo'
 import { generateTestToken } from './auth'
 
-
 /**
  * Create a mock context for testing
  */
@@ -20,7 +19,6 @@ export function createMockContext(overrides: Partial<IContext> = {}): IContext {
       ip: '127.0.0.1',
     } as unknown as IContext['req'],
     user: undefined,
-    decodedToken: undefined,
     headers: {},
     method: 'POST',
     contentType: 'application/json',

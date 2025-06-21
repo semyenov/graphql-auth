@@ -320,8 +320,8 @@ export class PostsService {
     userId?: UserId,
   ): Promise<
     | (Post & {
-      author: { id: number; name: string | null; email: string } | null
-    })
+        author: { id: number; name: string | null; email: string } | null
+      })
     | null
   > {
     const numericPostId = parseGlobalId(postId, 'Post')

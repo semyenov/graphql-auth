@@ -122,6 +122,8 @@ export type TokenPayload = {
  */
 export type UserRole = 'user' | 'moderator' | 'admin'
 
+export type UserStatus = 'active' | 'inactive' | 'pending'
+
 export type Permission =
   | 'read:posts'
   | 'create:posts'
@@ -154,6 +156,7 @@ export type User = {
   email: string
   name?: string
   role: UserRole
+  status: UserStatus
   permissions: Permission[]
   createdAt: Date
   updatedAt: Date

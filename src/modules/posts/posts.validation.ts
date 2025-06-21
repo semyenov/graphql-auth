@@ -189,6 +189,5 @@ export async function validatePostExists(postId: number): Promise<boolean> {
 // Re-export shared validation helpers for backwards compatibility
 export {
   safeValidateInput as safeValidatePostInput,
-  validateInput as validatePostInput
+  validateInput as validatePostInput,
 } from '../../validation/helpers'
-

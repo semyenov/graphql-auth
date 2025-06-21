@@ -11,7 +11,7 @@ import { createLoggerFromEnv, LoggerType as LT } from './logger-factory'
 export type {
   ILogger,
   LogContext,
-  LogLevel
+  LogLevel,
 } from '../services/logger.interface'
 export { ConsoleLogger } from './console-logger'
 export { createLoggerFromEnv, LoggerType } from './logger-factory'

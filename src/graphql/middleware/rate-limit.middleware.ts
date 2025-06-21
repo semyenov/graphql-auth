@@ -32,33 +32,35 @@ export const RATE_LIMIT_CONFIGS = {
  * Create a rate limiting rule
  */
 export function createRateLimitRule(config: RateLimitConfig) {
-  return rule({ cache: 'strict' })(async (_parent, _args, context: IContext) => {
-    try {
-      // Get client identifier (IP address or user ID)
-      const clientId =
-        context.userId?.value ||
-        context.request?.ip ||
-        context.req.headers['x-forwarded-for'] ||
-        'unknown'
+  return rule({ cache: 'strict' })(
+    async (_parent, _args, context: IContext) => {
+      try {
+        // Get client identifier (IP address or user ID)
+        const clientId =
+          context.userId?.value ||
+          context.request?.ip ||
+          context.req.headers['x-forwarded-for'] ||
+          'unknown'
 
-      // For now, just log the rate limiting attempt since we don't have
-      // a rate limiter instance in context yet
-      console.log(
-        `Rate limit check for client ${clientId}: ${config.max}/${config.windowMs}ms`,
-      )
+        // For now, just log the rate limiting attempt since we don't have
+        // a rate limiter instance in context yet
+        console.log(
+          `Rate limit check for client ${clientId}: ${config.max}/${config.windowMs}ms`,
+        )
 
-      // Placeholder implementation - would need actual rate limiter
-      // In a real implementation, you would check against a rate limiter
-      // service like Redis or in-memory store
+        // Placeholder implementation - would need actual rate limiter
+        // In a real implementation, you would check against a rate limiter
+        // service like Redis or in-memory store
 
-      return true
-    } catch (_error) {
-      return new RateLimitError(
-        config.message || 'Rate limit exceeded. Please try again later.',
-        Math.ceil(config.windowMs / 1000),
-      )
-    }
-  })
+        return true
+      } catch (_error) {
+        return new RateLimitError(
+          config.message || 'Rate limit exceeded. Please try again later.',
+          Math.ceil(config.windowMs / 1000),
+        )
+      }
+    },
+  )
 }
 
 /**

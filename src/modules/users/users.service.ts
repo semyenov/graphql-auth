@@ -7,7 +7,6 @@
 
 import type { Prisma, User } from '@prisma/client'
 import { container } from 'tsyringe'
-import { prisma } from '../../prisma'
 import {
   AuthorizationError,
   ConflictError,
@@ -15,6 +14,7 @@ import {
 } from '../../app/errors/types'
 import type { ILogger } from '../../app/services/logger.interface'
 import type { IPasswordService } from '../../app/services/password.service.interface'
+import { prisma } from '../../prisma'
 import { parseGlobalId } from '../../utils/relay'
 import type { UserId } from '../../value-objects/user-id.vo'
 

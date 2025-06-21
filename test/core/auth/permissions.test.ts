@@ -104,7 +104,11 @@ describe('Enhanced Permissions System', () => {
           title: 'Test Post for Permissions',
           content: 'Test content',
           published: false,
-          authorId: testUserId,
+          author: {
+            connect: {
+              id: testUserId,
+            },
+          },
         },
       })
 
@@ -306,7 +310,11 @@ describe('Enhanced Permissions System', () => {
           title: 'Other User Post',
           content: 'Not mine',
           published: false,
-          authorId: otherUserId,
+          author: {
+            connect: {
+              id: otherUserId,
+            },
+          },
         },
       })
 
@@ -390,7 +398,11 @@ describe('Enhanced Permissions System', () => {
           title: 'Test Post',
           content: 'Test content',
           published: true,
-          authorId: testUserId,
+          author: {
+            connect: {
+              id: testUserId,
+            },
+          },
         },
       })
 

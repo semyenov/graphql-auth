@@ -6,7 +6,7 @@ import type { ApolloServer } from '@apollo/server'
 import type { VariableValues } from '@apollo/server/dist/esm/externalTypes/graphql'
 import type { TadaDocumentNode } from 'gql.tada'
 import type { GraphQLFormattedError } from 'graphql'
-import type { BaseError } from '../../../src/errors/types'
+import type { BaseError } from '../../../src/app/errors/types'
 import type { IContext } from '../../../src/graphql/context/context.types'
 
 /**

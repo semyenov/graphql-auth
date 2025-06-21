@@ -5,27 +5,20 @@
  * IMPROVED-FILE-STRUCTURE.md specification.
  */
 
-import type { BaseContext } from '@apollo/server'
-import type { Endpoint, HTTPMethod } from 'fetchdts'
+import type { BaseContext, HTTPGraphQLRequest } from '@apollo/server'
+import type { Endpoint, HTTPMethod, MimeType } from 'fetchdts'
 import type { IncomingMessage, ServerResponse } from 'http'
 import type { Loaders } from '../../data/loaders/loaders'
+import type { RequestMetadata, SecurityContext, User } from '../../types.d'
 import type { UserId } from '../../value-objects/user-id.vo'
 
 // Note: These types would normally be imported from a types module
 // For now, we'll define them inline to avoid import issues
-type GraphQLRequestBody = {
+export type GraphQLRequestBody<TVariables extends Record<string, unknown>> = {
   query: string
   operationName?: string
-  variables?: Record<string, unknown>
+  variables?: TVariables
 }
-
-type MimeType = string
-
-import type {
-  RequestMetadata,
-  SecurityContext,
-  User,
-} from '../../types.d'
 
 // ============================================================================
 // GRAPHQL RESPONSE TYPES
@@ -67,11 +60,11 @@ export interface GraphQLOperationMeta {
 /**
  * API schema definition for fetchdts type safety
  */
-export interface GraphQLAPISchema {
+export interface GraphQLAPISchema<TVariables extends Record<string, unknown>> {
   '/graphql': {
     [Endpoint]: {
       POST: {
-        body: GraphQLRequestBody
+        body: GraphQLRequestBody<TVariables>
         headers: {
           'content-type': 'application/json'
           authorization?: string
@@ -92,9 +85,10 @@ export interface GraphQLAPISchema {
 /**
  * Enhanced HTTP request interface with properly typed GraphQL body
  */
-export interface GraphQLIncomingMessage extends IncomingMessage {
-  readonly body?: GraphQLRequestBody
-}
+export type GraphQLIncomingMessage<TVariables extends Record<string, unknown>> =
+  HTTPGraphQLRequest & {
+    readonly body?: GraphQLRequestBody<TVariables>
+  }
 
 /**
  * Base GraphQL context interface with comprehensive typing
@@ -102,18 +96,18 @@ export interface GraphQLIncomingMessage extends IncomingMessage {
  * @template TVariables - The type of GraphQL variables for the operation
  * @template TOperationName - The specific operation name as a string literal
  */
-export interface IContext extends BaseContext {
+export interface IContext<TVariables extends Record<string, unknown>>
+  extends BaseContext {
   // Operation-specific information
   operationName?: string
-  variables?: Record<string, unknown>
-  decodedToken?: DecodedToken
+  variables?: TVariables
 
   // Request information
   req: {
     readonly url: string
     readonly method: HTTPMethod
     readonly headers: Record<string, string>
-    readonly body?: GraphQLRequestBody
+    readonly body?: GraphQLRequestBody<TVariables>
   }
 
   // Additional request information for rate limiting
@@ -146,20 +140,22 @@ export interface IContext extends BaseContext {
 /**
  * Interface for request components during context creation
  */
-export interface RequestComponents {
+export interface RequestComponents<TVariables extends Record<string, unknown>> {
   headers: Record<string, string>
   method: HTTPMethod
   contentType: MimeType | string
   operationName?: string
-  variables?: Record<string, unknown>
+  variables?: TVariables
   metadata: RequestMetadata
-  requestObject: IContext['req']
+  requestObject: IContext<TVariables>['req']
 }
 
 /**
  * Interface for authentication context components
  */
-export interface AuthenticationContext {
+export interface AuthenticationContext<
+  TVariables extends Record<string, unknown>,
+> extends IContext<TVariables> {
   userId?: UserId
   security: SecurityContext
 }
@@ -167,10 +163,10 @@ export interface AuthenticationContext {
 /**
  * Type utility for context creation functions
  */
-export type ContextCreationFunction<T extends IContext = IContext> = (params: {
-  req: IncomingMessage
-  res: ServerResponse
-}) => Promise<T>
+export type ContextCreationFunction<
+  TVariables extends Record<string, unknown>,
+  T extends IContext<TVariables> = IContext<TVariables>,
+> = (params: { req: IncomingMessage; res: ServerResponse }) => Promise<T>
 
 // ============================================================================
 // ENHANCED CONTEXT TYPES
@@ -180,7 +176,8 @@ export type ContextCreationFunction<T extends IContext = IContext> = (params: {
  * Enhanced context with additional features
  * This is what gets returned after context enhancement
  */
-export interface EnhancedContext extends IContext {
+export interface Context<TVariables extends Record<string, unknown>>
+  extends IContext<TVariables> {
   // DataLoader instances would be added here
   loaders: Loaders
 
@@ -201,26 +198,29 @@ export interface EnhancedContext extends IContext {
 /**
  * Context for authentication operations
  */
-export interface AuthContext extends IContext {
+export interface AuthContext<TVariables extends Record<string, unknown>>
+  extends IContext<TVariables> {
   operationName: 'signup' | 'login' | 'me' | 'logout' | 'refreshToken'
 }
 
 /**
  * Context for post operations
  */
-export interface PostContext extends IContext {
+export interface PostContext<TVariables extends Record<string, unknown>>
+  extends IContext<TVariables> {
   operationName:
-  | 'createPost'
-  | 'updatePost'
-  | 'deletePost'
-  | 'feed'
-  | 'post'
-  | 'drafts'
+    | 'createPost'
+    | 'updatePost'
+    | 'deletePost'
+    | 'feed'
+    | 'post'
+    | 'drafts'
 }
 
 /**
  * Context for user operations
  */
-export interface UserContext extends IContext {
+export interface UserContext<TVariables extends Record<string, unknown>>
+  extends IContext<TVariables> {
   operationName: 'searchUsers' | 'updateUserProfile' | 'deleteUser'
 }

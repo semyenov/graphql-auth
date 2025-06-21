@@ -7,7 +7,7 @@
 import { container } from 'tsyringe'
 import { z } from 'zod'
 import { AuthenticationError, ConflictError } from '../../../app/errors/types'
-// import type { ILogger } from '../../../app/services/logger.interface'
+import type { ILogger } from '../../../app/services/logger.interface'
 import type { IPasswordService } from '../../../app/services/password.service.interface'
 import { RateLimitPresets } from '../../../app/services/rate-limiter.service'
 import {
@@ -26,13 +26,12 @@ import { signToken } from '../../../utils/jwt'
 // Get services from container
 const getPasswordService = () =>
   container.resolve<IPasswordService>('IPasswordService')
-// const getLogger = () => container.resolve<ILogger>('ILogger')
+const getLogger = () => container.resolve<ILogger>('ILogger')
 
 // Signup mutation with direct implementation
 builder.mutationField('signup', (t) =>
   t.string({
     description: 'Create a new user account',
-    grantScopes: ['public'],
     shield: rateLimitSensitiveOperations,
     args: {
       email: t.arg.string({
@@ -55,8 +54,8 @@ builder.mutationField('signup', (t) =>
       }),
     },
     resolve: async (_parent, args, context) => {
-      // const logger = getLogger().child({ resolver: 'signup' })
-      // logger.info('Signup attempt', { email: args.email })
+      const logger = getLogger().child({ resolver: 'signup' })
+      logger.info('Signup attempt', { email: args.email })
 
       // Apply rate limiting
       await applyRateLimit(
@@ -74,9 +73,9 @@ builder.mutationField('signup', (t) =>
       })
 
       if (existingUser) {
-        // logger.warn('Signup failed - email already exists', {
-        //   email: args.email,
-        // })
+        logger.warn('Signup failed - email already exists', {
+          email: args.email,
+        })
         throw new ConflictError('An account with this email already exists')
       }
 
@@ -93,10 +92,10 @@ builder.mutationField('signup', (t) =>
         },
       })
 
-      // logger.info('User created successfully', {
-      //   userId: user.id,
-      //   email: user.email,
-      // })
+      logger.info('User created successfully', {
+        userId: user.id,
+        email: user.email,
+      })
 
       // Generate token
       const token = signToken({ userId: user.id, email: user.email })
@@ -110,7 +109,6 @@ builder.mutationField('signup', (t) =>
 builder.mutationField('login', (t) =>
   t.string({
     description: 'Authenticate and receive a token',
-    grantScopes: ['public'],
     shield: rateLimitSensitiveOperations,
     args: {
       email: t.arg.string({
@@ -127,8 +125,8 @@ builder.mutationField('login', (t) =>
       }),
     },
     resolve: async (_parent, args, context) => {
-      // const logger = getLogger().child({ resolver: 'login' })
-      // logger.info('Login attempt', { email: args.email })
+      const logger = getLogger().child({ resolver: 'login' })
+      logger.info('Login attempt', { email: args.email })
 
       // Apply rate limiting
       await applyRateLimit(
@@ -146,7 +144,7 @@ builder.mutationField('login', (t) =>
       })
 
       if (!user) {
-        // logger.warn('Login failed - user not found', { email: args.email })
+        logger.warn('Login failed - user not found', { email: args.email })
         throw new AuthenticationError('Invalid email or password')
       }
 
@@ -158,10 +156,10 @@ builder.mutationField('login', (t) =>
       )
 
       if (!isValidPassword) {
-        // logger.warn('Login failed - invalid password', {
-        //   email: args.email,
-        //   userId: user.id,
-        // })
+        logger.warn('Login failed - invalid password', {
+          email: args.email,
+          userId: user.id,
+        })
         throw new AuthenticationError('Invalid email or password')
       }
 
@@ -175,11 +173,11 @@ builder.mutationField('login', (t) =>
             where: { id: user.id },
             data: { password: newHash },
           })
-          // logger.info('Password rehashed during login', { userId: user.id })
+          logger.info('Password rehashed during login', { userId: user.id })
         }
       }
 
-      // logger.info('Login successful', { email: args.email, userId: user.id })
+      logger.info('Login successful', { email: args.email, userId: user.id })
 
       // Generate token
       const token = signToken({ userId: user.id, email: user.email })
@@ -195,7 +193,6 @@ builder.queryField('me', (t) =>
     type: 'User',
     nullable: true,
     description: 'Get the currently authenticated user',
-    grantScopes: ['authenticated'],
     shield: isAuthenticatedUser,
     resolve: async (query, _parent, _args, context) => {
       if (!context.userId) {

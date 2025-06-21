@@ -12,7 +12,7 @@ import {
 import { ValidationError } from '../app/errors/types'
 
 export class Email {
-  private constructor(private readonly _value: string) { }
+  private constructor(private readonly _value: string) {}
 
   static create(value: string): Email {
     if (!value || value.trim().length === 0) {

@@ -10,32 +10,30 @@ import { inject, injectable } from 'tsyringe'
 import { AuthenticationError } from '../../../app/errors/types'
 import type {
   AuthTokens,
+  ITokenConfig,
   ITokenService,
-  TokenConfig,
   TokenPayload,
 } from '../../../app/services/token.service.interface'
-import { RefreshTokenRepository } from '../../../data/repositories/refresh-token.repository'
-import { UserId } from '../../../value-objects/user-id.vo'
-
-export type { TokenConfig } from '../../../app/services/token.service.interface'
+import { RefreshToken } from '../entities/refresh-token.entity'
+import type { IRefreshTokenRepository } from '../interfaces/refresh-token.repository.interface'
 
 @injectable()
 export class TokenService implements ITokenService {
   constructor(
-    @inject('TokenConfig') private config: TokenConfig,
-    @inject(RefreshTokenRepository)
-    private refreshTokenRepo: RefreshTokenRepository,
-  ) { }
+    @inject('ITokenConfig') private config: ITokenConfig,
+    @inject('IRefreshTokenRepository')
+    private refreshTokenRepo: IRefreshTokenRepository,
+  ) {}
 
   /**
-   * Generate both access and refresh tokens
+   * Generate both access   and refresh tokens
    */
   async generateTokens(user: {
     id: number
     email: string
   }): Promise<AuthTokens> {
     const payload: TokenPayload = {
-      userId: user.id,
+      userId: Number(user.id),
       email: user.email,
     }
 
@@ -59,23 +57,26 @@ export class TokenService implements ITokenService {
     const expiresInMs = this.parseExpiration(this.config.refreshTokenExpiresIn)
     expiresAt.setTime(expiresAt.getTime() + expiresInMs)
 
-    // Store refresh token in database
-    await this.refreshTokenRepo.create({
+    const refreshTokenEntity = RefreshToken.create({
       token: refreshTokenValue,
-      userId: user.id,
+      userId: Number(user.id),
       expiresAt,
+      family: refreshTokenValue,
     })
+
+    // Store refresh token in database
+    await this.refreshTokenRepo.save(refreshTokenEntity)
 
     return {
       accessToken,
-      refreshToken,
+      refreshToken, // Return the JWT, not the raw token
     }
   }
 
   /**
    * Verify access token
    */
-  async verifyAccessToken(token: string): Promise<UserId | null> {
+  async verifyAccessToken(token: string): Promise<string | null> {
     try {
       const decoded = jwt.verify(
         token,
@@ -86,7 +87,7 @@ export class TokenService implements ITokenService {
         return null
       }
 
-      return UserId.create(decoded.userId)
+      return decoded.userId.toString()
     } catch {
       return null
     }
@@ -111,6 +112,11 @@ export class TokenService implements ITokenService {
       const storedToken = await this.refreshTokenRepo.findByToken(decoded.jti)
 
       if (!storedToken) {
+        throw new AuthenticationError('Invalid refresh token')
+      }
+
+      // Check if token is revoked
+      if (storedToken.revoked) {
         throw new AuthenticationError('Invalid refresh token')
       }
 
@@ -140,7 +146,7 @@ export class TokenService implements ITokenService {
    * Revoke all refresh tokens for a user
    */
   async revokeAllTokens(userId: number): Promise<void> {
-    await this.refreshTokenRepo.deleteAllForUser(userId)
+    await this.refreshTokenRepo.revokeAllByUserId(userId)
   }
 
   /**

@@ -5,9 +5,9 @@
  * Provides consistent ownership validation for different resource types.
  */
 
-import { AuthorizationError, NotFoundError } from '../errors/types'
 import { prisma } from '../../prisma'
 import { parseAndValidateGlobalId } from '../../utils/relay'
+import { AuthorizationError, NotFoundError } from '../errors/types'
 
 /**
  * Type-safe Prisma model access

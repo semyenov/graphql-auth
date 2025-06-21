@@ -10,11 +10,14 @@ import { container } from 'tsyringe'
 import { createLoggerFromEnv } from '../../app/logging/logger-factory'
 import type { ILogger } from '../../app/services/logger.interface'
 import type { IPasswordService } from '../../app/services/password.service.interface'
-import type { ITokenService } from '../../app/services/token.service.interface'
+import type {
+  ITokenConfig,
+  ITokenService,
+} from '../../app/services/token.service.interface'
 import { RefreshTokenRepository } from '../../data/repositories/refresh-token.repository'
 import { Argon2PasswordService } from '../../modules/auth/services/argon2-password.service'
 import { LoginAttemptService } from '../../modules/auth/services/login-attempt.service'
-import { type TokenConfig, TokenService } from '../../modules/auth/services/token.service'
+import { TokenService } from '../../modules/auth/services/token.service'
 import { VerificationTokenService } from '../../modules/auth/services/verification-token.service'
 import { prisma } from '../../prisma'
 import { EmailService, type IEmailService } from '../services/email.service'
@@ -39,7 +42,7 @@ export function configureContainer(): void {
   )
 
   // Register token configuration
-  container.registerInstance<TokenConfig>('TokenConfig', {
+  container.registerInstance<ITokenConfig>('ITokenConfig', {
     accessTokenSecret: config.auth.jwtSecret,
     refreshTokenSecret: `${config.auth.jwtSecret}-refresh`, // In production, use a different secret
     accessTokenExpiresIn: '15m',
@@ -55,7 +58,7 @@ export function configureContainer(): void {
   container.register<ITokenService>('ITokenService', {
     useClass: TokenService,
   })
-  container.register<RefreshTokenRepository>(RefreshTokenRepository, {
+  container.register('IRefreshTokenRepository', {
     useClass: RefreshTokenRepository,
   })
 

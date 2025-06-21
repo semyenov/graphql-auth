@@ -4,6 +4,7 @@
  * Implements error types for the Pothos Errors plugin
  */
 
+import { builder } from '../../graphql/schema/builder'
 import {
   AuthenticationError,
   AuthorizationError,
@@ -12,7 +13,6 @@ import {
   NotFoundError,
   ValidationError,
 } from '../errors/types'
-import { builder } from '../../graphql/schema/builder'
 
 // Base error interface
 const BaseErrorInterface = builder

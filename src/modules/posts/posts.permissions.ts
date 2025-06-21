@@ -4,22 +4,18 @@
  * Defines authorization rules and permission checks for post operations
  */
 
-import { allow, rule, shield } from 'graphql-shield'
+import { rule } from 'graphql-shield'
 import {
   checkPostOwnership,
   requirePostOwnership,
 } from '../../app/auth/ownership.utils'
-import type { IContext } from '../../graphql/context/context.types'
-import {
-  isAuthenticated,
-  isModerator,
-} from '../../graphql/middleware/shared-rules'
-import { prisma } from '../../prisma'
 import {
   AuthenticationError,
   AuthorizationError,
   NotFoundError,
 } from '../../app/errors/types'
+import type { IContext } from '../../graphql/context/context.types'
+import { prisma } from '../../prisma'
 import { parseAndValidateGlobalId } from '../../utils/relay'
 
 /**
@@ -184,102 +180,3 @@ export const withinPostLimit = rule({ cache: 'contextual' })(
     return true
   },
 )
-
-/**
- * Posts module permissions configuration
- */
-export const postsPermissions = {
-  Query: {
-    // Public queries
-    feed: allow,
-    post: canViewPost,
-    searchPosts: allow,
-
-    // Authenticated queries
-    drafts: isAuthenticated,
-    myPosts: isAuthenticated,
-  },
-  Mutation: {
-    // Post CRUD
-    createPost: isAuthenticated,
-    updatePost: rule()(async (_parent, args, context) => {
-      if (!context.userId) {
-        return new AuthenticationError('You must be logged in')
-      }
-
-      try {
-        // Check ownership first
-        await requirePostOwnership(context.userId.value, args.id)
-
-        // Then check if post is editable
-        const postId = await parseAndValidateGlobalId(args.id, 'Post')
-        const post = await prisma.post.findUnique({
-          where: { id: postId },
-          select: {
-            createdAt: true,
-            published: true,
-          },
-        })
-
-        // Check if editable (draft posts always editable, published only within 24 hours)
-        if (post?.published) {
-          const hoursSinceCreation =
-            (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60)
-          if (hoursSinceCreation > 24) {
-            return new AuthorizationError(
-              'Published posts can only be edited within 24 hours of creation',
-            )
-          }
-        }
-
-        return true
-      } catch (error) {
-        if (error instanceof Error) return error
-        return new Error('Failed to check post permissions')
-      }
-    }),
-    deletePost: isPostOwner,
-    togglePublishPost: isPostOwner,
-
-    // Public operations
-    incrementPostViewCount: allow,
-
-    // Moderation
-    moderatePost: canModeratePost,
-    featurePost: isModerator,
-    unflagPost: isModerator,
-  },
-  Post: {
-    // Author info is always visible
-    author: allow,
-
-    // Draft content is restricted
-    content: rule()(
-      async (
-        parent: { id: number; published: boolean; authorId: number },
-        _args,
-        context,
-      ) => {
-        if (parent.published) return true
-
-        if (!context.userId) {
-          return false // Hide content for unauthenticated users
-        }
-
-        // Use ownership check utility
-        return await checkPostOwnership(context.userId.value, parent.id)
-      },
-    ),
-  },
-}
-
-/**
- * Create posts shield middleware
- */
-export const createPostsShield = () =>
-  shield(postsPermissions, {
-    allowExternalErrors: true,
-    fallbackError: new AuthorizationError(
-      'Not authorized to perform this action',
-    ),
-  })

@@ -5,8 +5,8 @@
  */
 
 import type { Post } from '../../entities/post.entity'
-import { AuthenticationError, ForbiddenError } from '../errors/types'
 import type { UserId } from '../../value-objects/user-id.vo'
+import { AuthenticationError, ForbiddenError } from '../errors/types'
 
 export const PostAuthorizationService = {
   canView(post: Post, userId?: UserId): boolean {

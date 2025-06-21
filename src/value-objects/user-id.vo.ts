@@ -7,7 +7,7 @@
 import { ValidationError } from '../app/errors/types'
 
 export class UserId {
-  private constructor(private readonly _value: number) { }
+  private constructor(private readonly _value: number) {}
 
   static create(value: number): UserId {
     if (!Number.isInteger(value) || value <= 0) {

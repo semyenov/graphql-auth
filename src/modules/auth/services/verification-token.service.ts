@@ -4,8 +4,8 @@
  * Manages email verification and password reset tokens
  */
 
-import type { VerificationToken } from '@prisma/client'
 import { randomBytes } from 'node:crypto'
+import type { VerificationToken } from '@prisma/client'
 import { inject, injectable } from 'tsyringe'
 import { ValidationError } from '../../../app/errors/types'
 import type { ILogger } from '../../../app/services/logger.interface'
@@ -28,7 +28,7 @@ export interface VerifyTokenResult {
 
 @injectable()
 export class VerificationTokenService {
-  constructor(@inject('ILogger') private logger: ILogger) { }
+  constructor(@inject('ILogger') private logger: ILogger) {}
 
   /**
    * Generate a secure random token
@@ -201,7 +201,7 @@ export class VerificationTokenService {
     const result = await this.verifyToken(token, 'email_verification')
 
     if (!(result.valid && result.userId)) {
-      throw new ValidationError(result.error || 'Invalid token')
+      throw new ValidationError([result.error || 'Invalid token'])
     }
 
     // Mark token as used
@@ -228,7 +228,7 @@ export class VerificationTokenService {
     const result = await this.verifyToken(token, 'password_reset')
 
     if (!(result.valid && result.userId)) {
-      throw new ValidationError(result.error || 'Invalid token')
+      throw new ValidationError([result.error || 'Invalid token'])
     }
 
     return result.userId

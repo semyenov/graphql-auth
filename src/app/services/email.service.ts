@@ -65,7 +65,7 @@ export class EmailService implements IEmailService {
 
       return true
     } catch (error) {
-      this.logger.error('Failed to send email', { error, options })
+      this.logger.warn('Failed to send email', { error, options })
       return false
     }
   }

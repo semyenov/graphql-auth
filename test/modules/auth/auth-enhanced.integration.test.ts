@@ -55,7 +55,10 @@ describe('Enhanced Authentication', () => {
         name: 'New User',
       }
 
-      const result = await executeOperation(
+      const result = await executeOperation<
+        ResultOf<typeof SignupWithVerificationMutation>,
+        VariablesOf<typeof SignupWithVerificationMutation>
+      >(
         server,
         print(SignupWithVerificationMutation),
         input,
@@ -63,8 +66,11 @@ describe('Enhanced Authentication', () => {
       )
 
       expect(hasGraphQLErrors(result)).toBe(false)
-      const data = extractGraphQLData(result)
-      expect(data.signupWithVerification).toEqual({
+      const data =
+        extractGraphQLData<ResultOf<typeof SignupWithVerificationMutation>>(
+          result,
+        )
+      expect(data?.signupWithVerification).toEqual({
         success: true,
         message:
           'Account created successfully. Please check your email to verify your account.',
@@ -99,7 +105,10 @@ describe('Enhanced Authentication', () => {
         password: 'SecurePassword123!',
       }
 
-      const result = await executeOperation(
+      const result = await executeOperation<
+        ResultOf<typeof SignupWithVerificationMutation>,
+        VariablesOf<typeof SignupWithVerificationMutation>
+      >(
         server,
         print(SignupWithVerificationMutation),
         input,
@@ -108,7 +117,7 @@ describe('Enhanced Authentication', () => {
 
       expect(hasGraphQLErrors(result)).toBe(true)
       const errors = getGraphQLErrors(result)
-      expect(errors[0].message).toBe(
+      expect(errors[0]?.message).toBe(
         'An account with this email already exists',
       )
     })
@@ -133,16 +142,15 @@ describe('Enhanced Authentication', () => {
         user.id,
       )
 
-      const result = await executeOperation(
-        server,
-        print(VerifyEmailMutation),
-        { token },
-        createMockContext(),
-      )
+      const result = await executeOperation<
+        ResultOf<typeof VerifyEmailMutation>,
+        VariablesOf<typeof VerifyEmailMutation>
+      >(server, print(VerifyEmailMutation), { token }, createMockContext())
 
       expect(hasGraphQLErrors(result)).toBe(false)
-      const data = extractGraphQLData(result)
-      expect(data.verifyEmail).toEqual({
+      const data =
+        extractGraphQLData<ResultOf<typeof VerifyEmailMutation>>(result)
+      expect(data?.verifyEmail).toEqual({
         success: true,
         message: 'Email verified successfully. You can now log in.',
       })
@@ -162,7 +170,10 @@ describe('Enhanced Authentication', () => {
     })
 
     it('should fail with invalid token', async () => {
-      const result = await executeOperation(
+      const result = await executeOperation<
+        ResultOf<typeof VerifyEmailMutation>,
+        VariablesOf<typeof VerifyEmailMutation>
+      >(
         server,
         print(VerifyEmailMutation),
         { token: 'invalid-token' },
@@ -171,9 +182,7 @@ describe('Enhanced Authentication', () => {
 
       expect(hasGraphQLErrors(result)).toBe(true)
       const errors = getGraphQLErrors(result)
-      expect(errors[0].message).toContain(
-        'Invalid or expired verification token',
-      )
+      expect(errors[0]?.message).toContain('Invalid or expired token')
     })
   })
 
@@ -209,8 +218,9 @@ describe('Enhanced Authentication', () => {
       )
 
       expect(hasGraphQLErrors(result)).toBe(false)
-      const data = extractGraphQLData(result)
-      expect(data.loginSecure).toEqual({
+      const data =
+        extractGraphQLData<ResultOf<typeof LoginSecureMutation>>(result)
+      expect(data?.loginSecure).toEqual({
         token: null,
         user: null,
         requiresEmailVerification: true,
@@ -259,11 +269,12 @@ describe('Enhanced Authentication', () => {
       )
 
       expect(hasGraphQLErrors(result)).toBe(false)
-      const data = extractGraphQLData(result)
-      expect(data.loginSecure?.token).toBeDefined()
-      expect(data.loginSecure?.user).toBeDefined()
-      expect(data.loginSecure?.requiresEmailVerification).toBe(false)
-      expect(data.loginSecure?.message).toBeNull()
+      const data =
+        extractGraphQLData<ResultOf<typeof LoginSecureMutation>>(result)
+      expect(data?.loginSecure?.token).toBeDefined()
+      expect(data?.loginSecure?.user).toBeDefined()
+      expect(data?.loginSecure?.requiresEmailVerification).toBe(false)
+      expect(data?.loginSecure?.message).toBeNull()
     })
 
     it('should track failed login attempts', async () => {
@@ -330,8 +341,11 @@ describe('Enhanced Authentication', () => {
       )
 
       expect(hasGraphQLErrors(result)).toBe(false)
-      const data = extractGraphQLData(result)
-      expect(data.requestPasswordReset).toEqual({
+      const data =
+        extractGraphQLData<ResultOf<typeof RequestPasswordResetMutation>>(
+          result,
+        )
+      expect(data?.requestPasswordReset).toEqual({
         success: true,
         message:
           'If an account exists with this email, a password reset link has been sent.',
@@ -347,7 +361,10 @@ describe('Enhanced Authentication', () => {
     it('should not reveal if email does not exist', async () => {
       const email = 'nonexistent@example.com'
 
-      const result = await executeOperation(
+      const result = await executeOperation<
+        ResultOf<typeof RequestPasswordResetMutation>,
+        VariablesOf<typeof RequestPasswordResetMutation>
+      >(
         server,
         print(RequestPasswordResetMutation),
         { email },
@@ -355,8 +372,11 @@ describe('Enhanced Authentication', () => {
       )
 
       expect(hasGraphQLErrors(result)).toBe(false)
-      const data = extractGraphQLData(result)
-      expect(data.requestPasswordReset).toEqual({
+      const data =
+        extractGraphQLData<ResultOf<typeof RequestPasswordResetMutation>>(
+          result,
+        )
+      expect(data?.requestPasswordReset).toEqual({
         success: true,
         message:
           'If an account exists with this email, a password reset link has been sent.',
@@ -397,15 +417,19 @@ describe('Enhanced Authentication', () => {
       )
 
       expect(hasGraphQLErrors(result)).toBe(false)
-      const data = extractGraphQLData(result)
-      expect(data.resetPassword).toEqual({
+      const data =
+        extractGraphQLData<ResultOf<typeof ResetPasswordMutation>>(result)
+      expect(data?.resetPassword).toEqual({
         success: true,
         message:
           'Password reset successfully. You can now log in with your new password.',
       })
 
       // Verify can login with new password
-      const loginResult = await executeOperation(
+      const loginResult = await executeOperation<
+        ResultOf<typeof LoginSecureMutation>,
+        VariablesOf<typeof LoginSecureMutation>
+      >(
         server,
         print(LoginSecureMutation),
         {
@@ -416,8 +440,9 @@ describe('Enhanced Authentication', () => {
       )
 
       expect(hasGraphQLErrors(loginResult)).toBe(false)
-      const loginData = extractGraphQLData(loginResult)
-      expect(loginData.loginSecure?.token).toBeDefined()
+      const loginData =
+        extractGraphQLData<ResultOf<typeof LoginSecureMutation>>(loginResult)
+      expect(loginData?.loginSecure?.token).toBeDefined()
     })
   })
 
@@ -443,8 +468,11 @@ describe('Enhanced Authentication', () => {
       )
 
       expect(hasGraphQLErrors(result)).toBe(false)
-      const data = extractGraphQLData(result)
-      expect(data.resendVerificationEmail).toEqual({
+      const data =
+        extractGraphQLData<ResultOf<typeof ResendVerificationEmailMutation>>(
+          result,
+        )
+      expect(data?.resendVerificationEmail).toEqual({
         success: true,
         message:
           'If an account exists with this email, a verification link has been sent.',
@@ -481,8 +509,11 @@ describe('Enhanced Authentication', () => {
       )
 
       expect(hasGraphQLErrors(result)).toBe(false)
-      const data = extractGraphQLData(result)
-      expect(data.resendVerificationEmail).toEqual({
+      const data =
+        extractGraphQLData<ResultOf<typeof ResendVerificationEmailMutation>>(
+          result,
+        )
+      expect(data?.resendVerificationEmail).toEqual({
         success: true,
         message: 'This email has already been verified.',
       })

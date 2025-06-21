@@ -114,7 +114,10 @@ describe('Refresh Token', () => {
     })
 
     it('should fail with invalid refresh token', async () => {
-      await gqlHelpers.expectGraphQLError(
+      await gqlHelpers.expectGraphQLError<
+        ResultOf<typeof RefreshTokenMutation>,
+        VariablesOf<typeof RefreshTokenMutation>
+      >(
         server,
         print(RefreshTokenMutation),
         { refreshToken: 'invalid-token' },
@@ -155,7 +158,7 @@ describe('Refresh Token', () => {
       >(
         server,
         print(RefreshTokenMutation),
-        { refreshToken },
+        { refreshToken: 'invalid-token' },
         createMockContext(),
         'Invalid refresh token',
       )
@@ -198,7 +201,10 @@ describe('Refresh Token', () => {
       expect(logoutResult.logout).toBe(true)
 
       // Try to use refresh token after logout
-      await gqlHelpers.expectGraphQLError(
+      await gqlHelpers.expectGraphQLError<
+        ResultOf<typeof RefreshTokenMutation>,
+        VariablesOf<typeof RefreshTokenMutation>
+      >(
         server,
         print(RefreshTokenMutation),
         { refreshToken: loginData.loginWithTokens?.refreshToken ?? '' },

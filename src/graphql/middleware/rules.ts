@@ -187,4 +187,3 @@ export const isPublic = rule()(() => true)
 
 // Export logical operators for use in resolvers
 export { and, not, or }
-

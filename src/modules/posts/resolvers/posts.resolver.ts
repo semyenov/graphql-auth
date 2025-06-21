@@ -7,7 +7,11 @@
 import type { Prisma } from '@prisma/client'
 import { container } from 'tsyringe'
 import { z } from 'zod'
-import { AuthorizationError, NotFoundError, RateLimitError } from '../../../app/errors/types'
+import {
+  AuthorizationError,
+  NotFoundError,
+  RateLimitError,
+} from '../../../app/errors/types'
 import type { ILogger } from '../../../app/services/logger.interface'
 import {
   and,

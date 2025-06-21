@@ -103,8 +103,8 @@ const server = new ApolloServer<IContext>({
         timestamp: new Date().toISOString(),
         ...(isDevelopment &&
           error instanceof GraphQLError && {
-          stacktrace: error.extensions?.stacktrace || error.stack,
-        }),
+            stacktrace: error.extensions?.stacktrace || error.stack,
+          }),
       },
     }
   },

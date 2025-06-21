@@ -136,14 +136,14 @@ export type DirectiveResolver<TArgs = Record<string, unknown>> = (
  */
 export type WhereInput<T> = {
   [K in keyof T]?: T[K] extends string
-  ? StringFilter
-  : T[K] extends number
-  ? IntFilter
-  : T[K] extends boolean
-  ? BooleanFilter
-  : T[K] extends Date
-  ? DateTimeFilter
-  : T[K]
+    ? StringFilter
+    : T[K] extends number
+      ? IntFilter
+      : T[K] extends boolean
+        ? BooleanFilter
+        : T[K] extends Date
+          ? DateTimeFilter
+          : T[K]
 } & {
   AND?: WhereInput<T>[]
   OR?: WhereInput<T>[]

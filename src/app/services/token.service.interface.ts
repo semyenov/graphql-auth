@@ -4,8 +4,6 @@
  * Defines the contract for JWT token generation and verification.
  */
 
-import type { UserId } from '../../value-objects/user-id.vo'
-
 export interface TokenPayload {
   userId: number
   email: string
@@ -17,7 +15,7 @@ export interface AuthTokens {
   refreshToken: string
 }
 
-export interface TokenConfig {
+export interface ITokenConfig {
   accessTokenSecret: string
   refreshTokenSecret: string
   accessTokenExpiresIn: string // e.g., '15m'
@@ -28,7 +26,7 @@ export interface ITokenService {
   /**
    * Generate both access and refresh tokens for a user.
    *
-   * @param payload - The token payload containing user information
+   * @param payload - The token payl    oad containing user information
    * @returns The generated access and refresh tokens
    */
   generateTokens(user: { id: number; email: string }): Promise<AuthTokens>
@@ -39,7 +37,7 @@ export interface ITokenService {
    * @param token - The access token to verify
    * @returns The user ID if the token is valid, null otherwise
    */
-  verifyAccessToken(token: string): Promise<UserId | null>
+  verifyAccessToken(token: string): Promise<string | null>
 
   /**
    * Refresh an access token using a refresh token.

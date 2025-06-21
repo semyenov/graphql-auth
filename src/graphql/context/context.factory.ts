@@ -10,7 +10,11 @@ import type { ContextFunction } from '@apollo/server'
 import type { IncomingMessage, ServerResponse } from 'http'
 import { ValidationError } from '../../app/errors/types'
 import { getUserIdFromAuthHeaderAsync } from './context.auth'
-import type { GraphQLIncomingMessage, IContext } from './context.types'
+import type {
+  GraphQLIncomingMessage,
+  IContext,
+  RequestComponents,
+} from './context.types'
 import {
   createRequestMetadata,
   createRequestObject,
@@ -88,7 +92,9 @@ export const createContext: ContextFunction<
  * @param req - The incoming GraphQL request
  * @returns Processed request components
  */
-function extractRequestComponents(req: GraphQLIncomingMessage) {
+function extractRequestComponents<TVariables extends Record<string, unknown>>(
+  req: GraphQLIncomingMessage<TVariables>,
+): RequestComponents<TVariables> {
   // Extract and normalize headers
   const headers = extractHeaders(req)
 
@@ -102,10 +108,12 @@ function extractRequestComponents(req: GraphQLIncomingMessage) {
   const variables = body?.variables
 
   // Create request metadata
-  const metadata = createRequestMetadata(headers, operationName, variables)
+  const metadata = createRequestMetadata(headers)
 
   // Create request object
-  const requestObject = createRequestObject(req, headers, method)
+  const requestObject = createRequestObject(
+    req,
+  ) as unknown as IContext<TVariables>['req']
 
   return {
     headers,
@@ -152,18 +160,18 @@ async function createAuthenticationContext(
  * @param ipAddress - The client IP address
  * @returns The complete Context object
  */
-function assembleContext(
-  requestComponents: ReturnType<typeof extractRequestComponents>,
+function assembleContext<TVariables extends Record<string, unknown>>(
+  requestComponents: ReturnType<typeof extractRequestComponents<TVariables>>,
   authContext: ReturnType<typeof createAuthenticationContext> extends Promise<
     infer T
   >
     ? T
     : never,
   ipAddress: string,
-): IContext {
+): IContext<TVariables> {
   return {
     // Request information
-    req: requestComponents.requestObject,
+    req: requestComponents.requestObject as unknown as IContext<TVariables>['req'],
     headers: requestComponents.headers,
     method: requestComponents.method,
     contentType: requestComponents.contentType,

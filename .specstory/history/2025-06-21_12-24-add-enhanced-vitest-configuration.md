@@ -185,3 +185,33 @@ I've updated your `vitest.config.ts` with the enhanced configuration. The new se
 
 ---
 
+_**User**_
+
+For the code present, we get this error:
+```
+
+Invalid `prisma.post.createMany()` invocation in
+/Users/aleksandrsemenov/Projects/graphql-auth/test/core/auth/permissions.test.ts:176:25
+
+  173 describe('GraphQL Permission Rules', () => {
+  174   it('should allow public access to feed query', async () => {
+  175     // Create published posts
+→ 176     await prisma.post.createMany(
+Foreign key constraint violated on the foreign key
+Serialized Error: {
+  code: 'P2003',
+  meta: { modelName: 'Post', constraint: null },
+  clientVersion: '6.10.1',
+  batchRequestIdx: undefined
+}
+```
+How can I resolve this? If you propose a fix, please make it concise.
+
+---
+
+_**Assistant**_
+
+
+
+---
+

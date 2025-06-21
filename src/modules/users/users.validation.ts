@@ -224,6 +224,5 @@ export async function validateUserUpdatePermission(
 // Re-export shared validation helpers for backwards compatibility
 export {
   safeValidateInput as safeValidateUserInput,
-  validateInput as validateUserInput
+  validateInput as validateUserInput,
 } from '../../validation/helpers'
-

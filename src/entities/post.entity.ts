@@ -4,7 +4,10 @@
  * Represents a blog post in our domain model.
  */
 
-import { VALIDATION_LIMITS, VALIDATION_MESSAGES } from '../app/constants/validation'
+import {
+  VALIDATION_LIMITS,
+  VALIDATION_MESSAGES,
+} from '../app/constants/validation'
 import { EntityValidationError } from '../app/errors/types'
 import { PostId } from '../value-objects/post-id.vo'
 import type { UserId } from '../value-objects/user-id.vo'
@@ -21,7 +24,7 @@ export interface PostProps {
 }
 
 export class Post {
-  private constructor(private readonly props: PostProps) { }
+  private constructor(private readonly props: PostProps) {}
 
   // Factory method for creating a new post
   static create(props: {

@@ -4,27 +4,26 @@
  * Defines authorization rules and permission checks for user operations
  */
 
-import { allow, rule, shield } from 'graphql-shield'
+import { rule } from 'graphql-shield'
 import { checkUserOwnership } from '../../app/auth/ownership.utils'
-import type { IContext } from '../../graphql/context/context.types'
-import {
-  isAdmin,
-  isAuthenticated,
-  isModerator,
-} from '../../graphql/middleware/shared-rules'
-import { prisma } from '../../prisma'
 import {
   AuthenticationError,
   AuthorizationError,
   NotFoundError,
 } from '../../app/errors/types'
+import type { IContext } from '../../graphql/context/context.types'
+import { prisma } from '../../prisma'
 import { parseAndValidateGlobalId } from '../../utils/relay'
 
 /**
  * Check if user is viewing their own profile
  */
 export const isSelf = rule({ cache: 'strict' })(
-  async (_parent, args: { id?: string; userId?: string }, context: IContext) => {
+  async (
+    _parent,
+    args: { id?: string; userId?: string },
+    context: IContext,
+  ) => {
     if (!context.userId) {
       return new AuthenticationError('You must be logged in')
     }
@@ -199,92 +198,3 @@ export const canSendMessage = rule({ cache: 'strict' })(
     }
   },
 )
-
-/**
- * Users module permissions configuration
- */
-export const usersPermissions = {
-  Query: {
-    // Public queries
-    searchUsers: allow,
-    user: canViewProfile,
-    userByUsername: allow,
-
-    // Authenticated queries
-    suggestedUsers: isAuthenticated,
-    blockedUsers: isAuthenticated,
-    following: allow,
-    followers: allow,
-  },
-  Mutation: {
-    // Profile management
-    updateUserProfile: isAuthenticated,
-    updateUserPreferences: isAuthenticated,
-    uploadAvatar: isAuthenticated,
-    deleteAvatar: isAuthenticated,
-
-    // Social features
-    followUser: isAuthenticated,
-    unfollowUser: isAuthenticated,
-    blockUser: isAuthenticated,
-    unblockUser: isAuthenticated,
-
-    // Messaging
-    sendMessage: canSendMessage,
-
-    // Reporting
-    reportUser: isAuthenticated,
-
-    // Admin operations
-    updateUserRole: isAdmin,
-    updateUserStatus: isModerator,
-    deleteUser: isAdmin,
-    impersonateUser: isAdmin,
-  },
-  User: {
-    // Public fields
-    id: allow,
-    name: allow,
-    username: allow,
-    avatar: allow,
-    bio: allow,
-    createdAt: allow,
-
-    // Private fields
-    email: rule()(async (parent: { id: number }, _args, context) => {
-      // User can see their own email
-      if (!context.userId) return false
-
-      const isOwner = await checkUserOwnership(context.userId.value, parent.id)
-      if (isOwner) return true
-
-      // NOTE: Privacy settings not yet implemented
-      // For now, hide emails from other users
-      return false
-    }),
-
-    // Stats (visible based on privacy)
-    postsCount: allow,
-    followersCount: allow,
-    followingCount: allow,
-
-    // Private data
-    role: isSelf,
-    status: isSelf,
-    preferences: isSelf,
-    privacy: isSelf,
-    sessions: isSelf,
-    twoFactorEnabled: isSelf,
-  },
-}
-
-/**
- * Create users shield middleware
- */
-export const createUsersShield = () =>
-  shield(usersPermissions, {
-    allowExternalErrors: true,
-    fallbackError: new AuthorizationError(
-      'Not authorized to perform this action',
-    ),
-  })

@@ -7,8 +7,8 @@
 import type { LoginAttempt } from '@prisma/client'
 import { inject, injectable } from 'tsyringe'
 import { AuthenticationError } from '../../../app/errors/types'
-import { prisma } from '../../../prisma'
 import type { ILogger } from '../../../app/services/logger.interface'
+import { prisma } from '../../../prisma'
 
 export interface LoginAttemptOptions {
   email: string
