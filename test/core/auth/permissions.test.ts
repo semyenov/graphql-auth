@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs'
+import * as argon2 from 'argon2'
 import type { ResultOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -28,7 +28,7 @@ describe('Enhanced Permissions System', () => {
     const user1 = await prisma.user.create({
       data: {
         email: `permtest${testCounter}@example.com`,
-        password: await bcrypt.hash('password123', 10),
+        password: await argon2.hash('password123'),
         name: 'Permission Test User',
       },
     })
@@ -37,7 +37,7 @@ describe('Enhanced Permissions System', () => {
     const user2 = await prisma.user.create({
       data: {
         email: `permtest${testCounter}other@example.com`,
-        password: await bcrypt.hash('password123', 10),
+        password: await argon2.hash('password123'),
         name: 'Other Permission Test User',
       },
     })

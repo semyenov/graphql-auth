@@ -19,7 +19,7 @@ import { prisma } from '../../data/database/client'
 import { PrismaUserRepository } from '../../data/repositories/prisma-user.repository'
 // Feature-based implementations (for refresh tokens)
 import { RefreshTokenRepository } from '../../data/repositories/refresh-token.repository'
-import { HybridPasswordService } from '../../modules/auth/services/hybrid-password.service'
+import { Argon2PasswordService } from '../../modules/auth/services/argon2-password.service'
 import {
   type TokenConfig,
   TokenService,
@@ -52,7 +52,7 @@ export function configureContainer(): void {
 
   // Register services
   container.register<IPasswordService>('IPasswordService', {
-    useClass: HybridPasswordService,
+    useClass: Argon2PasswordService,
   })
 
   // Register feature-based services (for refresh tokens)

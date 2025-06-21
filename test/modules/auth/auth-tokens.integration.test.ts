@@ -4,7 +4,7 @@
  * Tests for refresh token functionality
  */
 
-import bcrypt from 'bcryptjs'
+import * as argon2 from 'argon2'
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -30,7 +30,7 @@ describe('Refresh Token', () => {
     await prisma.user.create({
       data: {
         email: 'test@example.com',
-        password: await bcrypt.hash('password123', 10),
+        password: await argon2.hash('password123'),
         name: 'Test User',
       },
     })

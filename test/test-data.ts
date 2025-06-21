@@ -3,7 +3,7 @@
  */
 
 import type { Post, User } from '@prisma/client'
-import bcrypt from 'bcryptjs'
+import * as argon2 from 'argon2'
 import { prisma } from './setup'
 
 /**
@@ -20,7 +20,7 @@ export async function createTestUser(data?: {
   return prisma.user.create({
     data: {
       email: data?.email || `test-${timestamp}-${randomId}@example.com`,
-      password: await bcrypt.hash(data?.password || 'password123', 10),
+      password: await argon2.hash(data?.password || 'password123'),
       name: data?.name || `Test User ${timestamp}`,
     },
   })

@@ -4,7 +4,7 @@
  * Tests for Pothos resolvers without use cases
  */
 
-import bcrypt from 'bcryptjs'
+import * as argon2 from 'argon2'
 import { graphql } from 'gql.tada'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { prisma } from '../../setup'
@@ -23,7 +23,7 @@ describe('Direct Resolvers', () => {
       data: {
         id: 1,
         email: 'test@example.com',
-        password: await bcrypt.hash('password123', 10),
+        password: await argon2.hash('password123'),
         name: 'Test User',
       },
     })

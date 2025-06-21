@@ -4,7 +4,7 @@
  * Tests for DataLoader implementation and N+1 query prevention
  */
 
-import bcrypt from 'bcryptjs'
+import * as argon2 from 'argon2'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createDataLoaders } from '../../src/data/loaders'
 import { prisma } from '../setup'
@@ -15,7 +15,7 @@ describe('DataLoaders', () => {
 
   beforeEach(async () => {
     loaders = createDataLoaders()
-    hashedPassword = await bcrypt.hash('password123', 10)
+    hashedPassword = await argon2.hash('password123')
   })
 
   describe('userById loader', () => {

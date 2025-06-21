@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs'
+import * as argon2 from 'argon2'
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -41,7 +41,7 @@ describe('User queries', () => {
     const user = await prisma.user.create({
       data: {
         email: testUserEmail,
-        password: await bcrypt.hash('password123', 10),
+        password: await argon2.hash('password123'),
         name: 'Me Test User',
       },
     })
@@ -137,7 +137,7 @@ describe('User queries', () => {
       const otherUser = await prisma.user.create({
         data: {
           email: `other-${Date.now()}@example.com`,
-          password: await bcrypt.hash('password', 10),
+          password: await argon2.hash('password'),
           name: 'Other User',
         },
       })

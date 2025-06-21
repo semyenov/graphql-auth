@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs'
+import * as argon2 from 'argon2'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { UserId } from '../../../src/core/value-objects/user-id.vo'
@@ -72,7 +72,7 @@ describe('Posts', () => {
     const user = await prisma.user.create({
       data: {
         email: `posttest${testCounter}@example.com`,
-        password: await bcrypt.hash('password123', 10),
+        password: await argon2.hash('password123'),
         name: 'Post Test User',
       },
     })
@@ -298,7 +298,7 @@ describe('Posts', () => {
       const otherUser = await prisma.user.create({
         data: {
           email: `deleteother${testCounter}@example.com`,
-          password: await bcrypt.hash('password', 10),
+          password: await argon2.hash('password'),
           name: 'Other User',
         },
       })

@@ -19,11 +19,17 @@ export const SERVER_CONFIG = {
 
 export const AUTH_CONFIG = {
   DEFAULT_JWT_EXPIRES_IN: '7d',
-  DEFAULT_BCRYPT_ROUNDS: 10,
   MIN_PASSWORD_LENGTH: 8,
   MAX_PASSWORD_LENGTH: 128,
   DEFAULT_JWT_SECRET: 'your-secret-123',
   TOKEN_ALGORITHM: 'HS256' as const,
+  ARGON2_CONFIG: {
+    type: 2, // argon2id
+    memoryCost: 65536, // 64 MB
+    timeCost: 3,
+    parallelism: 4,
+    hashLength: 32,
+  },
 } as const
 
 export const DATABASE_CONFIG = {

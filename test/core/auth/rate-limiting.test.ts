@@ -4,7 +4,7 @@
  * Tests for rate limiting functionality on authentication endpoints
  */
 
-import bcrypt from 'bcryptjs'
+import * as argon2 from 'argon2'
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
@@ -41,7 +41,7 @@ describe('Rate Limiting', () => {
       await prisma.user.create({
         data: {
           email: 'ratelimit@example.com',
-          password: await bcrypt.hash('password123', 10),
+          password: await argon2.hash('password123'),
           name: 'Rate Limit Test',
         },
       })
@@ -105,7 +105,7 @@ describe('Rate Limiting', () => {
       await prisma.user.create({
         data: {
           email: 'another@example.com',
-          password: await bcrypt.hash('password123', 10),
+          password: await argon2.hash('password123'),
         },
       })
 
@@ -259,7 +259,7 @@ describe('Rate Limiting', () => {
       await prisma.user.create({
         data: {
           email: 'ratelimit@example.com',
-          password: await bcrypt.hash('password123', 10),
+          password: await argon2.hash('password123'),
           name: 'Rate Limit Test',
         },
       })

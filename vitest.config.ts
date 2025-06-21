@@ -1,4 +1,4 @@
-import path from 'path'
+import path from 'node:path'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
@@ -12,24 +12,29 @@ export default defineConfig({
     coverage: {
       reporter: ['text', 'json', 'html'],
       exclude: ['node_modules/', 'test/', 'prisma/', 'dist/', 'types/'],
+      provider: 'v8',
     },
     // Run tests sequentially to avoid database conflicts
     sequence: {
       concurrent: false,
     },
-    // Use threads instead of forks for in-memory SQLite with cache=shared
+    // Use threads pool for better performance in Vitest 3.x
     pool: 'threads',
     poolOptions: {
       threads: {
         singleThread: true,
+        isolate: false,
       },
     },
+    // Vitest 3.x specific optimizations
+    isolate: false,
+    fileParallelism: false,
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(import.meta.dirname || __dirname, './src'),
       '@prisma/client': path.resolve(
-        __dirname,
+        import.meta.dirname || __dirname,
         './node_modules/@prisma/client',
       ),
     },

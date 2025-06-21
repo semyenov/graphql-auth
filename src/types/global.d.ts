@@ -13,7 +13,9 @@ declare global {
     interface ProcessEnv {
       DATABASE_URL: string
       JWT_SECRET: string
-      BCRYPT_ROUNDS?: string
+      ARGON2_MEMORY_COST?: string
+      ARGON2_TIME_COST?: string
+      ARGON2_PARALLELISM?: string
       NODE_ENV?: 'development' | 'production' | 'test'
       PORT?: string
       HOST?: string

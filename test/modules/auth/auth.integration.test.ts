@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs'
+import * as argon2 from 'argon2'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { LoginMutation, SignupMutation } from '../../../src/gql/mutations'
@@ -57,7 +57,7 @@ describe('Authentication', () => {
       await prisma.user.create({
         data: {
           email: 'existing@example.com',
-          password: await bcrypt.hash('securePassword123', 10),
+          password: await argon2.hash('securePassword123'),
           name: 'Existing User',
         },
       })
@@ -90,7 +90,7 @@ describe('Authentication', () => {
       await prisma.user.create({
         data: {
           email,
-          password: await bcrypt.hash(password, 10),
+          password: await argon2.hash(password),
           name: 'Test User',
         },
       })
@@ -123,7 +123,7 @@ describe('Authentication', () => {
       await prisma.user.create({
         data: {
           email,
-          password: await bcrypt.hash(correctPassword, 10),
+          password: await argon2.hash(correctPassword),
           name: 'Test User',
         },
       })
