@@ -56,11 +56,12 @@ bun run demo                            # Run demo script
   - **Relay Plugin**: Global IDs, connections with metadata, cursor pagination
   - **Errors Plugin**: Union result types for comprehensive error handling
   - **Scope Auth Plugin**: Dynamic authorization with 14+ scope types
+  - **Shield Plugin**: Inline GraphQL Shield rules for field-level authorization
   - **DataLoader Plugin**: Automatic batch loading for N+1 prevention
   - **Validation Plugin**: Zod integration with async refinements
 - **Database**: Prisma ORM with SQLite (dev.db) - accessed directly, not through context
 - **Authentication**: JWT tokens with argon2 (hybrid bcrypt support) + refresh token rotation
-- **Authorization**: GraphQL Shield middleware with Pothos Scope Auth
+- **Authorization**: Dual authorization system using Pothos Scope Auth + GraphQL Shield Plugin
 - **Type Safety**: GraphQL Tada for compile-time GraphQL typing
 - **Testing**: Vitest with comprehensive test utilities
 - **Validation**: Zod schema validation with custom async refinements
@@ -124,6 +125,7 @@ src/
 │   │   ├── inputs.ts                 # Shared input types
 │   │   ├── scalars.ts                # Custom scalars (DateTime)
 │   │   └── plugins/                  # Schema plugins
+│   │       └── shield.ts             # Custom ShieldPlugin implementation
 │   ├── context/                      # GraphQL context
 │   │   ├── context.types.ts          # Context type definitions
 │   │   ├── context.factory.ts        # Context creation
@@ -131,8 +133,8 @@ src/
 │   │   └── context.utils.ts          # Context utilities
 │   ├── directives/                   # Custom GraphQL directives
 │   └── middleware/                   # GraphQL-specific middleware
-│       ├── shield-config.ts          # Permission mapping
-│       ├── rules.ts                  # Permission rules
+│       ├── shield-config.ts          # Permission mapping (legacy)
+│       ├── rules.ts                  # Shield permission rules
 │       └── rule-utils.ts             # Rule helper functions
 
 ├── core/                             # Core business logic and utilities
@@ -271,9 +273,29 @@ import { requireAuthentication } from '../../graphql/context/context.auth'
 const userId = requireAuthentication(context) // Throws if not authenticated
 ```
 
-### 6. Permission Rules
+### 6. Authorization with ShieldPlugin
 
-Rules should handle errors gracefully:
+The project uses a custom ShieldPlugin for inline authorization rules:
+
+```typescript
+// Define Shield rules inline with field definitions
+builder.mutationField('updatePost', (t) =>
+  t.prismaField({
+    type: 'Post',
+    grantScopes: ['authenticated'], // Pothos Scope Auth
+    shield: and(isAuthenticatedUser, isPostOwner), // GraphQL Shield rules
+    args: {
+      id: t.arg.id({ required: true }),
+      input: t.arg({ type: UpdatePostInput, required: true }),
+    },
+    resolve: async (query, _parent, args, context) => {
+      // Implementation
+    },
+  }),
+)
+```
+
+Shield rules should handle errors gracefully:
 
 ```typescript
 export const isPostOwner = rule({ cache: 'strict' })(
@@ -475,6 +497,8 @@ When working with GraphQL operations:
 6. **Biome Integration**: Replaced ESLint/Prettier with Biome for better performance
 7. **Hybrid Password Service**: Added argon2 support with bcrypt fallback
 8. **Enhanced Security**: Added security headers middleware
+9. **ShieldPlugin Integration**: Migrated from middleware-based Shield to inline plugin approach
+10. **Dual Authorization**: Combined Pothos Scope Auth with GraphQL Shield for flexible permissions
 
 ## Critical Rules from .cursor/rules
 

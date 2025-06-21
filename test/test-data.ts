@@ -4,7 +4,7 @@
 
 import type { Post, User } from '@prisma/client'
 import * as argon2 from 'argon2'
-import { prisma } from './setup'
+import { prisma } from '../src/prisma'
 
 /**
  * Create a test user with hashed password

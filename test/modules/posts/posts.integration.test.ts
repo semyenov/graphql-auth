@@ -8,13 +8,13 @@ import {
   IncrementPostViewCountMutation,
 } from '../../../src/gql/mutations'
 import { FeedQuery } from '../../../src/gql/queries'
-import { prisma } from '../../setup'
+import { prisma } from '../../../src/prisma'
 import {
   createAuthContext,
   createMockContext,
-  createTestServer,
   gqlHelpers,
 } from '../../utils/helpers/database.helpers'
+import { createTestServer } from '../../test-utils'
 import { toPostId } from '../../utils/helpers/relay.helpers'
 
 // Type definitions for GraphQL responses
@@ -112,8 +112,14 @@ describe('Posts', () => {
         createMockContext(),
       )
 
-      expect(data.feed.edges).toHaveLength(2)
+      // At least 2 posts should be returned (may include posts from other tests)
+      expect(data.feed.edges.length).toBeGreaterThanOrEqual(2)
       expect(data.feed.edges.every((edge) => edge.node.published)).toBe(true)
+      
+      // Verify our test posts are included
+      const testPostTitles = ['Published Post 1', 'Published Post 2']
+      const returnedTitles = data.feed.edges.map(edge => edge.node.title)
+      expect(returnedTitles).toEqual(expect.arrayContaining(testPostTitles))
     })
 
     it('should fetch user drafts when authenticated', async () => {
@@ -208,7 +214,7 @@ describe('Posts', () => {
         query,
         variables,
         createMockContext(), // No auth
-        'Authentication required',
+        'You must be logged in to perform this action. Please authenticate and try again.',
       )
     })
   })
@@ -256,7 +262,7 @@ describe('Posts', () => {
         print(CreatePostMutation),
         variables,
         createMockContext(), // No auth
-        'Authentication required',
+        'You must be logged in to perform this action. Please authenticate and try again.',
       )
     })
   })

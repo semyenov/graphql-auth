@@ -9,11 +9,12 @@ import { z } from 'zod'
 import { RateLimitPresets } from '../../../app/services/rate-limiter.service'
 import { normalizeError } from '../../../core/errors/handlers'
 import { AuthenticationError } from '../../../core/errors/types'
-import type { ILogger } from '../../../core/services/logger.interface'
+// import type { ILogger } from '../../../core/services/logger.interface'
 import type { IPasswordService } from '../../../core/services/password.service.interface'
 import type { ITokenService } from '../../../core/services/token.service.interface'
 import { builder } from '../../../graphql/schema/builder'
 import { commonValidations } from '../../../graphql/schema/helpers'
+import { isAuthenticatedUser, rateLimitSensitiveOperations } from '../../../graphql/middleware/rules'
 import {
   applyRateLimit,
   createRateLimitConfig,
@@ -25,7 +26,7 @@ import { AuthTokensType } from '../types/auth.types'
 // Get services from container
 const getPasswordService = () =>
   container.resolve<IPasswordService>('IPasswordService')
-const getLogger = () => container.resolve<ILogger>('ILogger')
+// const getLogger = () => container.resolve<ILogger>('ILogger')
 const getTokenService = () => container.resolve<ITokenService>('ITokenService')
 
 // Login with tokens mutation (direct implementation)
@@ -34,6 +35,7 @@ builder.mutationField('loginWithTokens', (t) =>
     type: AuthTokensType,
     description: 'Authenticate and receive access and refresh tokens',
     grantScopes: ['public'],
+    shield: rateLimitSensitiveOperations,
     args: {
       email: t.arg.string({
         required: true,
@@ -49,8 +51,8 @@ builder.mutationField('loginWithTokens', (t) =>
       }),
     },
     resolve: async (_parent, args, context) => {
-      const logger = getLogger().child({ resolver: 'loginWithTokens' })
-      logger.info('Login with tokens attempt', { email: args.email })
+      // const logger = getLogger().child({ resolver: 'loginWithTokens' })
+      // logger.info('Login with tokens attempt', { email: args.email })
 
       try {
         // Apply rate limiting
@@ -69,7 +71,7 @@ builder.mutationField('loginWithTokens', (t) =>
         })
 
         if (!user) {
-          logger.warn('Login failed - user not found', { email: args.email })
+          // logger.warn('Login failed - user not found', { email: args.email })
           throw new AuthenticationError('Invalid email or password')
         }
 
@@ -81,10 +83,10 @@ builder.mutationField('loginWithTokens', (t) =>
         )
 
         if (!isValidPassword) {
-          logger.warn('Login failed - invalid password', {
-            email: args.email,
-            userId: user.id,
-          })
+          // logger.warn('Login failed - invalid password', {
+          //   email: args.email,
+          //   userId: user.id,
+          // })
           throw new AuthenticationError('Invalid email or password')
         }
 
@@ -99,7 +101,7 @@ builder.mutationField('loginWithTokens', (t) =>
             where: { id: user.id },
             data: { password: newHash },
           })
-          logger.info('Password rehashed during login', { userId: user.id })
+          // logger.info('Password rehashed during login', { userId: user.id })
         }
 
         // Generate tokens
@@ -109,19 +111,19 @@ builder.mutationField('loginWithTokens', (t) =>
           email: user.email,
         })
 
-        logger.info('Login with tokens successful', {
-          email: args.email,
-          userId: user.id,
-        })
+        // logger.info('Login with tokens successful', {
+        //   email: args.email,
+        //   userId: user.id,
+        // })
 
         return {
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
         }
       } catch (error) {
-        logger.error('Login with tokens error', error as Error, {
-          email: args.email,
-        })
+        // logger.error('Login with tokens error', error as Error, {
+        //   email: args.email,
+        // })
         throw normalizeError(error)
       }
     },
@@ -134,6 +136,7 @@ builder.mutationField('refreshToken', (t) =>
     type: AuthTokensType,
     description: 'Refresh access token using a refresh token',
     grantScopes: ['public'],
+    shield: rateLimitSensitiveOperations,
     args: {
       refreshToken: t.arg.string({
         required: true,
@@ -143,18 +146,18 @@ builder.mutationField('refreshToken', (t) =>
       }),
     },
     resolve: async (_parent, args, _context) => {
-      const logger = getLogger().child({ resolver: 'refreshToken' })
-      logger.info('Token refresh attempt')
+      // const logger = getLogger().child({ resolver: 'refreshToken' })
+      // logger.info('Token refresh attempt')
 
       try {
         const tokenService = getTokenService()
         const tokens = await tokenService.refreshTokens(args.refreshToken)
 
-        logger.info('Token refresh successful')
+        // logger.info('Token refresh successful')
 
         return tokens
       } catch (error) {
-        logger.error('Token refresh error', error as Error)
+        // logger.error('Token refresh error', error as Error)
         throw normalizeError(error)
       }
     },
@@ -166,22 +169,23 @@ builder.mutationField('logout', (t) =>
   t.boolean({
     description: 'Logout user and revoke all refresh tokens',
     grantScopes: ['authenticated'],
+    shield: isAuthenticatedUser,
     resolve: async (_parent, _args, context) => {
-      const logger = getLogger().child({ resolver: 'logout' })
+      // const logger = getLogger().child({ resolver: 'logout' })
 
       try {
         const userId = requireAuthentication(context)
-        logger.info('Logout attempt', { userId })
+        // logger.info('Logout attempt', { userId })
 
         const tokenService = getTokenService()
 
         // Revoke all refresh tokens for the user (extract numeric value)
         await tokenService.revokeAllTokens(userId.value)
 
-        logger.info('Logout successful', { userId })
+        // logger.info('Logout successful', { userId })
         return true
       } catch (error) {
-        logger.error('Logout error', error as Error)
+        // logger.error('Logout error', error as Error)
         throw normalizeError(error)
       }
     },

@@ -1,25 +1,15 @@
-"""
-Legacy authentication response
-"""
+"""Legacy authentication response"""
 type AuthResponse {
-  """
-  JWT access token (deprecated, use AuthTokens instead)
-  """
+  """JWT access token (deprecated, use AuthTokens instead)"""
   token: String
 }
 
-"""
-Authentication tokens response
-"""
+"""Authentication tokens response"""
 type AuthTokens {
-  """
-  JWT access token for API requests
-  """
+  """JWT access token for API requests"""
   accessToken: String
 
-  """
-  Refresh token for obtaining new access tokens
-  """
+  """Refresh token for obtaining new access tokens"""
   refreshToken: String
 }
 
@@ -36,14 +26,10 @@ type AuthorizationError {
 }
 
 input BooleanFilter {
-  """
-  Exact boolean match
-  """
+  """Exact boolean match"""
   equals: Boolean
 
-  """
-  Boolean does not equal this value
-  """
+  """Boolean does not equal this value"""
   not: Boolean
 }
 
@@ -64,138 +50,86 @@ scalar DID
 scalar DateTime
 
 input DateTimeFilter {
-  """
-  Exact date match
-  """
+  """Exact date match"""
   equals: DateTime
 
-  """
-  Date after this value
-  """
+  """Date after this value"""
   gt: DateTime
 
-  """
-  Date on or after this value
-  """
+  """Date on or after this value"""
   gte: DateTime
 
-  """
-  Date before this value
-  """
+  """Date before this value"""
   lt: DateTime
 
-  """
-  Date on or before this value
-  """
+  """Date on or before this value"""
   lte: DateTime
 }
 
 input IntFilter {
-  """
-  Exact number match
-  """
+  """Exact number match"""
   equals: Int
 
-  """
-  Greater than this value
-  """
+  """Greater than this value"""
   gt: Int
 
-  """
-  Greater than or equal to this value
-  """
+  """Greater than or equal to this value"""
   gte: Int
 
-  """
-  Value is in this list
-  """
+  """Value is in this list"""
   in: [Int!]
 
-  """
-  Less than this value
-  """
+  """Less than this value"""
   lt: Int
 
-  """
-  Less than or equal to this value
-  """
+  """Less than or equal to this value"""
   lte: Int
 
-  """
-  Value is not in this list
-  """
+  """Value is not in this list"""
   notIn: [Int!]
 }
 
 scalar JSON
 
-"""
-The root mutation type
-"""
+"""The root mutation type"""
 type Mutation {
-  """
-  Create a comment on a post with rate limiting
-  """
+  """Create a comment on a post with rate limiting"""
   createComment(content: String!, postId: ID!): String
 
-  """
-  Create a new post
-  """
+  """Create a new post"""
   createPost(input: CreatePostInput!): Post
 
-  """
-  Delete a post
-  """
+  """Delete a post"""
   deletePost(id: ID!): Boolean
 
-  """
-  Increment the view count of a post
-  """
+  """Increment the view count of a post"""
   incrementPostViewCount(id: ID!): Post
 
-  """
-  Authenticate and receive a token
-  """
+  """Authenticate and receive a token"""
   login(email: String!, password: String!): String
 
-  """
-  Authenticate and receive access and refresh tokens
-  """
+  """Authenticate and receive access and refresh tokens"""
   loginWithTokens(email: String!, password: String!): AuthTokens
 
-  """
-  Logout user and revoke all refresh tokens
-  """
+  """Logout user and revoke all refresh tokens"""
   logout: Boolean
 
-  """
-  Moderate a post (approve, reject, or flag)
-  """
+  """Moderate a post (approve, reject, or flag)"""
   moderatePost(action: String!, id: ID!, reason: String): Boolean
 
-  """
-  Refresh access token using a refresh token
-  """
+  """Refresh access token using a refresh token"""
   refreshToken(refreshToken: String!): AuthTokens
 
-  """
-  Create a new user account
-  """
+  """Create a new user account"""
   signup(email: String!, name: String, password: String!): String
 
-  """
-  Toggle the publish status of a post
-  """
+  """Toggle the publish status of a post"""
   togglePublishPost(id: ID!): Post
 
-  """
-  Update an existing post
-  """
+  """Update an existing post"""
   updatePost(id: ID!, input: UpdatePostInput!): Post
 
-  """
-  Update the current user profile
-  """
+  """Update the current user profile"""
   updateUserProfile(input: UpdateUserInput!): User
 }
 
@@ -219,104 +153,66 @@ type PageInfo {
 }
 
 type Post implements Node {
-  """
-  The user who created this post
-  """
+  """The user who created this post"""
   author: User
 
-  """
-  The content/body of the post
-  """
+  """The content/body of the post"""
   content: String
 
-  """
-  When the post was first created
-  """
+  """When the post was first created"""
   createdAt: DateTime
 
-  """
-  A short excerpt from the post content (first 150 characters)
-  """
+  """A short excerpt from the post content (first 150 characters)"""
   excerpt: String
   id: ID!
 
-  """
-  Whether the current user is the owner of this post
-  """
+  """Whether the current user is the owner of this post"""
   isOwner: Boolean
 
-  """
-  Whether the post is published and visible to the public
-  """
+  """Whether the post is published and visible to the public"""
   published: Boolean
 
-  """
-  Estimated reading time in minutes (assuming 200 words per minute)
-  """
+  """Estimated reading time in minutes (assuming 200 words per minute)"""
   readingTimeMinutes: Int
 
-  """
-  The title of the post
-  """
+  """The title of the post"""
   title: String
 
-  """
-  When the post was last modified
-  """
+  """When the post was last modified"""
   updatedAt: DateTime
 
-  """
-  Number of times this post has been viewed
-  """
+  """Number of times this post has been viewed"""
   viewCount: Int
 
-  """
-  Approximate word count of the post content
-  """
+  """Approximate word count of the post content"""
   wordCount: Int
 }
 
 input PostCreateInput {
-  """
-  The content/body of the post
-  """
+  """The content/body of the post"""
   content: String
 
-  """
-  The title of the post
-  """
+  """The title of the post"""
   title: String!
 }
 
 input PostOrderByInput {
-  """
-  Order by creation date
-  """
+  """Order by creation date"""
   createdAt: SortOrder
 
-  """
-  Order by post ID
-  """
+  """Order by post ID"""
   id: SortOrder
 
-  """
-  Order by published status
-  """
+  """Order by published status"""
   published: SortOrder
 
-  """
-  Order by post title
-  """
+  """Order by post title"""
   title: SortOrder
 
-  """
-  Order by last update date
-  """
+  """Order by last update date"""
   updatedAt: SortOrder
 
-  """
-  Order by view count
-  """
+  """Order by view count"""
   viewCount: SortOrder
 }
 
@@ -325,121 +221,61 @@ input PostOrderByUpdatedAtInput {
 }
 
 input PostUpdateInput {
-  """
-  New content for the post
-  """
+  """New content for the post"""
   content: String
 
-  """
-  New published status for the post
-  """
+  """New published status for the post"""
   published: Boolean
 
-  """
-  New title for the post
-  """
+  """New title for the post"""
   title: String
 }
 
 input PostWhereInput {
-  """
-  Filter posts by author ID
-  """
+  """Filter posts by author ID"""
   authorId: IntFilter
 
-  """
-  Filter posts by content
-  """
+  """Filter posts by content"""
   content: StringFilter
 
-  """
-  Filter posts by creation date
-  """
+  """Filter posts by creation date"""
   createdAt: DateTimeFilter
 
-  """
-  Filter posts by published status
-  """
+  """Filter posts by published status"""
   published: BooleanFilter
 
-  """
-  Filter posts by title
-  """
+  """Filter posts by title"""
   title: StringFilter
 
-  """
-  Filter posts by last update date
-  """
+  """Filter posts by last update date"""
   updatedAt: DateTimeFilter
 
-  """
-  Filter posts by view count
-  """
+  """Filter posts by view count"""
   viewCount: IntFilter
 }
 
-"""
-The root query type
-"""
+"""The root query type"""
 type Query {
-  """
-  Get draft posts for the authenticated user
-  """
-  drafts(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): QueryDraftsConnection
+  """Get draft posts for the authenticated user"""
+  drafts(after: String, before: String, first: Int, last: Int): QueryDraftsConnection
 
-  """
-  Get published posts with optional search
-  """
-  feed(
-    after: String
-    before: String
-    first: Int
-    last: Int
-    searchString: String
-  ): QueryFeedConnection
+  """Get published posts with optional search"""
+  feed(after: String, before: String, first: Int, last: Int, searchString: String): QueryFeedConnection
 
-  """
-  Get the currently authenticated user
-  """
+  """Get the currently authenticated user"""
   me: User
 
-  """
-  Get a post by ID
-  """
+  """Get a post by ID"""
   post(id: ID!): Post
 
-  """
-  Search users by name or email
-  """
-  searchUsers(
-    after: String
-    before: String
-    first: Int
-    last: Int
-    search: String!
-  ): QuerySearchUsersConnection
+  """Search users by name or email"""
+  searchUsers(after: String, before: String, first: Int, last: Int, search: String!): QuerySearchUsersConnection
 
-  """
-  Get a user by ID
-  """
+  """Get a user by ID"""
   user(id: ID!): User
 
-  """
-  Get all users with optional filtering
-  """
-  users(
-    after: String
-    before: String
-    first: Int
-    last: Int
-    orderBy: UserOrderByInput
-    where: UserWhereInput
-  ): QueryUsersConnection
+  """Get all users with optional filtering"""
+  users(after: String, before: String, first: Int, last: Int, orderBy: UserOrderByInput, where: UserWhereInput): QueryUsersConnection
 }
 
 type QueryDraftsConnection {
@@ -499,29 +335,19 @@ enum SortOrder {
 }
 
 input StringFilter {
-  """
-  String contains this value (case-insensitive)
-  """
+  """String contains this value (case-insensitive)"""
   contains: String
 
-  """
-  String ends with this value
-  """
+  """String ends with this value"""
   endsWith: String
 
-  """
-  Exact string match
-  """
+  """Exact string match"""
   equals: String
 
-  """
-  String does not equal this value
-  """
+  """String does not equal this value"""
   not: String
 
-  """
-  String starts with this value
-  """
+  """String starts with this value"""
   startsWith: String
 }
 
@@ -541,17 +367,13 @@ input UpdateUserInput {
 type User implements Node {
   createdAt: DateTime
 
-  """
-  Number of unpublished posts by this user
-  """
+  """Number of unpublished posts by this user"""
   draftsCount: Int
   email: String
   id: ID!
   name: String
 
-  """
-  Total number of posts by this user
-  """
+  """Total number of posts by this user"""
   postCount: Int
   posts(
     after: String
@@ -559,38 +381,26 @@ type User implements Node {
     first: Int
     last: Int
 
-    """
-    Filter posts by published status
-    """
+    """Filter posts by published status"""
     published: Boolean
   ): UserPostsConnection
 
-  """
-  Number of published posts by this user
-  """
+  """Number of published posts by this user"""
   publishedPostCount: Int
 
-  """
-  Number of published posts by this user
-  """
+  """Number of published posts by this user"""
   publishedPostsCount: Int
   updatedAt: DateTime
 }
 
 input UserOrderByInput {
-  """
-  Order by user email
-  """
+  """Order by user email"""
   email: SortOrder
 
-  """
-  Order by user ID
-  """
+  """Order by user ID"""
   id: SortOrder = asc
 
-  """
-  Order by user name
-  """
+  """Order by user name"""
   name: SortOrder
 }
 
@@ -606,33 +416,23 @@ type UserPostsConnectionEdge {
 }
 
 input UserSearchInput {
-  """
-  Search query
-  """
+  """Search query"""
   query: String
 }
 
 input UserUniqueInput {
-  """
-  User email address
-  """
+  """User email address"""
   email: String
 
-  """
-  User ID
-  """
+  """User ID"""
   id: Int
 }
 
 input UserWhereInput {
-  """
-  Filter users by email
-  """
+  """Filter users by email"""
   email: StringFilter
 
-  """
-  Filter users by name
-  """
+  """Filter users by name"""
   name: StringFilter
 }
 

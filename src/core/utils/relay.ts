@@ -50,7 +50,10 @@ export const encodeGlobalId = toGlobalId
 /**
  * Alias for fromGlobalId for backward compatibility with Pothos builder
  */
-export const decodeGlobalId = fromGlobalId
+export const decodeGlobalId = (globalId: string) => {
+  const { type, id } = fromGlobalId(globalId)
+  return { typename: type, id }
+}
 
 /**
  * Alias for parseGlobalId for backward compatibility

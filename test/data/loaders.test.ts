@@ -7,14 +7,16 @@
 import * as argon2 from 'argon2'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createDataLoaders } from '../../src/data/loaders'
-import { prisma } from '../setup'
+import { prisma } from '../helpers/db'
 
 describe('DataLoaders', () => {
   let loaders: ReturnType<typeof createDataLoaders>
   let hashedPassword: string
 
   beforeEach(async () => {
-    loaders = createDataLoaders()
+    await prisma.user.deleteMany()
+    await prisma.post.deleteMany()
+    loaders = createDataLoaders(prisma)
     hashedPassword = await argon2.hash('password123')
   })
 

@@ -149,14 +149,13 @@ describe('Relay Utilities', () => {
       const node = { id: 'VXNlcjox' }
       const edge = createEdge(node)
 
-      expect(edge).toMatchObject({
-        cursor: expect.any(String),
-        node,
-      })
+      expect(edge.node).toBe(node)
+      expect(typeof edge.cursor).toBe('string')
+      expect(edge.cursor.length).toBeGreaterThan(0)
 
       // Verify cursor encodes the ID
       const decoded = decodeCursor(edge.cursor)
-      expect(decoded.id).toBe('VXNlcjox')
+      expect(decoded).toEqual({ id: 'VXNlcjox' })
     })
   })
 
@@ -386,17 +385,15 @@ describe('Relay Utilities', () => {
     it('should convert offset pagination to connection args', () => {
       const args = offsetToConnectionArgs(20, 10)
 
-      expect(args).toMatchObject({
-        first: 10,
-        after: expect.any(String),
-        last: null,
-        before: null,
-      })
+      expect(args.first).toBe(10)
+      expect(args.last).toBeNull()
+      expect(args.before).toBeNull()
+      expect(typeof args.after).toBe('string')
+      expect(args.after).toBeTruthy()
 
       // Verify cursor encodes the offset
-      expect(args.after).toBeTruthy()
       const decoded = decodeCursor(args.after as string)
-      expect(decoded.id).toBe(20)
+      expect(decoded).toEqual({ id: 20 })
     })
 
     it('should handle zero offset', () => {

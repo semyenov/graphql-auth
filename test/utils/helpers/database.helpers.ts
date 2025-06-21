@@ -25,12 +25,19 @@ import '../../test-env'
  */
 
 import { ApolloServer, type GraphQLResponse } from '@apollo/server'
+import { useDeferStream } from '@graphql-yoga/plugin-defer-stream'
+import { useDisableIntrospection } from '@graphql-yoga/plugin-disable-introspection'
+import type { PrismaClient } from '@prisma/client'
+import { createYoga } from 'graphql-yoga'
 import jwt from 'jsonwebtoken'
 import { env } from '../../../src/app/config/environment'
 import { UserId } from '../../../src/core/value-objects/user-id.vo'
-import type { Context } from '../../../src/graphql/context/context.types'
+import {
+  type AuthContext,
+  type Context,
+} from '../../../src/graphql/context/context.types'
 import { enhanceContext } from '../../../src/graphql/context/context.utils'
-import { getSchema } from '../../../src/graphql/schema'
+import { buildSchema } from '../../../src/graphql/schema'
 
 // Create test context
 export function createMockContext(overrides?: Partial<Context>): Context {
@@ -97,12 +104,61 @@ export function createAuthContext(userId: number | UserId): Context {
   })
 }
 
-// Create test server
-export function createTestServer() {
-  return new ApolloServer<Context>({
-    schema: getSchema(),
-    introspection: true,
+export interface TestServer {
+  yoga: ReturnType<typeof createYoga>
+  executeOperation: <
+    TData = unknown,
+    TVariables extends Record<string, unknown> = Record<string, unknown>,
+  >(
+    query: string,
+    variables?: TVariables,
+    context?: Context,
+  ) => Promise<GraphQLResponse<TData>>
+}
+
+/**
+ * Creates a Yoga test server instance for integration testing.
+ *
+ * @param authContext - Optional partial authentication context to be merged into the request context.
+ * @param dbClient - Optional PrismaClient instance to be passed to buildSchema
+ * @returns An object containing the test server and a function to execute operations.
+ */
+export async function createYogaTestServer(
+  authContext?: Partial<AuthContext>,
+  dbClient?: PrismaClient,
+): Promise<TestServer> {
+  const schema = await buildSchema(dbClient)
+  const yoga = createYoga({
+    schema,
+    context: authContext || {},
+    plugins: [useDeferStream(), useDisableIntrospection()],
   })
+
+  return {
+    yoga,
+    async executeOperation<
+      TData = unknown,
+      TVariables extends Record<string, unknown> = Record<string, unknown>,
+    >(
+      query: string,
+      variables?: TVariables,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      _context?: Context,
+    ): Promise<GraphQLResponse<TData>> {
+      const response = await yoga.fetch('http://localhost:4000/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query,
+          variables,
+        }),
+      })
+
+      return response.json() as Promise<GraphQLResponse<TData>>
+    },
+  }
 }
 
 // Generate test JWT token
@@ -268,3 +324,22 @@ export const gqlHelpers = {
  * The convenience functions are perfect for frontend applications and integration tests
  * with a running server, but not for unit tests of the GraphQL schema itself.
  */
+
+export async function createTestApp(options?: {
+  context?: Partial<ContextType>
+  useAuth?: boolean
+}) {
+  const schema = await buildSchema()
+  const yoga = createYoga({
+    schema,
+    context: options?.context || {},
+    plugins: [
+      useDisableIntrospection(),
+      useDeferStream(),
+    ],
+  })
+
+  const server = createTestServer() // Using Apollo for consistency
+
+  return { yoga, server }
+}

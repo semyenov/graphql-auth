@@ -6,44 +6,11 @@
  */
 
 // Authentication utilities
-export {
-  createAuthMetadata,
-  extractBearerToken,
-  getUserIdFromAuthHeaderAsync,
-  getUserRole,
-  hasPermission,
-  isAuthenticated,
-  requireAuthentication,
-} from './context.auth'
+export * from './context.auth'
 // Main context factory
-export { createContext } from './context.factory'
+export * from './context.factory'
 // Context types
-export type {
-  AuthContext,
-  AuthenticationContext,
-  Context,
-  ContextCreationFunction,
-  EnhancedContext,
-  GraphQLIncomingMessage,
-  GraphQLResponse,
-  PostContext,
-  RequestComponents,
-  UserContext,
-} from './context.types'
+export * from './context.types'
 
 // Context utilities
-export {
-  createPerformanceMetadata,
-  createRequestMetadata,
-  createRequestObject,
-  createSecurityContext,
-  determineHttpMethod,
-  enhanceContext,
-  extractClientIp,
-  extractContentType,
-  extractHeaders,
-  extractUserAgent,
-  getUserId,
-  isValidRequest,
-  validateContext,
-} from './context.utils'
+export * from './context.utils'

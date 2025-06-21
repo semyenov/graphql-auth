@@ -7,12 +7,18 @@
 
 import { print } from 'graphql'
 import { performance } from 'perf_hooks'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { FeedQuery } from '../../src/gql/queries'
-import { createTestServer } from '../utils/helpers/database.helpers'
+import { prisma } from '../../src/prisma'
+import { createMockContext, executeOperation } from '../utils/helpers/database.helpers'
+import { createTestServer } from '../test-utils'
 
 describe('Load Testing', () => {
-  const server = createTestServer()
+  let server: ReturnType<typeof createTestServer>
+
+  beforeAll(async () => {
+    server = createTestServer()
+  })
 
   beforeEach(async () => {
     // Setup test data for performance testing
@@ -23,10 +29,7 @@ describe('Load Testing', () => {
 
     // Simulate concurrent requests
     const promises = Array.from({ length: 10 }, () =>
-      server.executeOperation({
-        query: print(FeedQuery),
-        variables: {},
-      }),
+      executeOperation(server, print(FeedQuery), {}, createMockContext()),
     )
 
     const results = await Promise.all(promises)

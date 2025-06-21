@@ -7,13 +7,13 @@
 import * as argon2 from 'argon2'
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
-import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { rateLimiter } from '../../../src/app/services/rate-limiter.service'
 import { LoginMutation, SignupMutation } from '../../../src/gql/mutations'
-import { prisma } from '../../setup'
+import { prisma } from '../../../src/prisma'
+import { createTestServer } from '../../test-utils'
 import {
   createMockContext,
-  createTestServer,
   executeOperation,
   gqlHelpers,
 } from '../../utils/helpers/database.helpers'
@@ -21,15 +21,22 @@ import {
 describe('Rate Limiting', () => {
   const server = createTestServer()
 
+  beforeAll(() => {
+    // Enable rate limiting for these tests
+    process.env.TEST_RATE_LIMITING = 'true'
+  })
+
+  afterAll(async () => {
+    // Disable rate limiting after tests
+    delete process.env.TEST_RATE_LIMITING
+    // Cleanup
+    await rateLimiter.cleanup()
+  })
+
   beforeEach(async () => {
     // Reset rate limits for tests
     await rateLimiter.reset('login', 'email:ratelimit@example.com')
     await rateLimiter.reset('signup', 'email:newuser@example.com')
-  })
-
-  afterAll(async () => {
-    // Cleanup
-    await rateLimiter.cleanup()
   })
 
   describe('Login rate limiting', () => {
@@ -67,7 +74,7 @@ describe('Rate Limiting', () => {
           // Login failure is expected, but not rate limit error
           expect(
             response.body.kind === 'single' &&
-              response.body.singleResult.errors?.[0]?.message,
+            response.body.singleResult.errors?.[0]?.message,
           ).toContain('Invalid email or password')
         }
       }
@@ -139,11 +146,11 @@ describe('Rate Limiting', () => {
       ).toBeDefined()
       expect(
         response.body.kind === 'single' &&
-          response.body.singleResult.errors?.[0]?.message,
+        response.body.singleResult.errors?.[0]?.message,
       ).toContain('Invalid email or password')
       expect(
         response.body.kind === 'single' &&
-          response.body.singleResult.errors?.[0]?.message,
+        response.body.singleResult.errors?.[0]?.message,
       ).not.toContain('Too many requests')
     })
   })

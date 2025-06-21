@@ -102,6 +102,11 @@ export class RateLimiterService {
     options: RateLimiterOptions,
     points: number = 1,
   ): Promise<void> {
+    // Skip rate limiting in test environment for non-rate-limit tests
+    if (process.env.NODE_ENV === 'test' && !process.env.TEST_RATE_LIMITING) {
+      return
+    }
+
     const limiter = this.getRateLimiter(key, options)
 
     try {

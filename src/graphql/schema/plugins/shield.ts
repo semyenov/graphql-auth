@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-namespace */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// @ts-nocheck
-// @biome-ignore
 import SchemaBuilder, {
   BasePlugin,
   type FieldNullability,
@@ -81,7 +77,6 @@ declare global {
 }
 
 const pluginName = 'shield' as const
-export default pluginName
 
 export class ShieldPlugin<Types extends SchemaTypes> extends BasePlugin<Types> {
   override afterBuild(schema: GraphQLSchema): GraphQLSchema {
@@ -119,15 +114,9 @@ export class ShieldPlugin<Types extends SchemaTypes> extends BasePlugin<Types> {
     return applyMiddleware(
       schema,
       shield<Record<string, unknown>, Context>(rules, {
-        debug: true,
-        fallbackError: 'Unauthorized shield error',
+        debug: process.env.NODE_ENV !== 'production',
+        fallbackError: 'Not authorized',
         allowExternalErrors: true,
-        fallbackRule: {
-          name: 'unauthorized',
-          equals: () => true,
-          extractFragment: () => undefined,
-          resolve: () => Promise.resolve(true),
-        },
       }),
     )
   }
@@ -139,3 +128,5 @@ try {
 } catch (_error: unknown) {
   // Plugin already registered, ignore
 }
+
+export default pluginName

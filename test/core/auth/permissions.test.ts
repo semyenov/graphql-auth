@@ -6,13 +6,13 @@ import { UserId } from '../../../src/core/value-objects/user-id.vo'
 import { DeletePostMutation, LoginMutation } from '../../../src/gql/mutations'
 import { FeedQuery, MeQuery, PostQuery } from '../../../src/gql/queries'
 import { PermissionUtils } from '../../../src/graphql/middleware/utils-clean'
-import { prisma } from '../../setup'
+import { prisma } from '../../../src/prisma'
 import {
   createAuthContext,
   createMockContext,
-  createTestServer,
   executeOperation,
 } from '../../utils/helpers/database.helpers'
+import { createTestServer } from '../../test-utils'
 import { toPostId, toUserId } from '../../utils/helpers/relay.helpers'
 
 describe('Enhanced Permissions System', () => {
@@ -213,7 +213,7 @@ describe('Enhanced Permissions System', () => {
       if (unauthResult.body.kind === 'single') {
         expect(unauthResult.body.singleResult.errors).toBeDefined()
         expect(unauthResult.body.singleResult.errors?.[0]?.message).toContain(
-          'Authentication required',
+          'You must be logged in to perform this action. Please authenticate and try again.',
         )
       }
 

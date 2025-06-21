@@ -4,14 +4,13 @@
  * Provides batch loading functions to prevent N+1 queries
  */
 
-import type { Post, User } from '@prisma/client'
+import type { Post, PrismaClient, User } from '@prisma/client'
 import DataLoader from 'dataloader'
-import { prisma } from '../database/client'
 
 /**
  * Creates DataLoaders for the context
  */
-export function createDataLoaders() {
+export function createDataLoaders(prisma: PrismaClient) {
   return {
     // User loader by ID
     userById: new DataLoader<number, User | null>(

@@ -8,8 +8,9 @@ import type { Prisma } from '@prisma/client'
 import { container } from 'tsyringe'
 import { z } from 'zod'
 import { ConflictError } from '../../../core/errors/types'
-import type { ILogger } from '../../../core/services/logger.interface'
+// import type { ILogger } from '../../../core/services/logger.interface'
 import { parseGlobalId } from '../../../core/utils/relay'
+import { isAuthenticatedUser, isPublic, or } from '../../../graphql/middleware/rules'
 import { builder } from '../../../graphql/schema/builder'
 import {
   UserOrderByInput,
@@ -23,7 +24,7 @@ import { prisma } from '../../../prisma'
 import { requireAuthentication } from '../../auth/guards/auth.guards'
 
 // Get logger from container
-const getLogger = () => container.resolve<ILogger>('ILogger')
+// const getLogger = () => container.resolve<ILogger>('ILogger')
 
 // Get user by ID query
 builder.queryField('user', (t) =>
@@ -32,14 +33,15 @@ builder.queryField('user', (t) =>
     nullable: true,
     description: 'Get a user by ID',
     grantScopes: ['public'],
+    shield: or(isPublic, isAuthenticatedUser),
     args: {
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, _context) => {
-      const logger = getLogger().child({ resolver: 'user' })
+      // const logger = getLogger().child({ resolver: 'user' })
       const userId = parseGlobalId(args.id.toString(), 'User')
 
-      logger.info('Fetching user by ID', { userId })
+      // logger.info('Fetching user by ID', { userId })
 
       const user = await prisma.user.findUnique({
         ...query,
@@ -47,7 +49,7 @@ builder.queryField('user', (t) =>
       })
 
       if (!user) {
-        logger.warn('User not found', { userId })
+        // logger.warn('User not found', { userId })
         return null
       }
 
@@ -63,6 +65,7 @@ builder.queryField('users', (t) =>
     cursor: 'id',
     description: 'Get all users with optional filtering',
     grantScopes: ['public'],
+    shield: isPublic,
     args: {
       where: t.arg({ type: UserWhereInput, required: false }),
       orderBy: t.arg({ type: UserOrderByInput, required: false }),
@@ -90,6 +93,7 @@ builder.queryField('searchUsers', (t) =>
     cursor: 'id',
     description: 'Search users by name or email',
     grantScopes: ['public'],
+    shield: isPublic,
     args: {
       search: t.arg.string({
         required: true,
@@ -99,8 +103,8 @@ builder.queryField('searchUsers', (t) =>
       }),
     },
     resolve: (query, _parent, args, _context) => {
-      const logger = getLogger().child({ resolver: 'searchUsers' })
-      logger.info('Searching users', { searchTerm: args.search })
+      // const logger = getLogger().child({ resolver: 'searchUsers' })
+      // logger.info('Searching users', { searchTerm: args.search })
 
       return prisma.user.findMany({
         ...query,
@@ -176,6 +180,7 @@ builder.mutationField('updateUserProfile', (t) =>
     type: 'User',
     description: 'Update the current user profile',
     grantScopes: ['authenticated'],
+    shield: isAuthenticatedUser,
     args: {
       input: t.arg({
         type: UpdateUserInput,
@@ -183,10 +188,10 @@ builder.mutationField('updateUserProfile', (t) =>
       }),
     },
     resolve: async (query, _parent, args, context) => {
-      const logger = getLogger().child({ resolver: 'updateUserProfile' })
+      // const logger = getLogger().child({ resolver: 'updateUserProfile' })
       const userId = requireAuthentication(context)
 
-      logger.info('Updating user profile', { userId: userId.value })
+      // logger.info('Updating user profile', { userId: userId.value })
 
       // Build update data
       const updateData: Prisma.UserUpdateInput = {}
@@ -212,7 +217,7 @@ builder.mutationField('updateUserProfile', (t) =>
         data: updateData,
       })
 
-      logger.info('User profile updated', { userId: userId.value })
+      // logger.info('User profile updated', { userId: userId.value })
 
       return user
     },

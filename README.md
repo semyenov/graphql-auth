@@ -8,18 +8,19 @@ A production-ready **GraphQL server with TypeScript** demonstrating enterprise-g
 - [**Apollo Server 4**](https://www.apollographql.com/docs/apollo-server/): Modern GraphQL server with H3 integration
 - [**Pothos GraphQL**](https://pothos-graphql.dev/): Type-safe, code-first GraphQL schema builder
 - [**Prisma ORM**](https://www.prisma.io/): Next-generation TypeScript ORM with migrations
-- [**GraphQL Shield**](https://github.com/maticzav/graphql-shield): Declarative permission layer
+- [**GraphQL Shield**](https://github.com/maticzav/graphql-shield): Declarative permission layer via custom Pothos plugin
 - [**JWT Authentication**](https://jwt.io/): Secure token-based authentication with refresh tokens
 - [**SQLite**](https://www.sqlite.org/): Local database (easily switchable to PostgreSQL/MySQL)
 
 ## ✨ Key Features
 
 ### Advanced Pothos Integration
-- **6 Pothos Plugins**: Prisma, Relay, Errors, ScopeAuth, Validation, DataLoader
+- **7 Pothos Plugins**: Prisma, Relay, Errors, ScopeAuth, Shield, Validation, DataLoader
 - **Direct Prisma Access**: Prisma accessed directly (NOT through context) for better performance
 - **N+1 Query Prevention**: Automatic query batching with DataLoader
 - **Type Safety**: End-to-end type safety without code generation
 - **Performance Optimized**: Field-level query optimization with Prisma
+- **Dual Authorization**: Combines Pothos Scope Auth with GraphQL Shield for flexible permissions
 
 ### Production Features
 - **JWT Authentication**: Access & refresh token implementation
@@ -1006,17 +1007,34 @@ The API uses JWT tokens for authentication with support for refresh tokens:
 
 ### Authorization System
 
-The project implements two authorization layers:
+The project implements dual authorization layers that work together:
 
-#### 1. GraphQL Shield Rules
+#### 1. GraphQL Shield Plugin (Custom Pothos Plugin)
 
-Declarative permission rules for operations:
+Declarative permission rules defined inline with field definitions:
+
+```typescript
+builder.mutationField('updatePost', (t) =>
+  t.prismaField({
+    type: 'Post',
+    grantScopes: ['authenticated'], // Pothos Scope Auth
+    shield: and(isAuthenticatedUser, isPostOwner), // GraphQL Shield rules
+    args: { /* ... */ },
+    resolve: async (query, _parent, args, context) => {
+      // Implementation
+    },
+  }),
+)
+```
+
+Common Shield rules:
 
 | Rule                | Description                                    |
 | :------------------ | :--------------------------------------------- |
 | `isAuthenticatedUser` | Requires valid JWT token                     |
 | `isPostOwner`       | Requires user to be the post author           |
-| `isAdmin`           | Requires admin role (future use)              |
+| `isPublic`          | Allows public access                          |
+| `rateLimitSensitiveOperations` | Rate limits sensitive operations |
 
 #### 2. Pothos Scope Auth Plugin
 

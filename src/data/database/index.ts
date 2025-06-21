@@ -2,4 +2,5 @@
  * Database Access Layer
  */
 
-export * from './client'
+export * from '../../prisma';
+

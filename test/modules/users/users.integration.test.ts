@@ -4,13 +4,13 @@ import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TogglePublishPostMutation } from '../../../src/gql/mutations'
 import { MeQuery } from '../../../src/gql/queries'
-import { prisma } from '../../setup'
+import { prisma } from '../../../src/prisma'
 import {
   createAuthContext,
   createMockContext,
-  createTestServer,
   gqlHelpers,
 } from '../../utils/helpers/database.helpers'
+import { createTestServer } from '../../test-utils'
 import { extractNumericId, toPostId } from '../../utils/helpers/relay.helpers'
 
 // Type definitions for GraphQL responses
@@ -80,7 +80,7 @@ describe('User queries', () => {
         print(MeQuery),
         {},
         createMockContext(), // No auth
-        'Authentication required',
+        'You must be logged in to perform this action. Please authenticate and try again.',
       )
     })
   })

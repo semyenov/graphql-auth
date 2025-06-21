@@ -3,13 +3,13 @@
  */
 
 // Re-export prisma test client
-export { prisma } from '../setup'
+export { prisma } from '../../src/prisma'
 // Test data factory functions
 export {
   createTestPost,
   createTestUser,
   createUserWithPosts,
-  seedTestUsers,
+  seedTestUsers
 } from '../utils/factories/test.factory'
 // Core test utilities
 export {
@@ -22,7 +22,7 @@ export {
   getGraphQLErrors,
   gqlHelpers,
   hasGraphQLErrors,
-  type VariableValues,
+  type VariableValues
 } from '../utils/helpers/database.helpers'
 // Relay ID conversion utilities
 export {
@@ -30,5 +30,6 @@ export {
   fromGlobalId,
   toGlobalId,
   toPostId,
-  toUserId,
+  toUserId
 } from '../utils/helpers/relay.helpers'
+

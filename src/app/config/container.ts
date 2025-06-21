@@ -15,8 +15,8 @@ import type { IUserRepository } from '../../core/repositories/user.repository.in
 import type { ILogger } from '../../core/services/logger.interface'
 import type { IPasswordService } from '../../core/services/password.service.interface'
 import type { ITokenService } from '../../core/services/token.service.interface'
-import { prisma } from '../../data/database/client'
 import { PrismaUserRepository } from '../../data/repositories/prisma-user.repository'
+import { prisma } from '../../prisma'
 // Feature-based implementations (for refresh tokens)
 import { RefreshTokenRepository } from '../../data/repositories/refresh-token.repository'
 import { Argon2PasswordService } from '../../modules/auth/services/argon2-password.service'

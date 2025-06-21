@@ -38,6 +38,11 @@ function getPrismaClient(): PrismaClientType {
     return globalPrisma
   }
 
+  // In test environment, we expect the client to be set explicitly
+  if (env.NODE_ENV === 'test') {
+    throw new Error('Prisma client not set for test environment')
+  }
+
   globalPrisma = createPrismaClient()
   return globalPrisma
 }

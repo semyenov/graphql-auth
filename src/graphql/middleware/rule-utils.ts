@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from '../../core/errors/constants'
 import {
   AuthenticationError,
   AuthorizationError,
@@ -47,7 +48,7 @@ export function createAuthenticationCheck(
   context: Context,
 ): true | AuthenticationError {
   if (!context.userId) {
-    return new AuthenticationError()
+    return new AuthenticationError(ERROR_MESSAGES.AUTHENTICATION_REQUIRED + '. Please authenticate and try again.')
   }
   return true
 }

@@ -34,6 +34,7 @@ const builder = new SchemaBuilder<{
     RelayPlugin,
     ErrorsPlugin,
     ScopeAuthPlugin,
+    ShieldPlugin,       // Custom plugin for inline GraphQL Shield rules
     ValidationPlugin,
     DataloaderPlugin,
     ComplexityPlugin,
@@ -246,7 +247,66 @@ export interface EnhancedAuthScopes {
 }
 ```
 
-### 5. ✅ Validation Plugin with Zod
+### 5. ✅ Shield Plugin Implementation (Custom Plugin)
+
+**Files:**
+- `src/graphql/schema/plugins/shield.ts`
+- `src/graphql/middleware/rules.ts`
+
+**Features:**
+- **Inline Rule Definition**: Define Shield rules directly on fields
+- **Dual Authorization**: Works alongside Pothos Scope Auth
+- **Caching Support**: Rules can be cached for performance
+- **Error Handling**: Consistent error messages
+
+**Example:**
+
+```typescript
+// Define field with both Scope Auth and Shield rules
+builder.mutationField('updatePost', (t) =>
+  t.prismaField({
+    type: 'Post',
+    grantScopes: ['authenticated'],              // Pothos Scope Auth
+    shield: and(isAuthenticatedUser, isPostOwner), // GraphQL Shield rules
+    args: {
+      id: t.arg.id({ required: true }),
+      input: t.arg({ type: UpdatePostInput, required: true }),
+    },
+    resolve: async (query, _parent, args, context) => {
+      const numericId = await parseAndValidateGlobalId(args.id, 'Post')
+      
+      return prisma.post.update({
+        ...query,
+        where: { id: numericId },
+        data: args.input,
+      })
+    },
+  }),
+)
+
+// Common Shield rules
+export const isAuthenticatedUser = rule({ cache: 'contextual' })(
+  async (_parent, _args, context) => {
+    return context.security.isAuthenticated
+  }
+)
+
+export const isPostOwner = rule({ cache: 'strict' })(
+  async (_parent, args, context) => {
+    const userId = requireAuthentication(context)
+    const postId = await parseAndValidateGlobalId(args.id, 'Post')
+    
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { authorId: true },
+    })
+    
+    return post?.authorId === userId.value
+  }
+)
+```
+
+### 6. ✅ Validation Plugin with Zod
 
 **Features:**
 
@@ -315,7 +375,7 @@ const PostFilterInput = builder.inputType('PostFilterInput', {
 })
 ```
 
-### 6. ✅ DataLoader Plugin for N+1 Prevention
+### 7. ✅ DataLoader Plugin for N+1 Prevention
 
 **Features:**
 

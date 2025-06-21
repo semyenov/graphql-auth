@@ -4,20 +4,27 @@
  * Basic tests for rate limiting functionality
  */
 
-import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import {
   RateLimitPresets,
   rateLimiter,
 } from '../../../src/app/services/rate-limiter.service'
 
 describe('Rate Limiter Service', () => {
-  beforeEach(async () => {
-    // Reset rate limits
-    await rateLimiter.reset('test-key', 'test-id')
+  beforeAll(() => {
+    // Enable rate limiting for these tests
+    process.env.TEST_RATE_LIMITING = 'true'
   })
 
   afterAll(async () => {
+    // Disable rate limiting after tests
+    delete process.env.TEST_RATE_LIMITING
     await rateLimiter.cleanup()
+  })
+
+  beforeEach(async () => {
+    // Reset rate limits
+    await rateLimiter.reset('test-key', 'test-id')
   })
 
   it('should allow requests within rate limit', async () => {

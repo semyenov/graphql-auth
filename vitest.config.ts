@@ -18,16 +18,15 @@ export default defineConfig({
     sequence: {
       concurrent: false,
     },
-    // Use threads pool for better performance in Vitest 3.x
-    pool: 'threads',
+    // Use forks pool to ensure proper isolation
+    pool: 'forks',
     poolOptions: {
-      threads: {
-        singleThread: true,
-        isolate: false,
+      forks: {
+        singleFork: true,
       },
     },
-    // Vitest 3.x specific optimizations
-    isolate: false,
+    // Ensure proper isolation between test files
+    isolate: true,
     fileParallelism: false,
   },
   resolve: {

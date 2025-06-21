@@ -1,6 +1,7 @@
 import { builder } from '../../../graphql/schema/builder'
 import { prisma } from '../../../prisma'
 
+
 // Define User object type using Relay Node pattern with DataLoader optimizations
 builder.prismaNode('User', {
   // Map Prisma's numeric id to Relay's global ID
@@ -51,4 +52,13 @@ builder.prismaNode('User', {
       },
     }),
   }),
+})
+
+export enum Role {
+  ADMIN,
+  USER,
+}
+
+builder.enumType(Role, {
+  name: 'Role',
 })

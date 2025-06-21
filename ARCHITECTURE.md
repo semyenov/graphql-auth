@@ -8,7 +8,9 @@ This project implements a **modern GraphQL server** using **direct Pothos resolv
 src/
 ├── schema/                           # GraphQL Schema Definition
 │   ├── builder.ts                    # Pothos builder with advanced plugin integration
-│   ├── index.ts                      # Schema assembly and middleware
+│   ├── index.ts                      # Schema assembly (no middleware)
+│   ├── plugins/                      # Custom Pothos plugins
+│   │   └── shield.ts                # ShieldPlugin for inline permissions
 │   ├── types/                        # Prisma Node types and GraphQL objects
 │   ├── scalars.ts                    # Custom scalars (DateTime, JSON)
 │   ├── enums.ts                      # GraphQL enums
@@ -43,11 +45,11 @@ src/
 │   ├── utils.ts                      # JWT and request utilities
 │   └── types.d.ts                    # Context type definitions
 │
-├── permissions/                      # Authorization System
-│   ├── index.ts                      # Shield middleware export
-│   ├── rules-clean.ts               # Permission rules using rule-utils
-│   ├── rule-utils-clean.ts          # Extracted rule logic (ownership, validation)
-│   ├── shield-config.ts             # Maps rules to schema operations
+├── permissions/                      # Authorization System (Legacy)
+│   ├── index.ts                      # Shield middleware export (deprecated)
+│   ├── rules-clean.ts               # Permission rules now used inline
+│   ├── rule-utils-clean.ts          # Rule logic (ownership, validation)
+│   ├── shield-config.ts             # Maps rules to operations (deprecated)
 │   └── utils-clean.ts               # Permission utilities
 │
 ├── errors/                           # Hierarchical Error System
@@ -97,11 +99,12 @@ The project has **completed migration** from Domain-Driven Design to direct Poth
   - **Relay Plugin**: Global IDs, connections with metadata, cursor pagination
   - **Errors Plugin**: Union result types for comprehensive error handling
   - **Scope Auth Plugin**: Dynamic authorization with 14+ scope types
+  - **Shield Plugin**: Custom plugin for inline GraphQL Shield rules
   - **DataLoader Plugin**: Automatic batch loading for N+1 prevention
   - **Validation Plugin**: Zod integration with async refinements
 - **Database**: Prisma ORM with SQLite (dev.db) - accessed directly, not through context
 - **Authentication**: JWT tokens with argon2 (hybrid bcrypt support) + refresh token rotation
-- **Authorization**: GraphQL Shield middleware with Pothos Scope Auth
+- **Authorization**: Dual system using Pothos Scope Auth + GraphQL Shield Plugin
 - **Type Safety**: GraphQL Tada for compile-time GraphQL typing
 - **Testing**: Vitest with comprehensive test utilities
 - **Validation**: Zod schema validation with custom async refinements

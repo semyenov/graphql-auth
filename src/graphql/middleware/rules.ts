@@ -1,4 +1,4 @@
-import { rule } from 'graphql-shield'
+import { rule, and, or, not } from 'graphql-shield'
 import { ERROR_MESSAGES } from '../../constants'
 import { AuthorizationError, NotFoundError } from '../../core/errors/types'
 import { prisma } from '../../prisma'
@@ -175,3 +175,6 @@ export const canCreateDraft = rule({ cache: 'contextual' })(
  * Allows unrestricted access
  */
 export const isPublic = rule()(() => true)
+
+// Export logical operators for use in resolvers
+export { and, or, not }

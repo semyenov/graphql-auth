@@ -2,12 +2,12 @@ import * as argon2 from 'argon2'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { LoginMutation, SignupMutation } from '../../../src/gql/mutations'
-import { prisma } from '../../setup'
+import { prisma } from '../../../src/prisma'
 import {
   createMockContext,
-  createTestServer,
   gqlHelpers,
 } from '../../utils/helpers/database.helpers'
+import { createTestServer } from '../../test-utils'
 
 interface AuthMutationResponse {
   signup?: string

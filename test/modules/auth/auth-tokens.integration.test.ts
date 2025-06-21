@@ -9,17 +9,18 @@ import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 // Import direct mutations
+import { UserId } from '../../../src/core/value-objects/user-id.vo'
 import {
   LoginWithTokensMutation,
   LogoutMutation,
   RefreshTokenMutation,
 } from '../../../src/gql/mutations-auth-tokens'
-import { prisma } from '../../setup'
+import { prisma } from '../../../src/prisma'
 import {
   createMockContext,
-  createTestServer,
   gqlHelpers,
 } from '../../utils/helpers/database.helpers'
+import { createTestServer } from '../../test-utils'
 
 describe('Refresh Token', () => {
   const server = createTestServer()
@@ -180,10 +181,16 @@ describe('Refresh Token', () => {
         where: { email: 'test@example.com' },
       })
 
+      const userId = user?.id ?? 0
+
+      expect(user).toBeDefined()
+      expect(userId).toBeDefined()
+      expect(userId).toBeGreaterThan(0)
+
       // Create authenticated context
       const authContext = {
         ...createMockContext(),
-        userId: { value: user?.id } as { value: number },
+        userId: UserId.create(userId),
         security: {
           isAuthenticated: true,
           userId: user?.id,
@@ -219,7 +226,7 @@ describe('Refresh Token', () => {
         print(LogoutMutation),
         {},
         createMockContext(),
-        'Authentication required',
+        'You must be logged in to perform this action. Please authenticate and try again.',
       )
     })
   })

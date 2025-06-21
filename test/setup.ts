@@ -1,21 +1,11 @@
-import { PrismaClient } from '@prisma/client'
 import { execSync } from 'child_process'
 import { rm } from 'fs/promises'
 import { afterAll, beforeAll, beforeEach } from 'vitest'
 import { configureContainer } from '../src/app/config/container'
 import { DatabaseClient } from '../src/app/database/client'
 import { rateLimiter } from '../src/app/services/rate-limiter.service'
-import { setTestPrismaClient } from '../src/prisma'
+import { prisma } from '../src/prisma'
 import { TEST_DATABASE_URL } from './test-database-url'
-
-// Create a test database client
-export const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: TEST_DATABASE_URL,
-    },
-  },
-})
 
 // const __filename = fileURLToPath(import.meta.url)
 // const __dirname = dirname(__filename)
@@ -29,16 +19,13 @@ beforeAll(async () => {
     // Configure dependency injection container for tests
     configureContainer()
 
-    // Set the shared prisma instance to use our test client
-    setTestPrismaClient(prisma)
-
     // Also set the test client for clean architecture DatabaseClient
     DatabaseClient.setTestClient(prisma)
 
     // Connect to the database
     await prisma.$connect()
 
-    // Apply schema using Prisma db push
+    // Apply schema using Prisma db push with force reset
     console.log('Applying database schema...')
     execSync('bunx prisma db push --force-reset --skip-generate', {
       env: {
@@ -48,6 +35,9 @@ beforeAll(async () => {
       stdio: 'pipe',
       timeout: 30000,
     })
+    
+    // Wait a bit to ensure database is ready
+    await new Promise(resolve => setTimeout(resolve, 100))
 
     // Test the connection and write access
     await prisma.$queryRaw`SELECT 1`
@@ -90,9 +80,26 @@ afterAll(async () => {
 beforeEach(async () => {
   // Clean up database between tests
   try {
-    // Delete all data in reverse order of dependencies
-    await prisma.post.deleteMany({})
-    await prisma.user.deleteMany({})
+    // Use transactions to ensure atomic cleanup
+    await prisma.$transaction([
+      prisma.post.deleteMany({}),
+      prisma.user.deleteMany({}),
+    ])
+    
+    // Verify cleanup
+    const userCount = await prisma.user.count()
+    const postCount = await prisma.post.count()
+    
+    if (userCount > 0 || postCount > 0) {
+      throw new Error(`Database not clean: ${userCount} users, ${postCount} posts`)
+    }
+    
+    // Reset rate limiter between tests
+    try {
+      await rateLimiter.resetAll()
+    } catch (rateLimitError) {
+      console.error('Error resetting rate limiter:', rateLimitError)
+    }
   } catch (error) {
     console.error('Error cleaning database:', error)
     throw error

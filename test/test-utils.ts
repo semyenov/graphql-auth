@@ -30,7 +30,7 @@ import { env } from '../src/app/config/environment'
 import { UserId } from '../src/core/value-objects/user-id.vo'
 import { enhanceContext } from '../src/graphql/context'
 import type { Context } from '../src/graphql/context/context.types'
-import { getSchema } from '../src/graphql/schema'
+import { buildSchema } from '../src/graphql/schema'
 
 // Create test context
 export function createMockContext(overrides?: Partial<Context>): Context {
@@ -100,7 +100,7 @@ export function createAuthContext(userId: number | UserId): Context {
 // Create test server
 export function createTestServer() {
   return new ApolloServer<Context>({
-    schema: getSchema(),
+    schema: buildSchema(),
     introspection: true,
   })
 }
