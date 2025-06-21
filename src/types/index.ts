@@ -5,19 +5,18 @@
  * as specified in IMPROVED-FILE-STRUCTURE.md
  */
 
-export type { Email } from '../core/value-objects/email.vo'
-export type { UserId as UserIdVO } from '../core/value-objects/user-id.vo'
 // Re-export types from other modules for convenience
-export type { Context, EnhancedContext } from '../graphql/context/context.types'
+export type {
+  IContext as Context, EnhancedContext
+} from '../graphql/context/context.types'
+export type { Email } from '../value-objects/email.vo'
+export type { UserId as UserIdVO } from '../value-objects/user-id.vo'
 // Re-export types, avoiding conflicts
 // Use specific names to avoid conflicts
 export type {
   ApiError,
   ApiResponse,
-  AuthTokens,
-  Connection as GraphQLConnection,
-  EntityId,
-  LogContext,
+  AuthTokens, EntityId, Connection as GraphQLConnection, LogContext,
   LogLevel,
   OptionalExceptFor,
   PaginationInfo,
@@ -32,12 +31,10 @@ export type {
   Timestamps,
   TokenPayload,
   User,
-  UserRole,
+  UserRole
 } from './global'
 export type {
-  BooleanFilter,
-  Connection as RelayConnection,
-  ConnectionArgs,
+  BooleanFilter, ConnectionArgs,
   DateTimeFilter,
   DateTimeScalarConfig,
   DirectiveResolver,
@@ -52,15 +49,14 @@ export type {
   MutationResolver,
   OrderByInput,
   PageInfo,
-  QueryResolver,
-  Resolver,
+  QueryResolver, Connection as RelayConnection, Resolver,
   StringFilter,
   SubscriptionFilter,
   SubscriptionPayload,
   SubscriptionResolver,
   ValidationContext,
   ValidationRule,
-  WhereInput,
+  WhereInput
 } from './graphql'
 
 /**
@@ -150,8 +146,8 @@ export type PromiseType<T extends Promise<unknown>> = T extends Promise<infer U>
  */
 export type UnionToIntersection<U> = (
   U extends unknown
-    ? (k: U) => void
-    : never
+  ? (k: U) => void
+  : never
 ) extends (k: infer I) => void
   ? I
   : never

@@ -1,7 +1,6 @@
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { UserId } from '../../../src/core/value-objects/user-id.vo'
 import {
   DeletePostMutation,
   LoginMutation,
@@ -15,6 +14,7 @@ import {
 } from '../../../src/gql/queries'
 import { PermissionUtils } from '../../../src/graphql/middleware/utils-clean'
 import { prisma } from '../../../src/prisma'
+import { UserId } from '../../../src/value-objects/user-id.vo'
 import {
   cleanDatabase,
   createAuthContext,

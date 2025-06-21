@@ -6,8 +6,8 @@
  */
 
 import { and, rule, shield } from 'graphql-shield'
-import { ValidationError } from '../../core/errors/types'
-import type { Context } from '../context/context.types'
+import { ValidationError } from '../../app/errors/types'
+import type { IContext } from '../context/context.types'
 
 /**
  * Rule to validate email format
@@ -20,7 +20,7 @@ interface EmailArgs {
 }
 
 export const emailValidationRule = rule({ cache: 'strict' })(
-  async (_parent, args: EmailArgs, _context: Context) => {
+  async (_parent, args: EmailArgs, _context: IContext) => {
     try {
       const email = args.email || args.input?.email
       if (email) {
@@ -47,7 +47,7 @@ interface PasswordArgs {
 }
 
 export const passwordValidationRule = rule({ cache: 'strict' })(
-  async (_parent, args: PasswordArgs, _context: Context) => {
+  async (_parent, args: PasswordArgs, _context: IContext) => {
     try {
       const password = args.password || args.input?.password
       if (password) {
@@ -90,7 +90,7 @@ interface PostTitleArgs {
 }
 
 export const postTitleValidationRule = rule({ cache: 'strict' })(
-  async (_parent, args: PostTitleArgs, _context: Context) => {
+  async (_parent, args: PostTitleArgs, _context: IContext) => {
     try {
       const title = args.title || args.input?.title
       if (title) {
@@ -121,7 +121,7 @@ interface PostContentArgs {
 }
 
 export const postContentValidationRule = rule({ cache: 'strict' })(
-  async (_parent, args: PostContentArgs, _context: Context) => {
+  async (_parent, args: PostContentArgs, _context: IContext) => {
     try {
       const content = args.content || args.input?.content
       if (content) {
@@ -149,7 +149,7 @@ interface UserNameArgs {
 }
 
 export const userNameValidationRule = rule({ cache: 'strict' })(
-  async (_parent, args: UserNameArgs, _context: Context) => {
+  async (_parent, args: UserNameArgs, _context: IContext) => {
     try {
       const name = args.name || args.input?.name
       if (name) {
@@ -184,7 +184,7 @@ interface PaginationArgs {
 }
 
 export const paginationValidationRule = rule({ cache: 'strict' })(
-  async (_parent, args: PaginationArgs, _context: Context) => {
+  async (_parent, args: PaginationArgs, _context: IContext) => {
     try {
       const { first, last, take, skip } = args
 
@@ -233,7 +233,7 @@ export const paginationValidationRule = rule({ cache: 'strict' })(
 /**
  * Combined validation middleware using GraphQL Shield
  */
-export const validationMiddleware = shield<Record<string, unknown>, Context>(
+export const validationMiddleware = shield<Record<string, unknown>, IContext>(
   {
     Mutation: {
       signup: and(

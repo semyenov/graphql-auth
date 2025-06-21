@@ -8,25 +8,25 @@ import { allow, rule, shield } from 'graphql-shield'
 import {
   checkPostOwnership,
   requirePostOwnership,
-} from '../../core/auth/ownership.utils'
-import {
-  AuthenticationError,
-  AuthorizationError,
-  NotFoundError,
-} from '../../core/errors/types'
-import { parseAndValidateGlobalId } from '../../core/utils/relay'
-import type { Context } from '../../graphql/context/context.types'
+} from '../../app/auth/ownership.utils'
+import type { IContext } from '../../graphql/context/context.types'
 import {
   isAuthenticated,
   isModerator,
 } from '../../graphql/middleware/shared-rules'
 import { prisma } from '../../prisma'
+import {
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+} from '../../app/errors/types'
+import { parseAndValidateGlobalId } from '../../utils/relay'
 
 /**
  * Check if user owns the post
  */
 export const isPostOwner = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, context: Context) => {
+  async (_parent, args: { id: string }, context: IContext) => {
     if (!context.userId) {
       return new AuthenticationError('You must be logged in')
     }
@@ -47,7 +47,7 @@ export const isPostOwner = rule({ cache: 'strict' })(
  * Check if user can view the post
  */
 export const canViewPost = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, context: Context) => {
+  async (_parent, args: { id: string }, context: IContext) => {
     try {
       const postId = await parseAndValidateGlobalId(args.id, 'Post')
 
@@ -91,7 +91,7 @@ export const canViewPost = rule({ cache: 'strict' })(
  * Check if user can moderate posts
  */
 export const canModeratePost = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, context: Context) => {
+  async (_parent, args: { id: string }, context: IContext) => {
     if (!context.userId) {
       return new AuthenticationError('You must be logged in')
     }
@@ -120,7 +120,7 @@ export const canModeratePost = rule({ cache: 'strict' })(
  * Check if post is editable (time-based restriction)
  */
 export const isPostEditable = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, _context: Context) => {
+  async (_parent, args: { id: string }, _context: IContext) => {
     try {
       const postId = await parseAndValidateGlobalId(args.id, 'Post')
 
@@ -162,7 +162,7 @@ export const isPostEditable = rule({ cache: 'strict' })(
  * Check if user has reached post creation limit
  */
 export const withinPostLimit = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
+  async (_parent, _args, context: IContext) => {
     if (!context.userId) return false
 
     // Check posts created in the last 24 hours

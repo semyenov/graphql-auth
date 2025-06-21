@@ -8,8 +8,8 @@
 import type { BaseContext } from '@apollo/server'
 import type { Endpoint, HTTPMethod } from 'fetchdts'
 import type { IncomingMessage, ServerResponse } from 'http'
-import type { UserId } from '../../core/value-objects/user-id.vo'
 import type { Loaders } from '../../data/loaders/loaders'
+import type { UserId } from '../../value-objects/user-id.vo'
 
 // Note: These types would normally be imported from a types module
 // For now, we'll define them inline to avoid import issues
@@ -21,7 +21,11 @@ type GraphQLRequestBody = {
 
 type MimeType = string
 
-import type { RequestMetadata, SecurityContext, User } from '../../types.d'
+import type {
+  RequestMetadata,
+  SecurityContext,
+  User,
+} from '../../types.d'
 
 // ============================================================================
 // GRAPHQL RESPONSE TYPES
@@ -98,10 +102,11 @@ export interface GraphQLIncomingMessage extends IncomingMessage {
  * @template TVariables - The type of GraphQL variables for the operation
  * @template TOperationName - The specific operation name as a string literal
  */
-export interface Context extends BaseContext {
+export interface IContext extends BaseContext {
   // Operation-specific information
   operationName?: string
   variables?: Record<string, unknown>
+  decodedToken?: DecodedToken
 
   // Request information
   req: {
@@ -148,7 +153,7 @@ export interface RequestComponents {
   operationName?: string
   variables?: Record<string, unknown>
   metadata: RequestMetadata
-  requestObject: Context['req']
+  requestObject: IContext['req']
 }
 
 /**
@@ -162,7 +167,7 @@ export interface AuthenticationContext {
 /**
  * Type utility for context creation functions
  */
-export type ContextCreationFunction<T extends Context = Context> = (params: {
+export type ContextCreationFunction<T extends IContext = IContext> = (params: {
   req: IncomingMessage
   res: ServerResponse
 }) => Promise<T>
@@ -175,7 +180,7 @@ export type ContextCreationFunction<T extends Context = Context> = (params: {
  * Enhanced context with additional features
  * This is what gets returned after context enhancement
  */
-export interface EnhancedContext extends Context {
+export interface EnhancedContext extends IContext {
   // DataLoader instances would be added here
   loaders: Loaders
 
@@ -196,26 +201,26 @@ export interface EnhancedContext extends Context {
 /**
  * Context for authentication operations
  */
-export interface AuthContext extends Context {
+export interface AuthContext extends IContext {
   operationName: 'signup' | 'login' | 'me' | 'logout' | 'refreshToken'
 }
 
 /**
  * Context for post operations
  */
-export interface PostContext extends Context {
+export interface PostContext extends IContext {
   operationName:
-    | 'createPost'
-    | 'updatePost'
-    | 'deletePost'
-    | 'feed'
-    | 'post'
-    | 'drafts'
+  | 'createPost'
+  | 'updatePost'
+  | 'deletePost'
+  | 'feed'
+  | 'post'
+  | 'drafts'
 }
 
 /**
  * Context for user operations
  */
-export interface UserContext extends Context {
+export interface UserContext extends IContext {
   operationName: 'searchUsers' | 'updateUserProfile' | 'deleteUser'
 }

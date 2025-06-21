@@ -6,9 +6,7 @@
 
 import type { Prisma } from '@prisma/client'
 import { z } from 'zod'
-import { ConflictError } from '../../../core/errors/types'
-// import type { ILogger } from '../../../core/services/logger.interface'
-import { parseGlobalId } from '../../../core/utils/relay'
+import { ConflictError } from '../../../app/errors/types'
 import {
   isAuthenticatedUser,
   isPublic,
@@ -24,6 +22,8 @@ import {
   transformUserWhereInput,
 } from '../../../graphql/schema/utils/filter-transform'
 import { prisma } from '../../../prisma'
+// import type { ILogger } from '../../../app/services/logger.interface'
+import { parseGlobalId } from '../../../utils/relay'
 import { requireAuthentication } from '../../auth/guards/auth.guards'
 
 // Get logger from container
@@ -35,7 +35,6 @@ builder.queryField('user', (t) =>
     type: 'User',
     nullable: true,
     description: 'Get a user by ID',
-    grantScopes: ['public'],
     shield: or(isPublic, isAuthenticatedUser),
     args: {
       id: t.arg.id({ required: true }),
@@ -67,7 +66,6 @@ builder.queryField('users', (t) =>
     type: 'User',
     cursor: 'id',
     description: 'Get all users with optional filtering',
-    grantScopes: ['public'],
     shield: isPublic,
     args: {
       where: t.arg({ type: UserWhereInput, required: false }),
@@ -95,7 +93,6 @@ builder.queryField('searchUsers', (t) =>
     type: 'User',
     cursor: 'id',
     description: 'Search users by name or email',
-    grantScopes: ['public'],
     shield: isPublic,
     args: {
       search: t.arg.string({
@@ -182,7 +179,6 @@ builder.mutationField('updateUserProfile', (t) =>
   t.prismaField({
     type: 'User',
     description: 'Update the current user profile',
-    grantScopes: ['authenticated'],
     shield: isAuthenticatedUser,
     args: {
       input: t.arg({

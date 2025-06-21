@@ -1,9 +1,9 @@
 import { and, not, or, rule } from 'graphql-shield'
-import { ERROR_MESSAGES } from '../../constants'
-import { AuthorizationError, NotFoundError } from '../../core/errors/types'
+import { ERROR_MESSAGES } from '../../app/constants'
+import { AuthorizationError, NotFoundError } from '../../app/errors/types'
 import { prisma } from '../../prisma'
 import { requireAuthentication } from '../context/context.auth'
-import type { Context } from '../context/context.types'
+import type { IContext } from '../context/context.types'
 import {
   createAuthenticationCheck,
   createPermissionCheck,
@@ -26,7 +26,7 @@ export const isAuthenticatedUser = rule({ cache: 'contextual' })(
  * Ensures the user owns the post they're trying to modify
  */
 export const isPostOwner = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, context: Context) => {
+  async (_parent, args: { id: string }, context: IContext) => {
     try {
       // Validate the post ID
       validateResourceId(args.id, 'post')
@@ -70,7 +70,7 @@ export const isUserOwner = rule({ cache: 'strict' })(
       userUniqueInput?: { id?: number; email?: string }
       userId?: string
     },
-    context: Context,
+    context: IContext,
   ) => {
     try {
       const currentUserId = requireAuthentication(context.userId)
@@ -142,7 +142,7 @@ export const isModerator = rule({ cache: 'contextual' })(
  * Checks rate limits for sensitive operations using the rate limiter service
  */
 export const rateLimitSensitiveOperations = rule({ cache: 'no_cache' })(
-  async (_parent, _args, _context: Context) => {
+  async (_parent, _args, _context: IContext) => {
     try {
       // Note: Rate limiting is handled at the middleware level in this application
       // This rule serves as an additional check for sensitive operations
@@ -186,4 +186,5 @@ export const canCreateDraft = rule({ cache: 'contextual' })(
 export const isPublic = rule()(() => true)
 
 // Export logical operators for use in resolvers
-export { and, or, not }
+export { and, not, or }
+

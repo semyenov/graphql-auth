@@ -6,7 +6,7 @@
  */
 
 import type { GraphQLResolveInfo } from 'graphql'
-import type { Context } from '../graphql/context/context.types'
+import type { IContext } from '../graphql/context/context.types'
 
 /**
  * GraphQL resolver function types
@@ -15,7 +15,7 @@ export type Resolver<
   TResult,
   TParent = Record<string, never>,
   TArgs = Record<string, never>,
-  TContext = Context,
+  TContext = IContext,
 > = (
   parent: TParent,
   args: TArgs,
@@ -27,7 +27,7 @@ export type SubscriptionResolver<
   TResult,
   TParent = Record<string, never>,
   TArgs = Record<string, never>,
-  TContext = Context,
+  TContext = IContext,
 > = {
   subscribe: Resolver<AsyncIterator<TResult>, TParent, TArgs, TContext>
   resolve?: Resolver<TResult, TParent, TArgs, TContext>
@@ -40,7 +40,7 @@ export type FieldResolver<
   TResult = unknown,
   TParent = unknown,
   TArgs = unknown,
-> = Resolver<TResult, TParent, TArgs, Context>
+> = Resolver<TResult, TParent, TArgs, IContext>
 
 /**
  * Mutation resolver types
@@ -49,7 +49,7 @@ export type MutationResolver<TResult = unknown, TArgs = unknown> = Resolver<
   TResult,
   Record<string, never>,
   TArgs,
-  Context
+  IContext
 >
 
 /**
@@ -59,7 +59,7 @@ export type QueryResolver<TResult = unknown, TArgs = unknown> = Resolver<
   TResult,
   Record<string, never>,
   TArgs,
-  Context
+  IContext
 >
 
 /**
@@ -106,12 +106,12 @@ export type GraphQLMiddleware = (
   resolve: (
     root: unknown,
     args: unknown,
-    context: Context,
+    context: IContext,
     info: GraphQLResolveInfo,
   ) => unknown,
   root: unknown,
   args: unknown,
-  context: Context,
+  context: IContext,
   info: GraphQLResolveInfo,
 ) => unknown
 
@@ -122,12 +122,12 @@ export type DirectiveResolver<TArgs = Record<string, unknown>> = (
   next: (
     root: unknown,
     args: unknown,
-    context: Context,
+    context: IContext,
     info: GraphQLResolveInfo,
   ) => unknown,
   root: unknown,
   args: TArgs,
-  context: Context,
+  context: IContext,
   info: GraphQLResolveInfo,
 ) => unknown
 
@@ -136,14 +136,14 @@ export type DirectiveResolver<TArgs = Record<string, unknown>> = (
  */
 export type WhereInput<T> = {
   [K in keyof T]?: T[K] extends string
-    ? StringFilter
-    : T[K] extends number
-      ? IntFilter
-      : T[K] extends boolean
-        ? BooleanFilter
-        : T[K] extends Date
-          ? DateTimeFilter
-          : T[K]
+  ? StringFilter
+  : T[K] extends number
+  ? IntFilter
+  : T[K] extends boolean
+  ? BooleanFilter
+  : T[K] extends Date
+  ? DateTimeFilter
+  : T[K]
 } & {
   AND?: WhereInput<T>[]
   OR?: WhereInput<T>[]
@@ -233,7 +233,7 @@ export type SubscriptionPayload<T = unknown> = {
 export type SubscriptionFilter<T = unknown> = (
   payload: T,
   variables: Record<string, unknown>,
-  context: Context,
+  context: IContext,
 ) => boolean | Promise<boolean>
 
 /**
@@ -263,6 +263,6 @@ export type ValidationContext = {
   fieldValue: unknown
   parentValue: unknown
   args: Record<string, unknown>
-  context: Context
+  context: IContext
   info: GraphQLResolveInfo
 }

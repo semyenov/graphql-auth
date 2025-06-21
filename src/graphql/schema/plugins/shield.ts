@@ -9,9 +9,10 @@ import { type GraphQLSchema, isObjectType } from 'graphql'
 
 import { applyMiddleware } from 'graphql-middleware'
 import { type IRule, type IRules, shield } from 'graphql-shield'
-import type { Context } from '../../context/context.types'
+import type { ILogicRule } from 'graphql-shield/typings/types'
+import type { IContext } from '../../context/context.types'
 
-type ShieldRule = IRule
+export type ShieldRule = IRule | ILogicRule
 
 declare global {
   export namespace PothosSchemaTypes {
@@ -45,14 +46,14 @@ declare global {
       Args extends InputFieldMap,
       ResolveReturnShape,
     > extends FieldOptions<
-        Types,
-        Types['Root'],
-        Type,
-        Nullable,
-        Args,
-        Types['Root'],
-        ResolveReturnShape
-      > {
+      Types,
+      Types['Root'],
+      Type,
+      Nullable,
+      Args,
+      Types['Root'],
+      ResolveReturnShape
+    > {
       shield?: ShieldRule
     }
 
@@ -63,14 +64,14 @@ declare global {
       Args extends InputFieldMap,
       ResolveReturnShape,
     > extends FieldOptions<
-        Types,
-        Types['Root'],
-        Type,
-        Nullable,
-        Args,
-        Types['Root'],
-        ResolveReturnShape
-      > {
+      Types,
+      Types['Root'],
+      Type,
+      Nullable,
+      Args,
+      Types['Root'],
+      ResolveReturnShape
+    > {
       shield?: ShieldRule
     }
   }
@@ -113,7 +114,7 @@ export class ShieldPlugin<Types extends SchemaTypes> extends BasePlugin<Types> {
 
     return applyMiddleware(
       schema,
-      shield<Record<string, unknown>, Context>(rules, {
+      shield<Record<string, unknown>, IContext>(rules, {
         debug: process.env.NODE_ENV !== 'production',
         fallbackError: 'Not authorized',
         allowExternalErrors: true,

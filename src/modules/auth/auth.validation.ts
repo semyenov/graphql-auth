@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod'
-import { AUTH, ERROR_MESSAGES, VALIDATION } from '../../constants'
+import { AUTH, ERROR_MESSAGES, VALIDATION } from '../../app/constants'
 
 /**
  * Email validation with normalization
@@ -144,4 +144,4 @@ export const sessionSchema = z.object({
 export {
   safeValidateInput as safeValidateAuthInput,
   validateInput as validateAuthInput,
-} from '../../core/validation/helpers'
+} from '../../validation/helpers'

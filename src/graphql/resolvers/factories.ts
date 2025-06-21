@@ -6,17 +6,17 @@
  */
 
 import type { z } from 'zod'
+import { requireResourceOwnership } from '../../app/auth/ownership.utils'
+import type { RateLimitPreset } from '../../app/auth/types'
+import { AuthorizationError, NotFoundError } from '../../app/errors/types'
 import {
   applyRateLimit,
   createRateLimitConfig,
 } from '../../app/middleware/rate-limiting'
-import { requireResourceOwnership } from '../../core/auth/ownership.utils'
-import type { RateLimitPreset } from '../../core/auth/types'
-import { AuthorizationError, NotFoundError } from '../../core/errors/types'
-import { parseAndValidateGlobalId } from '../../core/utils/relay'
 import { prisma } from '../../prisma'
+import { parseAndValidateGlobalId } from '../../utils/relay'
 import { requireAuthentication } from '../context/context.auth'
-import type { Context } from '../context/context.types'
+import type { IContext } from '../context/context.types'
 import { builder } from '../schema/builder'
 
 /**
@@ -49,23 +49,23 @@ export interface CrudResolverConfig<TModel extends keyof typeof prisma> {
   hooks?: {
     beforeCreate?: (
       data: Record<string, unknown>,
-      context: Context,
+      context: IContext,
     ) => Promise<Record<string, unknown>>
     afterCreate?: (
       created: Record<string, unknown>,
-      context: Context,
+      context: IContext,
     ) => Promise<void>
     beforeUpdate?: (
       id: number,
       data: Record<string, unknown>,
-      context: Context,
+      context: IContext,
     ) => Promise<Record<string, unknown>>
     afterUpdate?: (
       updated: Record<string, unknown>,
-      context: Context,
+      context: IContext,
     ) => Promise<void>
-    beforeDelete?: (id: number, context: Context) => Promise<void>
-    afterDelete?: (id: number, context: Context) => Promise<void>
+    beforeDelete?: (id: number, context: IContext) => Promise<void>
+    afterDelete?: (id: number, context: IContext) => Promise<void>
   }
 }
 
@@ -297,7 +297,7 @@ export function singleQueryFactory<TModel extends keyof typeof prisma>(
     scopes?: string[]
     additionalChecks?: (
       item: Record<string, unknown>,
-      context: Context,
+      context: IContext,
     ) => Promise<boolean>
   },
 ) {
@@ -351,8 +351,8 @@ export function rateLimitedMutationFactory<TArgs = unknown, TReturn = unknown>(
     args?: Record<string, unknown>
     scopes?: string[]
     rateLimitPreset: RateLimitPreset
-    rateLimitKey?: (args: TArgs, context: Context) => string
-    resolve: (args: TArgs, context: Context) => Promise<TReturn>
+    rateLimitKey?: (args: TArgs, context: IContext) => string
+    resolve: (args: TArgs, context: IContext) => Promise<TReturn>
   },
 ) {
   const {
@@ -398,7 +398,7 @@ export function batchOperationFactory<TModel extends keyof typeof prisma>(
     operation: 'update' | 'delete'
     scopes?: string[]
     ownerField?: string
-    validateItem?: (id: number, context: Context) => Promise<boolean>
+    validateItem?: (id: number, context: IContext) => Promise<boolean>
   },
 ) {
   const {
@@ -493,7 +493,7 @@ export function computedFieldFactory<TParent = unknown, TReturn = unknown>(
     type: unknown
     description?: string
     nullable?: boolean
-    resolve: (parent: TParent, context: Context) => Promise<TReturn> | TReturn
+    resolve: (parent: TParent, context: IContext) => Promise<TReturn> | TReturn
   },
 ) {
   const { type, description, nullable = false, resolve } = config

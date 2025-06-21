@@ -6,8 +6,8 @@
  */
 
 import { z } from 'zod'
-import { builder } from '../../graphql/schema/builder'
-import { commonValidations } from '../../graphql/schema/helpers'
+import { builder } from '../graphql/schema/builder'
+import { commonValidations } from '../graphql/schema/helpers'
 
 // Input types for authentication operations
 export const LoginInput = builder.inputType('LoginInput', {

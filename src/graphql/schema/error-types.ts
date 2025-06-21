@@ -9,7 +9,7 @@ import {
   NotFoundError,
   RateLimitError,
   ValidationError,
-} from '../../core/errors/types'
+} from '../../app/errors/types'
 import { builder } from './builder'
 
 // Register error types with the builder

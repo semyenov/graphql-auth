@@ -3,7 +3,7 @@
  */
 
 import type { ApolloServer, GraphQLResponse } from '@apollo/server'
-import type { Context } from '../src/graphql/context/context.types'
+import type { IContext } from '../src/graphql/context/context.types'
 import { executeOperation } from './utils/helpers/database.helpers'
 
 export interface PerformanceMetrics {
@@ -33,10 +33,10 @@ export interface PerformanceReport {
  * Measure the performance of a GraphQL operation
  */
 export async function measureOperation<T = unknown>(
-  server: ApolloServer<Context>,
+  server: ApolloServer<IContext>,
   operation: string,
   variables: Record<string, unknown>,
-  context: Context,
+  context: IContext,
 ): Promise<{ result: GraphQLResponse<T>; metrics: PerformanceMetrics }> {
   const startMemory = process.memoryUsage().heapUsed
   const startTime = performance.now()
@@ -66,10 +66,10 @@ export async function measureOperation<T = unknown>(
  * Run a performance benchmark for an operation
  */
 export async function benchmark(
-  server: ApolloServer<Context>,
+  server: ApolloServer<IContext>,
   operation: string,
   variables: Record<string, unknown>,
-  context: Context,
+  context: IContext,
   options: {
     iterations?: number
     warmup?: number
@@ -103,11 +103,11 @@ export async function benchmark(
  * Benchmark multiple operations concurrently
  */
 export async function benchmarkConcurrent(
-  server: ApolloServer<Context>,
+  server: ApolloServer<IContext>,
   operations: Array<{
     operation: string
     variables: Record<string, unknown>
-    context: Context
+    context: IContext
   }>,
   options: {
     concurrency?: number
@@ -157,10 +157,10 @@ export async function benchmarkConcurrent(
  * Load test with gradually increasing concurrency
  */
 export async function loadTest(
-  server: ApolloServer<Context>,
+  server: ApolloServer<IContext>,
   operation: string,
   variables: Record<string, unknown>,
-  context: Context,
+  context: IContext,
   options: {
     maxConcurrency?: number
     step?: number

@@ -6,8 +6,8 @@
  */
 
 import { rule, shield } from 'graphql-shield'
-import { RateLimitError } from '../../core/errors/types'
-import type { Context } from '../context/context.types'
+import { RateLimitError } from '../../app/errors/types'
+import type { IContext } from '../context/context.types'
 
 /**
  * Rate limiting configuration
@@ -32,7 +32,7 @@ export const RATE_LIMIT_CONFIGS = {
  * Create a rate limiting rule
  */
 export function createRateLimitRule(config: RateLimitConfig) {
-  return rule({ cache: 'strict' })(async (_parent, _args, context: Context) => {
+  return rule({ cache: 'strict' })(async (_parent, _args, context: IContext) => {
     try {
       // Get client identifier (IP address or user ID)
       const clientId =

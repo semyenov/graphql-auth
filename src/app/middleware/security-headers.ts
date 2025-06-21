@@ -7,7 +7,7 @@
 
 import type { ApolloServerPlugin } from '@apollo/server'
 import type { IncomingMessage, ServerResponse } from 'http'
-import type { Context } from '../../graphql/context/context.types'
+import type { IContext } from '../../graphql/context/context.types'
 import { isDevelopment } from '../config/environment'
 
 /**
@@ -238,7 +238,7 @@ export const graphqlSecurityConfig: SecurityHeadersConfig = {
  */
 export function createSecurityHeadersPlugin(
   _config?: SecurityHeadersConfig,
-): ApolloServerPlugin<Context> {
+): ApolloServerPlugin<IContext> {
   return {
     async requestDidStart() {
       return {

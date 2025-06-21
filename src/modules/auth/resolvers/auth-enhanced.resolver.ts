@@ -6,16 +6,15 @@
 
 import { container } from 'tsyringe'
 import { z } from 'zod'
-import { RateLimitPresets } from '../../../app/services/rate-limiter.service'
 import {
   AuthenticationError,
   ConflictError,
   ValidationError,
-} from '../../../core/errors/types'
-import type { IEmailService } from '../../../core/services/email.service'
-import type { ILogger } from '../../../core/services/logger.interface'
-import type { IPasswordService } from '../../../core/services/password.service.interface'
-import { signToken } from '../../../core/utils/jwt'
+} from '../../../app/errors/types'
+import type { IEmailService } from '../../../app/services/email.service'
+import type { ILogger } from '../../../app/services/logger.interface'
+import type { IPasswordService } from '../../../app/services/password.service.interface'
+import { RateLimitPresets } from '../../../app/services/rate-limiter.service'
 import { rateLimitSensitiveOperations } from '../../../graphql/middleware/rules'
 import { builder } from '../../../graphql/schema/builder'
 import { commonValidations } from '../../../graphql/schema/helpers'
@@ -24,6 +23,7 @@ import {
   createRateLimitConfig,
 } from '../../../graphql/schema/plugins/rate-limit.plugin'
 import { prisma } from '../../../prisma'
+import { signToken } from '../../../utils/jwt'
 import { LoginAttemptService } from '../services/login-attempt.service'
 import { VerificationTokenService } from '../services/verification-token.service'
 
@@ -37,10 +37,27 @@ const getLoginAttemptService = () =>
   container.resolve<LoginAttemptService>(LoginAttemptService)
 const getLogger = () => container.resolve<ILogger>('ILogger')
 
+class SignupResult {
+  public success: boolean
+  public message: string
+  public requiresEmailVerification: boolean
+
+  constructor(
+    success: boolean,
+    message: string,
+    requiresEmailVerification: boolean,
+  ) {
+    this.success = success
+    this.message = message
+    this.requiresEmailVerification = requiresEmailVerification
+  }
+}
+
 // Enhanced Signup mutation with email verification
 builder.mutationField('signupWithVerification', (t) =>
   t.field({
-    type: builder.objectType('SignupResult', {
+    type: builder.objectType(SignupResult, {
+      name: 'SignupResult',
       fields: (t) => ({
         success: t.boolean({ resolve: () => true }),
         message: t.string({ resolve: (parent) => parent.message }),
@@ -50,7 +67,6 @@ builder.mutationField('signupWithVerification', (t) =>
       }),
     }),
     description: 'Create a new user account with email verification',
-    grantScopes: ['public'],
     shield: rateLimitSensitiveOperations,
     args: {
       email: t.arg.string({
@@ -137,10 +153,30 @@ builder.mutationField('signupWithVerification', (t) =>
   }),
 )
 
+class LoginResult {
+  public token: string | null
+  public userId: number | null
+  public requiresEmailVerification: boolean
+  public message: string | null
+
+  constructor(
+    token: string | null,
+    userId: number | null,
+    requiresEmailVerification: boolean,
+    message: string | null,
+  ) {
+    this.token = token
+    this.userId = userId
+    this.requiresEmailVerification = requiresEmailVerification
+    this.message = message
+  }
+}
+
 // Enhanced Login mutation with attempt tracking
 builder.mutationField('loginSecure', (t) =>
   t.field({
-    type: builder.objectType('LoginResult', {
+    type: builder.objectType(LoginResult, {
+      name: 'LoginResult',
       fields: (t) => ({
         token: t.string({
           nullable: true,
@@ -167,7 +203,6 @@ builder.mutationField('loginSecure', (t) =>
       }),
     }),
     description: 'Authenticate with email and password',
-    grantScopes: ['public'],
     shield: rateLimitSensitiveOperations,
     args: {
       email: t.arg.string({
@@ -293,17 +328,27 @@ builder.mutationField('loginSecure', (t) =>
   }),
 )
 
+class VerifyEmailResult {
+  public success: boolean
+  public message: string
+
+  constructor(success: boolean, message: string) {
+    this.success = success
+    this.message = message
+  }
+}
+
 // Verify email mutation
 builder.mutationField('verifyEmail', (t) =>
   t.field({
-    type: builder.objectType('VerifyEmailResult', {
+    type: builder.objectType(VerifyEmailResult, {
+      name: 'VerifyEmailResult',
       fields: (t) => ({
         success: t.boolean({ resolve: () => true }),
         message: t.string({ resolve: (parent) => parent.message }),
       }),
     }),
     description: 'Verify email address with token',
-    grantScopes: ['public'],
     args: {
       token: t.arg.string({
         required: true,
@@ -342,7 +387,10 @@ builder.mutationField('verifyEmail', (t) =>
           message: 'Email verified successfully. You can now log in.',
         }
       } catch (error) {
-        logger.error('Email verification failed', { error, token: args.token })
+        logger.warn('Email verification failed', {
+          error,
+          token: args.token,
+        })
 
         if (error instanceof ValidationError) {
           throw error
@@ -354,17 +402,27 @@ builder.mutationField('verifyEmail', (t) =>
   }),
 )
 
+class ResendVerificationResult {
+  public success: boolean
+  public message: string
+
+  constructor(success: boolean, message: string) {
+    this.success = success
+    this.message = message
+  }
+}
+
 // Resend verification email mutation
 builder.mutationField('resendVerificationEmail', (t) =>
   t.field({
-    type: builder.objectType('ResendVerificationResult', {
+    type: builder.objectType(ResendVerificationResult, {
+      name: 'ResendVerificationResult',
       fields: (t) => ({
         success: t.boolean({ resolve: () => true }),
         message: t.string({ resolve: (parent) => parent.message }),
       }),
     }),
     description: 'Resend email verification link',
-    grantScopes: ['public'],
     shield: rateLimitSensitiveOperations,
     args: {
       email: t.arg.string({
@@ -432,17 +490,27 @@ builder.mutationField('resendVerificationEmail', (t) =>
   }),
 )
 
+class PasswordResetResult {
+  public success: boolean
+  public message: string
+
+  constructor(success: boolean, message: string) {
+    this.success = success
+    this.message = message
+  }
+}
+
 // Request password reset mutation
 builder.mutationField('requestPasswordReset', (t) =>
   t.field({
-    type: builder.objectType('PasswordResetResult', {
+    type: builder.objectType(PasswordResetResult, {
+      name: 'PasswordResetResult',
       fields: (t) => ({
         success: t.boolean({ resolve: () => true }),
         message: t.string({ resolve: (parent) => parent.message }),
       }),
     }),
     description: 'Request a password reset email',
-    grantScopes: ['public'],
     shield: rateLimitSensitiveOperations,
     args: {
       email: t.arg.string({
@@ -497,17 +565,27 @@ builder.mutationField('requestPasswordReset', (t) =>
   }),
 )
 
+class ResetPasswordResult {
+  public success: boolean
+  public message: string
+
+  constructor(success: boolean, message: string) {
+    this.success = success
+    this.message = message
+  }
+}
+
 // Reset password mutation
 builder.mutationField('resetPassword', (t) =>
   t.field({
-    type: builder.objectType('ResetPasswordResult', {
+    type: builder.objectType(ResetPasswordResult, {
+      name: 'ResetPasswordResult',
       fields: (t) => ({
         success: t.boolean({ resolve: () => true }),
         message: t.string({ resolve: (parent) => parent.message }),
       }),
     }),
     description: 'Reset password with token',
-    grantScopes: ['public'],
     args: {
       token: t.arg.string({
         required: true,
@@ -553,7 +631,7 @@ builder.mutationField('resetPassword', (t) =>
             'Password reset successfully. You can now log in with your new password.',
         }
       } catch (error) {
-        logger.error('Password reset failed', { error, token: args.token })
+        logger.warn('Password reset failed', { error, token: args.token })
 
         if (error instanceof ValidationError) {
           throw error

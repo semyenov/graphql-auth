@@ -7,11 +7,11 @@
 
 export {
   authDirectiveTransformer,
-  authDirectiveTypeDefs,
+  authDirectiveTypeDefs
 } from './auth.directive'
 export {
   rateLimitDirectiveTransformer,
-  rateLimitDirectiveTypeDefs,
+  rateLimitDirectiveTypeDefs
 } from './rate-limit.directive'
 
 // Combined type definitions for easy schema integration

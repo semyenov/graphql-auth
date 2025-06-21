@@ -9,7 +9,7 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 import type { GraphQLSchema } from 'graphql'
 import type { Server } from 'http'
-import type { Context } from '../../graphql/context/context.types'
+import type { IContext } from '../../graphql/context/context.types'
 
 /**
  * Apollo Server configuration options
@@ -27,7 +27,7 @@ export interface ApolloServerConfig {
  */
 export function createApolloServer(
   config: ApolloServerConfig,
-): ApolloServer<Context> {
+): ApolloServer<IContext> {
   const {
     schema,
     httpServer,
@@ -53,7 +53,7 @@ export function createApolloServer(
     )
   }
 
-  return new ApolloServer<Context>({
+  return new ApolloServer<IContext>({
     schema,
     plugins,
     introspection,

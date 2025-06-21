@@ -7,12 +7,12 @@
 
 import type { Post, Prisma } from '@prisma/client'
 import { container } from 'tsyringe'
-import { requirePostOwnership } from '../../core/auth/ownership.utils'
-import { NotFoundError } from '../../core/errors/types'
-import type { ILogger } from '../../core/services/logger.interface'
-import { parseGlobalId } from '../../core/utils/relay'
-import type { UserId } from '../../core/value-objects/user-id.vo'
+import { requireResourceOwnership } from '../../app/auth/ownership.utils'
+import { NotFoundError } from '../../app/errors/types'
+import type { ILogger } from '../../app/services/logger.interface'
 import { prisma } from '../../prisma'
+import { parseGlobalId } from '../../utils/relay'
+import type { UserId } from '../../value-objects/user-id.vo'
 
 // Get services from container
 const getLogger = () => container.resolve<ILogger>('ILogger')
@@ -320,8 +320,8 @@ export class PostsService {
     userId?: UserId,
   ): Promise<
     | (Post & {
-        author: { id: number; name: string | null; email: string } | null
-      })
+      author: { id: number; name: string | null; email: string } | null
+    })
     | null
   > {
     const numericPostId = parseGlobalId(postId, 'Post')
@@ -432,7 +432,9 @@ export class PostsService {
     userId: UserId,
   ): Promise<{ authorId: number | null; published: boolean }> {
     // First verify ownership using the utility
-    await requirePostOwnership(userId.value, postId)
+    await requireResourceOwnership(userId.value, postId, {
+      resourceType: 'post',
+    })
 
     // Then get the post details we need
     const post = await prisma.post.findUnique({

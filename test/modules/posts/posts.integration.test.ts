@@ -1,7 +1,6 @@
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { UserId } from '../../../src/core/value-objects/user-id.vo'
 import {
   CreatePostMutation,
   DeletePostMutation,
@@ -9,6 +8,7 @@ import {
 } from '../../../src/gql/mutations'
 import { DraftsQuery, FeedQuery } from '../../../src/gql/queries'
 import { prisma } from '../../../src/prisma'
+import { UserId } from '../../../src/value-objects/user-id.vo'
 import {
   cleanDatabase,
   createAuthContext,
@@ -84,7 +84,6 @@ describe('Posts', () => {
     it('should fetch all published posts in feed', async () => {
       // Create user with posts
       const { posts } = await createUserWithPosts({
-        userId: testUserId.value,
         postCount: 3,
         publishedPosts: 2,
       })

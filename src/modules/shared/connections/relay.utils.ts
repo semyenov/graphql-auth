@@ -8,9 +8,9 @@
 export {
   encodeGlobalId,
   parseAndValidateGlobalId,
-} from '../../../core/utils/relay'
+} from '../../../utils/relay'
 
-import { fromGlobalId } from '../../../core/utils/relay'
+import { fromGlobalId } from '../../../utils/relay'
 import {
   CONNECTION_DEFAULTS,
   type Connection,

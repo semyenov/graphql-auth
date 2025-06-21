@@ -5,26 +5,26 @@
  */
 
 import { allow, rule, shield } from 'graphql-shield'
-import { checkUserOwnership } from '../../core/auth/ownership.utils'
-import {
-  AuthenticationError,
-  AuthorizationError,
-  NotFoundError,
-} from '../../core/errors/types'
-import { parseAndValidateGlobalId } from '../../core/utils/relay'
-import type { Context } from '../../graphql/context/context.types'
+import { checkUserOwnership } from '../../app/auth/ownership.utils'
+import type { IContext } from '../../graphql/context/context.types'
 import {
   isAdmin,
   isAuthenticated,
   isModerator,
 } from '../../graphql/middleware/shared-rules'
 import { prisma } from '../../prisma'
+import {
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+} from '../../app/errors/types'
+import { parseAndValidateGlobalId } from '../../utils/relay'
 
 /**
  * Check if user is viewing their own profile
  */
 export const isSelf = rule({ cache: 'strict' })(
-  async (_parent, args: { id?: string; userId?: string }, context: Context) => {
+  async (_parent, args: { id?: string; userId?: string }, context: IContext) => {
     if (!context.userId) {
       return new AuthenticationError('You must be logged in')
     }
@@ -47,7 +47,7 @@ export const isSelf = rule({ cache: 'strict' })(
  * Check if user can view another user's profile
  */
 export const canViewProfile = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, _context: Context) => {
+  async (_parent, args: { id: string }, _context: IContext) => {
     try {
       const userId = await parseAndValidateGlobalId(args.id, 'User')
 
@@ -81,7 +81,7 @@ export const canViewProfile = rule({ cache: 'strict' })(
  * Check if user can edit another user's data
  */
 export const canEditUser = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, context: Context) => {
+  async (_parent, args: { id: string }, context: IContext) => {
     if (!context.userId) {
       return new AuthenticationError('You must be logged in')
     }
@@ -133,7 +133,7 @@ export const canEditUser = rule({ cache: 'strict' })(
  * Check if user is blocked by target user
  */
 export const notBlocked = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, context: Context) => {
+  async (_parent, args: { id: string }, context: IContext) => {
     if (!context.userId) return true // Anonymous users can't be blocked
 
     try {
@@ -157,7 +157,7 @@ export const notBlocked = rule({ cache: 'strict' })(
  * Check if user can send messages
  */
 export const canSendMessage = rule({ cache: 'strict' })(
-  async (_parent, args: { recipientId: string }, context: Context) => {
+  async (_parent, args: { recipientId: string }, context: IContext) => {
     if (!context.userId) {
       return new AuthenticationError('You must be logged in to send messages')
     }

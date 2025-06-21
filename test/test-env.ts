@@ -1,6 +1,6 @@
 // Import reflect-metadata before anything else
-import 'reflect-metadata'
 import { PrismaClient } from '@prisma/client'
+import 'reflect-metadata'
 import { configureContainer } from '../src/app/config/container'
 import { setTestPrismaClient } from '../src/prisma'
 import { TEST_DATABASE_URL as testDbUrl } from './test-database-url'

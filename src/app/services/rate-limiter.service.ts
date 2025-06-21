@@ -10,8 +10,8 @@ import {
   RateLimiterRedis,
   RateLimiterRes,
 } from 'rate-limiter-flexible'
-import { RateLimitError } from '../../core/errors/types'
-import { logger } from '../../core/utils/logger'
+import { logger } from '../../utils/logger'
+import { RateLimitError } from '../errors/types'
 
 export interface RateLimiterOptions {
   points: number // Number of requests

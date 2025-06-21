@@ -7,17 +7,17 @@
 import { randomBytes } from 'crypto'
 import * as jwt from 'jsonwebtoken'
 import { inject, injectable } from 'tsyringe'
-import { AuthenticationError } from '../../../core/errors/types'
+import { AuthenticationError } from '../../../app/errors/types'
 import type {
   AuthTokens,
   ITokenService,
   TokenConfig,
   TokenPayload,
-} from '../../../core/services/token.service.interface'
-import { UserId } from '../../../core/value-objects/user-id.vo'
+} from '../../../app/services/token.service.interface'
 import { RefreshTokenRepository } from '../../../data/repositories/refresh-token.repository'
+import { UserId } from '../../../value-objects/user-id.vo'
 
-export type { TokenConfig } from '../../../core/services/token.service.interface'
+export type { TokenConfig } from '../../../app/services/token.service.interface'
 
 @injectable()
 export class TokenService implements ITokenService {
@@ -25,7 +25,7 @@ export class TokenService implements ITokenService {
     @inject('TokenConfig') private config: TokenConfig,
     @inject(RefreshTokenRepository)
     private refreshTokenRepo: RefreshTokenRepository,
-  ) {}
+  ) { }
 
   /**
    * Generate both access and refresh tokens

@@ -14,14 +14,14 @@ import {
   NotFoundError,
   RateLimitError,
   ValidationError,
-} from '../../core/errors/types'
-import { decodeGlobalId, encodeGlobalId } from '../../core/utils/relay'
+} from '../../app/errors/types'
 import { prisma } from '../../prisma'
-import type { Context } from '../context/context.types'
+import { decodeGlobalId, encodeGlobalId } from '../../utils/relay'
+import type { IContext } from '../context/context.types'
 import ShieldPlugin from './plugins/shield'
 
 export const builder = new SchemaBuilder<{
-  Context: Context
+  Context: IContext
   PrismaTypes: PrismaTypes
   Scalars: {
     DateTime: {

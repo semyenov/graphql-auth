@@ -2,10 +2,10 @@ import { PrismaClient } from '@prisma/client'
 import { execSync } from 'child_process'
 import { rm } from 'fs/promises'
 import { afterAll, beforeAll, beforeEach } from 'vitest'
-import { configureContainer } from '../../src/app/config/container'
-import { DatabaseClient } from '../../src/app/database/client'
-import { rateLimiter } from '../../src/app/services/rate-limiter.service'
+import { configureContainer } from '../../src/config/container'
+import { DatabaseClient } from '../../src/database/client'
 import { setTestPrismaClient } from '../../src/prisma'
+import { rateLimiter } from '../../src/services/rate-limiter.service'
 import { TEST_DATABASE_URL } from './database.setup'
 
 // Create a test database client

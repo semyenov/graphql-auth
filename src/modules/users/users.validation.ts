@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod'
-import { VALIDATION_LIMITS } from '../../constants'
+import { VALIDATION_LIMITS } from '../../app/constants'
 import { prisma } from '../../prisma'
 
 /**
@@ -224,5 +224,6 @@ export async function validateUserUpdatePermission(
 // Re-export shared validation helpers for backwards compatibility
 export {
   safeValidateInput as safeValidateUserInput,
-  validateInput as validateUserInput,
-} from '../../core/validation/helpers'
+  validateInput as validateUserInput
+} from '../../validation/helpers'
+

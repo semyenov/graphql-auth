@@ -5,18 +5,15 @@
  */
 
 import { rule } from 'graphql-shield'
-import {
-  AuthenticationError,
-  AuthorizationError,
-} from '../../core/errors/types'
+import { AuthenticationError, AuthorizationError } from '../../app/errors/types'
 import { prisma } from '../../prisma'
-import type { Context } from '../context/context.types'
+import type { IContext } from '../context/context.types'
 
 /**
  * Check if user is authenticated
  */
 export const isAuthenticated = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
+  async (_parent, _args, context: IContext) => {
     return !!context.userId
   },
 )
@@ -25,7 +22,7 @@ export const isAuthenticated = rule({ cache: 'contextual' })(
  * Check if user is not authenticated (for signup/login)
  */
 export const isNotAuthenticated = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
+  async (_parent, _args, context: IContext) => {
     return !context.userId
   },
 )
@@ -34,7 +31,7 @@ export const isNotAuthenticated = rule({ cache: 'contextual' })(
  * Check if user is admin
  */
 export const isAdmin = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
+  async (_parent, _args, context: IContext) => {
     if (!context.userId) return false
 
     const user = await prisma.user.findUnique({
@@ -50,7 +47,7 @@ export const isAdmin = rule({ cache: 'contextual' })(
  * Check if user is moderator or admin
  */
 export const isModerator = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
+  async (_parent, _args, context: IContext) => {
     if (!context.userId) return false
 
     const user = await prisma.user.findUnique({
@@ -66,7 +63,7 @@ export const isModerator = rule({ cache: 'contextual' })(
  * Check if user's account is active
  */
 export const isActiveAccount = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
+  async (_parent, _args, context: IContext) => {
     if (!context.userId) return false
 
     const user = await prisma.user.findUnique({
@@ -90,7 +87,7 @@ export const isActiveAccount = rule({ cache: 'contextual' })(
  * Check if email verification is required
  */
 export const isEmailVerified = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
+  async (_parent, _args, context: IContext) => {
     if (!context.userId) return false
 
     const user = await prisma.user.findUnique({
@@ -110,7 +107,7 @@ export const isEmailVerified = rule({ cache: 'contextual' })(
  * Check if user has specific permission
  */
 export const hasPermission = (permission: string) =>
-  rule({ cache: 'contextual' })(async (_parent, _args, context: Context) => {
+  rule({ cache: 'contextual' })(async (_parent, _args, context: IContext) => {
     if (!context.userId) return false
 
     const user = await prisma.user.findUnique({
@@ -138,7 +135,7 @@ export const hasPermission = (permission: string) =>
  * Require authentication with helpful error message
  */
 export const requireAuthentication = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
+  async (_parent, _args, context: IContext) => {
     if (!context.userId) {
       return new AuthenticationError('You must be logged in')
     }
@@ -150,7 +147,7 @@ export const requireAuthentication = rule({ cache: 'contextual' })(
  * Rate limiting check (integrates with rate limiter)
  */
 export const withinRateLimit = (_operation: string) =>
-  rule({ cache: 'no_cache' })(async (_parent, _args, _context: Context) => {
+  rule({ cache: 'no_cache' })(async (_parent, _args, _context: IContext) => {
     // This is handled by the rate limiter plugin
     // This rule is just for documentation/type safety
     return true

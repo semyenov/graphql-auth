@@ -60,7 +60,7 @@ bun run demo                            # Run demo script
   - **DataLoader Plugin**: Automatic batch loading for N+1 prevention
   - **Validation Plugin**: Zod integration with async refinements
 - **Database**: Prisma ORM with SQLite (dev.db) - accessed directly, not through context
-- **Authentication**: JWT tokens with hybrid password service (argon2 + bcrypt fallback) + refresh token rotation
+- **Authentication**: JWT tokens with argon2 (hybrid bcrypt support) + refresh token rotation
 - **Authorization**: Dual authorization system using Pothos Scope Auth + GraphQL Shield Plugin
 - **Type Safety**: GraphQL Tada for compile-time GraphQL typing
 - **Testing**: Vitest with comprehensive test utilities
@@ -69,23 +69,85 @@ bun run demo                            # Run demo script
 - **Dependency Injection**: TSyringe for service management
 - **Code Quality**: Biome for linting and formatting (replaces ESLint/Prettier)
 
-### Architecture: Modular Direct Resolvers
+### Architecture: Modular Direct Resolvers with Unified Structure
 
-The project uses a **modular architecture** with direct Pothos resolvers organized by feature:
+The project uses a **modular architecture** with direct Pothos resolvers organized by feature. The core and app directories have been merged into a unified src structure:
 
 ```
 src/
-├── app/                              # Application entry and configuration
-│   ├── server.ts                     # Main server setup (entry point: bun run dev)
-│   ├── config/                       # Configuration
-│   │   ├── container.ts              # TSyringe DI container setup
-│   │   ├── environment.ts            # Environment variable handling
-│   │   └── database.ts               # Database configuration
-│   └── middleware/                   # Application-level middleware
-│       ├── cors.ts                   # CORS configuration
-│       ├── rate-limiting.ts          # Rate limiter setup
-│       ├── logging.ts                # Request/response logging
-│       └── security-headers.ts       # Security headers middleware
+├── server.ts                         # Main server setup (entry point: bun run dev)
+├── main.ts                           # Build entry point
+├── prisma.ts                         # Prisma client export
+├── constants/                        # Application constants
+├── types/                            # Global type definitions
+│
+├── config/                           # Application configuration
+│   ├── container.ts                  # TSyringe DI container setup
+│   ├── environment.ts                # Environment variable handling
+│   ├── config.ts                     # Configuration management
+│   └── database.ts                   # Database configuration
+│
+├── middleware/                       # Application-level middleware
+│   ├── cors.ts                       # CORS configuration
+│   ├── rate-limiting.ts              # Rate limiter setup
+│   ├── logging.ts                    # Request/response logging
+│   └── security-headers.ts           # Security headers middleware
+│
+├── auth/                             # Authentication core
+│   ├── scopes.ts                     # Authorization scopes
+│   ├── types.ts                      # Auth types
+│   └── ownership.utils.ts            # Resource ownership utilities
+│
+├── errors/                           # Error handling system
+│   ├── types.ts                      # Error class hierarchy
+│   ├── handlers.ts                   # Error normalization
+│   ├── constants.ts                  # Error messages
+│   └── graphql-error-types.ts        # GraphQL error types
+│
+├── logging/                          # Logging system
+│   ├── logger-factory.ts             # Logger creation
+│   ├── console-logger.ts             # Console implementation
+│   ├── noop-logger.ts                # No-op logger
+│   └── index.ts                      # Logger exports
+│
+├── utils/                            # Core utilities
+│   ├── relay.ts                      # Global ID encoding/decoding
+│   ├── jwt.ts                        # JWT utilities
+│   ├── crypto.ts                     # Cryptographic utilities
+│   ├── dates.ts                      # Date utilities
+│   ├── strings.ts                    # String utilities
+│   ├── types.ts                      # Type utilities
+│   └── validation.ts                 # Validation utilities
+│
+├── validation/                       # Validation system
+│   ├── schemas.ts                    # Common Zod schemas
+│   ├── validators.ts                 # Custom validators
+│   ├── helpers.ts                    # Validation helpers
+│   └── enhanced-validations.ts       # Advanced validations
+│
+├── value-objects/                    # Domain value objects
+│   ├── email.vo.ts                   # Email value object
+│   ├── user-id.vo.ts                 # User ID value object
+│   └── post-id.vo.ts                 # Post ID value object
+│
+├── services/                         # Core services
+│   ├── email.service.ts              # Email service
+│   ├── logger.interface.ts           # Logger interface
+│   ├── password.service.interface.ts # Password service interface
+│   ├── post-authorization.service.ts # Post authorization
+│   ├── token.service.interface.ts    # Token service interface
+│   └── rate-limiter.service.ts       # Rate limiting service
+│
+├── database/                         # Database layer
+│   ├── client.ts                     # Database client
+│   └── index.ts                      # Database exports
+│
+├── entities/                         # Domain entities
+│   ├── post.entity.ts                # Post entity
+│   └── user.entity.ts                # User entity (if exists)
+│
+├── repositories/                     # Repository interfaces
+│   └── user.repository.interface.ts  # User repository interface
 
 ├── modules/                          # Feature modules (domain-driven)
 │   ├── auth/                         # Authentication module
@@ -94,12 +156,15 @@ src/
 │   │   ├── auth.validation.ts        # Input validation schemas
 │   │   ├── resolvers/                # GraphQL resolvers
 │   │   │   ├── auth.resolver.ts      # Basic auth (signup/login/me)
-│   │   │   └── auth-tokens.resolver.ts # Refresh token operations
+│   │   │   ├── auth-tokens.resolver.ts # Refresh token operations
+│   │   │   └── auth-enhanced.resolver.ts # Email verification & password reset
 │   │   ├── services/                 # Business logic services
 │   │   │   ├── password.service.ts   # Password hashing (bcryptjs)
 │   │   │   ├── argon2-password.service.ts # Argon2 password service
 │   │   │   ├── hybrid-password.service.ts # Hybrid password service
-│   │   │   └── token.service.ts      # JWT token management
+│   │   │   ├── token.service.ts      # JWT token management
+│   │   │   ├── verification-token.service.ts # Email verification tokens
+│   │   │   └── login-attempt.service.ts # Login attempt tracking
 │   │   └── types/                    # Module-specific types
 │   ├── posts/                        # Posts module
 │   │   ├── posts.schema.ts           # Post type definitions
@@ -148,6 +213,8 @@ src/
 │   ├── logging/                      # Logging system
 │   │   ├── logger-factory.ts         # Logger creation
 │   │   └── console-logger.ts         # Console implementation
+│   ├── services/                     # Core services
+│   │   └── email.service.ts          # Email service interface
 │   ├── utils/                        # Core utilities
 │   │   ├── relay.ts                  # Global ID encoding/decoding
 │   │   ├── jwt.ts                    # JWT utilities
@@ -499,44 +566,7 @@ When working with GraphQL operations:
 8. **Enhanced Security**: Added security headers middleware
 9. **ShieldPlugin Integration**: Migrated from middleware-based Shield to inline plugin approach
 10. **Dual Authorization**: Combined Pothos Scope Auth with GraphQL Shield for flexible permissions
-11. **Test Helper Integration**: Comprehensive `gqlHelpers` utilities for cleaner, type-safe testing
-
-## Test Helper Integration
-
-The project uses comprehensive test utilities for GraphQL operations:
-
-```typescript
-// ✅ CORRECT - Use gqlHelpers for clean test code
-import { gqlHelpers } from '../utils'
-
-// Successful operations
-const data = await gqlHelpers.expectSuccessfulQuery(
-  server,
-  print(FeedQuery),
-  { first: 10 },
-  context
-)
-
-// Expected errors
-await gqlHelpers.expectGraphQLError(
-  server,
-  print(LoginMutation),
-  { email: 'invalid', password: 'wrong' },
-  context,
-  'Invalid email or password'
-)
-```
-
-Available test helpers:
-- `gqlHelpers.expectSuccessfulQuery()` - Execute and expect success
-- `gqlHelpers.expectSuccessfulMutation()` - Execute mutation and expect success  
-- `gqlHelpers.expectGraphQLError()` - Execute and expect specific error
-- `createTestServer()` - Create test Apollo server
-- `createAuthContext()` - Create authenticated context
-- `createMockContext()` - Create unauthenticated context
-- `createTestUser()` - Create test user with unique email
-- `createUserWithPosts()` - Create user with sample posts
-- `cleanDatabase()` - Clean database between tests
+11. **Enhanced Authentication**: Added email verification, password reset, and login attempt tracking
 
 ## Critical Rules from .cursor/rules
 
@@ -552,9 +582,8 @@ Based on the Cursor rules in this project:
 ### Testing Patterns (.cursor/rules/02-testing-patterns.mdc)
 - Use typed GraphQL operations from `src/gql/`
 - Test both success and error cases
-- Use comprehensive test utilities with `gqlHelpers`
+- Use comprehensive test utilities
 - Test authorization and authentication flows
-- Never use raw GraphQL strings in tests
 
 ### Error Handling (.cursor/rules/03-error-handling.mdc)
 - Use the centralized error hierarchy

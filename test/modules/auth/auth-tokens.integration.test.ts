@@ -7,14 +7,14 @@
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
-// Import direct mutations
-import { UserId } from '../../../src/core/value-objects/user-id.vo'
 import {
   LoginWithTokensMutation,
   LogoutMutation,
   RefreshTokenMutation,
 } from '../../../src/gql/mutations-auth-tokens'
 import { prisma } from '../../../src/prisma'
+// Import direct mutations
+import { UserId } from '../../../src/value-objects/user-id.vo'
 import {
   cleanDatabase,
   createAuthContext,

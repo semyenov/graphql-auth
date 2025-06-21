@@ -5,14 +5,10 @@
  */
 
 import type { Prisma } from '@prisma/client'
+import { container } from 'tsyringe'
 import { z } from 'zod'
-import {
-  AuthorizationError,
-  NotFoundError,
-  RateLimitError,
-} from '../../../core/errors/types'
-// import type { ILogger } from '../../../core/services/logger.interface'
-import { parseGlobalId } from '../../../core/utils/relay'
+import { AuthorizationError, NotFoundError, RateLimitError } from '../../../app/errors/types'
+import type { ILogger } from '../../../app/services/logger.interface'
 import {
   and,
   isAuthenticatedUser,
@@ -23,10 +19,11 @@ import {
 } from '../../../graphql/middleware/rules'
 import { builder } from '../../../graphql/schema/builder'
 import { prisma } from '../../../prisma'
+import { parseGlobalId } from '../../../utils/relay'
 import { requireAuthentication } from '../../auth/guards/auth.guards'
 
 // Get logger from container
-// const getLogger = () => container.resolve<ILogger>('ILogger')
+const getLogger = () => container.resolve<ILogger>('ILogger')
 
 // Input types for post mutations
 const CreatePostInput = builder.inputType('CreatePostInput', {
@@ -75,7 +72,6 @@ builder.mutationField('createPost', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Create a new post',
-    grantScopes: ['authenticated'],
     shield: isAuthenticatedUser,
     args: {
       input: t.arg({
@@ -84,14 +80,14 @@ builder.mutationField('createPost', (t) =>
       }),
     },
     resolve: async (query, _parent, args, context) => {
-      // const logger = getLogger().child({ resolver: 'createPost' })
+      const logger = getLogger().child({ resolver: 'createPost' })
       const userId = requireAuthentication(context)
 
-      // logger.info('Creating new post', {
-      //   authorId: userId.value,
-      //   title: args.input.title,
-      //   published: args.input.published,
-      // })
+      logger.info('Creating new post', {
+        authorId: userId.value,
+        title: args.input.title,
+        published: args.input.published,
+      })
 
       const post = await prisma.post.create({
         ...query,
@@ -103,11 +99,11 @@ builder.mutationField('createPost', (t) =>
         },
       })
 
-      // logger.info('Post created successfully', {
-      //   postId: post.id,
-      //   authorId: userId.value,
-      //   published: post.published,
-      // })
+      logger.info('Post created successfully', {
+        postId: post.id,
+        authorId: userId.value,
+        published: post.published,
+      })
 
       return post
     },
@@ -119,7 +115,6 @@ builder.mutationField('updatePost', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Update an existing post',
-    grantScopes: ['authenticated'],
     shield: and(isAuthenticatedUser, isPostOwner),
     args: {
       id: t.arg.id({ required: true }),
@@ -129,7 +124,7 @@ builder.mutationField('updatePost', (t) =>
       }),
     },
     resolve: async (query, _parent, args, context) => {
-      // const logger = getLogger().child({ resolver: 'updatePost' })
+      const logger = getLogger().child({ resolver: 'updatePost' })
       const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
@@ -149,7 +144,7 @@ builder.mutationField('updatePost', (t) =>
         )
       }
 
-      // logger.info('Updating post', { postId, userId: userId.value })
+      logger.info('Updating post', { postId, userId: userId.value })
 
       // Build update data
       const updateData: Prisma.PostUpdateInput = {}
@@ -166,7 +161,7 @@ builder.mutationField('updatePost', (t) =>
         data: updateData,
       })
 
-      // logger.info('Post updated successfully', { postId })
+      logger.info('Post updated successfully', { postId })
 
       return post
     },
@@ -177,13 +172,12 @@ builder.mutationField('updatePost', (t) =>
 builder.mutationField('deletePost', (t) =>
   t.boolean({
     description: 'Delete a post',
-    grantScopes: ['authenticated'],
     shield: and(isAuthenticatedUser, isPostOwner),
     args: {
       id: t.arg.id({ required: true }),
     },
     resolve: async (_parent, args, context) => {
-      // const logger = getLogger().child({ resolver: 'deletePost' })
+      const logger = getLogger().child({ resolver: 'deletePost' })
       const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
@@ -207,13 +201,13 @@ builder.mutationField('deletePost', (t) =>
         )
       }
 
-      // logger.info('Deleting post', { postId, userId: userId.value })
+      logger.info('Deleting post', { postId, userId: userId.value })
 
       await prisma.post.delete({
         where: { id: postId },
       })
 
-      // logger.info('Post deleted successfully', { postId })
+      logger.info('Post deleted successfully', { postId })
 
       return true
     },
@@ -225,13 +219,12 @@ builder.mutationField('togglePublishPost', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Toggle the publish status of a post',
-    grantScopes: ['authenticated'],
     shield: and(isAuthenticatedUser, isPostOwner),
     args: {
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, context) => {
-      // const logger = getLogger().child({ resolver: 'togglePublishPost' })
+      const logger = getLogger().child({ resolver: 'togglePublishPost' })
       const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
@@ -251,10 +244,10 @@ builder.mutationField('togglePublishPost', (t) =>
         )
       }
 
-      // logger.info('Toggling post publish status', {
-      //   postId,
-      //   currentStatus: existingPost.published,
-      // })
+      logger.info('Toggling post publish status', {
+        postId,
+        currentStatus: existingPost.published,
+      })
 
       const post = await prisma.post.update({
         ...query,
@@ -262,10 +255,10 @@ builder.mutationField('togglePublishPost', (t) =>
         data: { published: !existingPost.published },
       })
 
-      // logger.info('Post publish status toggled', {
-      //   postId,
-      //   newStatus: post.published,
-      // })
+      logger.info('Post publish status toggled', {
+        postId,
+        newStatus: post.published,
+      })
 
       return post
     },
@@ -277,13 +270,12 @@ builder.mutationField('incrementPostViewCount', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Increment the view count of a post',
-    grantScopes: ['public'],
     shield: isPublic,
     args: {
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, _context) => {
-      // const logger = getLogger().child({ resolver: 'incrementPostViewCount' })
+      const logger = getLogger().child({ resolver: 'incrementPostViewCount' })
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
       // Check if post exists
@@ -296,7 +288,7 @@ builder.mutationField('incrementPostViewCount', (t) =>
         throw new NotFoundError('Post', args.id.toString())
       }
 
-      // logger.info('Incrementing post view count', { postId })
+      logger.info('Incrementing post view count', { postId })
 
       const post = await prisma.post.update({
         ...query,
@@ -304,10 +296,10 @@ builder.mutationField('incrementPostViewCount', (t) =>
         data: { viewCount: { increment: 1 } },
       })
 
-      // logger.info('Post view count incremented', {
-      //   postId,
-      //   newCount: post.viewCount,
-      // })
+      logger.info('Post view count incremented', {
+        postId,
+        newCount: post.viewCount,
+      })
 
       return post
     },
@@ -366,7 +358,6 @@ builder.queryField('drafts', (t) =>
     type: 'Post',
     cursor: 'id',
     description: 'Get draft posts for the authenticated user',
-    grantScopes: ['authenticated'],
     shield: isAuthenticatedUser,
     resolve: (query, _parent, _args, context) => {
       const userId = requireAuthentication(context)
@@ -400,7 +391,6 @@ builder.queryField('post', (t) =>
     nullable: true,
     description: 'Get a post by ID',
     shield: or(isPublic, isAuthenticatedUser),
-    grantScopes: ['public'],
     args: {
       id: t.arg.id({ required: true }),
     },
@@ -431,7 +421,6 @@ builder.queryField('post', (t) =>
 builder.mutationField('moderatePost', (t) =>
   t.boolean({
     description: 'Moderate a post (approve, reject, or flag)',
-    grantScopes: ['authenticated'],
     shield: isModerator,
     args: {
       id: t.arg.id({ required: true }),
@@ -449,7 +438,7 @@ builder.mutationField('moderatePost', (t) =>
       }),
     },
     resolve: async (_parent, args, context) => {
-      // const logger = getLogger().child({ resolver: 'moderatePost' })
+      const logger = getLogger().child({ resolver: 'moderatePost' })
 
       // Check moderation permission using enhanced scopes
       if (
@@ -465,11 +454,11 @@ builder.mutationField('moderatePost', (t) =>
 
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
-      // logger.info('Moderating post', {
-      //   postId,
-      //   action: args.action,
-      //   moderatorId: context.userId?.value,
-      // })
+      logger.info('Moderating post', {
+        postId,
+        action: args.action,
+        moderatorId: context.userId?.value,
+      })
 
       // Check if post exists
       const post = await prisma.post.findUnique({
@@ -495,10 +484,10 @@ builder.mutationField('moderatePost', (t) =>
         },
       })
 
-      // logger.info('Post moderated successfully', {
-      //   postId,
-      //   action: args.action,
-      // })
+      logger.info('Post moderated successfully', {
+        postId,
+        action: args.action,
+      })
 
       return true
     },
@@ -509,7 +498,6 @@ builder.mutationField('moderatePost', (t) =>
 builder.mutationField('createComment', (t) =>
   t.string({
     description: 'Create a comment on a post with rate limiting',
-    grantScopes: ['authenticated'],
     shield: isAuthenticatedUser,
     args: {
       postId: t.arg.id({ required: true }),

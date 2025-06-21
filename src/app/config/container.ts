@@ -7,27 +7,17 @@
 import type { PrismaClient } from '@prisma/client'
 import 'reflect-metadata'
 import { container } from 'tsyringe'
-// Infrastructure implementations
-import { createLoggerFromEnv } from '../../core/logging/logger-factory'
-import {
-  EmailService,
-  type IEmailService,
-} from '../../core/services/email.service'
-// Core interfaces
-import type { ILogger } from '../../core/services/logger.interface'
-import type { IPasswordService } from '../../core/services/password.service.interface'
-import type { ITokenService } from '../../core/services/token.service.interface'
-// Feature-based implementations (for refresh tokens)
+import { createLoggerFromEnv } from '../../app/logging/logger-factory'
+import type { ILogger } from '../../app/services/logger.interface'
+import type { IPasswordService } from '../../app/services/password.service.interface'
+import type { ITokenService } from '../../app/services/token.service.interface'
 import { RefreshTokenRepository } from '../../data/repositories/refresh-token.repository'
 import { Argon2PasswordService } from '../../modules/auth/services/argon2-password.service'
 import { LoginAttemptService } from '../../modules/auth/services/login-attempt.service'
-import {
-  type TokenConfig,
-  TokenService,
-} from '../../modules/auth/services/token.service'
+import { type TokenConfig, TokenService } from '../../modules/auth/services/token.service'
 import { VerificationTokenService } from '../../modules/auth/services/verification-token.service'
 import { prisma } from '../../prisma'
-
+import { EmailService, type IEmailService } from '../services/email.service'
 // Configuration
 import { type AppConfig, getConfig } from './config'
 

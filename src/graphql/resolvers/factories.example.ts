@@ -6,7 +6,7 @@
  */
 
 import { z } from 'zod'
-import { RateLimitPresets } from '../../core/auth/types'
+import { RateLimitPresets } from '../../app/auth/types'
 import { prisma } from '../../prisma'
 import {
   batchOperationFactory,

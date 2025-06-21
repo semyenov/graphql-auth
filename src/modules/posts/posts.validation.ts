@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod'
-import { VALIDATION_LIMITS } from '../../constants'
+import { VALIDATION_LIMITS } from '../../app/constants'
 import { prisma } from '../../prisma'
 
 /**
@@ -173,7 +173,7 @@ export const postReactionSchema = z.object({
 })
 
 // Re-export ownership check from core utilities
-export { checkPostOwnership as validatePostOwnership } from '../../core/auth/ownership.utils'
+export { checkPostOwnership as validatePostOwnership } from '../../app/auth/ownership.utils'
 
 /**
  * Validate post exists
@@ -189,5 +189,6 @@ export async function validatePostExists(postId: number): Promise<boolean> {
 // Re-export shared validation helpers for backwards compatibility
 export {
   safeValidateInput as safeValidatePostInput,
-  validateInput as validatePostInput,
-} from '../../core/validation/helpers'
+  validateInput as validatePostInput
+} from '../../validation/helpers'
+

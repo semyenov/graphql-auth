@@ -5,8 +5,8 @@
 
 import type { ApolloServerPlugin } from '@apollo/server'
 import type { IncomingMessage, ServerResponse } from 'http'
-import { createLogger } from '../../core/logging'
-import type { Context } from '../../graphql/context/context.types'
+import type { IContext } from '../../graphql/context/context.types'
+import { createLogger } from '../logging'
 
 const logger = createLogger('middleware')
 
@@ -62,7 +62,7 @@ export function createHttpLoggingMiddleware() {
 /**
  * GraphQL operation logging plugin
  */
-export function createGraphQLLoggingPlugin(): ApolloServerPlugin<Context> {
+export function createGraphQLLoggingPlugin(): ApolloServerPlugin<IContext> {
   return {
     async requestDidStart() {
       return {

@@ -6,11 +6,10 @@
 
 import { container } from 'tsyringe'
 import { z } from 'zod'
+import { AuthenticationError, ConflictError } from '../../../app/errors/types'
+// import type { ILogger } from '../../../app/services/logger.interface'
+import type { IPasswordService } from '../../../app/services/password.service.interface'
 import { RateLimitPresets } from '../../../app/services/rate-limiter.service'
-import { AuthenticationError, ConflictError } from '../../../core/errors/types'
-// import type { ILogger } from '../../../core/services/logger.interface'
-import type { IPasswordService } from '../../../core/services/password.service.interface'
-import { signToken } from '../../../core/utils/jwt'
 import {
   isAuthenticatedUser,
   rateLimitSensitiveOperations,
@@ -22,6 +21,7 @@ import {
   createRateLimitConfig,
 } from '../../../graphql/schema/plugins/rate-limit.plugin'
 import { prisma } from '../../../prisma'
+import { signToken } from '../../../utils/jwt'
 
 // Get services from container
 const getPasswordService = () =>

@@ -8,7 +8,7 @@ import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { container } from 'tsyringe'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { IEmailService } from '../../../src/core/services/email.service'
+import type { IEmailService } from '../../../src/app/services/email.service'
 import {
   LoginSecureMutation,
   RequestPasswordResetMutation,
@@ -180,7 +180,7 @@ describe('Enhanced Authentication', () => {
   describe('secure login', () => {
     it('should block login for unverified email', async () => {
       // First create a user using the signup mutation to ensure proper password hashing
-      const signupResult = await executeOperation<
+      await executeOperation<
         ResultOf<typeof SignupWithVerificationMutation>,
         VariablesOf<typeof SignupWithVerificationMutation>
       >(

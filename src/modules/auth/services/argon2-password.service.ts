@@ -8,7 +8,7 @@
 
 import * as argon2 from 'argon2'
 import { injectable } from 'tsyringe'
-import type { IPasswordService } from '../../../core/services/password.service.interface'
+import type { IPasswordService } from '../../../app/services/password.service.interface'
 
 @injectable()
 export class Argon2PasswordService implements IPasswordService {

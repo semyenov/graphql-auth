@@ -6,15 +6,15 @@
  */
 
 import type { HTTPMethod } from 'fetchdts'
-import { DEFAULT_VALUES, HEADER_KEYS } from '../../constants/context'
-import { getUserIdFromAuthHeader } from '../../core/utils/jwt'
+import { DEFAULT_VALUES, HEADER_KEYS } from '../../app/constants/context'
 import { prisma } from '../../data/database'
 import { createEnhancedLoaders } from '../../data/loaders/loaders'
 import type { RequestMetadata, SecurityContext } from '../../types.d'
+import { getUserIdFromAuthHeader } from '../../utils/jwt'
 import type {
-  Context,
   EnhancedContext,
   GraphQLIncomingMessage,
+  IContext,
 } from './context.types'
 
 /**
@@ -184,7 +184,7 @@ export function isValidRequest(req: GraphQLIncomingMessage): boolean {
  * @param context - The GraphQL context
  * @returns The user ID if authenticated, null otherwise
  */
-export function getUserId(context: Context): number | null {
+export function getUserId(context: IContext): number | null {
   const authHeader = context.headers[HEADER_KEYS.AUTHORIZATION]
   return getUserIdFromAuthHeader(authHeader)
 }
@@ -195,7 +195,7 @@ export function getUserId(context: Context): number | null {
  * @param context - The base context
  * @returns Enhanced context with additional features
  */
-export function enhanceContext(context: Context): EnhancedContext {
+export function enhanceContext(context: IContext): EnhancedContext {
   const enhanced = context as EnhancedContext
 
   // Add performance tracking
@@ -254,7 +254,7 @@ export function createPerformanceMetadata() {
 /**
  * Validates context completeness
  */
-export function validateContext(context: Context): boolean {
+export function validateContext(context: IContext): boolean {
   return !!(
     context.headers &&
     context.method &&

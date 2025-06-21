@@ -1,10 +1,10 @@
-import { ERROR_MESSAGES } from '../../core/errors/constants'
+import { ERROR_MESSAGES } from '../../app/constants'
 import {
   AuthenticationError,
   AuthorizationError,
   ValidationError,
-} from '../../core/errors/types'
-import type { Context } from '../context/context.types'
+} from '../../app/errors/types'
+import type { IContext } from '../context/context.types'
 
 /**
  * Validates that a resource ID is valid
@@ -34,7 +34,7 @@ export async function parseAndValidateGlobalId(
   globalId: string,
   expectedType: string,
 ): Promise<number> {
-  const { parseGlobalId } = await import('../../core/utils/relay')
+  const { parseGlobalId } = await import('../../utils/relay')
   return parseGlobalId(globalId, expectedType)
 }
 
@@ -45,7 +45,7 @@ export async function parseAndValidateGlobalId(
  * @returns True if authenticated, AuthenticationError otherwise
  */
 export function createAuthenticationCheck(
-  context: Context,
+  context: IContext,
 ): true | AuthenticationError {
   if (!context.userId) {
     return new AuthenticationError(
@@ -64,7 +64,7 @@ export function createAuthenticationCheck(
  * @returns True if has role, AuthorizationError otherwise
  */
 export function createRoleCheck(
-  context: Context,
+  context: IContext,
   requiredRole: string,
   errorMessage?: string,
 ): true | AuthenticationError | AuthorizationError {
@@ -95,7 +95,7 @@ export function createRoleCheck(
  * @returns True if has permission, error otherwise
  */
 export function createPermissionCheck(
-  context: Context,
+  context: IContext,
   requiredPermission: string,
   errorMessage?: string,
 ): true | AuthenticationError | AuthorizationError {

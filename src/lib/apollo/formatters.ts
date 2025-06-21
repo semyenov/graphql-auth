@@ -5,7 +5,7 @@
  */
 
 import type { GraphQLError, GraphQLFormattedError } from 'graphql'
-import { BaseError } from '../../core/errors/types'
+import { BaseError } from '../../app/errors/types'
 
 /**
  * Format GraphQL errors for response

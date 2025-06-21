@@ -38,5 +38,5 @@
       "@": ["./src"]
     }
   },
-  "include": ["src/**/*", "test/**/*"]
+  "include": ["src/**/*", "test/**/*", "gql/**/*"]
 }

@@ -9,19 +9,19 @@ import {
   type RateLimiterOptions,
   rateLimiter,
 } from '../../../app/services/rate-limiter.service'
-import type { Context } from '../../context/context.types'
+import type { IContext } from '../../context/context.types'
 
 /**
  * Rate limit configuration for a field
  */
 export interface RateLimitConfig {
   key: string // Rate limit key (e.g., 'login', 'signup')
-  identifier?: (args: Record<string, unknown>, context: Context) => string // Custom identifier function
+  identifier?: (args: Record<string, unknown>, context: IContext) => string // Custom identifier function
   points?: number // Override default points
   options?: Partial<RateLimiterOptions> // Override default options
   skipIf?: (
     args: Record<string, unknown>,
-    context: Context,
+    context: IContext,
   ) => boolean | Promise<boolean> // Skip rate limiting conditionally
 }
 
@@ -31,7 +31,7 @@ export interface RateLimitConfig {
 function getRateLimitIdentifier(
   config: RateLimitConfig,
   args: Record<string, unknown>,
-  context: Context,
+  context: IContext,
 ): string {
   if (config.identifier) {
     return config.identifier(args, context)
@@ -63,7 +63,7 @@ export function rateLimitedField<TReturn>(
     description?: string
     resolve: (
       args: Record<string, unknown>,
-      context: Context,
+      context: IContext,
     ) => Promise<TReturn> | TReturn
     args?: Record<string, unknown>
     authScopes?: string[]
@@ -80,7 +80,7 @@ export function rateLimitedField<TReturn>(
       resolve: async (
         _root: unknown,
         args: Record<string, unknown>,
-        context: Context,
+        context: IContext,
         _info: unknown,
       ) => {
         // Check if rate limiting should be skipped
@@ -113,7 +113,7 @@ export function rateLimitedField<TReturn>(
 export async function applyRateLimit(
   config: RateLimitConfig,
   args: Record<string, unknown>,
-  context: Context,
+  context: IContext,
 ): Promise<void> {
   // Check if rate limiting should be skipped
   if (config.skipIf && (await config.skipIf(args, context))) {
@@ -140,7 +140,12 @@ export async function applyRateLimit(
 export const createRateLimitConfig = {
   // For authentication operations - use email as identifier
   forAuth: (
-    operation: 'login' | 'signup' | 'passwordReset',
+    operation:
+      | 'login'
+      | 'signup'
+      | 'passwordReset'
+      | 'verifyEmail'
+      | 'resendVerification',
   ): RateLimitConfig => ({
     key: operation,
     identifier: (args) =>

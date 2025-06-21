@@ -5,12 +5,12 @@
  */
 
 import type { ApolloServerPlugin, GraphQLRequestListener } from '@apollo/server'
-import type { Context } from '../../graphql/context/context.types'
+import type { IContext } from '../../graphql/context/context.types'
 
 /**
  * Logging plugin
  */
-export const loggingPlugin: ApolloServerPlugin<Context> = {
+export const loggingPlugin: ApolloServerPlugin<IContext> = {
   async requestDidStart() {
     const startTime = Date.now()
 
@@ -36,14 +36,14 @@ export const loggingPlugin: ApolloServerPlugin<Context> = {
           userId: requestContext.contextValue.userId,
         })
       },
-    } as GraphQLRequestListener<Context>
+    } as GraphQLRequestListener<IContext>
   },
 }
 
 /**
  * Performance monitoring plugin
  */
-export const performancePlugin: ApolloServerPlugin<Context> = {
+export const performancePlugin: ApolloServerPlugin<IContext> = {
   async requestDidStart() {
     const fieldTimings = new Map<string, number>()
 
@@ -81,14 +81,14 @@ export const performancePlugin: ApolloServerPlugin<Context> = {
           }
         }
       },
-    } as GraphQLRequestListener<Context>
+    } as GraphQLRequestListener<IContext>
   },
 }
 
 /**
  * Complexity analysis plugin
  */
-export const complexityPlugin: ApolloServerPlugin<Context> = {
+export const complexityPlugin: ApolloServerPlugin<IContext> = {
   async requestDidStart() {
     return {
       async didResolveOperation(requestContext) {
@@ -110,14 +110,14 @@ export const complexityPlugin: ApolloServerPlugin<Context> = {
           throw new Error('Query too complex')
         }
       },
-    } as GraphQLRequestListener<Context>
+    } as GraphQLRequestListener<IContext>
   },
 }
 
 /**
  * Caching hints plugin
  */
-export const cachingPlugin: ApolloServerPlugin<Context> = {
+export const cachingPlugin: ApolloServerPlugin<IContext> = {
   async requestDidStart() {
     return {
       async willSendResponse(requestContext) {
@@ -130,14 +130,14 @@ export const cachingPlugin: ApolloServerPlugin<Context> = {
           response.http.headers.set('Cache-Control', 'no-store')
         }
       },
-    } as GraphQLRequestListener<Context>
+    } as GraphQLRequestListener<IContext>
   },
 }
 
 /**
  * Error formatting plugin
  */
-export const errorFormattingPlugin: ApolloServerPlugin<Context> = {
+export const errorFormattingPlugin: ApolloServerPlugin<IContext> = {
   async requestDidStart() {
     return {
       async willSendResponse(requestContext) {
@@ -150,7 +150,7 @@ export const errorFormattingPlugin: ApolloServerPlugin<Context> = {
           }
         }
       },
-    } as GraphQLRequestListener<Context>
+    } as GraphQLRequestListener<IContext>
   },
 }
 
@@ -191,7 +191,7 @@ function estimateComplexity(document: GraphQLDocument): number {
 /**
  * All plugins combined
  */
-export const allPlugins: ApolloServerPlugin<Context>[] = [
+export const allPlugins: ApolloServerPlugin<IContext>[] = [
   loggingPlugin,
   performancePlugin,
   complexityPlugin,

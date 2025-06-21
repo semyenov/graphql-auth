@@ -44,7 +44,7 @@ describe('Security Headers Middleware', () => {
         setHeader: (name: string, value: string) => {
           headers[name] = value
         },
-        removeHeader: () => {},
+        removeHeader: () => { },
       } as unknown as ServerResponse
 
       // Disable HSTS explicitly
@@ -61,7 +61,7 @@ describe('Security Headers Middleware', () => {
         setHeader: (name: string, value: string) => {
           headers[name] = value
         },
-        removeHeader: () => {},
+        removeHeader: () => { },
       } as unknown as ServerResponse
 
       // Mock production environment
@@ -84,7 +84,7 @@ describe('Security Headers Middleware', () => {
         setHeader: (name: string, value: string) => {
           headers[name] = value
         },
-        removeHeader: () => {},
+        removeHeader: () => { },
       } as unknown as ServerResponse
 
       applySecurityHeaders(mockResponse, {
@@ -106,7 +106,7 @@ describe('Security Headers Middleware', () => {
         setHeader: (name: string, value: string) => {
           headers[name] = value
         },
-        removeHeader: () => {},
+        removeHeader: () => { },
       } as unknown as ServerResponse
 
       applySecurityHeaders(mockResponse)
@@ -124,7 +124,7 @@ describe('Security Headers Middleware', () => {
         setHeader: (name: string, value: string) => {
           headers[name] = value
         },
-        removeHeader: () => {},
+        removeHeader: () => { },
       } as unknown as ServerResponse
 
       applySecurityHeaders(mockResponse, {

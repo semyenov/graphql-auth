@@ -6,18 +6,15 @@
  */
 
 import { and, rule, shield } from 'graphql-shield'
-import {
-  AuthenticationError,
-  AuthorizationError,
-} from '../../core/errors/types'
+import { AuthenticationError, AuthorizationError } from '../../app/errors/types'
 import { isAuthenticated, requireAuthentication } from '../context/context.auth'
-import type { Context } from '../context/context.types'
+import type { IContext } from '../context/context.types'
 
 /**
  * Rule to check if user is authenticated
  */
 export const isAuthenticatedRule = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
+  async (_parent, _args, context: IContext) => {
     try {
       return isAuthenticated(context.userId)
     } catch (_error) {
@@ -32,7 +29,7 @@ export const isAuthenticatedRule = rule({ cache: 'contextual' })(
  * Rule to require authentication and throw error if not authenticated
  */
 export const requireAuthenticationRule = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
+  async (_parent, _args, context: IContext) => {
     try {
       requireAuthentication(context.userId)
       return true
@@ -48,7 +45,7 @@ export const requireAuthenticationRule = rule({ cache: 'contextual' })(
  * Rule to check if user owns the resource (for posts, comments, etc.)
  */
 export const isResourceOwnerRule = rule({ cache: 'strict' })(
-  async (_parent, _args, context: Context) => {
+  async (_parent, _args, context: IContext) => {
     try {
       requireAuthentication(context.userId)
 
@@ -65,7 +62,7 @@ export const isResourceOwnerRule = rule({ cache: 'strict' })(
  * Rule to check if user has admin role
  */
 export const isAdminRule = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
+  async (_parent, _args, context: IContext) => {
     try {
       requireAuthentication(context.userId)
 

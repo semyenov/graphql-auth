@@ -5,11 +5,8 @@
  */
 
 import { allow, rule, shield } from 'graphql-shield'
-import {
-  AuthenticationError,
-  AuthorizationError,
-} from '../../core/errors/types'
-import type { Context } from '../../graphql/context/context.types'
+import { AuthenticationError, AuthorizationError } from '../../app/errors/types'
+import type { IContext } from '../../graphql/context/context.types'
 import {
   isAdmin,
   isAuthenticated,
@@ -21,7 +18,7 @@ import {
  * Check if user owns the account
  */
 export const isAccountOwner = rule({ cache: 'strict' })(
-  async (_parent, args: { userId: string }, context: Context) => {
+  async (_parent, args: { userId: string }, context: IContext) => {
     if (!context.userId) {
       return new AuthenticationError('You must be logged in')
     }

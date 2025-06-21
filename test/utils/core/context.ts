@@ -2,26 +2,15 @@
  * Test context creation utilities
  */
 
-import { container } from 'tsyringe'
-import { ConsoleLogger } from '../../../src/core/logging/console-logger'
-import type { ILogger } from '../../../src/core/services/logger.interface'
-import { UserId } from '../../../src/core/value-objects/user-id.vo'
-import type { Context } from '../../../src/graphql/context/context.types'
+import type { IContext } from '../../../src/graphql/context/context.types'
+import { UserId } from '../../../src/value-objects/user-id.vo'
 import { generateTestToken } from './auth'
 
-// Get logger from container
-const getLogger = () => {
-  if (!container.isRegistered('ILogger')) {
-    container.registerSingleton<ILogger>('ILogger', ConsoleLogger)
-  }
-  return container.resolve<ILogger>('ILogger')
-}
 
 /**
  * Create a mock context for testing
  */
-export function createMockContext(overrides: Partial<Context> = {}): Context {
-  const logger = getLogger()
+export function createMockContext(overrides: Partial<IContext> = {}): IContext {
   return {
     req: {
       headers: {},
@@ -29,17 +18,19 @@ export function createMockContext(overrides: Partial<Context> = {}): Context {
       url: '/graphql',
       body: {},
       ip: '127.0.0.1',
-    } as unknown as Context['req'],
-    res: {
-      headers: {},
-      statusCode: 200,
-    } as unknown as Context['res'],
-    user: null,
-    decodedToken: null,
-    logger: logger.child({ test: true }),
-    loaders: {
-      users: new Map() as unknown as Context['loaders']['users'],
-      posts: new Map() as unknown as Context['loaders']['posts'],
+    } as unknown as IContext['req'],
+    user: undefined,
+    decodedToken: undefined,
+    headers: {},
+    method: 'POST',
+    contentType: 'application/json',
+    metadata: {
+      ip: '127.0.0.1',
+      userAgent: 'test',
+      operationName: 'test',
+      query: 'test',
+      variables: {},
+      startTime: Date.now(),
     },
     security: {
       isAuthenticated: false,
@@ -56,8 +47,8 @@ export function createMockContext(overrides: Partial<Context> = {}): Context {
  */
 export function createAuthContext(
   userIdOrValue: number | UserId = 1,
-  overrides: Partial<Context> = {},
-): Context {
+  overrides: Partial<IContext> = {},
+): IContext {
   const userId =
     typeof userIdOrValue === 'number' ? userIdOrValue : userIdOrValue.value
   const userIdVO =
@@ -73,7 +64,7 @@ export function createAuthContext(
   }
 
   return createMockContext({
-    user: { id: userId, email: payload.email } as unknown as Context['user'],
+    user: { id: userId, email: payload.email } as unknown as IContext['user'],
     userId: userIdVO,
     decodedToken: payload,
     security: {
@@ -90,7 +81,7 @@ export function createAuthContext(
       url: '/graphql',
       body: {},
       ip: '127.0.0.1',
-    } as unknown as Context['req'],
+    } as unknown as IContext['req'],
     ...overrides,
   })
 }

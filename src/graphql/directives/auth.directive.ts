@@ -7,9 +7,9 @@
 
 import { getDirective, MapperKind, mapSchema } from '@graphql-tools/utils'
 import { defaultFieldResolver, type GraphQLSchema } from 'graphql'
-import { AuthenticationError } from '../../core/errors/types'
+import { AuthenticationError } from '../../app/errors/types'
 import { requireAuthentication } from '../context/context.auth'
-import type { Context } from '../context/context.types'
+import type { IContext } from '../context/context.types'
 
 /**
  * Auth directive transformer function
@@ -30,7 +30,7 @@ export function authDirectiveTransformer(
         const { resolve = defaultFieldResolver } = fieldConfig
         const requiredRole = authDirective.requires
 
-        fieldConfig.resolve = async (source, args, context: Context, info) => {
+        fieldConfig.resolve = async (source, args, context: IContext, info) => {
           try {
             // Require authentication
             requireAuthentication(context.userId)

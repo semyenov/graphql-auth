@@ -8,9 +8,9 @@
 
 import type { ContextFunction } from '@apollo/server'
 import type { IncomingMessage, ServerResponse } from 'http'
-import { ValidationError } from '../../core/errors/types'
+import { ValidationError } from '../../app/errors/types'
 import { getUserIdFromAuthHeaderAsync } from './context.auth'
-import type { Context, GraphQLIncomingMessage } from './context.types'
+import type { GraphQLIncomingMessage, IContext } from './context.types'
 import {
   createRequestMetadata,
   createRequestObject,
@@ -45,7 +45,7 @@ import {
  */
 export const createContext: ContextFunction<
   [{ req: IncomingMessage; res: ServerResponse }],
-  Context
+  IContext
 > = async ({ req }) => {
   // Cast to our extended type for body access
   const graphqlReq = req as GraphQLIncomingMessage
@@ -160,7 +160,7 @@ function assembleContext(
     ? T
     : never,
   ipAddress: string,
-): Context {
+): IContext {
   return {
     // Request information
     req: requestComponents.requestObject,

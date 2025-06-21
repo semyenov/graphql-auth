@@ -1,14 +1,14 @@
 import { shield } from 'graphql-shield'
 import { isDevelopment } from '../../app/config/environment'
-import { AuthorizationError } from '../../core/errors/types'
-import type { Context } from '../context/context.types'
+import { AuthorizationError } from '../../app/errors/types'
+import type { IContext } from '../context/context.types'
 import * as rules from './rules'
 
 /**
  * GraphQL Shield permissions configuration
  * Maps GraphQL operations to permission rules
  */
-export const permissions = shield<Record<string, unknown>, Context>(
+export const permissions = shield<Record<string, unknown>, IContext>(
   {
     Query: {
       // User-related queries

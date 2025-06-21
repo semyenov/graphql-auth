@@ -7,8 +7,8 @@
 
 import { getDirective, MapperKind, mapSchema } from '@graphql-tools/utils'
 import { defaultFieldResolver, type GraphQLSchema } from 'graphql'
-import { RateLimitError } from '../../core/errors/types'
-import type { Context } from '../context/context.types'
+import { RateLimitError } from '../../app/errors/types'
+import type { IContext } from '../context/context.types'
 
 /**
  * Rate limit directive transformer function
@@ -30,7 +30,7 @@ export function rateLimitDirectiveTransformer(
         const maxRequests = rateLimitDirective.max || 10
         const windowMs = rateLimitDirective.window || 60000 // 1 minute default
 
-        fieldConfig.resolve = async (source, args, context: Context, info) => {
+        fieldConfig.resolve = async (source, args, context: IContext, info) => {
           try {
             // Get rate limiter from context (placeholder - would need to implement)
             // For now, just log the rate limiting attempt
