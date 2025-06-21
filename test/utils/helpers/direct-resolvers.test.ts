@@ -7,6 +7,7 @@
 import * as argon2 from 'argon2'
 import { graphql } from 'gql.tada'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { UserId } from '../../../src/core/value-objects/user-id.vo'
 import { prisma } from '../../setup'
 import { createMockContext, createTestServer } from './context.helpers'
 import { gqlHelpers } from './graphql.helpers'
@@ -93,7 +94,7 @@ describe('Direct Resolvers', () => {
 
       const authContext = {
         ...createMockContext(),
-        userId: { value: 1 } as unknown as { value: number },
+        userId: UserId.create(1),
         security: {
           isAuthenticated: true,
           userId: 1,
@@ -134,7 +135,7 @@ describe('Direct Resolvers', () => {
 
       const authContext = {
         ...createMockContext(),
-        userId: { value: 1 } as unknown as { value: number },
+        userId: UserId.create(1),
         security: {
           isAuthenticated: true,
           userId: 1,
@@ -257,7 +258,7 @@ describe('Direct Resolvers', () => {
 
       const authContext = {
         ...createMockContext(),
-        userId: { value: 1 } as unknown as { value: number },
+        userId: UserId.create(1),
         security: {
           isAuthenticated: true,
           userId: 1,
