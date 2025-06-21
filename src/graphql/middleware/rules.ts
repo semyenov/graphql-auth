@@ -142,7 +142,7 @@ export const isModerator = rule({ cache: 'contextual' })(
  * Checks rate limits for sensitive operations using the rate limiter service
  */
 export const rateLimitSensitiveOperations = rule({ cache: 'no_cache' })(
-  async (_parent, _args, context: Context) => {
+  async (_parent, _args, _context: Context) => {
     try {
       // Note: Rate limiting is handled at the middleware level in this application
       // This rule serves as an additional check for sensitive operations
