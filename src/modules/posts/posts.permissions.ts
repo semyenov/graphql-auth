@@ -5,9 +5,9 @@
  */
 
 import { allow, rule, shield } from 'graphql-shield'
-import type { Context } from '../../graphql/context/context.types'
-import { parseAndValidateGlobalId } from '../../core/utils/relay'
 import { AuthenticationError, AuthorizationError, NotFoundError } from '../../core/errors/types'
+import { parseAndValidateGlobalId } from '../../core/utils/relay'
+import type { Context } from '../../graphql/context/context.types'
 import { prisma } from '../../prisma'
 
 /**
@@ -132,7 +132,21 @@ export const canModeratePost = rule({ cache: 'strict' })(
     }
 
     // Otherwise, must be post owner
-    return isPostOwner.resolve(_parent, args, context)
+    // Check inline instead of calling resolve
+    try {
+      const postId = parseAndValidateGlobalId(args.id, 'Post')
+      const post = await prisma.post.findUnique({
+        where: { id: postId },
+        select: { authorId: true },
+      })
+      if (!post) {
+        return new NotFoundError('Post', args.id)
+      }
+      return post.authorId === context.userId?.value
+    } catch (error) {
+      if (error instanceof Error) return error
+      return new Error('Failed to check post ownership')
+    }
   }
 )
 
@@ -140,7 +154,7 @@ export const canModeratePost = rule({ cache: 'strict' })(
  * Check if post is editable (time-based restriction)
  */
 export const isPostEditable = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, context: Context) => {
+  async (_parent, args: { id: string }, _context: Context) => {
     try {
       const postId = await parseAndValidateGlobalId(args.id, 'Post')
 
@@ -218,10 +232,10 @@ export const postsPermissions = {
     // Post CRUD
     createPost: isAuthenticated,
     updatePost: rule()(async (parent, args, context) => {
-      const ownerCheck = await isPostOwner.resolve(parent, args, context)
+      const ownerCheck = await isPostOwner.resolve(parent, args, context, {} as any, {} as any)
       if (ownerCheck !== true) return ownerCheck
 
-      const editableCheck = await isPostEditable.resolve(parent, args, context)
+      const editableCheck = await isPostEditable.resolve(parent, args, context, {} as any, {} as any)
       if (editableCheck !== true) return editableCheck
 
       return true
@@ -242,15 +256,15 @@ export const postsPermissions = {
     author: allow,
 
     // Draft content is restricted
-    content: rule()(async (parent: any, args, context) => {
+    content: rule()(async (parent: any, _args, context) => {
       if (parent.published) return true
 
       if (!context.userId) {
-        return null // Hide content for unauthenticated users
+        return false // Hide content for unauthenticated users
       }
 
       if (parent.authorId !== context.userId.value) {
-        return null // Hide content from non-authors
+        return false // Hide content from non-authors
       }
 
       return true

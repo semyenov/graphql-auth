@@ -33,7 +33,7 @@ export const RATE_LIMIT_CONFIGS = {
  */
 export function createRateLimitRule(config: RateLimitConfig) {
   return rule({ cache: 'strict' })(
-    async (parent, args, context: Context) => {
+    async (_parent, _args, context: Context) => {
       try {
         // Get client identifier (IP address or user ID)
         const clientId = context.userId?.value || 

@@ -111,7 +111,7 @@ export const hasPermission = (permission: string) =>
 /**
  * Rate limiting check (integrates with rate limiter)
  */
-export const withinRateLimit = (operation: string) =>
+export const withinRateLimit = (_operation: string) =>
   rule({ cache: 'no_cache' })(
     async (_parent, _args, _context: Context) => {
       // This is handled by the rate limiter plugin

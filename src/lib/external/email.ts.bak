@@ -60,7 +60,7 @@ export class ConsoleEmailService implements IEmailService {
 export class SmtpEmailService implements IEmailService {
   // private _transporter: any
 
-  constructor(_config: {
+  constructor(config: {
     host: string
     port: number
     secure: boolean
@@ -70,7 +70,7 @@ export class SmtpEmailService implements IEmailService {
     }
   }) {
     // In real implementation, initialize nodemailer transporter
-    // this._transporter = config
+    this._transporter = config
   }
 
   async send(message: EmailMessage): Promise<void> {

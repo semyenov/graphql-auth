@@ -50,7 +50,6 @@ export class MemoryCache implements ICache {
   }
   
   private cleanup(): void {
-    const now = Date.now()
     let removed = 0
     
     for (const [key, entry] of this.cache.entries()) {

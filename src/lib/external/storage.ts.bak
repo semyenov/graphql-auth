@@ -146,7 +146,7 @@ export class S3StorageService implements IStorageService {
   }) {
     // In real implementation, initialize S3 client
     this.bucket = config.bucket
-    // this._client = config
+    this._client = config
   }
 
   async upload(file: FileUpload, key: string): Promise<StorageFile> {

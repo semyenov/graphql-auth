@@ -26,7 +26,7 @@ export function authDirectiveTransformer(schema: GraphQLSchema, directiveName: s
         fieldConfig.resolve = async function (source, args, context: Context, info) {
           try {
             // Require authentication
-            const userId = requireAuthentication(context.userId)
+            requireAuthentication(context.userId)
             
             // If role is specified, check for role-based access
             if (requiredRole && context.user?.role !== requiredRole) {

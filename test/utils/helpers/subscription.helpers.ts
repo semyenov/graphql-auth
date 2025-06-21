@@ -5,7 +5,7 @@
 import type { GraphQLResponse } from '@apollo/server'
 import { ApolloServer } from '@apollo/server'
 import { parse } from 'graphql'
-import { Context } from '../src/context/context-direct'
+import { Context } from '../../../src/graphql/context/context.types'
 
 export interface SubscriptionTestHelper {
   subscribe: () => Promise<AsyncIterator<GraphQLResponse>>
@@ -148,7 +148,7 @@ export class MockSubscriptionEmitter<T = any> {
 /**
  * Create a mock pubsub for testing subscriptions
  */
-export function createMockPubSub<T extends Record<string, any>>(): {
+export function createMockPubSub(): {
   publish: (event: string, payload: any) => void
   subscribe: (event: string) => AsyncIterator<any>
   getSubscriberCount: (event?: string) => number

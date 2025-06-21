@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod'
-import { VALIDATION } from '../../constants'
+import { VALIDATION_LIMITS } from '../../constants'
 import { prisma } from '../../prisma'
 
 /**
@@ -13,8 +13,8 @@ import { prisma } from '../../prisma'
  */
 export const titleSchema = z
   .string()
-  .min(VALIDATION.POST_TITLE_MIN_LENGTH, 'Title is too short')
-  .max(VALIDATION.POST_TITLE_MAX_LENGTH, 'Title is too long')
+  .min(VALIDATION_LIMITS.TITLE_MIN_LENGTH, 'Title is too short')
+  .max(VALIDATION_LIMITS.TITLE_MAX_LENGTH, 'Title is too long')
   .transform(title => title.trim())
 
 /**
@@ -22,7 +22,7 @@ export const titleSchema = z
  */
 export const contentSchema = z
   .string()
-  .max(VALIDATION.POST_CONTENT_MAX_LENGTH, 'Content is too long')
+  .max(VALIDATION_LIMITS.CONTENT_MAX_LENGTH, 'Content is too long')
   .optional()
   .transform(content => content?.trim())
 

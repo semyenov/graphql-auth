@@ -150,7 +150,7 @@ export function createPageInfo<T extends Node>(
 /**
  * Apply connection arguments to a query
  */
-export function applyConnectionArgs<T extends { id: number }>(
+export function applyConnectionArgs(
   query: any,
   args: ConnectionArgs
 ): any {

@@ -52,7 +52,7 @@ export const passwordValidationRule = rule({ cache: 'strict' })(
       }
       return true
     } catch (error) {
-      return new ValidationError(['Password validation failed'])
+      return new ValidationError('Password validation failed')
     }
   }
 )
@@ -66,15 +66,15 @@ export const postTitleValidationRule = rule({ cache: 'strict' })(
       const title = args.title || args.input?.title
       if (title) {
         if (title.length < 1) {
-          return new ValidationError(['Post title cannot be empty'])
+          return new ValidationError('Post title cannot be empty')
         }
         if (title.length > 200) {
-          return new ValidationError(['Post title cannot exceed 200 characters'])
+          return new ValidationError('Post title cannot exceed 200 characters')
         }
       }
       return true
     } catch (error) {
-      return new ValidationError(['Post title validation failed'])
+      return new ValidationError('Post title validation failed')
     }
   }
 )
@@ -93,7 +93,7 @@ export const postContentValidationRule = rule({ cache: 'strict' })(
       }
       return true
     } catch (error) {
-      return new ValidationError(['Post content validation failed'])
+      return new ValidationError('Post content validation failed')
     }
   }
 )
@@ -107,19 +107,19 @@ export const userNameValidationRule = rule({ cache: 'strict' })(
       const name = args.name || args.input?.name
       if (name) {
         if (name.length < 1) {
-          return new ValidationError(['Name cannot be empty'])
+          return new ValidationError('Name cannot be empty')
         }
         if (name.length > 100) {
-          return new ValidationError(['Name cannot exceed 100 characters'])
+          return new ValidationError('Name cannot exceed 100 characters')
         }
         // Basic sanitization - no HTML tags
         if (/<[^>]*>/.test(name)) {
-          return new ValidationError(['Name cannot contain HTML tags'])
+          return new ValidationError('Name cannot contain HTML tags')
         }
       }
       return true
     } catch (error) {
-      return new ValidationError(['Name validation failed'])
+      return new ValidationError('Name validation failed')
     }
   }
 )
@@ -135,41 +135,41 @@ export const paginationValidationRule = rule({ cache: 'strict' })(
       // Validate cursor-based pagination
       if (first !== undefined) {
         if (first < 0) {
-          return new ValidationError(['first must be non-negative'])
+          return new ValidationError('first must be non-negative')
         }
         if (first > 100) {
-          return new ValidationError(['first cannot exceed 100'])
+          return new ValidationError('first cannot exceed 100')
         }
       }
 
       if (last !== undefined) {
         if (last < 0) {
-          return new ValidationError(['last must be non-negative'])
+          return new ValidationError('last must be non-negative')
         }
         if (last > 100) {
-          return new ValidationError(['last cannot exceed 100'])
+          return new ValidationError('last cannot exceed 100')
         }
       }
 
       // Validate offset-based pagination
       if (take !== undefined) {
         if (take < 0) {
-          return new ValidationError(['take must be non-negative'])
+          return new ValidationError('take must be non-negative')
         }
         if (take > 100) {
-          return new ValidationError(['take cannot exceed 100'])
+          return new ValidationError('take cannot exceed 100')
         }
       }
 
       if (skip !== undefined) {
         if (skip < 0) {
-          return new ValidationError(['skip must be non-negative'])
+          return new ValidationError('skip must be non-negative')
         }
       }
 
       return true
     } catch (error) {
-      return new ValidationError(['Pagination validation failed'])
+      return new ValidationError('Pagination validation failed')
     }
   }
 )

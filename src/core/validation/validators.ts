@@ -127,9 +127,9 @@ export function isValidFileExtension(filename: string, allowedExtensions: string
  * Validate image dimensions (requires external library in real app)
  */
 export async function isValidImageDimensions(
-  imageUrl: string,
-  maxWidth: number,
-  maxHeight: number
+  _imageUrl: string,
+  _maxWidth: number,
+  _maxHeight: number
 ): Promise<boolean> {
   // This would require an image processing library
   // For now, return true as placeholder
@@ -210,7 +210,7 @@ export function isValidCreditCard(cardNumber: string): boolean {
   let isEven = false
   
   for (let i = digits.length - 1; i >= 0; i--) {
-    let digit = parseInt(digits[i], 10)
+    let digit = parseInt(digits[i]!, 10)
     
     if (isEven) {
       digit *= 2

@@ -9,6 +9,11 @@ export type { ICache, CacheOptions, CacheMetrics } from './cache.interface'
 export { MemoryCache } from './memory-cache'
 export { RedisCache } from './redis-cache'
 
+// Import ICache type for local use
+import type { ICache } from './cache.interface'
+import { MemoryCache } from './memory-cache'
+import { RedisCache } from './redis-cache'
+
 /**
  * Cache factory function
  */

@@ -5,5 +5,5 @@ export type { Database } from './client'
 // Export repositories
 export {
   BaseRepository
-} from './repositories'
+} from '../../data/repositories/base'
 

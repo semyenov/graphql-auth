@@ -30,7 +30,7 @@ export function getCorsOptions(): CorsOptions | boolean {
   
   // Return full CORS configuration
   return {
-    origin: cors.origin,
+    origin: cors.origin as CorsOptions['origin'],
     credentials: cors.credentials,
     maxAge: cors.maxAge,
     methods: cors.methods,

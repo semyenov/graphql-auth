@@ -2,7 +2,7 @@ import { print } from 'graphql'
 import type {
   GraphQLError,
   GraphQLResponse
-} from './context'
+} from './graphql/context/context.types'
 
 // =============================================================================
 // ADVANCED QUERY UTILITIES

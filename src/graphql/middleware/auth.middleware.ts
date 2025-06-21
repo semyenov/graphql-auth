@@ -5,7 +5,7 @@
  * as specified in IMPROVED-FILE-STRUCTURE.md
  */
 
-import { shield, rule, and, or } from 'graphql-shield'
+import { shield, rule, and } from 'graphql-shield'
 import { AuthenticationError, AuthorizationError } from '../../core/errors/types'
 import { requireAuthentication, isAuthenticated } from '../context/context.auth'
 import type { Context } from '../context/context.types'
@@ -14,7 +14,7 @@ import type { Context } from '../context/context.types'
  * Rule to check if user is authenticated
  */
 export const isAuthenticatedRule = rule({ cache: 'contextual' })(
-  async (parent, args, context: Context) => {
+  async (_parent, _args, context: Context) => {
     try {
       return isAuthenticated(context.userId)
     } catch (error) {
@@ -27,7 +27,7 @@ export const isAuthenticatedRule = rule({ cache: 'contextual' })(
  * Rule to require authentication and throw error if not authenticated
  */
 export const requireAuthenticationRule = rule({ cache: 'contextual' })(
-  async (parent, args, context: Context) => {
+  async (_parent, _args, context: Context) => {
     try {
       requireAuthentication(context.userId)
       return true
@@ -41,9 +41,9 @@ export const requireAuthenticationRule = rule({ cache: 'contextual' })(
  * Rule to check if user owns the resource (for posts, comments, etc.)
  */
 export const isResourceOwnerRule = rule({ cache: 'strict' })(
-  async (parent, args, context: Context) => {
+  async (_parent, _args, context: Context) => {
     try {
-      const userId = requireAuthentication(context.userId)
+      requireAuthentication(context.userId)
       
       // This would need to be implemented based on the specific resource
       // For now, return true as a placeholder
@@ -58,9 +58,9 @@ export const isResourceOwnerRule = rule({ cache: 'strict' })(
  * Rule to check if user has admin role
  */
 export const isAdminRule = rule({ cache: 'contextual' })(
-  async (parent, args, context: Context) => {
+  async (_parent, _args, context: Context) => {
     try {
-      const userId = requireAuthentication(context.userId)
+      requireAuthentication(context.userId)
       
       // Placeholder for admin check - would need to implement role system
       // For now, return false since we don't have admin roles implemented

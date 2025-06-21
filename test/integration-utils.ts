@@ -5,7 +5,7 @@
 import { ApolloServer, type GraphQLResponse } from '@apollo/server'
 import type { Post, User } from '@prisma/client'
 import { print } from 'graphql'
-import { Context } from '../src/context/context-direct'
+import { Context } from '../src/graphql/context/context.types'
 import { createBlogScenario, createPermissionScenario } from './utils/fixtures/graphql.fixtures'
 import { createTestServer } from './utils/helpers/database.helpers'
 import { measureOperation, type PerformanceMetrics } from './utils/helpers/performance.helpers'

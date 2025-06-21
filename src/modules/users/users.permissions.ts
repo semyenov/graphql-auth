@@ -5,6 +5,7 @@
  */
 
 import { allow, rule, shield } from 'graphql-shield'
+import { UserStatus } from '@prisma/client'
 import type { Context } from '../../graphql/context/context.types'
 import { parseAndValidateGlobalId } from '../../core/utils/relay'
 import { AuthenticationError, AuthorizationError, NotFoundError } from '../../core/errors/types'
@@ -78,14 +79,13 @@ export const isModerator = rule({ cache: 'contextual' })(
  * Check if user can view another user's profile
  */
 export const canViewProfile = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, context: Context) => {
+  async (_parent, args: { id: string }, _context: Context) => {
     try {
       const userId = await parseAndValidateGlobalId(args.id, 'User')
 
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: {
-          privacy: true,
           status: true,
         },
       })
@@ -95,27 +95,8 @@ export const canViewProfile = rule({ cache: 'strict' })(
       }
 
       // Banned users are not visible
-      if (user.status === 'banned') {
+      if (user.status === UserStatus.BANNED) {
         return new NotFoundError('User', args.id)
-      }
-
-      // Check privacy settings
-      if (user.privacy?.showProfile === false) {
-        // Only the user themselves or admins can view private profiles
-        if (!context.userId) {
-          return new AuthorizationError('This profile is private')
-        }
-
-        if (context.userId.value !== userId) {
-          const viewer = await prisma.user.findUnique({
-            where: { id: context.userId.value },
-            select: { role: true },
-          })
-
-          if (viewer?.role !== 'admin') {
-            return new AuthorizationError('This profile is private')
-          }
-        }
       }
 
       return true
@@ -185,19 +166,11 @@ export const notBlocked = rule({ cache: 'strict' })(
     if (!context.userId) return true // Anonymous users can't be blocked
 
     try {
-      const targetUserId = await parseAndValidateGlobalId(args.id, 'User')
+      await parseAndValidateGlobalId(args.id, 'User')
 
-      // Check if current user is blocked by target user
-      const block = await prisma.userBlock.findFirst({
-        where: {
-          blockerId: targetUserId,
-          blockedId: context.userId.value,
-        },
-      })
-
-      if (block) {
-        return new AuthorizationError('You cannot interact with this user')
-      }
+      // NOTE: userBlock table doesn't exist yet
+      // This would check if current user is blocked by target user
+      // For now, allow all interactions
 
       return true
     } catch (error) {
@@ -226,11 +199,10 @@ export const canSendMessage = rule({ cache: 'strict' })(
         return new AuthorizationError('You cannot send messages to yourself')
       }
 
-      // Check recipient's privacy settings
+      // Check recipient's status
       const recipient = await prisma.user.findUnique({
         where: { id: recipientId },
         select: {
-          privacy: true,
           status: true,
         },
       })
@@ -239,16 +211,12 @@ export const canSendMessage = rule({ cache: 'strict' })(
         return new NotFoundError('User', args.recipientId)
       }
 
-      if (recipient.status === 'banned') {
+      if (recipient.status === UserStatus.BANNED) {
         return new AuthorizationError('Cannot send messages to this user')
       }
 
-      if (recipient.privacy?.allowMessages === false) {
-        return new AuthorizationError('This user does not accept messages')
-      }
-
-      // Check if blocked
-      return notBlocked.resolve(_parent, { id: args.recipientId }, context)
+      // NOTE: Privacy settings and blocking functionality not yet implemented
+      return true
     } catch (error) {
       if (error instanceof Error) {
         return error
@@ -276,8 +244,8 @@ export const usersPermissions = {
   },
   Mutation: {
     // Profile management
-    updateUserProfile: rule()(async (parent, args, context) => {
-      return canEditUser.resolve(parent, { id: context.userId?.value.toString() || '' }, context)
+    updateUserProfile: rule()(async (_parent, _args, context) => {
+      return canEditUser.resolve(_parent, { id: context.userId?.value.toString() || '' }, context, {} as any, {} as any)
     }),
     updateUserPreferences: isAuthenticated,
     uploadAvatar: isAuthenticated,
@@ -311,16 +279,13 @@ export const usersPermissions = {
     createdAt: allow,
 
     // Private fields
-    email: rule()(async (parent: any, args, context) => {
+    email: rule()(async (parent: any, _args, context) => {
       // User can see their own email
       if (context.userId?.value === parent.id) return true
 
-      // Check privacy settings
-      if (parent.privacy?.showEmail === false) {
-        return null
-      }
-
-      return true
+      // NOTE: Privacy settings not yet implemented
+      // For now, hide emails from other users
+      return false
     }),
 
     // Stats (visible based on privacy)

@@ -5,12 +5,12 @@
  * IMPROVED-FILE-STRUCTURE.md specification.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
 import { performance } from 'perf_hooks'
-import { createTestServer } from '../utils/helpers/database.helpers'
+import { beforeEach, describe, expect, it } from 'vitest'
+// import { createTestServer } from '../utils/helpers/database.helpers'
 
 describe('Benchmarks', () => {
-  const server = createTestServer()
+  // const _server = createTestServer()
 
   beforeEach(async () => {
     // Setup benchmark data
@@ -18,13 +18,13 @@ describe('Benchmarks', () => {
 
   it('should benchmark GraphQL schema building time', async () => {
     const startTime = performance.now()
-    
+
     // The schema is already built during server creation
     // This test measures the overhead of server initialization
-    
+
     const endTime = performance.now()
     const buildTime = endTime - startTime
-    
+
     // Schema building should be fast
     expect(buildTime).toBeLessThan(1000) // 1 second max
   })

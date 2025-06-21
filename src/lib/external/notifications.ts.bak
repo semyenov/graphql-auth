@@ -93,13 +93,13 @@ export class ConsoleNotificationService implements INotificationService {
 export class FCMNotificationService implements INotificationService {
   // private _admin: any
 
-  constructor(_config: {
+  constructor(config: {
     projectId: string
     privateKey: string
     clientEmail: string
   }) {
     // In real implementation, initialize Firebase Admin SDK
-    // this._admin = config
+    this._admin = config
   }
 
   async send(recipient: NotificationRecipient, notification: Notification): Promise<void> {

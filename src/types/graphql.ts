@@ -5,7 +5,7 @@
  * as specified in IMPROVED-FILE-STRUCTURE.md
  */
 
-import type { GraphQLResolveInfo, GraphQLScalarType } from 'graphql'
+import type { GraphQLResolveInfo } from 'graphql'
 import type { Context } from '../graphql/context/context.types'
 
 /**

@@ -196,15 +196,15 @@ export function enhanceContext(context: Context): EnhancedContext {
   enhanced.createScopes = () => {
     // This would return an object with scope-checking methods
     return {
-      canViewContent: async (type: string, id: string) => {
+      canViewContent: async (_type: string, _id: string) => {
         // Implementation would check content visibility
         return true
       },
-      hasPermission: async (permission: string) => {
+      hasPermission: async (_permission: string) => {
         // Implementation would check user permissions
         return false
       },
-      withinRateLimit: async (operation: string, limit: number, window: number) => {
+      withinRateLimit: async (_operation: string, _limit: number, _window: number) => {
         // Implementation would check rate limits
         return true
       }
