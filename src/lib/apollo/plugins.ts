@@ -143,11 +143,11 @@ export const errorFormattingPlugin: ApolloServerPlugin<Context> = {
       async willSendResponse(requestContext) {
         if (requestContext.errors) {
           // Add request ID to errors
-          requestContext.errors.forEach((error) => {
+          for (const error of requestContext.errors) {
             error.extensions.requestId =
               requestContext.request.http?.headers.get('x-request-id')
             error.extensions.timestamp = new Date().toISOString()
-          })
+          }
         }
       },
     } as GraphQLRequestListener<Context>
@@ -173,17 +173,17 @@ function estimateComplexity(document: GraphQLDocument): number {
   const visit = (node: GraphQLNode, depth = 0) => {
     if (node.selectionSet) {
       complexity += depth * node.selectionSet.selections.length
-      node.selectionSet.selections.forEach((selection: GraphQLNode) => {
-        visit(selection, depth + 1)
-      })
+      for (const selection of node.selectionSet.selections) {
+        visit(selection as GraphQLNode, depth + 1)
+      }
     }
   }
 
-  document.definitions.forEach((def: GraphQLNode) => {
-    if (def.selectionSet) {
-      visit(def, 1)
+  for (const def of document.definitions) {
+    if ((def as GraphQLNode).selectionSet) {
+      visit(def as GraphQLNode, 1)
     }
-  })
+  }
 
   return complexity
 }

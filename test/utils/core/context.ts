@@ -28,17 +28,17 @@ export function createMockContext(overrides: Partial<Context> = {}): Context {
       url: '/graphql',
       body: {},
       ip: '127.0.0.1',
-    } as any,
+    } as unknown as Context['req'],
     res: {
       headers: {},
       statusCode: 200,
-    } as any,
+    } as unknown as Context['res'],
     user: null,
     decodedToken: null,
     logger: logger.child({ test: true }),
     loaders: {
-      users: new Map() as any,
-      posts: new Map() as any,
+      users: new Map() as unknown as Context['loaders']['users'],
+      posts: new Map() as unknown as Context['loaders']['posts'],
     },
     security: {
       isAuthenticated: false,
@@ -68,7 +68,7 @@ export function createAuthContext(
   }
 
   return createMockContext({
-    user: { id: userId, email: payload.email } as any,
+    user: { id: userId, email: payload.email } as unknown as Context['user'],
     userId:
       typeof userIdOrValue === 'object' ? userIdOrValue : { value: userId },
     decodedToken: payload,
@@ -86,7 +86,7 @@ export function createAuthContext(
       url: '/graphql',
       body: {},
       ip: '127.0.0.1',
-    } as any,
+    } as unknown as Context['req'],
     ...overrides,
   })
 }

@@ -285,11 +285,11 @@ export class GraphQLBatcher {
         )
       })
     } catch (error) {
-      requests.forEach((request) => {
+      for (const request of requests) {
         request.reject(
           error instanceof Error ? error : new Error(String(error)),
         )
-      })
+      }
     }
   }
 }

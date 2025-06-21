@@ -90,13 +90,13 @@ export function validateInput<T>(schema: z.ZodSchema<T>, data: unknown): T {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const errors: Record<string, string[]> = {}
-      error.errors.forEach((err) => {
+      for (const err of error.errors) {
         const path = err.path.join('.')
         if (!errors[path]) {
           errors[path] = []
         }
         errors[path].push(err.message)
-      })
+      }
       throw new ValidationError(errors)
     }
     throw error
@@ -118,13 +118,13 @@ export function safeValidateInput<T>(
   } catch (error) {
     if (error instanceof z.ZodError) {
       const errors: Record<string, string[]> = {}
-      error.errors.forEach((err) => {
+      for (const err of error.errors) {
         const path = err.path.join('.')
         if (!errors[path]) {
           errors[path] = []
         }
         errors[path].push(err.message)
-      })
+      }
       return { success: false, errors }
     }
     throw error

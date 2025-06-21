@@ -115,9 +115,9 @@ export function sanitizeErrorMessage(message: string): string {
     ]
 
     let sanitized = message
-    patterns.forEach((pattern) => {
+    for (const pattern of patterns) {
       sanitized = sanitized.replace(pattern, '[REDACTED]')
-    })
+    }
 
     return sanitized
   }
@@ -177,13 +177,13 @@ export function extractValidationErrors(
   const fieldErrors: Record<string, string[]> = {}
 
   if (Array.isArray(validationErrors)) {
-    validationErrors.forEach((err: { field: string; message: string }) => {
+    for (const err of validationErrors) {
       const field = err.field || 'general'
       if (!fieldErrors[field]) {
         fieldErrors[field] = []
       }
       fieldErrors[field].push(err.message)
-    })
+    }
   }
 
   return fieldErrors

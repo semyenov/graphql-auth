@@ -36,6 +36,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': `${__dirname}/src`,
+      '@test': `${__dirname}/test`,
       // Force all graphql imports to resolve to the same module
       graphql: path.resolve(__dirname, 'node_modules/graphql/index.js'),
       'graphql/type': path.resolve(

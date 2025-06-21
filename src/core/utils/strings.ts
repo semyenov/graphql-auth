@@ -188,7 +188,15 @@ export function isAlphanumeric(str: string): boolean {
  * Remove accents from a string
  */
 export function removeAccents(str: string): string {
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  // Split NFD normalized string and filter out combining diacritical marks
+  return str
+    .normalize('NFD')
+    .split('')
+    .filter((char) => {
+      const code = char.charCodeAt(0)
+      return code < 0x0300 || code > 0x036f
+    })
+    .join('')
 }
 
 /**

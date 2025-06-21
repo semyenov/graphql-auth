@@ -153,11 +153,10 @@ export class GraphQLSnapshotTester {
       }
       if (obj && typeof obj === 'object') {
         const sorted: Record<string, unknown> = {}
-        Object.keys(obj)
-          .sort()
-          .forEach((key) => {
-            sorted[key] = sortArrays((obj as Record<string, unknown>)[key])
-          })
+        const keys = Object.keys(obj).sort()
+        for (const key of keys) {
+          sorted[key] = sortArrays((obj as Record<string, unknown>)[key])
+        }
         return sorted
       }
       return obj

@@ -142,7 +142,9 @@ export class MockSubscriptionEmitter<T = unknown> {
   }
 
   emit(value: T): void {
-    this.subscribers.forEach((callback) => callback(value))
+    for (const callback of this.subscribers) {
+      callback(value)
+    }
   }
 
   getSubscriberCount(): number {
@@ -334,7 +336,7 @@ export function createSubscriptionTester(server: ApolloServer<Context>) {
         await createSubscriptionHelper(server, subscription, variables, context)
         throw new Error('Expected subscription to fail')
       } catch (error: unknown) {
-        if (!error.message.includes(expectedError)) {
+        if (error instanceof Error && !error.message.includes(expectedError)) {
           throw error
         }
       }

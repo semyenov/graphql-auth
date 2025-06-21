@@ -100,13 +100,13 @@ export function transformOrderBy(orderBy: OrderByInputType | null | undefined) {
 
   const prismaOrderBy: Prisma.PostOrderByWithRelationInput = {}
 
-  Object.keys(orderBy).forEach((key) => {
+  for (const key of Object.keys(orderBy)) {
     if (orderBy[key] !== undefined) {
       prismaOrderBy[key as keyof Prisma.PostOrderByWithRelationInput] = orderBy[
         key
       ] as Prisma.SortOrder
     }
-  })
+  }
 
   return Object.keys(prismaOrderBy).length > 0 ? prismaOrderBy : undefined
 }

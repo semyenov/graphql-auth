@@ -125,9 +125,13 @@ export function sanitizeJson(jsonString: string): string {
  * Remove invisible characters
  */
 export function removeInvisibleChars(text: string): string {
-  return text
-    .replace(/[\u200B-\u200D\uFEFF]/g, '') // Zero-width chars
-    .replace(/[\u2028\u2029]/g, '') // Line/paragraph separators
+  return (
+    text
+      // Remove individual zero-width characters
+      .replace(/\u200B|\u200C|\u200D|\uFEFF/g, '')
+      // Remove line/paragraph separators
+      .replace(/\u2028|\u2029/g, '')
+  )
 }
 
 /**

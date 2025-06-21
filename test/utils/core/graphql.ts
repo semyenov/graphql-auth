@@ -12,7 +12,7 @@ import type { Context } from '../../../src/graphql/context/context.types'
  * Execute a GraphQL operation against a test server
  */
 export async function executeOperation<
-  TResult = any,
+  TResult = unknown,
   TVariables extends VariableValues = VariableValues,
 >(
   server: ApolloServer<Context>,
@@ -20,13 +20,12 @@ export async function executeOperation<
   variables?: TVariables,
   contextValue?: Context,
 ) {
-  const queryString =
-    typeof query === 'string' ? query : (query as any).toString()
+  const queryString = typeof query === 'string' ? query : String(query)
 
   return server.executeOperation<TResult, TVariables>(
     {
       query: queryString,
-      variables: variables as any,
+      variables: variables as TVariables,
     },
     { contextValue: contextValue || ({} as Context) },
   )
