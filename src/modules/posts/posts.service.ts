@@ -7,7 +7,8 @@
 
 import type { Post, Prisma } from '@prisma/client'
 import { container } from 'tsyringe'
-import { AuthorizationError, NotFoundError } from '../../core/errors/types'
+import { requirePostOwnership } from '../../core/auth/ownership.utils'
+import { NotFoundError } from '../../core/errors/types'
 import type { ILogger } from '../../core/services/logger.interface'
 import { parseGlobalId } from '../../core/utils/relay'
 import type { UserId } from '../../core/value-objects/user-id.vo'
@@ -424,12 +425,16 @@ export class PostsService {
   }
 
   /**
-   * Private helper: Check post ownership
+   * Private helper: Check post ownership and get post details
    */
   private async checkPostOwnership(
     postId: number,
     userId: UserId,
   ): Promise<{ authorId: number | null; published: boolean }> {
+    // First verify ownership using the utility
+    await requirePostOwnership(userId.value, postId)
+
+    // Then get the post details we need
     const post = await prisma.post.findUnique({
       where: { id: postId },
       select: { authorId: true, published: true },
@@ -437,12 +442,6 @@ export class PostsService {
 
     if (!post) {
       throw new NotFoundError('Post', postId.toString())
-    }
-
-    if (!post.authorId || post.authorId !== userId.value) {
-      throw new AuthorizationError(
-        'You can only modify posts that you have created',
-      )
     }
 
     return post

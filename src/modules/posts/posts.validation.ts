@@ -172,19 +172,8 @@ export const postReactionSchema = z.object({
   type: z.enum(['like', 'love', 'wow', 'sad', 'angry']),
 })
 
-/**
- * Validate post ownership
- */
-export async function validatePostOwnership(
-  postId: number,
-  userId: number,
-): Promise<boolean> {
-  const post = await prisma.post.findUnique({
-    where: { id: postId },
-    select: { authorId: true },
-  })
-  return post?.authorId === userId
-}
+// Re-export ownership check from core utilities
+export { checkPostOwnership as validatePostOwnership } from '../../core/auth/ownership.utils'
 
 /**
  * Validate post exists

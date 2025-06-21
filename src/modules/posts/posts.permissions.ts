@@ -6,6 +6,10 @@
 
 import { allow, rule, shield } from 'graphql-shield'
 import {
+  checkPostOwnership,
+  requirePostOwnership,
+} from '../../core/auth/ownership.utils'
+import {
   AuthenticationError,
   AuthorizationError,
   NotFoundError,
@@ -28,23 +32,7 @@ export const isPostOwner = rule({ cache: 'strict' })(
     }
 
     try {
-      const postId = await parseAndValidateGlobalId(args.id, 'Post')
-
-      const post = await prisma.post.findUnique({
-        where: { id: postId },
-        select: { authorId: true },
-      })
-
-      if (!post) {
-        return new NotFoundError('Post', args.id)
-      }
-
-      if (post.authorId !== context.userId.value) {
-        return new AuthorizationError(
-          'You can only modify posts that you have created',
-        )
-      }
-
+      await requirePostOwnership(context.userId.value, args.id)
       return true
     } catch (error) {
       if (error instanceof Error) {
@@ -119,17 +107,8 @@ export const canModeratePost = rule({ cache: 'strict' })(
     }
 
     // Otherwise, must be post owner
-    // Check inline instead of calling resolve
     try {
-      const postId = parseAndValidateGlobalId(args.id, 'Post')
-      const post = await prisma.post.findUnique({
-        where: { id: postId },
-        select: { authorId: true },
-      })
-      if (!post) {
-        return new NotFoundError('Post', args.id)
-      }
-      return post.authorId === context.userId?.value
+      return await checkPostOwnership(context.userId.value, args.id)
     } catch (error) {
       if (error instanceof Error) return error
       return new Error('Failed to check post ownership')
@@ -224,32 +203,26 @@ export const postsPermissions = {
     // Post CRUD
     createPost: isAuthenticated,
     updatePost: rule()(async (_parent, args, context) => {
-      // Check ownership inline
       if (!context.userId) {
         return new AuthenticationError('You must be logged in')
       }
 
       try {
+        // Check ownership first
+        await requirePostOwnership(context.userId.value, args.id)
+
+        // Then check if post is editable
         const postId = await parseAndValidateGlobalId(args.id, 'Post')
         const post = await prisma.post.findUnique({
           where: { id: postId },
           select: {
-            authorId: true,
             createdAt: true,
             published: true,
           },
         })
 
-        if (!post) {
-          return new NotFoundError('Post', args.id)
-        }
-
-        if (post.authorId !== context.userId.value) {
-          return new AuthorizationError('You can only update your own posts')
-        }
-
         // Check if editable (draft posts always editable, published only within 24 hours)
-        if (post.published) {
+        if (post?.published) {
           const hoursSinceCreation =
             (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60)
           if (hoursSinceCreation > 24) {
@@ -283,7 +256,7 @@ export const postsPermissions = {
     // Draft content is restricted
     content: rule()(
       async (
-        parent: { published: boolean; authorId: string },
+        parent: { id: number; published: boolean; authorId: number },
         _args,
         context,
       ) => {
@@ -293,11 +266,8 @@ export const postsPermissions = {
           return false // Hide content for unauthenticated users
         }
 
-        if (parent.authorId !== context.userId.value) {
-          return false // Hide content from non-authors
-        }
-
-        return true
+        // Use ownership check utility
+        return await checkPostOwnership(context.userId.value, parent.id)
       },
     ),
   },

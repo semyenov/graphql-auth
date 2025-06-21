@@ -5,6 +5,7 @@
  */
 
 import { allow, rule, shield } from 'graphql-shield'
+import { checkUserOwnership } from '../../core/auth/ownership.utils'
 import {
   AuthenticationError,
   AuthorizationError,
@@ -32,12 +33,12 @@ export const isSelf = rule({ cache: 'strict' })(
     if (!targetId) return false
 
     try {
-      const userId = await parseAndValidateGlobalId(targetId, 'User')
-      return userId === context.userId.value
-    } catch {
-      // If not a global ID, try parsing as number
-      const userId = Number.parseInt(targetId, 10)
-      return userId === context.userId.value
+      return await checkUserOwnership(context.userId.value, targetId)
+    } catch (error) {
+      if (error instanceof Error) {
+        return error
+      }
+      return false
     }
   },
 )
@@ -86,12 +87,13 @@ export const canEditUser = rule({ cache: 'strict' })(
     }
 
     try {
-      const targetUserId = await parseAndValidateGlobalId(args.id, 'User')
-
       // Users can edit their own data
-      if (targetUserId === context.userId.value) {
+      const isOwner = await checkUserOwnership(context.userId.value, args.id)
+      if (isOwner) {
         return true
       }
+
+      const targetUserId = await parseAndValidateGlobalId(args.id, 'User')
 
       // Check if user is admin or moderator
       const user = await prisma.user.findUnique({
@@ -251,7 +253,10 @@ export const usersPermissions = {
     // Private fields
     email: rule()(async (parent: { id: number }, _args, context) => {
       // User can see their own email
-      if (context.userId?.value === parent.id) return true
+      if (!context.userId) return false
+
+      const isOwner = await checkUserOwnership(context.userId.value, parent.id)
+      if (isOwner) return true
 
       // NOTE: Privacy settings not yet implemented
       // For now, hide emails from other users
