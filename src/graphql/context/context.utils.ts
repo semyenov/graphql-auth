@@ -7,13 +7,15 @@
 
 import { HeaderMap } from '@apollo/server'
 import type { HTTPMethod } from 'fetchdts'
+import type { IncomingMessage } from 'http'
 import { DEFAULT_VALUES, HEADER_KEYS } from '../../app/constants/context'
+import { ValidationError } from '../../app/errors/types'
 import { prisma } from '../../data/database'
 import { createEnhancedLoaders } from '../../data/loaders/loaders'
 import type { RequestMetadata, SecurityContext } from '../../types.d'
 import { getUserIdFromAuthHeader } from '../../utils/jwt'
 import { UserId } from '../../value-objects/user-id.vo'
-import type { Context, GraphQLIncomingMessage, IContext } from './context.types'
+import type { Context, GraphQLRequestBody, IContext } from './context.types'
 
 /**
  * Extracts and normalizes HTTP headers from the incoming request
@@ -21,9 +23,7 @@ import type { Context, GraphQLIncomingMessage, IContext } from './context.types'
  * @param req - The incoming GraphQL request
  * @returns Normalized headers object with string values
  */
-export function extractHeaders<TVariables extends Record<string, unknown>>(
-  req: GraphQLIncomingMessage<TVariables>,
-): HeaderMap {
+export function extractHeaders(req: IncomingMessage): HeaderMap {
   const headers: HeaderMap = new HeaderMap()
 
   for (const [key, value] of Object.entries(req.headers || {})) {
@@ -41,9 +41,7 @@ export function extractHeaders<TVariables extends Record<string, unknown>>(
  * @param req - The incoming GraphQL request
  * @returns The HTTP method as HTTPMethod type
  */
-export function determineHttpMethod<TVariables extends Record<string, unknown>>(
-  req: GraphQLIncomingMessage<TVariables>,
-): HTTPMethod {
+export function determineHttpMethod(req: IncomingMessage): HTTPMethod {
   const method = req.method?.toUpperCase()
 
   // Validate that it's a supported HTTP method
@@ -108,11 +106,33 @@ export function extractUserAgent(headers: HeaderMap): string {
  */
 export function createRequestMetadata<
   TVariables extends Record<string, unknown>,
->(req: GraphQLIncomingMessage<TVariables>): RequestMetadata {
+>(req: IncomingMessage): RequestMetadata {
   const headers = extractHeaders(req)
-  const operationName = getOperationName(req)
-  const variables = getVariables(req) as Record<string, unknown>
-  const query = getQuery(req)
+  const body = req.read() as GraphQLRequestBody<TVariables> | undefined
+  if (!body) {
+    throw new ValidationError({
+      body: ['No body found in request'],
+    })
+  }
+
+  const operationName = getOperationName(body)
+  const variables = getVariables(body) as Record<string, unknown>
+  const query = getQuery(body)
+  if (!query) {
+    throw new ValidationError({
+      body: ['No query found in request'],
+    })
+  }
+  if (!operationName) {
+    throw new ValidationError({
+      body: ['No operation name found in request'],
+    })
+  }
+  if (!variables) {
+    throw new ValidationError({
+      body: ['No variables found in request'],
+    })
+  }
   return {
     ip: extractClientIp(headers),
     userAgent: extractUserAgent(headers),
@@ -152,8 +172,8 @@ export function createSecurityContext(
  * @returns Basic request object for context
  */
 export function createRequestObject<TVariables extends Record<string, unknown>>(
-  req: GraphQLIncomingMessage<TVariables>,
-): IContext<TVariables> {
+  req: IncomingMessage,
+) {
   const userId = UserId.create(1)
   const headers = extractHeaders(req)
   const method = determineHttpMethod(req)
@@ -171,7 +191,7 @@ export function createRequestObject<TVariables extends Record<string, unknown>>(
     contentType,
     ipAddress,
   }
-  return requestObject as unknown as IContext<TVariables>
+  return requestObject as unknown as IContext<TVariables>['req']
 }
 
 /**
@@ -180,9 +200,7 @@ export function createRequestObject<TVariables extends Record<string, unknown>>(
  * @param req - The incoming GraphQL request
  * @returns True if the request structure is valid
  */
-export function isValidRequest<TVariables extends Record<string, unknown>>(
-  req: GraphQLIncomingMessage<TVariables>,
-): boolean {
+export function isValidRequest(req: IncomingMessage): boolean {
   if (!req) {
     return false
   }
@@ -197,8 +215,8 @@ export function isValidRequest<TVariables extends Record<string, unknown>>(
  * @param context - The GraphQL context
  * @returns The user ID if authenticated, null otherwise
  */
-export function getUserId<TVariables extends Record<string, unknown>>(
-  context: GraphQLIncomingMessage<TVariables>,
+export function getUserId(
+  context: IContext<Record<string, unknown>>,
 ): number | null {
   const authHeader = context.headers.get(HEADER_KEYS.AUTHORIZATION)
   return getUserIdFromAuthHeader(authHeader)
@@ -211,7 +229,7 @@ export function getUserId<TVariables extends Record<string, unknown>>(
  * @returns Enhanced context with additional features
  */
 export function enhanceContext<TVariables extends Record<string, unknown>>(
-  context: GraphQLIncomingMessage<TVariables>,
+  context: IContext<TVariables>,
 ): Context<TVariables> {
   const enhanced = context as unknown as Context<TVariables>
 
@@ -286,19 +304,19 @@ export function validateContext<TVariables extends Record<string, unknown>>(
 }
 
 function getOperationName<TVariables extends Record<string, unknown>>(
-  req: GraphQLIncomingMessage<TVariables>,
+  body: GraphQLRequestBody<TVariables>,
 ): string | undefined {
-  return req.body?.operationName as string | undefined
+  return body?.operationName as string | undefined
 }
 
 function getVariables<TVariables extends Record<string, unknown>>(
-  req: GraphQLIncomingMessage<TVariables>,
+  body: GraphQLRequestBody<TVariables>,
 ): Record<string, unknown> | undefined {
-  return req.body?.variables as Record<string, unknown> | undefined
+  return body?.variables as Record<string, unknown> | undefined
 }
 
 function getQuery<TVariables extends Record<string, unknown>>(
-  req: GraphQLIncomingMessage<TVariables>,
+  body: GraphQLRequestBody<TVariables>,
 ): string | undefined {
-  return req.body?.query as string | undefined
+  return body?.query as string | undefined
 }

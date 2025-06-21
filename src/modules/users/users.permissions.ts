@@ -11,7 +11,6 @@ import {
   AuthorizationError,
   NotFoundError,
 } from '../../app/errors/types'
-import type { IContext } from '../../graphql/context/context.types'
 import { prisma } from '../../prisma'
 import { parseAndValidateGlobalId } from '../../utils/relay'
 
@@ -19,11 +18,7 @@ import { parseAndValidateGlobalId } from '../../utils/relay'
  * Check if user is viewing their own profile
  */
 export const isSelf = rule({ cache: 'strict' })(
-  async (
-    _parent,
-    args: { id?: string; userId?: string },
-    context: IContext,
-  ) => {
+  async (_parent, args: { id?: string; userId?: string }, context) => {
     if (!context.userId) {
       return new AuthenticationError('You must be logged in')
     }
@@ -46,7 +41,7 @@ export const isSelf = rule({ cache: 'strict' })(
  * Check if user can view another user's profile
  */
 export const canViewProfile = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, _context: IContext) => {
+  async (_parent, args: { id: string }, _context) => {
     try {
       const userId = await parseAndValidateGlobalId(args.id, 'User')
 
@@ -80,7 +75,7 @@ export const canViewProfile = rule({ cache: 'strict' })(
  * Check if user can edit another user's data
  */
 export const canEditUser = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, context: IContext) => {
+  async (_parent, args: { id: string }, context) => {
     if (!context.userId) {
       return new AuthenticationError('You must be logged in')
     }
@@ -132,7 +127,7 @@ export const canEditUser = rule({ cache: 'strict' })(
  * Check if user is blocked by target user
  */
 export const notBlocked = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, context: IContext) => {
+  async (_parent, args: { id: string }, context) => {
     if (!context.userId) return true // Anonymous users can't be blocked
 
     try {
@@ -156,7 +151,7 @@ export const notBlocked = rule({ cache: 'strict' })(
  * Check if user can send messages
  */
 export const canSendMessage = rule({ cache: 'strict' })(
-  async (_parent, args: { recipientId: string }, context: IContext) => {
+  async (_parent, args: { recipientId: string }, context) => {
     if (!context.userId) {
       return new AuthenticationError('You must be logged in to send messages')
     }

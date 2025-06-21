@@ -101,7 +101,7 @@
     "*.{ts,tsx}": [
       "bunx @biomejs/biome check --write"
     ],
-    "*.{json,md}": [
+    "*.{json}": [
       "bunx @biomejs/biome format --write"
     ]
   },

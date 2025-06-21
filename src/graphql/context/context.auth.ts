@@ -42,7 +42,9 @@ export async function getUserIdFromAuthHeaderAsync(
 
   try {
     const tokenService = container.resolve(TokenService)
-    return await tokenService.verifyAccessToken(token)
+    return (await tokenService.verifyAccessToken(
+      token,
+    )) as unknown as UserId | null
   } catch {
     return null
   }

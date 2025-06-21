@@ -5,7 +5,11 @@
  * IMPROVED-FILE-STRUCTURE.md specification.
  */
 
-import type { BaseContext, HTTPGraphQLRequest } from '@apollo/server'
+import type {
+  HTTPGraphQLRequest as ApolloHTTPGraphQLRequest,
+  BaseContext,
+  HeaderMap,
+} from '@apollo/server'
 import type { Endpoint, HTTPMethod, MimeType } from 'fetchdts'
 import type { IncomingMessage, ServerResponse } from 'http'
 import type { Loaders } from '../../data/loaders/loaders'
@@ -85,8 +89,8 @@ export interface GraphQLAPISchema<TVariables extends Record<string, unknown>> {
 /**
  * Enhanced HTTP request interface with properly typed GraphQL body
  */
-export type GraphQLIncomingMessage<TVariables extends Record<string, unknown>> =
-  HTTPGraphQLRequest & {
+export type HTTPGraphQLRequest<TVariables extends Record<string, unknown>> =
+  ApolloHTTPGraphQLRequest & {
     readonly body?: GraphQLRequestBody<TVariables>
   }
 
@@ -119,7 +123,7 @@ export interface IContext<TVariables extends Record<string, unknown>>
     }
   }
 
-  headers: Record<string, string>
+  headers: HeaderMap
   method: HTTPMethod
   contentType: MimeType | string
   metadata: RequestMetadata
@@ -141,7 +145,7 @@ export interface IContext<TVariables extends Record<string, unknown>>
  * Interface for request components during context creation
  */
 export interface RequestComponents<TVariables extends Record<string, unknown>> {
-  headers: Record<string, string>
+  headers: HeaderMap
   method: HTTPMethod
   contentType: MimeType | string
   operationName?: string
@@ -153,7 +157,7 @@ export interface RequestComponents<TVariables extends Record<string, unknown>> {
 /**
  * Interface for authentication context components
  */
-export interface AuthenticationContext<
+export interface IAuthenticationContext<
   TVariables extends Record<string, unknown>,
 > extends IContext<TVariables> {
   userId?: UserId
@@ -163,7 +167,7 @@ export interface AuthenticationContext<
 /**
  * Type utility for context creation functions
  */
-export type ContextCreationFunction<
+export type IContextCreationFunction<
   TVariables extends Record<string, unknown>,
   T extends IContext<TVariables> = IContext<TVariables>,
 > = (params: { req: IncomingMessage; res: ServerResponse }) => Promise<T>
@@ -198,7 +202,7 @@ export interface Context<TVariables extends Record<string, unknown>>
 /**
  * Context for authentication operations
  */
-export interface AuthContext<TVariables extends Record<string, unknown>>
+export interface IAuthContext<TVariables extends Record<string, unknown>>
   extends IContext<TVariables> {
   operationName: 'signup' | 'login' | 'me' | 'logout' | 'refreshToken'
 }
@@ -206,7 +210,7 @@ export interface AuthContext<TVariables extends Record<string, unknown>>
 /**
  * Context for post operations
  */
-export interface PostContext<TVariables extends Record<string, unknown>>
+export interface IPostContext<TVariables extends Record<string, unknown>>
   extends IContext<TVariables> {
   operationName:
     | 'createPost'
@@ -220,7 +224,7 @@ export interface PostContext<TVariables extends Record<string, unknown>>
 /**
  * Context for user operations
  */
-export interface UserContext<TVariables extends Record<string, unknown>>
+export interface IUserContext<TVariables extends Record<string, unknown>>
   extends IContext<TVariables> {
   operationName: 'searchUsers' | 'updateUserProfile' | 'deleteUser'
 }

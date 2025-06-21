@@ -69,101 +69,56 @@ bun run demo                            # Run demo script
 - **Dependency Injection**: TSyringe for service management
 - **Code Quality**: Biome for linting and formatting (replaces ESLint/Prettier)
 
-### Architecture: Modular Direct Resolvers with Unified Structure
+### Architecture: Modular Direct Resolvers
 
-The project uses a **modular architecture** with direct Pothos resolvers organized by feature. The core and app directories have been merged into a unified src structure:
+The project uses a **modular architecture** with direct Pothos resolvers organized by feature:
 
 ```
 src/
 ├── server.ts                         # Main server setup (entry point: bun run dev)
 ├── main.ts                           # Build entry point
 ├── prisma.ts                         # Prisma client export
-├── constants/                        # Application constants
 ├── types/                            # Global type definitions
 │
-├── config/                           # Application configuration
-│   ├── container.ts                  # TSyringe DI container setup
-│   ├── environment.ts                # Environment variable handling
-│   ├── config.ts                     # Configuration management
-│   └── database.ts                   # Database configuration
-│
-├── middleware/                       # Application-level middleware
-│   ├── cors.ts                       # CORS configuration
-│   ├── rate-limiting.ts              # Rate limiter setup
-│   ├── logging.ts                    # Request/response logging
-│   └── security-headers.ts           # Security headers middleware
-│
-├── auth/                             # Authentication core
-│   ├── scopes.ts                     # Authorization scopes
-│   ├── types.ts                      # Auth types
-│   └── ownership.utils.ts            # Resource ownership utilities
-│
-├── errors/                           # Error handling system
-│   ├── types.ts                      # Error class hierarchy
-│   ├── handlers.ts                   # Error normalization
-│   ├── constants.ts                  # Error messages
-│   └── graphql-error-types.ts        # GraphQL error types
-│
-├── logging/                          # Logging system
-│   ├── logger-factory.ts             # Logger creation
-│   ├── console-logger.ts             # Console implementation
-│   ├── noop-logger.ts                # No-op logger
-│   └── index.ts                      # Logger exports
-│
-├── utils/                            # Core utilities
-│   ├── relay.ts                      # Global ID encoding/decoding
-│   ├── jwt.ts                        # JWT utilities
-│   ├── crypto.ts                     # Cryptographic utilities
-│   ├── dates.ts                      # Date utilities
-│   ├── strings.ts                    # String utilities
-│   ├── types.ts                      # Type utilities
-│   └── validation.ts                 # Validation utilities
-│
-├── validation/                       # Validation system
-│   ├── schemas.ts                    # Common Zod schemas
-│   ├── validators.ts                 # Custom validators
-│   ├── helpers.ts                    # Validation helpers
-│   └── enhanced-validations.ts       # Advanced validations
-│
-├── value-objects/                    # Domain value objects
-│   ├── email.vo.ts                   # Email value object
-│   ├── user-id.vo.ts                 # User ID value object
-│   └── post-id.vo.ts                 # Post ID value object
-│
-├── services/                         # Core services
-│   ├── email.service.ts              # Email service
-│   ├── logger.interface.ts           # Logger interface
-│   ├── password.service.interface.ts # Password service interface
-│   ├── post-authorization.service.ts # Post authorization
-│   ├── token.service.interface.ts    # Token service interface
-│   └── rate-limiter.service.ts       # Rate limiting service
-│
-├── database/                         # Database layer
-│   ├── client.ts                     # Database client
-│   └── index.ts                      # Database exports
-│
-├── entities/                         # Domain entities
-│   ├── post.entity.ts                # Post entity
-│   └── user.entity.ts                # User entity (if exists)
-│
-├── repositories/                     # Repository interfaces
-│   └── user.repository.interface.ts  # User repository interface
+├── app/                              # Application infrastructure
+│   ├── config/                       # Configuration
+│   │   ├── container.ts              # TSyringe DI container setup
+│   │   ├── config.ts                 # Configuration management
+│   │   ├── environment.ts            # Environment variables
+│   │   └── database.ts               # Database configuration
+│   ├── middleware/                   # HTTP middleware
+│   │   ├── cors.ts                   # CORS configuration
+│   │   ├── rate-limiting.ts          # Rate limiter setup
+│   │   ├── logging.ts                # Request/response logging
+│   │   └── security-headers.ts       # Security headers
+│   ├── errors/                       # Error handling
+│   │   ├── types.ts                  # Error class hierarchy
+│   │   ├── handlers.ts               # Error normalization
+│   │   └── constants.ts              # Error messages
+│   ├── logging/                      # Logging system
+│   │   ├── logger-factory.ts         # Logger creation
+│   │   └── console-logger.ts         # Console implementation
+│   └── services/                     # Application services
+│       ├── email.service.ts          # Email service
+│       └── *.interface.ts            # Service interfaces
 
-├── modules/                          # Feature modules (domain-driven)
+├── modules/                          # Feature modules
 │   ├── auth/                         # Authentication module
-│   │   ├── auth.schema.ts            # GraphQL schema definitions
+│   │   ├── auth.schema.ts            # GraphQL type definitions
 │   │   ├── auth.permissions.ts       # Authorization rules
 │   │   ├── auth.validation.ts        # Input validation schemas
+│   │   ├── entities/                 # Module entities
+│   │   │   └── refresh-token.entity.ts # Refresh token entity
+│   │   ├── interfaces/               # Module interfaces
+│   │   │   └── refresh-token.repository.interface.ts
 │   │   ├── resolvers/                # GraphQL resolvers
 │   │   │   ├── auth.resolver.ts      # Basic auth (signup/login/me)
 │   │   │   ├── auth-tokens.resolver.ts # Refresh token operations
 │   │   │   └── auth-enhanced.resolver.ts # Email verification & password reset
 │   │   ├── services/                 # Business logic services
-│   │   │   ├── password.service.ts   # Password hashing (bcryptjs)
-│   │   │   ├── argon2-password.service.ts # Argon2 password service
-│   │   │   ├── hybrid-password.service.ts # Hybrid password service
+│   │   │   ├── argon2-password.service.ts # Argon2 password hashing
 │   │   │   ├── token.service.ts      # JWT token management
-│   │   │   ├── verification-token.service.ts # Email verification tokens
+│   │   │   ├── verification-token.service.ts # Email verification
 │   │   │   └── login-attempt.service.ts # Login attempt tracking
 │   │   └── types/                    # Module-specific types
 │   ├── posts/                        # Posts module
@@ -172,90 +127,70 @@ src/
 │   │   ├── posts.validation.ts       # Post input validation
 │   │   ├── posts.service.ts          # Post business logic
 │   │   └── resolvers/                # Post CRUD resolvers
+│   │       └── posts.resolver.ts     # Post operations
 │   ├── users/                        # Users module
 │   │   ├── users.schema.ts           # User type definitions
 │   │   ├── users.permissions.ts      # User authorization rules
 │   │   ├── users.validation.ts       # User input validation
 │   │   ├── users.service.ts          # User business logic
 │   │   └── resolvers/                # User query resolvers
+│   │       └── users.resolver.ts     # User operations
 │   └── shared/                       # Shared module utilities
-│       ├── pagination/               # Pagination utilities
-│       ├── filtering/                # Filter utilities
 │       └── connections/              # Relay connection helpers
+│           └── relay.utils.ts        # Connection utilities
 
 ├── graphql/                          # GraphQL infrastructure
-│   ├── schema/                       # Schema building and assembly
+│   ├── schema/                       # Schema building
 │   │   ├── builder.ts                # Pothos builder with plugins
 │   │   ├── index.ts                  # Schema assembly & export
 │   │   ├── inputs.ts                 # Shared input types
 │   │   ├── scalars.ts                # Custom scalars (DateTime)
+│   │   ├── enums.ts                  # GraphQL enums
+│   │   ├── error-types.ts            # Error union types
 │   │   └── plugins/                  # Schema plugins
-│   │       └── shield.ts             # Custom ShieldPlugin implementation
+│   │       └── shield.plugin.ts      # Custom ShieldPlugin
 │   ├── context/                      # GraphQL context
 │   │   ├── context.types.ts          # Context type definitions
 │   │   ├── context.factory.ts        # Context creation
 │   │   ├── context.auth.ts           # Authentication helpers
 │   │   └── context.utils.ts          # Context utilities
 │   ├── directives/                   # Custom GraphQL directives
-│   └── middleware/                   # GraphQL-specific middleware
-│       ├── shield-config.ts          # Permission mapping (legacy)
+│   │   ├── auth.directive.ts         # @auth directive
+│   │   ├── rate-limit.directive.ts   # @rateLimit directive
+│   │   └── index.ts                  # Directive exports
+│   └── middleware/                   # GraphQL middleware
+│       ├── auth.middleware.ts        # Authentication checks
+│       ├── rate-limit.middleware.ts  # Rate limiting
+│       ├── validation.middleware.ts  # Input validation
+│       ├── shield-config.ts          # Permission mapping
 │       ├── rules.ts                  # Shield permission rules
+│       ├── shared-rules.ts           # Reusable auth rules
 │       └── rule-utils.ts             # Rule helper functions
 
-├── core/                             # Core business logic and utilities
-│   ├── auth/                         # Authentication core
-│   │   ├── scopes.ts                 # Authorization scopes
-│   │   └── types.ts                  # Auth types
-│   ├── errors/                       # Error handling system
-│   │   ├── types.ts                  # Error class hierarchy
-│   │   ├── handlers.ts               # Error normalization
-│   │   └── constants.ts              # Error messages
-│   ├── logging/                      # Logging system
-│   │   ├── logger-factory.ts         # Logger creation
-│   │   └── console-logger.ts         # Console implementation
-│   ├── services/                     # Core services
-│   │   └── email.service.ts          # Email service interface
-│   ├── utils/                        # Core utilities
-│   │   ├── relay.ts                  # Global ID encoding/decoding
-│   │   ├── jwt.ts                    # JWT utilities
-│   │   ├── crypto.ts                 # Cryptographic utilities
-│   │   ├── dates.ts                  # Date utilities
-│   │   ├── strings.ts                # String utilities
-│   │   └── types.ts                  # Type utilities
-│   └── validation/                   # Validation system
-│       ├── schemas.ts                # Common Zod schemas
-│       └── validators.ts             # Custom validators
-
 ├── data/                             # Data access layer
-│   ├── database/                     # Database configuration
-│   │   └── client.ts                 # Prisma client setup
 │   ├── loaders/                      # DataLoader implementations
 │   │   └── loaders.ts                # User/Post loaders
-│   ├── repositories/                 # Repository pattern
-│   │   └── refresh-token.repository.ts # Refresh token storage
-│   └── cache/                        # Caching layer
-│       ├── memory-cache.ts           # In-memory cache
-│       └── redis-cache.ts            # Redis cache (optional)
+│   └── repositories/                 # Repository implementations
+│       ├── index.ts                  # Repository exports
+│       └── refresh-token.repository.ts # Refresh token storage
 
 ├── lib/                              # Third-party integrations
 │   ├── apollo/                       # Apollo Server setup
 │   │   ├── plugins.ts                # Apollo Server plugins
-│   │   ├── formatters.ts             # Error formatters
-│   │   └── server.ts                 # Apollo Server configuration
-│   └── prisma/                       # Prisma extensions and helpers
-│       ├── client.ts                 # Global Prisma client
-│       ├── extensions.ts             # Prisma extensions
-│       └── helpers.ts                # Prisma utility functions
+│   │   └── formatters.ts             # Error formatters
+│   └── prisma/                       # Prisma extensions
+│       └── client.ts                 # Extended Prisma client
 
-├── gql/                              # GraphQL client operations (for testing)
+├── gql/                              # GraphQL client operations (testing)
 │   ├── queries.ts                    # Query definitions
 │   ├── mutations.ts                  # Mutation definitions
 │   └── mutations-auth-tokens.ts      # Auth token mutations
 
-├── types/                            # Global type definitions
 ├── constants/                        # Application constants
-├── main.ts                           # Build entry point
-└── prisma.ts                         # Prisma client export
+├── utils/                            # Shared utilities
+├── validation/                       # Validation schemas
+├── value-objects/                    # Value objects
+└── entities/                         # Domain entities
 ```
 
 ## Key Architectural Patterns
@@ -302,8 +237,8 @@ builder.mutationField('createPost', (t) =>
 Use the error hierarchy and always normalize errors:
 
 ```typescript
-import { normalizeError } from '../../../core/errors/handlers'
-import { AuthenticationError, NotFoundError } from '../../../core/errors/types'
+import { normalizeError } from '../../../app/errors/handlers'
+import { AuthenticationError, NotFoundError } from '../../../app/errors/types'
 
 try {
   // operation
@@ -320,7 +255,7 @@ Use centralized helpers for consistent ID handling:
 import {
   parseAndValidateGlobalId,
   encodeGlobalId,
-} from '../../core/utils/relay'
+} from '../../utils/relay'
 
 // Parse incoming global ID
 const numericId = await parseAndValidateGlobalId(args.id, 'Post')
@@ -495,6 +430,16 @@ const result = await executeOperation(
 )
 ```
 
+### RefreshToken Implementation
+
+Key points for refresh token implementation:
+
+1. **Entity Structure**: RefreshToken uses string IDs (UUIDs) in the database
+2. **Token Service**: Returns JWT refresh token, not the raw token value
+3. **Repository Pattern**: Implements `IRefreshTokenRepository` interface
+4. **Revocation**: Check `revoked` field before accepting refresh tokens
+5. **Rotation**: Delete old token after successful refresh (single-use tokens)
+
 ### DataLoader Usage
 
 DataLoaders are created in context for N+1 prevention:
@@ -553,20 +498,21 @@ When working with GraphQL operations:
 - **Test specific operation**: Use GraphQL Playground at http://localhost:4000
 - **Lint errors**: `bun run check:fix` to auto-fix all Biome issues
 - **Format issues**: `bun run format:fix` to auto-format code
+- **DI errors**: Check container.ts for proper interface registration (e.g., `ITokenConfig` not `TokenConfig`)
 
 ## Recent Architecture Changes
 
-1. **Modular Structure**: Migrated from scattered files to organized modules
-2. **Direct Resolvers**: Removed abstraction layers, business logic in resolvers
-3. **Improved Error Handling**: Centralized error types with consistent messages
-4. **Enhanced Testing**: All tests use typed GraphQL operations from src/gql/
-5. **TypeScript Strict**: All files pass strict type checking
-6. **Biome Integration**: Replaced ESLint/Prettier with Biome for better performance
-7. **Hybrid Password Service**: Added argon2 support with bcrypt fallback
-8. **Enhanced Security**: Added security headers middleware
-9. **ShieldPlugin Integration**: Migrated from middleware-based Shield to inline plugin approach
-10. **Dual Authorization**: Combined Pothos Scope Auth with GraphQL Shield for flexible permissions
-11. **Enhanced Authentication**: Added email verification, password reset, and login attempt tracking
+1. **Simplified Architecture**: Removed DDD implementation in favor of modular direct resolvers
+2. **RefreshToken Entity**: Simplified entity without value objects, using primitive types
+3. **Direct Repository Pattern**: Implemented repositories without base classes or complex abstractions
+4. **Improved Testing**: Fixed all dependency injection issues, all 191 tests now pass
+5. **Clean Module Structure**: Each module contains entities, interfaces, services, and resolvers
+6. **TypeScript Strict**: All files pass strict type checking with Biome
+7. **Hybrid Password Service**: Argon2 as default with bcrypt fallback support
+8. **Enhanced Security**: Security headers middleware with CSP support
+9. **ShieldPlugin Integration**: Custom inline GraphQL Shield plugin for field-level auth
+10. **Dual Authorization**: Pothos Scope Auth + GraphQL Shield for flexible permissions
+11. **Token Rotation**: Proper refresh token rotation with family tracking
 
 ## Critical Rules from .cursor/rules
 

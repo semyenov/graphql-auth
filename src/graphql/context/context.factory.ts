@@ -6,12 +6,14 @@
  * error handling, type safety, and comprehensive request processing.
  */
 
-import type { ContextFunction } from '@apollo/server'
+import type { ContextFunction, HeaderMap } from '@apollo/server'
 import type { IncomingMessage, ServerResponse } from 'http'
+import { HEADER_KEYS } from '../../app/constants'
 import { ValidationError } from '../../app/errors/types'
 import { getUserIdFromAuthHeaderAsync } from './context.auth'
 import type {
-  GraphQLIncomingMessage,
+  Context,
+  GraphQLRequestBody,
   IContext,
   RequestComponents,
 } from './context.types'
@@ -49,10 +51,10 @@ import {
  */
 export const createContext: ContextFunction<
   [{ req: IncomingMessage; res: ServerResponse }],
-  IContext
+  Context<Record<string, unknown>>
 > = async ({ req }) => {
   // Cast to our extended type for body access
-  const graphqlReq = req as GraphQLIncomingMessage
+  const graphqlReq = req
 
   // Validate incoming request structure
   if (!isValidRequest(graphqlReq)) {
@@ -69,7 +71,9 @@ export const createContext: ContextFunction<
     const authContext = await createAuthenticationContext(requestComponents)
 
     // Extract IP address for the context
-    const ipAddress = extractClientIp(requestComponents.headers)
+    const ipAddress = extractClientIp(
+      requestComponents.headers as unknown as HeaderMap,
+    )
 
     // Assemble final context
     const context = assembleContext(requestComponents, authContext, ipAddress)
@@ -93,7 +97,7 @@ export const createContext: ContextFunction<
  * @returns Processed request components
  */
 function extractRequestComponents<TVariables extends Record<string, unknown>>(
-  req: GraphQLIncomingMessage<TVariables>,
+  req: IncomingMessage,
 ): RequestComponents<TVariables> {
   // Extract and normalize headers
   const headers = extractHeaders(req)
@@ -103,17 +107,15 @@ function extractRequestComponents<TVariables extends Record<string, unknown>>(
   const contentType = extractContentType(headers)
 
   // Extract GraphQL operation details
-  const body = req.body
+  const body = req.read() as GraphQLRequestBody<TVariables> | undefined
   const operationName = body?.operationName
   const variables = body?.variables
 
   // Create request metadata
-  const metadata = createRequestMetadata(headers)
+  const metadata = createRequestMetadata(req)
 
   // Create request object
-  const requestObject = createRequestObject(
-    req,
-  ) as unknown as IContext<TVariables>['req']
+  const requestObject = createRequestObject<TVariables>(req)
 
   return {
     headers,
@@ -136,7 +138,7 @@ async function createAuthenticationContext(
   requestComponents: ReturnType<typeof extractRequestComponents>,
 ) {
   // Attempt to get user ID from the request
-  const authHeader = requestComponents.headers.authorization
+  const authHeader = requestComponents.headers.get(HEADER_KEYS.AUTHORIZATION)
   const userId = await getUserIdFromAuthHeaderAsync(authHeader)
   const isAuthenticated = Boolean(userId)
 
@@ -171,7 +173,7 @@ function assembleContext<TVariables extends Record<string, unknown>>(
 ): IContext<TVariables> {
   return {
     // Request information
-    req: requestComponents.requestObject as unknown as IContext<TVariables>['req'],
+    req: requestComponents.requestObject,
     headers: requestComponents.headers,
     method: requestComponents.method,
     contentType: requestComponents.contentType,

@@ -1,7 +1,7 @@
 import type { HTTPMethod } from 'fetchdts'
 import { DEFAULT_VALUES, HEADER_KEYS } from '../app/constants/context'
 import type {
-  GraphQLIncomingMessage,
+  HTTPGraphQLRequest,
   IContext,
 } from '../graphql/context/context.types'
 import type { RequestMetadata, SecurityContext } from '../types.d'
@@ -21,7 +21,7 @@ import { getUserIdFromAuthHeader } from './jwt'
  * @returns Normalized headers object with string values
  */
 export function extractHeaders(
-  req: GraphQLIncomingMessage,
+  req: HTTPGraphQLRequest,
 ): Record<string, string> {
   const headers: Record<string, string> = {}
 
@@ -41,7 +41,7 @@ export function extractHeaders(
  * @param req - The incoming GraphQL request
  * @returns The HTTP method as HTTPMethod type
  */
-export function determineHttpMethod(req: GraphQLIncomingMessage): HTTPMethod {
+export function determineHttpMethod(req: HTTPGraphQLRequest): HTTPMethod {
   const method = req.method?.toUpperCase()
 
   // Validate that it's a supported HTTP method
@@ -148,7 +148,7 @@ export function createSecurityContext(
  * @returns Basic request object for context
  */
 export function createRequestObject(
-  req: GraphQLIncomingMessage,
+  req: HTTPGraphQLRequest,
   headers: Record<string, string>,
   method: HTTPMethod,
 ) {
@@ -166,7 +166,7 @@ export function createRequestObject(
  * @param req - The incoming GraphQL request
  * @returns True if the request structure is valid
  */
-export function isValidRequest(req: GraphQLIncomingMessage): boolean {
+export function isValidRequest(req: HTTPGraphQLRequest): boolean {
   if (!req) {
     return false
   }

@@ -14,7 +14,6 @@ import {
   AuthorizationError,
   NotFoundError,
 } from '../../app/errors/types'
-import type { IContext } from '../../graphql/context/context.types'
 import { prisma } from '../../prisma'
 import { parseAndValidateGlobalId } from '../../utils/relay'
 
@@ -22,7 +21,7 @@ import { parseAndValidateGlobalId } from '../../utils/relay'
  * Check if user owns the post
  */
 export const isPostOwner = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, context: IContext) => {
+  async (_parent, args: { id: string }, context) => {
     if (!context.userId) {
       return new AuthenticationError('You must be logged in')
     }
@@ -43,7 +42,7 @@ export const isPostOwner = rule({ cache: 'strict' })(
  * Check if user can view the post
  */
 export const canViewPost = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, context: IContext) => {
+  async (_parent, args: { id: string }, context) => {
     try {
       const postId = await parseAndValidateGlobalId(args.id, 'Post')
 
@@ -87,7 +86,7 @@ export const canViewPost = rule({ cache: 'strict' })(
  * Check if user can moderate posts
  */
 export const canModeratePost = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, context: IContext) => {
+  async (_parent, args: { id: string }, context) => {
     if (!context.userId) {
       return new AuthenticationError('You must be logged in')
     }
@@ -116,7 +115,7 @@ export const canModeratePost = rule({ cache: 'strict' })(
  * Check if post is editable (time-based restriction)
  */
 export const isPostEditable = rule({ cache: 'strict' })(
-  async (_parent, args: { id: string }, _context: IContext) => {
+  async (_parent, args: { id: string }, _context) => {
     try {
       const postId = await parseAndValidateGlobalId(args.id, 'Post')
 
@@ -158,7 +157,7 @@ export const isPostEditable = rule({ cache: 'strict' })(
  * Check if user has reached post creation limit
  */
 export const withinPostLimit = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: IContext) => {
+  async (_parent, _args, context) => {
     if (!context.userId) return false
 
     // Check posts created in the last 24 hours
