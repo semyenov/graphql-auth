@@ -4,14 +4,14 @@
 
 import { ApolloServer } from '@apollo/server'
 import { createYoga } from 'graphql-yoga'
-import type { IContext } from '../../../src/graphql/context/context.types'
+import type { DefaultContext } from '../../../src/graphql/context/context.types'
 import { buildSchema } from '../../../src/graphql/schema'
 
 /**
  * Create a test Apollo Server instance
  */
-export function createTestServer(): ApolloServer<IContext> {
-  return new ApolloServer<IContext>({
+export function createTestServer(): ApolloServer<DefaultContext> {
+  return new ApolloServer<DefaultContext>({
     schema: buildSchema(),
     introspection: true,
     includeStacktraceInErrorResponses: true,
@@ -22,7 +22,7 @@ export function createTestServer(): ApolloServer<IContext> {
  * Create a test Yoga server instance for advanced GraphQL testing
  */
 export function createYogaTestServer() {
-  return createYoga<IContext>({
+  return createYoga<DefaultContext>({
     schema: buildSchema(),
     logging: false,
     maskedErrors: false,

@@ -1,7 +1,8 @@
 /**
- * Posts GraphQL Resolvers (Direct Implementation)
+ * Post Module Resolver
  *
- * Implements post operations directly in Pothos resolvers without use cases.
+ * Consolidated post operations following the Direct Resolvers pattern.
+ * Uses inline Shield rules with the Pothos plugin.
  */
 
 import type { Prisma } from '@prisma/client'
@@ -11,25 +12,22 @@ import {
   AuthorizationError,
   NotFoundError,
   RateLimitError,
-} from '../../../app/errors/types'
-import type { ILogger } from '../../../app/services/logger.interface'
-import {
-  and,
-  isAuthenticatedUser,
-  isModerator,
-  isPostOwner,
-  isPublic,
-  or,
-} from '../../../graphql/middleware/rules'
-import { builder } from '../../../graphql/schema/builder'
-import { prisma } from '../../../prisma'
-import { parseGlobalId } from '../../../utils/relay'
-import { requireAuthentication } from '../../auth/guards/auth.guards'
+} from '../../app/errors/types'
+import type { ILogger } from '../../app/services/logger.interface'
+import { isAuthenticatedUser, isPublic } from '../../graphql/rules/common.rules'
+import { builder } from '../../graphql/schema/builder'
+import { prisma } from '../../prisma'
+import { parseGlobalId } from '../../utils/relay'
+import { requireAuthentication } from '../auth/guards/auth.guards'
+import { canIncrementViewCount, canViewPost, isPostOwner } from './post.rules'
 
-// Get logger from container
+// Service getters
 const getLogger = () => container.resolve<ILogger>('ILogger')
 
-// Input types for post mutations
+// ============================================================================
+// Input Types
+// ============================================================================
+
 const CreatePostInput = builder.inputType('CreatePostInput', {
   fields: (t) => ({
     title: t.string({
@@ -71,11 +69,18 @@ const UpdatePostInput = builder.inputType('UpdatePostInput', {
   }),
 })
 
-// Create post mutation
+// ============================================================================
+// Mutations
+// ============================================================================
+
+/**
+ * Create post mutation
+ */
 builder.mutationField('createPost', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Create a new post',
+    grantScopes: ['authenticated'],
     shield: isAuthenticatedUser,
     args: {
       input: t.arg({
@@ -114,12 +119,15 @@ builder.mutationField('createPost', (t) =>
   }),
 )
 
-// Update post mutation
+/**
+ * Update post mutation
+ */
 builder.mutationField('updatePost', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Update an existing post',
-    shield: and(isAuthenticatedUser, isPostOwner),
+    grantScopes: ['authenticated'],
+    shield: isPostOwner,
     args: {
       id: t.arg.id({ required: true }),
       input: t.arg({
@@ -131,22 +139,6 @@ builder.mutationField('updatePost', (t) =>
       const logger = getLogger().child({ resolver: 'updatePost' })
       const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
-
-      // Check if post exists and user owns it
-      const existingPost = await prisma.post.findUnique({
-        where: { id: postId },
-        select: { authorId: true },
-      })
-
-      if (!existingPost) {
-        throw new NotFoundError('Post', args.id.toString())
-      }
-
-      if (existingPost.authorId !== userId.value) {
-        throw new AuthorizationError(
-          'You can only modify posts that you have created',
-        )
-      }
 
       logger.info('Updating post', { postId, userId: userId.value })
 
@@ -172,11 +164,14 @@ builder.mutationField('updatePost', (t) =>
   }),
 )
 
-// Delete post mutation
+/**
+ * Delete post mutation
+ */
 builder.mutationField('deletePost', (t) =>
   t.boolean({
     description: 'Delete a post',
-    shield: and(isAuthenticatedUser, isPostOwner),
+    grantScopes: ['authenticated'],
+    shield: isPostOwner,
     args: {
       id: t.arg.id({ required: true }),
     },
@@ -184,26 +179,6 @@ builder.mutationField('deletePost', (t) =>
       const logger = getLogger().child({ resolver: 'deletePost' })
       const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
-
-      // Check if post exists and user owns it (or is admin)
-      const existingPost = await prisma.post.findUnique({
-        where: { id: postId },
-        select: { authorId: true },
-      })
-
-      if (!existingPost) {
-        throw new NotFoundError('Post', args.id.toString())
-      }
-
-      // Admin can delete any post, otherwise must be owner
-      if (
-        existingPost.authorId !== userId.value &&
-        context.user?.role !== 'admin'
-      ) {
-        throw new AuthorizationError(
-          'You can only modify posts that you have created',
-        )
-      }
 
       logger.info('Deleting post', { postId, userId: userId.value })
 
@@ -218,34 +193,31 @@ builder.mutationField('deletePost', (t) =>
   }),
 )
 
-// Toggle publish post mutation
+/**
+ * Toggle publish post mutation
+ */
 builder.mutationField('togglePublishPost', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Toggle the publish status of a post',
-    shield: and(isAuthenticatedUser, isPostOwner),
+    grantScopes: ['authenticated'],
+    shield: isPostOwner,
     args: {
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, context) => {
       const logger = getLogger().child({ resolver: 'togglePublishPost' })
-      const userId = requireAuthentication(context)
+      requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
-      // Check if post exists and user owns it
+      // Get current publish status
       const existingPost = await prisma.post.findUnique({
         where: { id: postId },
-        select: { authorId: true, published: true },
+        select: { published: true },
       })
 
       if (!existingPost) {
-        throw new NotFoundError('Post', args.id.toString())
-      }
-
-      if (existingPost.authorId !== userId.value) {
-        throw new AuthorizationError(
-          'You can only modify posts that you have created',
-        )
+        throw new NotFoundError('Post not found')
       }
 
       logger.info('Toggling post publish status', {
@@ -269,28 +241,20 @@ builder.mutationField('togglePublishPost', (t) =>
   }),
 )
 
-// Increment view count mutation
+/**
+ * Increment view count mutation
+ */
 builder.mutationField('incrementPostViewCount', (t) =>
   t.prismaField({
     type: 'Post',
     description: 'Increment the view count of a post',
-    shield: isPublic,
+    shield: canIncrementViewCount,
     args: {
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, _context) => {
       const logger = getLogger().child({ resolver: 'incrementPostViewCount' })
       const postId = parseGlobalId(args.id.toString(), 'Post')
-
-      // Check if post exists
-      const existingPost = await prisma.post.findUnique({
-        where: { id: postId },
-        select: { id: true },
-      })
-
-      if (!existingPost) {
-        throw new NotFoundError('Post', args.id.toString())
-      }
 
       logger.info('Incrementing post view count', { postId })
 
@@ -310,7 +274,78 @@ builder.mutationField('incrementPostViewCount', (t) =>
   }),
 )
 
-// Feed query
+/**
+ * Create comment mutation with rate limiting
+ */
+builder.mutationField('createComment', (t) =>
+  t.string({
+    description: 'Create a comment on a post',
+    grantScopes: ['authenticated'],
+    shield: isAuthenticatedUser,
+    args: {
+      postId: t.arg.id({ required: true }),
+      content: t.arg.string({
+        required: true,
+        validate: {
+          schema: z.string().min(1).max(1000),
+        },
+      }),
+    },
+    resolve: async (_parent, args, context) => {
+      const logger = getLogger().child({ resolver: 'createComment' })
+      const userId = requireAuthentication(context)
+
+      // Check rate limit using enhanced scopes
+      if (
+        'createScopes' in context &&
+        typeof context.createScopes === 'function'
+      ) {
+        const scopes = context.createScopes()
+        const withinLimit = await scopes.withinRateLimit(
+          'createComment',
+          10,
+          3600000,
+        )
+        if (!withinLimit) {
+          throw new RateLimitError('Too many comments. Please try again later.')
+        }
+      }
+
+      const postId = parseGlobalId(args.postId.toString(), 'Post')
+
+      // Verify post exists and is published
+      const post = await prisma.post.findUnique({
+        where: { id: postId },
+        select: { id: true, published: true },
+      })
+
+      if (!post) {
+        throw new NotFoundError('Post not found')
+      }
+
+      if (!post.published) {
+        throw new AuthorizationError('Cannot comment on unpublished posts')
+      }
+
+      logger.info('Creating comment', {
+        postId,
+        userId: userId.value,
+      })
+
+      // In a real implementation, you would create a comment record
+      // For now, just return a success message
+      return `Comment "${args.content}" created successfully on post ${args.postId}`
+    },
+  }),
+)
+
+// ============================================================================
+// Queries
+// ============================================================================
+
+/**
+ * Feed query - Get published posts
+ */
 builder.queryField('feed', (t) =>
   t.prismaConnection({
     type: 'Post',
@@ -356,12 +391,15 @@ builder.queryField('feed', (t) =>
   }),
 )
 
-// User drafts query
+/**
+ * Drafts query - Get user's draft posts
+ */
 builder.queryField('drafts', (t) =>
   t.prismaConnection({
     type: 'Post',
     cursor: 'id',
     description: 'Get draft posts for the authenticated user',
+    grantScopes: ['authenticated'],
     shield: isAuthenticatedUser,
     resolve: (query, _parent, _args, context) => {
       const userId = requireAuthentication(context)
@@ -388,30 +426,20 @@ builder.queryField('drafts', (t) =>
   }),
 )
 
-// Get post by ID query
+/**
+ * Get post by ID query
+ */
 builder.queryField('post', (t) =>
   t.prismaField({
     type: 'Post',
     nullable: true,
     description: 'Get a post by ID',
-    shield: or(isPublic, isAuthenticatedUser),
+    shield: canViewPost,
     args: {
       id: t.arg.id({ required: true }),
     },
-    resolve: async (query, _parent, args, context) => {
+    resolve: async (query, _parent, args, _context) => {
       const postId = parseGlobalId(args.id.toString(), 'Post')
-
-      // Use enhanced scopes to check visibility
-      if (
-        'createScopes' in context &&
-        typeof context.createScopes === 'function'
-      ) {
-        const scopes = context.createScopes()
-        const canView = await scopes.canViewContent('Post', args.id.toString())
-        if (!canView) {
-          return null // Post not visible to user
-        }
-      }
 
       return prisma.post.findUnique({
         ...query,
@@ -421,11 +449,13 @@ builder.queryField('post', (t) =>
   }),
 )
 
-// Moderate post mutation - requires moderation permission
+/**
+ * Moderate post mutation - Admin only
+ */
 builder.mutationField('moderatePost', (t) =>
   t.boolean({
-    description: 'Moderate a post (approve, reject, or flag)',
-    shield: isModerator,
+    description: 'Moderate a post (admin only)',
+    grantScopes: ['admin'],
     args: {
       id: t.arg.id({ required: true }),
       action: t.arg.string({
@@ -443,25 +473,13 @@ builder.mutationField('moderatePost', (t) =>
     },
     resolve: async (_parent, args, context) => {
       const logger = getLogger().child({ resolver: 'moderatePost' })
-
-      // Check moderation permission using enhanced scopes
-      if (
-        'createScopes' in context &&
-        typeof context.createScopes === 'function'
-      ) {
-        const scopes = context.createScopes()
-        const hasPermission = await scopes.hasPermission('post:moderate')
-        if (!hasPermission) {
-          throw new AuthorizationError('You need moderation permission')
-        }
-      }
-
+      const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
       logger.info('Moderating post', {
         postId,
         action: args.action,
-        moderatorId: context.userId?.value,
+        moderatorId: userId.value,
       })
 
       // Check if post exists
@@ -471,90 +489,18 @@ builder.mutationField('moderatePost', (t) =>
       })
 
       if (!post) {
-        throw new NotFoundError('Post', args.id.toString())
+        throw new NotFoundError('Post not found')
       }
 
-      // Update post with moderation status
-      // This is a simplified example - you might want to create a separate moderation table
-      await prisma.post.update({
-        where: { id: postId },
-        data: {
-          // You would need to add these fields to your Post model
-          // moderated: true,
-          // moderatedAt: new Date(),
-          // moderationStatus: args.action,
-          // moderationReason: args.reason,
-          // moderatorId: context.userId?.value,
-        },
-      })
-
+      // In a real implementation, you would update moderation fields
+      // For now, just log the action
       logger.info('Post moderated successfully', {
         postId,
         action: args.action,
+        reason: args.reason,
       })
 
       return true
-    },
-  }),
-)
-
-// Create comment mutation with rate limiting
-builder.mutationField('createComment', (t) =>
-  t.string({
-    description: 'Create a comment on a post with rate limiting',
-    shield: isAuthenticatedUser,
-    args: {
-      postId: t.arg.id({ required: true }),
-      content: t.arg.string({
-        required: true,
-        validate: {
-          schema: z.string().min(1).max(1000),
-        },
-      }),
-    },
-    resolve: async (_parent, args, context) => {
-      // const logger = getLogger().child({ resolver: 'createComment' })
-
-      // Check rate limit using enhanced scopes
-      if (
-        'createScopes' in context &&
-        typeof context.createScopes === 'function'
-      ) {
-        const scopes = context.createScopes()
-        const withinLimit = await scopes.withinRateLimit(
-          'createComment',
-          10,
-          3600000,
-        )
-        if (!withinLimit) {
-          throw new RateLimitError('Too many comments. Please try again later.')
-        }
-      }
-
-      const postId = parseGlobalId(args.postId.toString(), 'Post')
-
-      // Verify post exists and is published
-      const post = await prisma.post.findUnique({
-        where: { id: postId },
-        select: { id: true, published: true },
-      })
-
-      if (!post) {
-        throw new NotFoundError('Post', args.postId.toString())
-      }
-
-      if (!post.published) {
-        throw new AuthorizationError('Cannot comment on unpublished posts')
-      }
-
-      // logger.info('Creating comment', {
-      //   postId,
-      //   userId: context.userId?.value,
-      // })
-
-      // In a real implementation, you would create a comment record
-      // For now, just return a success message
-      return `Comment "${args.content}" created successfully on post ${args.postId}`
     },
   }),
 )

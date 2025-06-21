@@ -10,7 +10,7 @@ import { z } from 'zod'
  * Validation schemas for common patterns
  */
 export const commonValidations = {
-  email: z.string().email('Invalid email format').toLowerCase(),
+  email: z.string().email('Invalid email format'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   title: z.string().min(1, 'Title is required').max(255, 'Title too long'),
   content: z.string().max(10000, 'Content too long').optional(),

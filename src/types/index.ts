@@ -6,7 +6,11 @@
  */
 
 // Re-export types from other modules for convenience
-export type { Context, IContext } from '../graphql/context/context.types'
+export type {
+  Context,
+  DefaultContext,
+  IContext,
+} from '../graphql/context/context.types'
 export type {
   ApiError,
   ApiResponse,

@@ -204,17 +204,13 @@ describe('Enhanced Permissions System', () => {
     })
 
     it('should require authentication for me query', async () => {
-      // Test without authentication
-      await gqlHelpers.expectGraphQLError<
+      // Test without authentication - should return null, not error
+      const data = await gqlHelpers.expectSuccessfulQuery<
         ResultOf<typeof MeQuery>,
         VariablesOf<typeof MeQuery>
-      >(
-        server,
-        print(MeQuery),
-        {},
-        createMockContext(),
-        'You must be logged in to perform this action. Please authenticate and try again.',
-      )
+      >(server, print(MeQuery), {}, createMockContext())
+
+      expect(data?.me).toBeNull()
 
       // Verify the test user exists
       const testUser = await prisma.user.findUnique({
@@ -223,7 +219,7 @@ describe('Enhanced Permissions System', () => {
       expect(testUser).toBeTruthy()
 
       // Test with authentication - user should exist
-      const data = await gqlHelpers.expectSuccessfulQuery<
+      const authData = await gqlHelpers.expectSuccessfulQuery<
         ResultOf<typeof MeQuery>,
         VariablesOf<typeof MeQuery>
       >(
@@ -233,10 +229,10 @@ describe('Enhanced Permissions System', () => {
         createAuthContext(UserId.create(testUserId)),
       )
       // The me query should work since testUserId was created in beforeEach
-      expect(data?.me).toBeTruthy()
-      if (data?.me) {
-        expect(data.me.id).toBe(toUserId(testUserId))
-        expect(data.me.email).toBe(`permtest${testCounter}@example.com`)
+      expect(authData?.me).toBeTruthy()
+      if (authData?.me) {
+        expect(authData.me.id).toBe(toUserId(testUserId))
+        expect(authData.me.email).toBe(`permtest${testCounter}@example.com`)
       }
     })
 

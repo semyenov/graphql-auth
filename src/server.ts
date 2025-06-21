@@ -15,22 +15,22 @@ import { configureContainer } from './config/container'
 import { env, isDevelopment } from './config/environment'
 import { isBaseError } from './errors/handlers'
 import { createContext } from './graphql/context/context.factory'
-import type { IContext } from './graphql/context/context.types'
+import type { DefaultContext } from './graphql/context/context.types'
 import { buildSchema } from './graphql/schema'
 import { disconnectPrisma } from './prisma'
 
 // Enhanced Apollo Server with better typing
-const server = new ApolloServer<IContext>({
+const server = new ApolloServer<DefaultContext>({
   schema: buildSchema(),
   plugins: [
     ApolloServerPluginInlineTrace(),
     createSecurityHeadersPlugin(),
     // Custom plugin for request/response logging with fetchdts types
     {
-      async requestDidStart(): Promise<GraphQLRequestListener<IContext>> {
+      async requestDidStart(): Promise<GraphQLRequestListener<DefaultContext>> {
         return {
           async willSendResponse(
-            requestContext: GraphQLRequestContext<IContext>,
+            requestContext: GraphQLRequestContext<DefaultContext>,
           ): Promise<void> {
             const { request, contextValue } = requestContext
             const method = contextValue.method as HTTPMethod
@@ -45,7 +45,7 @@ const server = new ApolloServer<IContext>({
             })
           },
           async didEncounterErrors(
-            requestContext: GraphQLRequestContext<IContext>,
+            requestContext: GraphQLRequestContext<DefaultContext>,
           ): Promise<void> {
             const { errors, contextValue } = requestContext
             if (errors) {

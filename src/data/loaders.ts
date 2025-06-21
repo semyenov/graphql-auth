@@ -33,10 +33,12 @@ export function createDataLoaders(prisma: PrismaClient): Loaders {
       })
       const postMap = new Map<number, Post[]>()
       for (const post of posts) {
-        if (!postMap.has(post.authorId)) {
-          postMap.set(post.authorId, [])
+        if (post.authorId !== null) {
+          if (!postMap.has(post.authorId)) {
+            postMap.set(post.authorId, [])
+          }
+          postMap.get(post.authorId)?.push(post)
         }
-        postMap.get(post.authorId)?.push(post)
       }
       return authorIds.map((id) => postMap.get(id) || [])
     }),

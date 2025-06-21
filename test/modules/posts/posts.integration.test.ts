@@ -48,22 +48,6 @@ interface PostConnection {
   totalCount?: number
 }
 
-interface GetFeedResponse {
-  feed: PostConnection
-}
-
-interface GetDraftsResponse {
-  drafts: PostConnection | null
-}
-
-interface CreatePostResponse {
-  createPost: Post
-}
-
-interface IncrementPostViewCountResponse {
-  incrementPostViewCount: Post
-}
-
 describe('Posts', () => {
   const server = createTestServer()
   let testUserId: UserId

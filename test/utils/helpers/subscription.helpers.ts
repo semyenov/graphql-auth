@@ -4,7 +4,7 @@
 
 import type { ApolloServer, GraphQLResponse } from '@apollo/server'
 import { parse } from 'graphql'
-import type { IContext } from '../../../src/graphql/context/context.types'
+import type { DefaultContext } from '../../../src/graphql/context/context.types'
 
 export interface SubscriptionTestHelper {
   subscribe: () => Promise<AsyncIterator<GraphQLResponse>>
@@ -18,10 +18,10 @@ export interface SubscriptionTestHelper {
  * Create a subscription test helper
  */
 export async function createSubscriptionHelper(
-  server: ApolloServer<IContext>,
+  server: ApolloServer<DefaultContext>,
   subscription: string,
   variables: Record<string, unknown>,
-  context: IContext,
+  context: DefaultContext,
 ): Promise<SubscriptionTestHelper> {
   const document = parse(subscription)
 
@@ -84,10 +84,10 @@ export async function createSubscriptionHelper(
  * Test subscription with timeout
  */
 export async function testSubscriptionWithTimeout(
-  server: ApolloServer<IContext>,
+  server: ApolloServer<DefaultContext>,
   subscription: string,
   variables: Record<string, unknown>,
-  context: IContext,
+  context: DefaultContext,
   options: {
     expectedEvents: number
     timeout?: number
@@ -257,12 +257,12 @@ export async function waitForSubscription(
 /**
  * Create a subscription tester with common assertions
  */
-export function createSubscriptionTester(server: ApolloServer<IContext>) {
+export function createSubscriptionTester(server: ApolloServer<DefaultContext>) {
   return {
     async expectSubscriptionEvent<T = unknown>(
       subscription: string,
       variables: Record<string, unknown>,
-      context: IContext,
+      context: DefaultContext,
       triggerFn: () => Promise<void>,
       validator?: (data: T) => void,
     ): Promise<T> {
@@ -297,7 +297,7 @@ export function createSubscriptionTester(server: ApolloServer<IContext>) {
     async expectNoSubscriptionEvent(
       subscription: string,
       variables: Record<string, unknown>,
-      context: IContext,
+      context: DefaultContext,
       triggerFn: () => Promise<void>,
       waitTime = 1000,
     ): Promise<void> {
@@ -329,7 +329,7 @@ export function createSubscriptionTester(server: ApolloServer<IContext>) {
     async expectSubscriptionError(
       subscription: string,
       variables: Record<string, unknown>,
-      context: IContext,
+      context: DefaultContext,
       expectedError: string,
     ): Promise<void> {
       try {

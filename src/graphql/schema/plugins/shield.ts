@@ -10,7 +10,7 @@ import { type GraphQLSchema, isObjectType } from 'graphql'
 import { applyMiddleware } from 'graphql-middleware'
 import { type IRule, type IRules, shield } from 'graphql-shield'
 import type { ILogicRule } from 'graphql-shield/typings/types'
-import type { IContext } from '../../context/context.types'
+import type { DefaultContext } from '../../context/context.types'
 
 export type ShieldRule = IRule | ILogicRule
 
@@ -114,7 +114,7 @@ export class ShieldPlugin<Types extends SchemaTypes> extends BasePlugin<Types> {
 
     return applyMiddleware(
       schema,
-      shield<Record<string, unknown>, IContext>(rules, {
+      shield<Record<string, unknown>, DefaultContext>(rules, {
         debug: process.env.NODE_ENV !== 'production',
         fallbackError: 'Not authorized',
         allowExternalErrors: true,

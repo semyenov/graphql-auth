@@ -4,6 +4,7 @@ import ErrorsPlugin from '@pothos/plugin-errors'
 import PrismaPlugin from '@pothos/plugin-prisma'
 import type PrismaTypes from '@pothos/plugin-prisma/generated'
 import RelayPlugin from '@pothos/plugin-relay'
+import ScopeAuthPlugin from '@pothos/plugin-scope-auth'
 import ValidationPlugin from '@pothos/plugin-validation'
 import type { ZodError } from 'zod'
 import { isProduction } from '../../app/config/environment'
@@ -17,16 +18,32 @@ import {
 } from '../../app/errors/types'
 import { prisma } from '../../prisma'
 import { decodeGlobalId, encodeGlobalId } from '../../utils/relay'
-import type { IContext } from '../context/context.types'
+import type { DefaultContext } from '../context/context.types'
 import ShieldPlugin from './plugins/shield'
 
 export const builder = new SchemaBuilder<{
-  Context: IContext
+  Context: DefaultContext
   PrismaTypes: PrismaTypes
   Scalars: {
     DateTime: {
       Input: Date
       Output: Date
+    }
+    JSON: {
+      Input: unknown
+      Output: unknown
+    }
+    ObjectID: {
+      Input: string
+      Output: string
+    }
+    DID: {
+      Input: string
+      Output: string
+    }
+    UUID: {
+      Input: string
+      Output: string
     }
   }
   Errors: {
@@ -43,9 +60,17 @@ export const builder = new SchemaBuilder<{
     RelayPlugin,
     ErrorsPlugin,
     DataloaderPlugin,
+    ScopeAuthPlugin,
     ValidationPlugin,
     ShieldPlugin,
   ],
+  scopeAuth: {
+    authScopes: async (context) => ({
+      public: true,
+      authenticated: !!context.userId,
+      admin: context.security?.roles?.includes('admin') ?? false,
+    }),
+  },
   prisma: {
     client: prisma,
     exposeDescriptions: true,

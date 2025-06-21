@@ -9,19 +9,22 @@ import {
   type RateLimiterOptions,
   rateLimiter,
 } from '../../../app/services/rate-limiter.service'
-import type { IContext } from '../../context/context.types'
+import type { DefaultContext } from '../../context/context.types'
 
 /**
  * Rate limit configuration for a field
  */
 export interface RateLimitConfig {
   key: string // Rate limit key (e.g., 'login', 'signup')
-  identifier?: (args: Record<string, unknown>, context: IContext) => string // Custom identifier function
+  identifier?: (
+    args: Record<string, unknown>,
+    context: DefaultContext,
+  ) => string // Custom identifier function
   points?: number // Override default points
   options?: Partial<RateLimiterOptions> // Override default options
   skipIf?: (
     args: Record<string, unknown>,
-    context: IContext,
+    context: DefaultContext,
   ) => boolean | Promise<boolean> // Skip rate limiting conditionally
 }
 
@@ -31,7 +34,7 @@ export interface RateLimitConfig {
 function getRateLimitIdentifier(
   config: RateLimitConfig,
   args: Record<string, unknown>,
-  context: IContext,
+  context: DefaultContext,
 ): string {
   if (config.identifier) {
     return config.identifier(args, context)
@@ -63,7 +66,7 @@ export function rateLimitedField<TReturn>(
     description?: string
     resolve: (
       args: Record<string, unknown>,
-      context: IContext,
+      context: DefaultContext,
     ) => Promise<TReturn> | TReturn
     args?: Record<string, unknown>
     authScopes?: string[]
@@ -80,7 +83,7 @@ export function rateLimitedField<TReturn>(
       resolve: async (
         _root: unknown,
         args: Record<string, unknown>,
-        context: IContext,
+        context: DefaultContext,
         _info: unknown,
       ) => {
         // Check if rate limiting should be skipped
@@ -113,7 +116,7 @@ export function rateLimitedField<TReturn>(
 export async function applyRateLimit(
   config: RateLimitConfig,
   args: Record<string, unknown>,
-  context: IContext,
+  context: DefaultContext,
 ): Promise<void> {
   // Check if rate limiting should be skipped
   if (config.skipIf && (await config.skipIf(args, context))) {

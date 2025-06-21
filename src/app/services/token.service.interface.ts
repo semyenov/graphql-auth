@@ -43,7 +43,7 @@ export interface ITokenService {
    * Refresh an access token using a refresh token.
    *
    * @param refreshToken - The refresh token to use for refresh
-   * @returns The new access token
+   * @returns The new tokens and user information
    */
   refreshTokens(refreshToken: string): Promise<AuthTokens>
 

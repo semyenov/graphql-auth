@@ -156,7 +156,10 @@ describe('User queries', () => {
 
       const variables = { id: toPostId(post.id) }
 
-      await gqlHelpers.expectGraphQLError(
+      await gqlHelpers.expectGraphQLError<
+        ResultOf<typeof TogglePublishPostMutation>,
+        VariablesOf<typeof TogglePublishPostMutation>
+      >(
         server,
         print(TogglePublishPostMutation),
         variables,
@@ -174,7 +177,10 @@ describe('User queries', () => {
     it('should fail for non-existent post', async () => {
       const variables = { id: toPostId(999999) } // Non-existent ID
 
-      await gqlHelpers.expectGraphQLError(
+      await gqlHelpers.expectGraphQLError<
+        ResultOf<typeof TogglePublishPostMutation>,
+        VariablesOf<typeof TogglePublishPostMutation>
+      >(
         server,
         print(TogglePublishPostMutation),
         variables,

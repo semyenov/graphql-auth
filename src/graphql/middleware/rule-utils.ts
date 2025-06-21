@@ -1,10 +1,11 @@
+import type { VariableValues } from '@apollo/server/dist/esm/externalTypes/graphql'
 import { ERROR_MESSAGES } from '../../app/constants'
 import {
   AuthenticationError,
   AuthorizationError,
   ValidationError,
 } from '../../app/errors/types'
-import type { IContext } from '../context/context.types'
+import type { DefaultContext } from '../context/context.types'
 
 /**
  * Validates that a resource ID is valid
@@ -44,8 +45,8 @@ export async function parseAndValidateGlobalId(
  * @param context - The GraphQL context
  * @returns True if authenticated, AuthenticationError otherwise
  */
-export function createAuthenticationCheck(
-  context: IContext,
+export function createAuthenticationCheck<TVariables extends VariableValues>(
+  context: DefaultContext,
 ): true | AuthenticationError {
   if (!context.userId) {
     return new AuthenticationError(
@@ -63,8 +64,8 @@ export function createAuthenticationCheck(
  * @param errorMessage - Custom error message
  * @returns True if has role, AuthorizationError otherwise
  */
-export function createRoleCheck(
-  context: IContext,
+export function createRoleCheck<TVariables extends VariableValues>(
+  context: DefaultContext,
   requiredRole: string,
   errorMessage?: string,
 ): true | AuthenticationError | AuthorizationError {
@@ -94,8 +95,8 @@ export function createRoleCheck(
  * @param errorMessage - Custom error message
  * @returns True if has permission, error otherwise
  */
-export function createPermissionCheck(
-  context: IContext,
+export function createPermissionCheck<TVariables extends VariableValues>(
+  context: DefaultContext,
   requiredPermission: string,
   errorMessage?: string,
 ): true | AuthenticationError | AuthorizationError {

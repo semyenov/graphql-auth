@@ -2,14 +2,16 @@
  * Test context creation utilities
  */
 
-import type { IContext } from '../../../src/graphql/context/context.types'
+import type { DefaultContext } from '../../../src/graphql/context/context.types'
 import { UserId } from '../../../src/types/value-objects'
 import { generateTestToken } from './auth'
 
 /**
  * Create a mock context for testing
  */
-export function createMockContext(overrides: Partial<IContext> = {}): IContext {
+export function createMockContext(
+  overrides: Partial<DefaultContext> = {},
+): DefaultContext {
   return {
     req: {
       headers: {},
@@ -17,7 +19,7 @@ export function createMockContext(overrides: Partial<IContext> = {}): IContext {
       url: '/graphql',
       body: {},
       ip: '127.0.0.1',
-    } as unknown as IContext['req'],
+    } as unknown as DefaultContext['req'],
     user: undefined,
     headers: {},
     method: 'POST',
@@ -45,8 +47,8 @@ export function createMockContext(overrides: Partial<IContext> = {}): IContext {
  */
 export function createAuthContext(
   userIdOrValue: number | UserId = 1,
-  overrides: Partial<IContext> = {},
-): IContext {
+  overrides: Partial<DefaultContext> = {},
+): DefaultContext {
   const userId =
     typeof userIdOrValue === 'number' ? userIdOrValue : userIdOrValue.value
   const userIdVO =
@@ -62,7 +64,10 @@ export function createAuthContext(
   }
 
   return createMockContext({
-    user: { id: userId, email: payload.email } as unknown as IContext['user'],
+    user: {
+      id: userId,
+      email: payload.email,
+    } as unknown as DefaultContext['user'],
     userId: userIdVO,
     decodedToken: payload,
     security: {
@@ -79,7 +84,7 @@ export function createAuthContext(
       url: '/graphql',
       body: {},
       ip: '127.0.0.1',
-    } as unknown as IContext['req'],
+    } as unknown as DefaultContext['req'],
     ...overrides,
   })
 }

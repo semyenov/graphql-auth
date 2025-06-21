@@ -6,7 +6,7 @@
  */
 
 import type { GraphQLResolveInfo } from 'graphql'
-import type { IContext } from '../graphql/context/context.types'
+import type { DefaultContext } from '../graphql/context/context.types'
 
 /**
  * GraphQL resolver function types
@@ -15,7 +15,7 @@ export type Resolver<
   TResult,
   TParent = Record<string, never>,
   TArgs = Record<string, never>,
-  TContext = IContext,
+  TContext = DefaultContext,
 > = (
   parent: TParent,
   args: TArgs,
@@ -27,7 +27,7 @@ export type SubscriptionResolver<
   TResult,
   TParent = Record<string, never>,
   TArgs = Record<string, never>,
-  TContext = IContext,
+  TContext = DefaultContext,
 > = {
   subscribe: Resolver<AsyncIterator<TResult>, TParent, TArgs, TContext>
   resolve?: Resolver<TResult, TParent, TArgs, TContext>
@@ -40,7 +40,7 @@ export type FieldResolver<
   TResult = unknown,
   TParent = unknown,
   TArgs = unknown,
-> = Resolver<TResult, TParent, TArgs, IContext>
+> = Resolver<TResult, TParent, TArgs, DefaultContext>
 
 /**
  * Mutation resolver types
@@ -106,12 +106,12 @@ export type GraphQLMiddleware = (
   resolve: (
     root: unknown,
     args: unknown,
-    context: IContext,
+    context: DefaultContext,
     info: GraphQLResolveInfo,
   ) => unknown,
   root: unknown,
   args: unknown,
-  context: IContext,
+  context: DefaultContext,
   info: GraphQLResolveInfo,
 ) => unknown
 
@@ -122,12 +122,12 @@ export type DirectiveResolver<TArgs = Record<string, unknown>> = (
   next: (
     root: unknown,
     args: unknown,
-    context: IContext,
+    context: DefaultContext,
     info: GraphQLResolveInfo,
   ) => unknown,
   root: unknown,
   args: TArgs,
-  context: IContext,
+  context: DefaultContext,
   info: GraphQLResolveInfo,
 ) => unknown
 
@@ -233,7 +233,7 @@ export type SubscriptionPayload<T = unknown> = {
 export type SubscriptionFilter<T = unknown> = (
   payload: T,
   variables: Record<string, unknown>,
-  context: IContext,
+  context: DefaultContext,
 ) => boolean | Promise<boolean>
 
 /**

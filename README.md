@@ -2,6 +2,42 @@
 
 A production-ready **GraphQL server with TypeScript** demonstrating enterprise-grade patterns and best practices.
 
+```mermaid
+graph TD
+
+    8058["User<br>External Actor"]
+    subgraph 8046["External Systems"]
+        8056["Database<br>PostgreSQL / SQLite"]
+        8057["Email APIs<br>SendGrid, Mailgun, etc."]
+    end
+    subgraph 8047["GraphQL API<br>Node.js / Apollo Server"]
+        8048["HTTP Server<br>Apollo Server"]
+        8049["GraphQL Schema<br>Pothos / GraphQL Shield"]
+        8050["Context Factory<br>TypeScript"]
+        8051["Domain Modules (Resolvers)<br>GraphQL / Pothos"]
+        8052["Authentication Services<br>TypeScript"]
+        8053["Data Loaders<br>DataLoader"]
+        8054["Prisma Client<br>Prisma ORM"]
+        8055["Email Service<br>TypeScript"]
+        %% Edges at this level (grouped by source)
+        8048["HTTP Server<br>Apollo Server"] -->|uses| 8049["GraphQL Schema<br>Pothos / GraphQL Shield"]
+        8048["HTTP Server<br>Apollo Server"] -->|creates request context via| 8050["Context Factory<br>TypeScript"]
+        8049["GraphQL Schema<br>Pothos / GraphQL Shield"] -->|is built from| 8051["Domain Modules (Resolvers)<br>GraphQL / Pothos"]
+        8050["Context Factory<br>TypeScript"] -->|validates token with| 8052["Authentication Services<br>TypeScript"]
+        8050["Context Factory<br>TypeScript"] -->|initializes| 8053["Data Loaders<br>DataLoader"]
+        8051["Domain Modules (Resolvers)<br>GraphQL / Pothos"] -->|use| 8052["Authentication Services<br>TypeScript"]
+        8051["Domain Modules (Resolvers)<br>GraphQL / Pothos"] -->|use| 8053["Data Loaders<br>DataLoader"]
+        8051["Domain Modules (Resolvers)<br>GraphQL / Pothos"] -->|access data via| 8054["Prisma Client<br>Prisma ORM"]
+        8052["Authentication Services<br>TypeScript"] -->|manages user/token data in| 8054["Prisma Client<br>Prisma ORM"]
+        8052["Authentication Services<br>TypeScript"] -->|sends verification emails via| 8055["Email Service<br>TypeScript"]
+        8053["Data Loaders<br>DataLoader"] -->|batches queries to| 8054["Prisma Client<br>Prisma ORM"]
+    end
+    %% Edges at this level (grouped by source)
+    8058["User<br>External Actor"] -->|sends GraphQL requests| 8048["HTTP Server<br>Apollo Server"]
+    8054["Prisma Client<br>Prisma ORM"] -->|queries| 8056["Database<br>PostgreSQL / SQLite"]
+    8055["Email Service<br>TypeScript"] -->|sends emails via| 8057["Email APIs<br>SendGrid, Mailgun, etc."]
+```
+
 ## 🚀 Tech Stack
 
 - [**Bun**](https://bun.sh/): Fast all-in-one JavaScript runtime & toolkit

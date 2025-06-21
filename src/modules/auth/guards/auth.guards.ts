@@ -1,6 +1,6 @@
 import { ERROR_MESSAGES } from '../../../app/constants'
 import { AuthenticationError } from '../../../app/errors/types'
-import type { IContext } from '../../../graphql/context/context.types'
+import type { DefaultContext } from '../../../graphql/context/context.types'
 import type { UserId } from '../../../types/value-objects'
 
 /**
@@ -25,8 +25,8 @@ import type { UserId } from '../../../types/value-objects'
  * ```
  */
 export function isAuthenticated(
-  context: IContext,
-): context is IContext & { userId: UserId } {
+  context: DefaultContext,
+): context is DefaultContext & { userId: UserId } {
   return context.security.isAuthenticated && Boolean(context.userId)
 }
 
@@ -43,7 +43,7 @@ export function isAuthenticated(
  * // userId is guaranteed to be a valid number
  * ```
  */
-export function requireAuthentication(context: IContext): UserId {
+export function requireAuthentication(context: DefaultContext): UserId {
   if (!isAuthenticated(context)) {
     throw new AuthenticationError(ERROR_MESSAGES.AUTHENTICATION_REQUIRED)
   }
@@ -66,7 +66,10 @@ export function requireAuthentication(context: IContext): UserId {
  * }
  * ```
  */
-export function hasPermission(context: IContext, permission: string): boolean {
+export function hasPermission(
+  context: DefaultContext,
+  permission: string,
+): boolean {
   if (!permission || typeof permission !== 'string') {
     return false
   }
@@ -89,7 +92,7 @@ export function hasPermission(context: IContext, permission: string): boolean {
  * }
  * ```
  */
-export function hasRole(context: IContext, role: string): boolean {
+export function hasRole(context: DefaultContext, role: string): boolean {
   if (!role || typeof role !== 'string') {
     return false
   }
@@ -113,7 +116,7 @@ export function hasRole(context: IContext, role: string): boolean {
  * ```
  */
 export function hasAnyPermission(
-  context: IContext,
+  context: DefaultContext,
   permissions: string[],
 ): boolean {
   if (!Array.isArray(permissions) || permissions.length === 0) {
@@ -138,7 +141,7 @@ export function hasAnyPermission(
  * ```
  */
 export function hasAllPermissions(
-  context: IContext,
+  context: DefaultContext,
   permissions: string[],
 ): boolean {
   if (!Array.isArray(permissions) || permissions.length === 0) {

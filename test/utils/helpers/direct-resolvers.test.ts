@@ -9,7 +9,7 @@ import type { User } from '@prisma/client'
 import { graphql, type ResultOf, type VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import type { IContext } from '../../../src/graphql/context/context.types'
+import type { DefaultContext } from '../../../src/graphql/context/context.types'
 import { prisma } from '../../../src/prisma'
 import { UserId } from '../../../src/types/value-objects'
 import {
@@ -22,7 +22,7 @@ import {
 } from '../../utils'
 
 describe('Direct Resolvers', () => {
-  let server: ApolloServer<IContext>
+  let server: ApolloServer<DefaultContext>
   let testUser: User
 
   beforeAll(async () => {

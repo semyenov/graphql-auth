@@ -118,7 +118,7 @@ describe('Rate Limiting', () => {
         >(
           server,
           print(LoginMutation),
-          { email: 'ratelimit@example.com', password: 'wrong' },
+          { email: 'ratelimit@example.com', password: 'wrongpassword' },
           createMockContext(),
         )
       }
@@ -130,7 +130,7 @@ describe('Rate Limiting', () => {
       >(
         server,
         print(LoginMutation),
-        { email: 'another@example.com', password: 'wrong' },
+        { email: 'another@example.com', password: 'wrongpassword' },
         createMockContext(),
       )
 
@@ -272,7 +272,7 @@ describe('Rate Limiting', () => {
         >(
           server,
           print(LoginMutation),
-          { email: 'ratelimit@example.com', password: 'wrong' },
+          { email: 'ratelimit@example.com', password: 'wrongpassword' },
           createMockContext(),
         )
       }
@@ -284,7 +284,7 @@ describe('Rate Limiting', () => {
       >(
         server,
         print(LoginMutation),
-        { email: 'ratelimit@example.com', password: 'wrong' },
+        { email: 'ratelimit@example.com', password: 'wrong-wrongpassword' },
         createMockContext(),
       )
 

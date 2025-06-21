@@ -16,11 +16,9 @@ import './inputs'
 // Import error types for Pothos Errors plugin
 import './error-types'
 
-import '../../modules/auth/resolvers/auth-tokens.resolver'
-import '../../modules/auth/resolvers/auth.resolver'
-import '../../modules/auth/resolvers/auth-enhanced.resolver'
-import '../../modules/posts/resolvers/posts.resolver'
-import '../../modules/users/resolvers/users.resolver'
+import '../../modules/auth/auth.resolver'
+import '../../modules/posts/post.resolver'
+import '../../modules/users/user.resolver'
 
 // Lazy load schema to ensure all types are registered first
 let _schema: ReturnType<typeof builder.toSchema> | null = null

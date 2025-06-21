@@ -6,25 +6,22 @@
 
 import type { Prisma } from '@prisma/client'
 import { z } from 'zod'
-import { ConflictError } from '../../../app/errors/types'
+import { ConflictError } from '../../app/errors/types'
 import {
   isAuthenticatedUser,
   isPublic,
   or,
-} from '../../../graphql/middleware/rules'
-import { builder } from '../../../graphql/schema/builder'
-import {
-  UserOrderByInput,
-  UserWhereInput,
-} from '../../../graphql/schema/inputs'
+} from '../../graphql/rules/common.rules'
+import { builder } from '../../graphql/schema/builder'
+import { UserOrderByInput, UserWhereInput } from '../../graphql/schema/inputs'
 import {
   transformOrderBy,
   transformUserWhereInput,
-} from '../../../graphql/schema/utils/filter-transform'
-import { prisma } from '../../../prisma'
-// import type { ILogger } from '../../../app/services/logger.interface'
-import { parseGlobalId } from '../../../utils/relay'
-import { requireAuthentication } from '../../auth/guards/auth.guards'
+} from '../../graphql/schema/utils/filter-transform'
+import { prisma } from '../../prisma'
+// import type { ILogger } from '../../app/services/logger.interface'
+import { parseGlobalId } from '../../utils/relay'
+import { requireAuthentication } from '../auth/guards/auth.guards'
 
 // Get logger from container
 // const getLogger = () => container.resolve<ILogger>('ILogger')

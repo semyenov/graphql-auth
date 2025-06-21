@@ -70,15 +70,14 @@ export class AuthorizationError extends BaseError {
 export class ValidationError extends BaseError {
   constructor(
     public readonly errors: Record<string, string[]> | string[],
-    message?: string,
+    message: string = 'Invalid input',
   ) {
     const errorMessage =
-      message ||
       (Array.isArray(errors)
         ? errors.join(', ')
         : Object.entries(errors)
             .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
-            .join('; '))
+            .join('; ')) || message
 
     super(errorMessage, 'VALIDATION_ERROR', 400)
   }
@@ -159,6 +158,8 @@ export class TimeoutError extends BaseError {
 }
 
 // Aliases for domain errors (for backward compatibility)
-export { ValidationError as EntityValidationError }
-export { NotFoundError as EntityNotFoundError }
-export { AuthorizationError as ForbiddenError }
+export {
+  NotFoundError as EntityNotFoundError,
+  ValidationError as EntityValidationError,
+  AuthorizationError as ForbiddenError,
+}

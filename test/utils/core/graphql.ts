@@ -7,7 +7,7 @@ import type { VariableValues } from '@apollo/server/dist/esm/externalTypes/graph
 import type { TadaDocumentNode } from 'gql.tada'
 import type { GraphQLFormattedError } from 'graphql'
 import type { BaseError } from '../../../src/app/errors/types'
-import type { IContext } from '../../../src/graphql/context/context.types'
+import type { DefaultContext } from '../../../src/graphql/context/context.types'
 
 /**
  * Execute a GraphQL operation against a test server
@@ -16,10 +16,10 @@ export async function executeOperation<
   TResult = unknown,
   TVariables extends VariableValues = VariableValues,
 >(
-  server: ApolloServer<IContext>,
+  server: ApolloServer<DefaultContext>,
   query: string | TadaDocumentNode<TResult, TVariables>,
   variables?: TVariables,
-  contextValue?: IContext,
+  contextValue?: DefaultContext,
 ) {
   const queryString = typeof query === 'string' ? query : String(query)
 
@@ -28,7 +28,7 @@ export async function executeOperation<
       query: queryString,
       variables: variables as TVariables,
     },
-    { contextValue: contextValue || ({} as IContext) },
+    { contextValue: contextValue || ({} as DefaultContext) },
   )
 }
 
@@ -86,10 +86,10 @@ export const gqlHelpers = {
    * Execute a typed GraphQL operation
    */
   async execute<TResult, TVariables extends VariableValues = VariableValues>(
-    server: ApolloServer<IContext>,
+    server: ApolloServer<DefaultContext>,
     operation: TadaDocumentNode<TResult, TVariables>,
     variables: TVariables,
-    context?: IContext,
+    context?: DefaultContext,
   ) {
     return executeOperation(server, operation, variables, context)
   },
@@ -98,10 +98,10 @@ export const gqlHelpers = {
    * Execute and extract data, throwing on errors
    */
   async executeAndExtract<TResult, TVariables extends VariableValues>(
-    server: ApolloServer<IContext>,
+    server: ApolloServer<DefaultContext>,
     operation: TadaDocumentNode<TResult, TVariables>,
     variables: TVariables,
-    context?: IContext,
+    context?: DefaultContext,
   ): Promise<TResult> {
     const response = await executeOperation(
       server,
@@ -116,10 +116,10 @@ export const gqlHelpers = {
    * Execute and expect errors
    */
   async executeAndExpectErrors<TResult, TVariables extends VariableValues>(
-    server: ApolloServer<IContext>,
+    server: ApolloServer<DefaultContext>,
     operation: TadaDocumentNode<TResult, TVariables>,
     variables: TVariables,
-    context?: IContext,
+    context?: DefaultContext,
   ): Promise<GraphQLFormattedError[]> {
     const response = await executeOperation<TResult, TVariables>(
       server,
@@ -138,11 +138,11 @@ export const gqlHelpers = {
    * Execute and expect a specific error
    */
   async executeAndExpectError<TResult, TVariables extends VariableValues>(
-    server: ApolloServer<IContext>,
+    server: ApolloServer<DefaultContext>,
     operation: TadaDocumentNode<TResult, TVariables>,
     variables: TVariables,
     expectedError: string | RegExp | Partial<BaseError>,
-    context?: IContext,
+    context?: DefaultContext,
   ): Promise<GraphQLFormattedError> {
     const errors = await this.executeAndExpectErrors(
       server,
@@ -191,10 +191,10 @@ export const gqlHelpers = {
    * Execute a mutation and expect it to succeed
    */
   async expectSuccessfulMutation<TResult, TVariables extends VariableValues>(
-    server: ApolloServer<IContext>,
+    server: ApolloServer<DefaultContext>,
     operation: string | TadaDocumentNode<TResult, TVariables>,
     variables: TVariables,
-    context?: IContext,
+    context?: DefaultContext,
   ): Promise<TResult> {
     const response = await executeOperation(
       server,
@@ -221,10 +221,10 @@ export const gqlHelpers = {
    * Execute a query and expect it to succeed
    */
   async expectSuccessfulQuery<TResult, TVariables extends VariableValues>(
-    server: ApolloServer<IContext>,
+    server: ApolloServer<DefaultContext>,
     operation: string | TadaDocumentNode<TResult, TVariables>,
     variables: TVariables,
-    context?: IContext,
+    context?: DefaultContext,
   ): Promise<TResult> {
     const response = await executeOperation(
       server,
@@ -251,10 +251,10 @@ export const gqlHelpers = {
    * Execute an operation and expect a specific GraphQL error
    */
   async expectGraphQLError<TResult, TVariables extends VariableValues>(
-    server: ApolloServer<IContext>,
+    server: ApolloServer<DefaultContext>,
     operation: string | TadaDocumentNode<TResult, TVariables>,
     variables: TVariables,
-    context: IContext | undefined,
+    context: DefaultContext | undefined,
     expectedMessage: string,
   ): Promise<void> {
     const response = await executeOperation<TResult, TVariables>(

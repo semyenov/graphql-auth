@@ -165,6 +165,31 @@ export const IncrementPostViewCountMutation = graphql(`
   }
 `)
 
+// Token-based authentication mutations
+export const LoginWithTokensMutation = graphql(`
+  mutation LoginWithTokens($email: String!, $password: String!) {
+    loginWithTokens(email: $email, password: $password) {
+      accessToken
+      refreshToken
+    }
+  }
+`)
+
+export const RefreshTokenMutation = graphql(`
+  mutation RefreshToken($refreshToken: String!) {
+    refreshToken(refreshToken: $refreshToken) {
+      accessToken
+      refreshToken
+    }
+  }
+`)
+
+export const LogoutMutation = graphql(`
+  mutation Logout {
+    logout
+  }
+`)
+
 // User mutations
 export const UpdateUserProfileMutation = graphql(`
   mutation UpdateUserProfile($input: UpdateUserInput!) {
