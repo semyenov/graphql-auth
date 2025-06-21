@@ -41,6 +41,8 @@ bunx gql.tada generate-output           # Generate GraphQL type definitions
 # Environment & Debugging
 bun run env:verify                      # Verify environment setup
 bun run graphql:examples                # Run GraphQL query examples
+bun run seed                            # Manually seed database
+bun run demo                            # Run demo script
 ```
 
 ## Architecture Overview
@@ -337,7 +339,7 @@ The project uses **Biome** for linting and formatting:
 
 ```bash
 # Required
-DATABASE_URL="file:./dev.db"     # SQLite database path
+DATABASE_URL="file:./dev.db"     # SQLite database path (or postgresql://... for PostgreSQL)
 JWT_SECRET="your-secret-key"      # JWT signing secret
 
 # Optional
@@ -345,6 +347,16 @@ BCRYPT_ROUNDS=10                  # Password hashing rounds (default: 10)
 NODE_ENV="development"            # Environment mode
 PORT=4000                         # Server port
 HOST="localhost"                  # Server host
+```
+
+**Note**: This project supports multiple databases. For PostgreSQL, use:
+```bash
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=SCHEMA"
+```
+
+For production with Prisma Postgres, add the Accelerate extension:
+```bash
+bun add @prisma/extension-accelerate
 ```
 
 ## Common Development Patterns

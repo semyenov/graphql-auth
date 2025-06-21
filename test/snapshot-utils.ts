@@ -333,7 +333,7 @@ export const commonNormalizers = {
               ).sort((a, b) => {
                 const aVal = a.node?.[field]
                 const bVal = b.node?.[field]
-                if (aVal === undefined || bVal === undefined) return 0
+                if (!(aVal && bVal)) return 0
                 return aVal < bVal ? -1 : aVal > bVal ? 1 : 0
               })
             } else {
