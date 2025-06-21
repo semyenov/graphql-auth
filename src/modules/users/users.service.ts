@@ -5,6 +5,7 @@
  * This service contains reusable business logic that can be used by resolvers and other services.
  */
 
+import type { Prisma, User } from '@prisma/client'
 import { container } from 'tsyringe'
 import {
   AuthorizationError,
@@ -84,7 +85,9 @@ export class UsersService {
     filter: UserFilter = {},
     sort: UserSort = { field: 'createdAt', direction: 'desc' },
     pagination: { skip?: number; take?: number } = {},
-  ): Promise<any[]> {
+  ): Promise<
+    Pick<User, 'id' | 'name' | 'email' | 'createdAt' | 'updatedAt'>[]
+  > {
     this.logger.debug('Searching users', { filter, sort, pagination })
 
     const whereClause = this.buildWhereClause(filter)
@@ -117,7 +120,12 @@ export class UsersService {
   /**
    * Get user by ID
    */
-  async getUserById(userId: string): Promise<any | null> {
+  async getUserById(
+    userId: string,
+  ): Promise<Pick<
+    User,
+    'id' | 'name' | 'email' | 'createdAt' | 'updatedAt'
+  > | null> {
     const numericUserId = parseGlobalId(userId, 'User')
 
     this.logger.debug('Getting user by ID', { userId: numericUserId })
@@ -141,7 +149,7 @@ export class UsersService {
   async updateUserProfile(
     userId: UserId,
     data: UpdateUserProfileData,
-  ): Promise<any> {
+  ): Promise<Pick<User, 'id' | 'name' | 'email' | 'createdAt' | 'updatedAt'>> {
     this.logger.info('Updating user profile', { userId: userId.value })
 
     // Check if email is being changed and if it's already taken
@@ -157,7 +165,7 @@ export class UsersService {
     }
 
     // Build update data (only include fields that exist in the database)
-    const updateData: any = {}
+    const updateData: Prisma.UserUpdateInput = {}
     if (data.name !== undefined) updateData.name = data.name
     // Note: bio, avatar, website, location would need to be added to the User model
     // For now, we'll only update name
@@ -185,7 +193,7 @@ export class UsersService {
     targetUserId: string,
     _data: AdminUpdateUserData,
     adminUserId: UserId,
-  ): Promise<any> {
+  ): Promise<User> {
     const numericTargetUserId = parseGlobalId(targetUserId, 'User')
 
     this.logger.info('Admin updating user', {
@@ -444,13 +452,13 @@ export class UsersService {
   /**
    * Private helper: Build where clause for filtering
    */
-  private buildWhereClause(filter: UserFilter): any {
-    const where: any = {}
+  private buildWhereClause(filter: UserFilter): Prisma.UserWhereInput {
+    const where: Prisma.UserWhereInput = {}
 
     if (filter.searchString) {
       where.OR = [
-        { name: { contains: filter.searchString, mode: 'insensitive' } },
-        { email: { contains: filter.searchString, mode: 'insensitive' } },
+        { name: { contains: filter.searchString } },
+        { email: { contains: filter.searchString } },
       ]
     }
 
@@ -481,8 +489,10 @@ export class UsersService {
     }
 
     if (filter.createdBefore) {
-      if (where.createdAt) {
-        where.createdAt.lte = new Date(filter.createdBefore)
+      if (where.createdAt && typeof where.createdAt === 'object') {
+        ;(where.createdAt as { gte?: Date; lte?: Date }).lte = new Date(
+          filter.createdBefore,
+        )
       } else {
         where.createdAt = { lte: new Date(filter.createdBefore) }
       }

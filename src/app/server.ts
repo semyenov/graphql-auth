@@ -5,7 +5,7 @@ import type {
 import { ApolloServer } from '@apollo/server'
 import { ApolloServerPluginInlineTrace } from '@apollo/server/plugin/inlineTrace'
 import { startStandaloneServer } from '@apollo/server/standalone'
-import consola from 'consola'
+import { consola } from 'consola'
 import type { HTTPMethod, MimeType } from 'fetchdts'
 import { GraphQLError, type GraphQLFormattedError } from 'graphql'
 import { createSecurityHeadersPlugin } from './middleware/security-headers'

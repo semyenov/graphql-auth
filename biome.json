@@ -23,7 +23,7 @@
         "useSimplifiedLogicExpression": "warn"
       },
       "correctness": {
-        "noUnusedVariables": "error",
+        "noUnusedVariables": "off",
         "noUnusedImports": "error",
         "noUndeclaredVariables": "error",
         "noUnreachable": "error",

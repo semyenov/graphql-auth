@@ -272,7 +272,7 @@ describe('Filter Utilities', () => {
         },
       }
 
-      const result = applyBaseFilter(filter as any)
+      const result = applyBaseFilter(filter as Record<string, unknown>)
 
       expect(result).toMatchObject({
         name: { contains: 'test' },
@@ -316,7 +316,7 @@ describe('Filter Utilities', () => {
         ],
       }
 
-      const result = validateFilterDepth(filter as any, 3)
+      const result = validateFilterDepth(filter as Record<string, unknown>, 3)
       expect(result.valid).toBe(false)
       expect(result.errors).toContain(
         'Filter depth exceeds maximum allowed depth of 3',
@@ -334,7 +334,7 @@ describe('Filter Utilities', () => {
         ],
       }
 
-      const result = validateFilterDepth(filter as any, 3)
+      const result = validateFilterDepth(filter as Record<string, unknown>, 3)
       expect(result.valid).toBe(true)
     })
   })

@@ -11,7 +11,7 @@ export interface PerformanceMetrics {
   executionTime: number
   memoryUsed: number
   timestamp: number
-  variables?: Record<string, any>
+  variables?: Record<string, unknown>
 }
 
 export interface PerformanceReport {
@@ -32,10 +32,10 @@ export interface PerformanceReport {
 /**
  * Measure the performance of a GraphQL operation
  */
-export async function measureOperation<T = any>(
+export async function measureOperation<T = unknown>(
   server: ApolloServer<Context>,
   operation: string,
-  variables: Record<string, any>,
+  variables: Record<string, unknown>,
   context: Context,
 ): Promise<{ result: GraphQLResponse<T>; metrics: PerformanceMetrics }> {
   const startMemory = process.memoryUsage().heapUsed
@@ -68,7 +68,7 @@ export async function measureOperation<T = any>(
 export async function benchmark(
   server: ApolloServer<Context>,
   operation: string,
-  variables: Record<string, any>,
+  variables: Record<string, unknown>,
   context: Context,
   options: {
     iterations?: number
@@ -106,7 +106,7 @@ export async function benchmarkConcurrent(
   server: ApolloServer<Context>,
   operations: Array<{
     operation: string
-    variables: Record<string, any>
+    variables: Record<string, unknown>
     context: Context
   }>,
   options: {
@@ -132,15 +132,12 @@ export async function benchmarkConcurrent(
     for (let j = 0; j < concurrency && i + j < iterations; j++) {
       const op = operations[(i + j) % operations.length]
       batch.push(
-        measureOperation(
-          server,
-          op?.operation,
-          op?.variables,
-          op?.context,
-        ).then(({ metrics }) => {
-          const name = extractOperationName(op?.operation)
-          results.get(name)?.push(metrics)
-        }),
+        measureOperation(server, op.operation, op.variables, op.context).then(
+          ({ metrics }) => {
+            const name = extractOperationName(op.operation)
+            results.get(name)?.push(metrics)
+          },
+        ),
       )
     }
 
@@ -162,7 +159,7 @@ export async function benchmarkConcurrent(
 export async function loadTest(
   server: ApolloServer<Context>,
   operation: string,
-  variables: Record<string, any>,
+  variables: Record<string, unknown>,
   context: Context,
   options: {
     maxConcurrency?: number

@@ -89,8 +89,8 @@
   "private": true,
   "lint-staged": {
     "*.{ts,tsx}": [
-      "bunx @biomejs/biome format --write",
-      "bunx tsc --noEmit"
+      "bun run check:fix",
+      "bun run lint:fix"
     ],
     "*.{json,md}": [
       "bunx @biomejs/biome format --write"

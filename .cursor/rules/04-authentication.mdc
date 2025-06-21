@@ -3,417 +3,92 @@ description: Authentication and authorization patterns
 globs: ["src/context/**/*.ts", "src/permissions/**/*.ts", "src/schema/mutations/auth*.ts"]
 alwaysApply: false
 ---
-# Authentication & Authorization Guide
+# Authentication and Authorization Patterns
 
-## Authentication Flow
+This document outlines the patterns for handling authentication (who the user is) and authorization (what the user can do).
 
-### 1. User Signup
+## 1. Authentication Guards
+
+To enforce that a resolver requires an authenticated user, use the `requireAuthentication` guard from [`src/graphql/context/context.auth.ts`](mdc:src/graphql/context/context.auth.ts).
+
+This function inspects the GraphQL context and will throw an `AuthenticationError` if the user is not logged in. This is the standard way to protect mutations and queries that require a user session.
+
+### Usage
+
 ```typescript
-// Mutation
-mutation Signup($email: String!, $password: String!, $name: String) {
-  signup(email: $email, password: $password, name: $name)
-}
+import { requireAuthentication } from '../../graphql/context/context.auth'
 
-// Implementation
-builder.mutationField('signup', (t) =>
+// In a resolver:
+builder.mutationField('someProtectedAction', (t) =>
   t.field({
-    type: 'String',
-    args: {
-      email: t.arg.string({ required: true }),
-      password: t.arg.string({ required: true }),
-      name: t.arg.string(),
-    },
-    resolve: async (parent, args) => {
-      // Check if user exists
-      await checkUserExists(args.email)
-      
-      // Hash password
-      const hashedPassword = await hashPassword(args.password)
-      
-      // Create user
-      const user = await createUser({
-        email: args.email,
-        password: hashedPassword,
-        name: args.name,
-      })
-      
-      // Generate JWT
-      return sign({ userId: user.id }, APP_SECRET)
-    },
-  })
-)
-```
-
-### 2. User Login
-```typescript
-// Mutation
-mutation Login($email: String!, $password: String!) {
-  login(email: $email, password: $password)
-}
-
-// Implementation
-builder.mutationField('login', (t) =>
-  t.field({
-    type: 'String',
-    args: {
-      email: t.arg.string({ required: true }),
-      password: t.arg.string({ required: true }),
-    },
-    resolve: async (parent, args) => {
-      // Authenticate user
-      const user = await authenticateUser(args.email, args.password)
-      
-      // Generate JWT
-      return sign({ userId: user.id }, APP_SECRET)
-    },
-  })
-)
-```
-
-### 3. JWT Token Structure
-```typescript
-// Token payload
-interface TokenPayload {
-  userId: number
-}
-
-// Token generation
-const token = sign({ userId: user.id }, APP_SECRET)
-
-// Token verification
-const payload = verify(token, APP_SECRET) as TokenPayload
-```
-
-## Context System
-
-### Context Types
-```typescript
-// Base context
-interface BaseContext {
-  request: H3Event
-  prisma: PrismaClient
-  userId: number | null
-  security: SecurityContext
-}
-
-// Security context
-interface SecurityContext {
-  isAuthenticated: boolean
-  permissions: string[]
-  roles: string[]
-}
-```
-
-### Context Creation
-```typescript
-// src/context/creation.ts
-export async function createContext(request: H3Event): Promise<Context> {
-  const authHeader = getHeader(request, 'authorization')
-  const token = authHeader?.replace('Bearer ', '')
-  
-  let userId: number | null = null
-  
-  if (token) {
-    try {
-      const verifiedToken = verifyToken(token)
-      userId = verifiedToken.userId
-    } catch (error) {
-      console.warn('Invalid token:', error)
-    }
-  }
-  
-  return {
-    request,
-    prisma,
-    userId,
-    security: {
-      isAuthenticated: !!userId,
-      permissions: userId ? ['read:own', 'write:own'] : ['read:public'],
-      roles: ['user'],
-    },
-  }
-}
-```
-
-### Authentication Helpers
-```typescript
-// Check if authenticated
-export function isAuthenticated(context: Context): context is AuthenticatedContext {
-  return context.userId !== null
-}
-
-// Require authentication
-export function requireAuthentication(context: Context): number {
-  if (!isAuthenticated(context)) {
-    throw new AuthenticationError()
-  }
-  return context.userId
-}
-
-// Check permissions
-export function hasPermission(context: Context, permission: string): boolean {
-  return context.security.permissions.includes(permission)
-}
-
-export function hasAllPermissions(context: Context, permissions: string[]): boolean {
-  return permissions.every(p => hasPermission(context, p))
-}
-```
-
-## GraphQL Shield Rules
-
-### Rule Definitions
-```typescript
-// src/permissions/rules.ts
-
-// Basic authentication rule
-export const isAuthenticatedUser = rule({ cache: 'contextual' })(
-  async (parent, args, context) => {
-    return isAuthenticated(context)
-  }
-)
-
-// Resource ownership rule
-export const isPostOwner = rule({ cache: 'strict' })(
-  async (parent, args, context) => {
-    try {
-      validateResourceId(args.id, 'post')
+    type: 'SomeType',
+    resolve: async (_parent, args, context) => {
+      // This will throw if the user is not authenticated.
+      // The `userId` returned is a typed value object.
       const userId = requireAuthentication(context)
+
+      // ... proceed with logic that requires a user
+      return doSomething(userId.value)
+    },
+  }),
+)
+```
+
+## 2. Authorization with Permission Rules (GraphQL Shield)
+
+For fine-grained access control, we use GraphQL Shield, integrated via Pothos Scope Auth. Rules are defined in `src/graphql/middleware/rules.ts` and `src/modules/**/*.permissions.ts`.
+
+### Key Principles for Rules
+
+1.  **Rules Return Errors, Not Throw**: Inside a permission rule, you should return an error object instead of throwing it. The `handleRuleError` utility helps with this.
+2.  **Graceful Error Handling**: Rules should anticipate potential issues (e.g., resource not found) and return appropriate errors.
+3.  **Clarity and Specificity**: A rule should have a single, clear purpose.
+
+### Example: Ownership Rule
+
+This `isPostOwner` rule checks if the currently authenticated user is the author of a specific post.
+
+```typescript
+// Location: src/graphql/middleware/rules.ts
+
+import { rule } from 'graphql-shield'
+import { requireAuthentication } from '../../graphql/context/context.auth'
+import { parseAndValidateGlobalId } from '../../core/utils/relay'
+import { prisma } from '../../prisma'
+import { NotFoundError, AuthorizationError } from '../../core/errors/types'
+import { handleRuleError } from './rule-utils'
+
+export const isPostOwner = rule({ cache: 'strict' })(
+  async (_parent, args, context) => {
+    try {
+      // 1. Ensure user is authenticated
+      const userId = requireAuthentication(context)
+
+      // 2. Validate the incoming ID
       const postId = await parseAndValidateGlobalId(args.id, 'Post')
-      
-      const ownership = await checkPostOwnership(postId, userId)
-      if (!ownership.resourceExists) {
-        throw new NotFoundError('Post', args.id)
+
+      // 3. Fetch the resource to check ownership
+      const post = await prisma.post.findUnique({
+        where: { id: postId },
+        select: { authorId: true },
+      })
+
+      // 4. Handle "not found" case
+      if (!post) {
+        return new NotFoundError('Post', args.id)
       }
-      if (!ownership.isOwner) {
-        throw new AuthorizationError(ERROR_MESSAGES.NOT_POST_OWNER)
+
+      // 5. Check ownership and return error if mismatched
+      if (post.authorId !== userId.value) {
+        return new AuthorizationError('You can only modify posts that you have created')
       }
-      
+
+      // 6. Return true if all checks pass
       return true
     } catch (error) {
+      // 7. Normalize any unexpected errors
       return handleRuleError(error)
     }
-  }
-)
-
-// Combined rules
-export const canReadPost = or(
-  isPostPublished,
-  isPostOwner,
-  isAdmin
-)
-```
-
-### Shield Configuration
-```typescript
-// src/permissions/shield-config.ts
-export const permissions = shield(
-  {
-    Query: {
-      me: isAuthenticatedUser,
-      draftsByUser: isAuthenticatedUser,
-      postById: isAuthenticatedUser,
-    },
-    Mutation: {
-      createDraft: isAuthenticatedUser,
-      deletePost: isPostOwner,
-      togglePublishPost: isPostOwner,
-    },
   },
-  {
-    fallbackRule: isAuthenticatedUser,
-    fallbackError: new AuthenticationError(),
-  }
-)
-```
-
-## Authorization Patterns
-
-### Check Resource Ownership
-```typescript
-export async function checkPostOwnership(
-  postId: number,
-  userId: number
-): Promise<{ resourceExists: boolean; isOwner: boolean }> {
-  const post = await prisma.post.findUnique({
-    where: { id: postId },
-    select: { authorId: true },
-  })
-  
-  return {
-    resourceExists: !!post,
-    isOwner: post?.authorId === userId,
-  }
-}
-```
-
-### Validate Resource Access
-```typescript
-export async function validatePostAccess(
-  globalId: string,
-  context: Context,
-  checkOwnership = false
-): Promise<{ postId: number; currentStatus?: boolean }> {
-  // Parse global ID
-  const { id: postId } = parseGlobalID(globalId, 'Post')
-  
-  // Fetch post
-  const post = await context.prisma.post.findUnique({
-    where: { id: postId },
-    select: { authorId: true, published: true },
-  })
-  
-  if (!post) {
-    throw new NotFoundError('Post', globalId)
-  }
-  
-  // Check ownership if required
-  if (checkOwnership) {
-    const userId = requireAuthentication(context)
-    if (post.authorId !== userId) {
-      throw new AuthorizationError(ERROR_MESSAGES.NOT_POST_OWNER)
-    }
-  }
-  
-  return { postId, currentStatus: post.published }
-}
-```
-
-## Testing Authentication
-
-### Test Contexts
-```typescript
-// Create unauthenticated context
-const mockContext = createMockContext()
-
-// Create authenticated context
-const authContext = createAuthContext('1')
-
-// Create context with custom token
-const tokenContext = createAuthContext('1', 'custom-jwt-token')
-```
-
-### Test Authentication Flow
-```typescript
-describe('Authentication', () => {
-  it('should signup new user', async () => {
-    const data = await gqlHelpers.expectSuccessfulMutation(
-      server,
-      print(SignupMutation),
-      {
-        email: 'new@example.com',
-        password: 'password123',
-        name: 'New User',
-      },
-      createMockContext()
-    )
-    
-    expect(data.signup).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+/)
-  })
-  
-  it('should login existing user', async () => {
-    const user = await createTestUser({
-      email: 'test@example.com',
-      password: 'password123',
-    })
-    
-    const data = await gqlHelpers.expectSuccessfulMutation(
-      server,
-      print(LoginMutation),
-      {
-        email: 'test@example.com',
-        password: 'password123',
-      },
-      createMockContext()
-    )
-    
-    expect(data.login).toBeDefined()
-  })
-})
-```
-
-### Test Authorization
-```typescript
-describe('Authorization', () => {
-  it('should require authentication for protected queries', async () => {
-    await gqlHelpers.expectGraphQLError(
-      server,
-      print(GetMeQuery),
-      {},
-      createMockContext(), // No auth
-      'You must be logged in'
-    )
-  })
-  
-  it('should enforce resource ownership', async () => {
-    const owner = await createTestUser()
-    const other = await createTestUser()
-    const post = await createTestPost({ authorId: owner.id })
-    
-    // Owner can modify
-    await gqlHelpers.expectSuccessfulMutation(
-      server,
-      print(TogglePublishPostMutation),
-      { id: toPostId(post.id) },
-      createAuthContext(owner.id.toString())
-    )
-    
-    // Other cannot
-    await gqlHelpers.expectGraphQLError(
-      server,
-      print(TogglePublishPostMutation),
-      { id: toPostId(post.id) },
-      createAuthContext(other.id.toString()),
-      'only modify posts that you have created'
-    )
-  })
-})
-```
-
-## Security Best Practices
-
-1. **Always hash passwords with bcrypt**
-2. **Use strong JWT secret (APP_SECRET)**
-3. **Validate tokens on every request**
-4. **Check permissions at resolver level**
-5. **Use GraphQL Shield for consistent authorization**
-6. **Test both authenticated and unauthenticated paths**
-7. **Never expose user IDs directly - use global IDs**
-8. **Implement rate limiting for auth endpoints**
-9. **Log authentication failures for monitoring**
-10. **Use HTTPS in production**
-
-## Common Patterns
-
-### Protected Query
-```typescript
-builder.queryField('me', (t) =>
-  t.prismaField({
-    type: 'User',
-    nullable: true,
-    resolve: async (query, root, args, ctx) => {
-      const userId = requireAuthentication(ctx)
-      return ctx.prisma.user.findUnique({
-        ...query,
-        where: { id: userId },
-      })
-    },
-  })
-)
-```
-
-### Owner-Only Mutation
-```typescript
-builder.mutationField('deletePost', (t) =>
-  t.prismaField({
-    type: 'Post',
-    args: {
-      id: t.arg.id({ required: true }),
-    },
-    resolve: async (query, parent, args, ctx) => {
-      const { postId } = await validatePostAccess(args.id, ctx, true)
-      return deletePostById(postId, query)
-    },
-  })
 )
 ```

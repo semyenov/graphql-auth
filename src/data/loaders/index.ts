@@ -38,9 +38,10 @@ export function createDataLoaders() {
 
         const postsByAuthor = new Map<number, Post[]>()
         for (const post of posts) {
-          const authorPosts = postsByAuthor.get(post.authorId!) || []
+          if (post.authorId === null) continue
+          const authorPosts = postsByAuthor.get(post.authorId) || []
           authorPosts.push(post)
-          postsByAuthor.set(post.authorId!, authorPosts)
+          postsByAuthor.set(post.authorId, authorPosts)
         }
 
         return authorIds.map((id) => postsByAuthor.get(id) || [])

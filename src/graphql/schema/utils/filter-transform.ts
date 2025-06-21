@@ -22,39 +22,80 @@ export function transformStringFilter(
   return Object.keys(prismaFilter).length > 0 ? prismaFilter : undefined
 }
 
-export function transformUserWhereInput(where: any) {
+interface UserWhereInputType {
+  name?: Prisma.StringFilter
+  email?: Prisma.StringFilter
+}
+
+export function transformUserWhereInput(
+  where: UserWhereInputType | null | undefined,
+) {
   if (!where) return undefined
 
   const prismaWhere: Prisma.UserWhereInput = {}
 
-  Object.keys(where).forEach((key) => {
-    if (where[key] !== undefined) {
-      prismaWhere[key as keyof Prisma.UserWhereInput] =
-        where[key as keyof Prisma.UserWhereInput]
-    }
-  })
+  if (where.name) {
+    prismaWhere.name = transformStringFilter(where.name)
+  }
+  if (where.email) {
+    prismaWhere.email = transformStringFilter(where.email)
+  }
 
   return Object.keys(prismaWhere).length > 0 ? prismaWhere : undefined
 }
 
+interface PostWhereInputType {
+  title?: Prisma.StringFilter
+  content?: Prisma.StringFilter
+  published?: Prisma.BoolFilter
+  viewCount?: Prisma.IntFilter
+  createdAt?: Prisma.DateTimeFilter
+  updatedAt?: Prisma.DateTimeFilter
+}
+
 // Transform post where input to Prisma where clause
-export function transformPostWhereInput(where: any) {
+export function transformPostWhereInput(
+  where: PostWhereInputType | null | undefined,
+) {
   if (!where) return undefined
 
   const prismaWhere: Prisma.PostWhereInput = {}
 
-  Object.keys(where).forEach((key) => {
-    if (where[key] !== undefined) {
-      prismaWhere[key as keyof Prisma.PostWhereInput] =
-        where[key as keyof Prisma.PostWhereInput]
-    }
-  })
+  if (where.title) {
+    prismaWhere.title = transformStringFilter(where.title)
+  }
+  if (where.content) {
+    prismaWhere.content = transformStringFilter(where.content)
+  }
+  if (where.published !== undefined) {
+    prismaWhere.published = where.published
+  }
+  if (where.viewCount !== undefined) {
+    prismaWhere.viewCount = where.viewCount
+  }
+  if (where.createdAt !== undefined) {
+    prismaWhere.createdAt = where.createdAt
+  }
+  if (where.updatedAt !== undefined) {
+    prismaWhere.updatedAt = where.updatedAt
+  }
 
   return Object.keys(prismaWhere).length > 0 ? prismaWhere : undefined
 }
 
+interface OrderByInputType {
+  id?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  content?: Prisma.SortOrder
+  published?: Prisma.SortOrder
+  viewCount?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+  [key: string]: Prisma.SortOrder | undefined
+}
+
 // Transform order by input to Prisma orderBy clause
-export function transformOrderBy(orderBy: any) {
+export function transformOrderBy(orderBy: OrderByInputType | null | undefined) {
   if (!orderBy) return undefined
 
   const prismaOrderBy: Prisma.PostOrderByWithRelationInput = {}

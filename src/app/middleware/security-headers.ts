@@ -5,7 +5,9 @@
  * Provides comprehensive security headers to protect against common web vulnerabilities.
  */
 
+import type { ApolloServerPlugin } from '@apollo/server'
 import type { IncomingMessage, ServerResponse } from 'http'
+import type { Context } from '../../graphql/context/context.types'
 import { isDevelopment } from '../config/environment'
 
 /**
@@ -234,13 +236,13 @@ export const graphqlSecurityConfig: SecurityHeadersConfig = {
 /**
  * Create an Apollo Server plugin for security headers
  */
-export function createSecurityHeadersPlugin(_config?: SecurityHeadersConfig) {
+export function createSecurityHeadersPlugin(
+  _config?: SecurityHeadersConfig,
+): ApolloServerPlugin<Context> {
   return {
     async requestDidStart() {
       return {
-        async willSendResponse(requestContext: {
-          response?: { http?: { headers?: Map<string, string> } }
-        }) {
+        async willSendResponse(requestContext) {
           const { response } = requestContext
           // Apply security headers to GraphQL responses
           if (response?.http?.headers) {

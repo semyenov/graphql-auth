@@ -28,18 +28,18 @@ export function createEnhancedLoaders(prisma: PrismaClient): Loaders {
   const user = new DataLoader<number, User | null>(async (userIds) => {
     const users = await prisma.user.findMany({
       where: { id: { in: userIds as number[] } },
-    });
+    })
 
-    return userIds.map((id) => users.find((user) => user.id === id) || null);
-  });
+    return userIds.map((id) => users.find((user) => user.id === id) || null)
+  })
 
   const post = new DataLoader<number, Post | null>(async (postIds) => {
     const posts = await prisma.post.findMany({
       where: { id: { in: postIds as number[] } },
-    });
+    })
 
-    return postIds.map((id) => posts.find((post) => post.id === id) || null);
-  });
+    return postIds.map((id) => posts.find((post) => post.id === id) || null)
+  })
 
   // Count loaders for aggregations
   const postCountByAuthor = new DataLoader<number, number>(
@@ -110,12 +110,12 @@ export function createEnhancedLoaders(prisma: PrismaClient): Loaders {
     const posts = await prisma.post.findMany({
       where: { authorId: { in: authorIds as number[] } },
       orderBy: { createdAt: 'desc' },
-    });
+    })
 
     return authorIds.map((authorId) =>
       posts.filter((post) => post.authorId === authorId),
-    );
-  });
+    )
+  })
 
   const publishedPostsByAuthor = new DataLoader<number, Post[]>(
     async (authorIds) => {
@@ -125,17 +125,17 @@ export function createEnhancedLoaders(prisma: PrismaClient): Loaders {
           published: true,
         },
         orderBy: { createdAt: 'desc' },
-      });
+      })
 
       return authorIds.map((authorId) =>
         posts.filter((post) => post.authorId === authorId),
-      );
+      )
     },
     {
       maxBatchSize: 30,
       cacheKeyFn: (key) => key,
     },
-  );
+  )
 
   const draftPostsByAuthor = new DataLoader<number, Post[]>(
     async (authorIds) => {
@@ -145,17 +145,17 @@ export function createEnhancedLoaders(prisma: PrismaClient): Loaders {
           published: false,
         },
         orderBy: { createdAt: 'desc' },
-      });
+      })
 
       return authorIds.map((authorId) =>
         posts.filter((post) => post.authorId === authorId),
-      );
+      )
     },
     {
       maxBatchSize: 30,
       cacheKeyFn: (key) => key,
     },
-  );
+  )
 
   return {
     user,

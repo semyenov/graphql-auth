@@ -8,6 +8,8 @@
 import type { HTTPMethod } from 'fetchdts'
 import { DEFAULT_VALUES, HEADER_KEYS } from '../../constants/context'
 import { getUserIdFromAuthHeader } from '../../core/utils/jwt'
+import { prisma } from '../../data/database'
+import { createEnhancedLoaders } from '../../data/loaders/loaders'
 import type { RequestMetadata, SecurityContext } from '../../types.d'
 import type {
   Context,
@@ -202,11 +204,8 @@ export function enhanceContext(context: Context): EnhancedContext {
     requestId: generateRequestId(),
   }
 
-  // Add DataLoader instances (placeholder - would be implemented with actual loaders)
-  enhanced.loaders = {
-    // user: createUserLoader(),
-    // post: createPostLoader(),
-  }
+  // Add DataLoader instances
+  enhanced.loaders = createEnhancedLoaders(prisma)
 
   // Add scope creation function (placeholder for enhanced authorization)
   enhanced.createScopes = () => {

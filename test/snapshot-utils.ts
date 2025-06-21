@@ -12,7 +12,7 @@ export interface SnapshotOptions {
   name: string
   directory?: string
   update?: boolean
-  normalizers?: Array<(data: any) => any>
+  normalizers?: Array<(data: unknown) => unknown>
   redactFields?: string[]
 }
 
@@ -20,8 +20,8 @@ export interface SnapshotResult {
   passed: boolean
   message?: string
   diff?: string
-  actual?: any
-  expected?: any
+  actual?: unknown
+  expected?: unknown
 }
 
 /**
@@ -91,7 +91,7 @@ export class GraphQLSnapshotTester {
     operations: Array<{
       name: string
       response: GraphQLResponse
-      normalizers?: Array<(data: any) => any>
+      normalizers?: Array<(data: unknown) => unknown>
     }>,
     baseOptions: Omit<SnapshotOptions, 'name'>,
   ): Promise<Map<string, SnapshotResult>> {
@@ -115,7 +115,7 @@ export class GraphQLSnapshotTester {
   private normalizeResponse(
     response: GraphQLResponse,
     options: SnapshotOptions,
-  ): any {
+  ): unknown {
     let normalized = JSON.parse(JSON.stringify(response))
 
     // Apply default normalizers
@@ -139,11 +139,11 @@ export class GraphQLSnapshotTester {
   /**
    * Apply default normalizers
    */
-  private applyDefaultNormalizers(data: any): any {
+  private applyDefaultNormalizers(data: unknown): unknown {
     const normalized = JSON.parse(JSON.stringify(data))
 
     // Sort arrays for consistent ordering
-    const sortArrays = (obj: any): any => {
+    const sortArrays = (obj: unknown): unknown => {
       if (Array.isArray(obj)) {
         return obj.map(sortArrays).sort((a, b) => {
           const aStr = JSON.stringify(a)
@@ -152,11 +152,11 @@ export class GraphQLSnapshotTester {
         })
       }
       if (obj && typeof obj === 'object') {
-        const sorted: any = {}
+        const sorted: Record<string, unknown> = {}
         Object.keys(obj)
           .sort()
           .forEach((key) => {
-            sorted[key] = sortArrays(obj[key])
+            sorted[key] = sortArrays((obj as Record<string, unknown>)[key])
           })
         return sorted
       }
@@ -169,14 +169,16 @@ export class GraphQLSnapshotTester {
   /**
    * Redact sensitive fields
    */
-  private redactFields(data: any, fields: string[]): any {
-    const redact = (obj: any, path: string = ''): any => {
+  private redactFields(data: unknown, fields: string[]): unknown {
+    const redact = (obj: unknown, path: string = ''): unknown => {
       if (Array.isArray(obj)) {
         return obj.map((item, index) => redact(item, `${path}[${index}]`))
       }
       if (obj && typeof obj === 'object') {
-        const result: any = {}
-        for (const [key, value] of Object.entries(obj)) {
+        const result: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(
+          obj as Record<string, unknown>,
+        )) {
           const currentPath = path ? `${path}.${key}` : key
           if (fields.some((field) => currentPath.endsWith(field))) {
             result[key] = '[REDACTED]'
@@ -210,14 +212,14 @@ export class GraphQLSnapshotTester {
   /**
    * Write snapshot to file
    */
-  private writeSnapshot(path: string, data: any): void {
+  private writeSnapshot(path: string, data: unknown): void {
     writeFileSync(path, JSON.stringify(data, null, 2))
   }
 
   /**
    * Read snapshot from file
    */
-  private readSnapshot(path: string): any {
+  private readSnapshot(path: string): unknown {
     const content = readFileSync(path, 'utf-8')
     return JSON.parse(content)
   }
@@ -225,7 +227,7 @@ export class GraphQLSnapshotTester {
   /**
    * Compare two snapshots
    */
-  private compareSnapshots(actual: any, expected: any): boolean {
+  private compareSnapshots(actual: unknown, expected: unknown): boolean {
     return JSON.stringify(actual) === JSON.stringify(expected)
   }
 }
@@ -237,7 +239,7 @@ export const commonNormalizers = {
   /**
    * Replace timestamps with placeholders
    */
-  timestamps: (data: any): any => {
+  timestamps: (data: unknown): unknown => {
     const timestampRegex = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/g
     const jsonStr = JSON.stringify(data)
     const normalized = jsonStr.replace(timestampRegex, '[TIMESTAMP]')
@@ -247,14 +249,16 @@ export const commonNormalizers = {
   /**
    * Replace IDs with placeholders
    */
-  ids: (data: any): any => {
-    const replaceIds = (obj: any): any => {
+  ids: (data: unknown): unknown => {
+    const replaceIds = (obj: unknown): unknown => {
       if (Array.isArray(obj)) {
         return obj.map(replaceIds)
       }
       if (obj && typeof obj === 'object') {
-        const result: any = {}
-        for (const [key, value] of Object.entries(obj)) {
+        const result: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(
+          obj as Record<string, unknown>,
+        )) {
           if (key === 'id' || key.endsWith('Id')) {
             result[key] = `[${key.toUpperCase()}]`
           } else {
@@ -271,7 +275,7 @@ export const commonNormalizers = {
   /**
    * Replace JWT tokens with placeholders
    */
-  tokens: (data: any): any => {
+  tokens: (data: unknown): unknown => {
     const tokenRegex = /[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*/g
     const jsonStr = JSON.stringify(data)
     const normalized = jsonStr.replace(tokenRegex, '[JWT_TOKEN]')
@@ -281,14 +285,16 @@ export const commonNormalizers = {
   /**
    * Replace cursors with placeholders
    */
-  cursors: (data: any): any => {
-    const replaceCursors = (obj: any): any => {
+  cursors: (data: unknown): unknown => {
+    const replaceCursors = (obj: unknown): unknown => {
       if (Array.isArray(obj)) {
         return obj.map(replaceCursors)
       }
       if (obj && typeof obj === 'object') {
-        const result: any = {}
-        for (const [key, value] of Object.entries(obj)) {
+        const result: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(
+          obj as Record<string, unknown>,
+        )) {
           if (
             key === 'cursor' ||
             key === 'endCursor' ||
@@ -311,16 +317,20 @@ export const commonNormalizers = {
    */
   sortEdges:
     (field: string) =>
-    (data: any): any => {
-      const sortByField = (obj: any): any => {
+    (data: unknown): unknown => {
+      const sortByField = (obj: unknown): unknown => {
         if (Array.isArray(obj)) {
           return obj.map(sortByField)
         }
         if (obj && typeof obj === 'object') {
-          const result: any = {}
-          for (const [key, value] of Object.entries(obj)) {
+          const result: Record<string, unknown> = {}
+          for (const [key, value] of Object.entries(
+            obj as Record<string, unknown>,
+          )) {
             if (key === 'edges' && Array.isArray(value)) {
-              result[key] = value.sort((a, b) => {
+              result[key] = (
+                value as Array<{ node?: Record<string, unknown> }>
+              ).sort((a, b) => {
                 const aVal = a.node?.[field]
                 const bVal = b.node?.[field]
                 if (aVal === undefined || bVal === undefined) return 0

@@ -100,8 +100,8 @@ export const builder = new SchemaBuilder<{
       Output: string
     }
     JSON: {
-      Input: any
-      Output: any
+      Input: unknown
+      Output: unknown
     }
     ObjectID: {
       Input: string

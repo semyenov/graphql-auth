@@ -64,6 +64,7 @@ bun run graphql:examples                # Run GraphQL query examples
 - **Validation**: Zod schema validation with custom async refinements
 - **Rate Limiting**: rate-limiter-flexible with configurable presets
 - **Dependency Injection**: TSyringe for service management
+- **Code Quality**: Biome for linting and formatting (replaces ESLint/Prettier)
 
 ### Architecture: Modular Direct Resolvers
 
@@ -80,8 +81,9 @@ src/
 │   └── middleware/                   # Application-level middleware
 │       ├── cors.ts                   # CORS configuration
 │       ├── rate-limiting.ts          # Rate limiter setup
-│       └── logging.ts                # Request/response logging
-│
+│       ├── logging.ts                # Request/response logging
+│       └── security-headers.ts       # Security headers middleware
+
 ├── modules/                          # Feature modules (domain-driven)
 │   ├── auth/                         # Authentication module
 │   │   ├── auth.schema.ts            # GraphQL schema definitions
@@ -92,6 +94,8 @@ src/
 │   │   │   └── auth-tokens.resolver.ts # Refresh token operations
 │   │   ├── services/                 # Business logic services
 │   │   │   ├── password.service.ts   # Password hashing (bcryptjs)
+│   │   │   ├── argon2-password.service.ts # Argon2 password service
+│   │   │   ├── hybrid-password.service.ts # Hybrid password service
 │   │   │   └── token.service.ts      # JWT token management
 │   │   └── types/                    # Module-specific types
 │   ├── posts/                        # Posts module
@@ -110,7 +114,7 @@ src/
 │       ├── pagination/               # Pagination utilities
 │       ├── filtering/                # Filter utilities
 │       └── connections/              # Relay connection helpers
-│
+
 ├── graphql/                          # GraphQL infrastructure
 │   ├── schema/                       # Schema building and assembly
 │   │   ├── builder.ts                # Pothos builder with plugins
@@ -128,7 +132,7 @@ src/
 │       ├── shield-config.ts          # Permission mapping
 │       ├── rules.ts                  # Permission rules
 │       └── rule-utils.ts             # Rule helper functions
-│
+
 ├── core/                             # Core business logic and utilities
 │   ├── auth/                         # Authentication core
 │   │   ├── scopes.ts                 # Authorization scopes
@@ -141,7 +145,7 @@ src/
 │   │   ├── logger-factory.ts         # Logger creation
 │   │   └── console-logger.ts         # Console implementation
 │   ├── utils/                        # Core utilities
-│   │   ├── relay-helpers.ts          # Global ID encoding/decoding
+│   │   ├── relay.ts                  # Global ID encoding/decoding
 │   │   ├── jwt.ts                    # JWT utilities
 │   │   ├── crypto.ts                 # Cryptographic utilities
 │   │   ├── dates.ts                  # Date utilities
@@ -150,7 +154,7 @@ src/
 │   └── validation/                   # Validation system
 │       ├── schemas.ts                # Common Zod schemas
 │       └── validators.ts             # Custom validators
-│
+
 ├── data/                             # Data access layer
 │   ├── database/                     # Database configuration
 │   │   └── client.ts                 # Prisma client setup
@@ -161,12 +165,22 @@ src/
 │   └── cache/                        # Caching layer
 │       ├── memory-cache.ts           # In-memory cache
 │       └── redis-cache.ts            # Redis cache (optional)
-│
+
+├── lib/                              # Third-party integrations
+│   ├── apollo/                       # Apollo Server setup
+│   │   ├── plugins.ts                # Apollo Server plugins
+│   │   ├── formatters.ts             # Error formatters
+│   │   └── server.ts                 # Apollo Server configuration
+│   └── prisma/                       # Prisma extensions and helpers
+│       ├── client.ts                 # Global Prisma client
+│       ├── extensions.ts             # Prisma extensions
+│       └── helpers.ts                # Prisma utility functions
+
 ├── gql/                              # GraphQL client operations (for testing)
 │   ├── queries.ts                    # Query definitions
 │   ├── mutations.ts                  # Mutation definitions
 │   └── mutations-auth-tokens.ts      # Auth token mutations
-│
+
 ├── types/                            # Global type definitions
 ├── constants/                        # Application constants
 ├── main.ts                           # Build entry point
@@ -235,7 +249,7 @@ Use centralized helpers for consistent ID handling:
 import {
   parseAndValidateGlobalId,
   encodeGlobalId,
-} from '../../core/utils/relay-helpers'
+} from '../../core/utils/relay'
 
 // Parse incoming global ID
 const numericId = await parseAndValidateGlobalId(args.id, 'Post')
@@ -288,6 +302,36 @@ export const isPostOwner = rule({ cache: 'strict' })(
   },
 )
 ```
+
+### 7. GraphQL Tada Integration
+
+**Critical**: Always use typed GraphQL operations for testing:
+
+```typescript
+import { print } from 'graphql'
+import { LoginMutation } from '../src/gql/mutations'
+
+// ✅ CORRECT - Use typed operations
+const result = await executeOperation(
+  server,
+  print(LoginMutation),
+  { email: 'test@example.com', password: 'password' },
+  context,
+)
+
+// ❌ WRONG - Never use raw GraphQL strings
+// const result = await executeOperation(server, 'mutation { ... }', variables, context)
+```
+
+### 8. Code Quality Standards
+
+The project uses **Biome** for linting and formatting:
+
+- **No `any` types**: Use specific types or `unknown` for better type safety  
+- **Consistent formatting**: Auto-formatted with Biome
+- **Import organization**: Imports are automatically sorted
+- **Strict TypeScript**: All files must pass `bunx tsc --noEmit`
+- **String modes**: Never use `mode: 'insensitive'` in Prisma queries (not supported in SQLite)
 
 ## Environment Variables
 
@@ -362,6 +406,42 @@ loaders: {
 }
 ```
 
+### GraphQL Tada Workflow
+
+When working with GraphQL operations:
+
+1. **Define operations in `src/gql/`**:
+   ```typescript
+   export const CreatePostMutation = graphql(`
+     mutation CreatePost($title: String!, $content: String) {
+       createPost(input: { title: $title, content: $content }) {
+         id
+         title
+         content
+         author { id name }
+       }
+     }
+   `)
+   ```
+
+2. **Generate types after changes**:
+   ```bash
+   bun run generate:gql  # or bun run generate
+   ```
+
+3. **Use in tests with type safety**:
+   ```typescript
+   import { print } from 'graphql'
+   import { CreatePostMutation } from '../src/gql/mutations'
+   
+   const result = await executeOperation(
+     server,
+     print(CreatePostMutation),
+     { title: 'Test Post', content: 'Content' },
+     context,
+   )
+   ```
+
 ## Debugging Quick Reference
 
 - **Type errors**: `bun run generate` (regenerates Prisma & GraphQL types)
@@ -370,6 +450,8 @@ loaders: {
 - **Database issues**: `bunx prisma studio` for visual inspection
 - **GraphQL schema**: `bun run gen:schema` to update schema.graphql
 - **Test specific operation**: Use GraphQL Playground at http://localhost:4000
+- **Lint errors**: `bun run check:fix` to auto-fix all Biome issues
+- **Format issues**: `bun run format:fix` to auto-format code
 
 ## Recent Architecture Changes
 
@@ -378,3 +460,42 @@ loaders: {
 3. **Improved Error Handling**: Centralized error types with consistent messages
 4. **Enhanced Testing**: All tests use typed GraphQL operations from src/gql/
 5. **TypeScript Strict**: All files pass strict type checking
+6. **Biome Integration**: Replaced ESLint/Prettier with Biome for better performance
+7. **Hybrid Password Service**: Added argon2 support with bcrypt fallback
+8. **Enhanced Security**: Added security headers middleware
+
+## Critical Rules from .cursor/rules
+
+Based on the Cursor rules in this project:
+
+### Pothos Patterns (.cursor/rules/01-pothos-patterns.mdc)
+- Always import Prisma directly, never from context
+- Always spread the `query` parameter in `t.prismaField` calls
+- Use `t.relation()` for automatic relation handling
+- Use `prismaNode` for entities with global IDs
+- Extract resolver logic to utility functions
+
+### Testing Patterns (.cursor/rules/02-testing-patterns.mdc)
+- Use typed GraphQL operations from `src/gql/`
+- Test both success and error cases
+- Use comprehensive test utilities
+- Test authorization and authentication flows
+
+### Error Handling (.cursor/rules/03-error-handling.mdc)
+- Use the centralized error hierarchy
+- Always normalize unknown errors
+- Provide descriptive error messages
+- Handle GraphQL Shield rule errors gracefully
+
+### Authentication (.cursor/rules/04-authentication.mdc)
+- Use `requireAuthentication()` for protected resolvers
+- Implement proper JWT token validation
+- Support refresh token rotation
+- Use TSyringe for service injection
+
+### GraphQL Tada (.cursor/rules/05-graphql-tada.mdc)
+- Always define operations in `src/gql/` directory
+- Never use raw GraphQL strings in tests
+- Use `print(operation)` to convert typed operations to strings
+- Generate types with `bun run generate:gql` after schema changes
+- Extract result and variable types for reuse

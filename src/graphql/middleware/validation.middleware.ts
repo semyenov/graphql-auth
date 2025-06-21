@@ -12,8 +12,15 @@ import type { Context } from '../context/context.types'
 /**
  * Rule to validate email format
  */
+interface EmailArgs {
+  email?: string
+  input?: {
+    email?: string
+  }
+}
+
 export const emailValidationRule = rule({ cache: 'strict' })(
-  async (_parent, args, _context: Context) => {
+  async (_parent, args: EmailArgs, _context: Context) => {
     try {
       const email = args.email || args.input?.email
       if (email) {
@@ -32,8 +39,15 @@ export const emailValidationRule = rule({ cache: 'strict' })(
 /**
  * Rule to validate password strength
  */
+interface PasswordArgs {
+  password?: string
+  input?: {
+    password?: string
+  }
+}
+
 export const passwordValidationRule = rule({ cache: 'strict' })(
-  async (_parent, args, _context: Context) => {
+  async (_parent, args: PasswordArgs, _context: Context) => {
     try {
       const password = args.password || args.input?.password
       if (password) {
@@ -68,8 +82,15 @@ export const passwordValidationRule = rule({ cache: 'strict' })(
 /**
  * Rule to validate post title
  */
+interface PostTitleArgs {
+  title?: string
+  input?: {
+    title?: string
+  }
+}
+
 export const postTitleValidationRule = rule({ cache: 'strict' })(
-  async (_parent, args, _context: Context) => {
+  async (_parent, args: PostTitleArgs, _context: Context) => {
     try {
       const title = args.title || args.input?.title
       if (title) {
@@ -92,8 +113,15 @@ export const postTitleValidationRule = rule({ cache: 'strict' })(
 /**
  * Rule to validate post content
  */
+interface PostContentArgs {
+  content?: string
+  input?: {
+    content?: string
+  }
+}
+
 export const postContentValidationRule = rule({ cache: 'strict' })(
-  async (_parent, args, _context: Context) => {
+  async (_parent, args: PostContentArgs, _context: Context) => {
     try {
       const content = args.content || args.input?.content
       if (content) {
@@ -113,8 +141,15 @@ export const postContentValidationRule = rule({ cache: 'strict' })(
 /**
  * Rule to validate user name
  */
+interface UserNameArgs {
+  name?: string
+  input?: {
+    name?: string
+  }
+}
+
 export const userNameValidationRule = rule({ cache: 'strict' })(
-  async (_parent, args, _context: Context) => {
+  async (_parent, args: UserNameArgs, _context: Context) => {
     try {
       const name = args.name || args.input?.name
       if (name) {
@@ -139,8 +174,17 @@ export const userNameValidationRule = rule({ cache: 'strict' })(
 /**
  * Rule to validate pagination arguments
  */
+interface PaginationArgs {
+  first?: number
+  last?: number
+  take?: number
+  skip?: number
+  after?: string
+  before?: string
+}
+
 export const paginationValidationRule = rule({ cache: 'strict' })(
-  async (_parent, args, _context: Context) => {
+  async (_parent, args: PaginationArgs, _context: Context) => {
     try {
       const { first, last, take, skip } = args
 
@@ -189,7 +233,7 @@ export const paginationValidationRule = rule({ cache: 'strict' })(
 /**
  * Combined validation middleware using GraphQL Shield
  */
-export const validationMiddleware = shield(
+export const validationMiddleware = shield<Record<string, unknown>, Context>(
   {
     Mutation: {
       signup: and(

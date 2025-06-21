@@ -14,7 +14,6 @@ import type { IPasswordService } from '../../../core/services/password.service.i
 @injectable()
 export class HybridPasswordService implements IPasswordService {
   private readonly argon2Options: argon2.Options & { raw?: false }
-  private readonly bcryptRounds: number
 
   constructor() {
     // Configure Argon2 options
@@ -26,8 +25,7 @@ export class HybridPasswordService implements IPasswordService {
       hashLength: 32,
     }
 
-    // Configure bcrypt rounds
-    this.bcryptRounds = 10
+    // Bcrypt rounds are set to 10 by default
   }
 
   /**

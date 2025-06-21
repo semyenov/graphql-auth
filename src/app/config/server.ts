@@ -105,9 +105,19 @@ export const graphqlServerOptions = {
   introspection: serverConfig.introspection,
   formatError: (error: unknown) => {
     // Remove stack traces in production
-    if (process.env.NODE_ENV === 'production') {
-      delete error.extensions?.exception?.stacktrace
-      delete error.extensions?.stacktrace
+    if (
+      process.env.NODE_ENV === 'production' &&
+      error &&
+      typeof error === 'object'
+    ) {
+      const typedError = error as {
+        extensions?: {
+          exception?: { stacktrace?: unknown }
+          stacktrace?: unknown
+        }
+      }
+      delete typedError.extensions?.exception?.stacktrace
+      delete typedError.extensions?.stacktrace
     }
     return error
   },

@@ -182,11 +182,11 @@ export class S3StorageService implements IStorageService {
 /**
  * Storage utilities
  */
-export class StorageUtils {
+export const StorageUtils = {
   /**
    * Generate unique file key
    */
-  static generateKey(filename: string, prefix?: string): string {
+  generateKey(filename: string, prefix?: string): string {
     const timestamp = Date.now()
     const random = Math.random().toString(36).substring(2, 8)
     const ext = path.extname(filename)
@@ -196,12 +196,12 @@ export class StorageUtils {
     const key = `${timestamp}-${random}-${safeFilename}${ext}`
 
     return prefix ? `${prefix}/${key}` : key
-  }
+  },
 
   /**
    * Get file extension from mimetype
    */
-  static getExtensionFromMimetype(mimetype: string): string {
+  getExtensionFromMimetype(mimetype: string): string {
     const mimeMap: Record<string, string> = {
       'image/jpeg': '.jpg',
       'image/png': '.png',
@@ -213,12 +213,12 @@ export class StorageUtils {
     }
 
     return mimeMap[mimetype] || ''
-  }
+  },
 
   /**
    * Validate file type
    */
-  static isValidFileType(mimetype: string, allowedTypes: string[]): boolean {
+  isValidFileType(mimetype: string, allowedTypes: string[]): boolean {
     return allowedTypes.some((type) => {
       if (type.endsWith('/*')) {
         // Wildcard match (e.g., image/*)
@@ -227,12 +227,12 @@ export class StorageUtils {
       }
       return mimetype === type
     })
-  }
+  },
 
   /**
    * Format file size
    */
-  static formatFileSize(bytes: number): string {
+  formatFileSize(bytes: number): string {
     const units = ['B', 'KB', 'MB', 'GB', 'TB']
     let size = bytes
     let unitIndex = 0
@@ -243,7 +243,7 @@ export class StorageUtils {
     }
 
     return `${size.toFixed(2)} ${units[unitIndex]}`
-  }
+  },
 }
 
 /**

@@ -4,6 +4,7 @@
  * Utility functions for common Prisma operations
  */
 
+import type { PrismaClient } from '@prisma/client'
 import { Prisma } from '@prisma/client'
 
 /**
@@ -52,10 +53,15 @@ export function handlePrismaError(error: unknown): Error {
  * Create a transaction-safe operation
  */
 export async function withTransaction<T>(
-  prisma: any,
-  fn: (tx: any) => Promise<T>,
+  prisma: PrismaClient,
+  fn: (
+    tx: Omit<
+      PrismaClient,
+      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+    >,
+  ) => Promise<T>,
 ): Promise<T> {
-  return prisma.$transaction(async (tx: any) => {
+  return prisma.$transaction(async (tx) => {
     try {
       return await fn(tx)
     } catch (error) {
@@ -67,8 +73,10 @@ export async function withTransaction<T>(
 /**
  * Build dynamic where clause
  */
-export function buildWhereClause(filters: Record<string, any>): any {
-  const where: any = {}
+export function buildWhereClause(
+  filters: Record<string, unknown>,
+): Record<string, unknown> {
+  const where: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(filters)) {
     if (value === undefined || value === null) continue
@@ -80,11 +88,12 @@ export function buildWhereClause(filters: Record<string, any>): any {
     } else if (Array.isArray(value)) {
       // IN clause
       where[key] = { in: value }
-    } else if (typeof value === 'object' && value.min !== undefined) {
+    } else if (typeof value === 'object' && value !== null && 'min' in value) {
       // Range query
+      const rangeValue = value as { min?: unknown; max?: unknown }
       where[key] = {
-        gte: value.min,
-        lte: value.max,
+        gte: rangeValue.min,
+        lte: rangeValue.max,
       }
     } else {
       // Exact match
@@ -101,7 +110,7 @@ export function buildWhereClause(filters: Record<string, any>): any {
 export function buildOrderByClause(sort?: {
   field: string
   direction: 'asc' | 'desc'
-}): any {
+}): Record<string, 'asc' | 'desc'> {
   if (!sort) return { createdAt: 'desc' }
 
   return { [sort.field]: sort.direction }
@@ -111,10 +120,10 @@ export function buildOrderByClause(sort?: {
  * Apply cursor-based pagination
  */
 export function applyCursorPagination(
-  query: any,
+  query: Record<string, unknown>,
   cursor?: string,
   take = 20,
-): any {
+): Record<string, unknown> {
   if (!cursor) {
     return { ...query, take }
   }
@@ -130,7 +139,11 @@ export function applyCursorPagination(
 /**
  * Apply offset-based pagination
  */
-export function applyOffsetPagination(query: any, page = 1, perPage = 20): any {
+export function applyOffsetPagination(
+  query: Record<string, unknown>,
+  page = 1,
+  perPage = 20,
+): Record<string, unknown> {
   return {
     ...query,
     skip: (page - 1) * perPage,
@@ -158,116 +171,14 @@ export async function batchOperation<T, R>(
 }
 
 /**
- * Upsert helper with better error handling
- */
-export async function safeUpsert<T>(
-  model: any,
-  where: any,
-  create: any,
-  update: any,
-): Promise<T> {
-  try {
-    return await model.upsert({
-      where,
-      create,
-      update,
-    })
-  } catch (error) {
-    throw handlePrismaError(error)
-  }
-}
-
-/**
  * Check if record exists
  */
-export async function exists(model: any, where: any): Promise<boolean> {
+export async function exists(
+  model: {
+    count: (args: { where: Record<string, unknown> }) => Promise<number>
+  },
+  where: Record<string, unknown>,
+): Promise<boolean> {
   const count = await model.count({ where })
   return count > 0
-}
-
-/**
- * Get or create record
- */
-export async function getOrCreate<T>(
-  model: any,
-  where: any,
-  create: any,
-): Promise<{ record: T; created: boolean }> {
-  const existing = await model.findUnique({ where })
-
-  if (existing) {
-    return { record: existing, created: false }
-  }
-
-  const record = await model.create({ data: create })
-  return { record, created: true }
-}
-
-/**
- * Bulk create with conflict handling
- */
-export async function bulkCreateWithConflictHandling<T>(
-  model: any,
-  data: any[],
-  _conflictFields: string[],
-): Promise<T[]> {
-  try {
-    return await model.createMany({
-      data,
-      skipDuplicates: true,
-    })
-  } catch (_error) {
-    // Fallback to individual creates if bulk fails
-    const results: T[] = []
-
-    for (const item of data) {
-      try {
-        const result = await model.create({ data: item })
-        results.push(result)
-      } catch (err) {
-        // Skip duplicates
-        if (
-          err instanceof Prisma.PrismaClientKnownRequestError &&
-          err.code === 'P2002'
-        ) {
-          continue
-        }
-        throw err
-      }
-    }
-
-    return results
-  }
-}
-
-/**
- * Execute raw SQL safely
- */
-export async function executeRawSql<T>(
-  prisma: any,
-  sql: string,
-  params: any[] = [],
-): Promise<T> {
-  try {
-    return await prisma.$queryRawUnsafe(sql, ...params)
-  } catch (error) {
-    throw handlePrismaError(error)
-  }
-}
-
-/**
- * Get database statistics
- */
-export async function getDatabaseStats(prisma: any): Promise<{
-  tables: Array<{ name: string; count: number }>
-}> {
-  const models = ['user', 'post', 'refreshToken']
-  const tables = []
-
-  for (const model of models) {
-    const count = await (prisma as any)[model].count()
-    tables.push({ name: model, count })
-  }
-
-  return { tables }
 }

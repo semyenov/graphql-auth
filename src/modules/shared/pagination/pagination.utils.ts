@@ -137,9 +137,9 @@ export function createPaginatedResponse<T>(
  * Apply pagination to a query builder (Prisma example)
  */
 export function applyPagination(
-  query: any,
+  query: Record<string, unknown>,
   args: CursorPaginationArgs | OffsetPaginationArgs | PagePaginationArgs,
-): any {
+): Record<string, unknown> {
   let skip: number | undefined
   let take: number | undefined
   let cursor: { id: number } | undefined
@@ -302,8 +302,8 @@ export function offsetToCursor(offset: number): string {
   return encodeCursor(offset)
 }
 
-export function parsePageNumber(value: any): number {
-  const num = parseInt(value, 10)
+export function parsePageNumber(value: unknown): number {
+  const num = parseInt(String(value), 10)
   return Number.isNaN(num) || num < 1 ? 1 : num
 }
 

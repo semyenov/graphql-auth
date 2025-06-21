@@ -21,4 +21,13 @@ export interface IPasswordService {
    * @returns True if the password matches the hash, false otherwise
    */
   verify(password: string, hash: string): Promise<boolean>
+
+  /**
+   * Check if a password hash needs to be rehashed.
+   * This is useful for upgrading legacy hashes or when security parameters change.
+   *
+   * @param hash - The hashed password to check
+   * @returns True if the hash should be rehashed, false otherwise
+   */
+  needsRehash?(hash: string): Promise<boolean>
 }

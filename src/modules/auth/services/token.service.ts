@@ -160,7 +160,10 @@ export class TokenService implements ITokenService {
     }
 
     const [, value, unit] = match
-    const numValue = parseInt(value!, 10)
+    if (!(value && unit)) {
+      throw new Error(`Invalid expiration format: ${expiration}`)
+    }
+    const numValue = parseInt(value, 10)
 
     switch (unit) {
       case 's':

@@ -1,4 +1,4 @@
-import { print } from 'graphql'
+import { type DocumentNode, print } from 'graphql'
 import type {
   GraphQLError,
   GraphQLResponse,
@@ -62,11 +62,11 @@ export class QueryBuilder {
 /**
  * Transform GraphQL response data
  */
-export class ResponseTransformer {
+export const ResponseTransformer = {
   /**
    * Extract data from GraphQL response or throw error
    */
-  static unwrap<T>(response: GraphQLResponse<T>): T {
+  unwrap<T>(response: GraphQLResponse<T>): T {
     if (response.errors && response.errors.length > 0) {
       throw new GraphQLResponseError(response.errors)
     }
@@ -74,12 +74,12 @@ export class ResponseTransformer {
       throw new Error('GraphQL response contains no data')
     }
     return response.data
-  }
+  },
 
   /**
    * Transform response data with a mapping function
    */
-  static map<T, U>(
+  map<T, U>(
     response: GraphQLResponse<T>,
     mapper: (data: T) => U,
   ): GraphQLResponse<U> {
@@ -87,15 +87,15 @@ export class ResponseTransformer {
       ...response,
       data: response.data ? mapper(response.data) : undefined,
     }
-  }
+  },
 
   /**
    * Flatten nested response structure
    */
-  static flatten<T extends Record<string, any>>(
+  flatten<T extends Record<string, unknown>>(
     response: GraphQLResponse<T>,
   ): GraphQLResponse<T[keyof T]> {
-    if (!response.data) return response as any
+    if (!response.data) return response as GraphQLResponse<T[keyof T]>
 
     const keys = Object.keys(response.data)
     if (keys.length === 1) {
@@ -104,8 +104,8 @@ export class ResponseTransformer {
         data: response.data[keys[0] as keyof T],
       }
     }
-    return response as any
-  }
+    return response as GraphQLResponse<T[keyof T]>
+  },
 }
 
 /**
@@ -140,7 +140,7 @@ interface CacheEntry<T> {
  * Simple in-memory cache for GraphQL responses
  */
 export class GraphQLCache {
-  private cache = new Map<string, CacheEntry<any>>()
+  private cache = new Map<string, CacheEntry<unknown>>()
   private defaultTTL = 5 * 60 * 1000 // 5 minutes
 
   /**
@@ -169,7 +169,7 @@ export class GraphQLCache {
       return null
     }
 
-    return entry.data
+    return entry.data as T
   }
 
   /**
@@ -301,11 +301,11 @@ export class GraphQLBatcher {
 /**
  * GraphQL query validation utilities
  */
-export class QueryValidator {
+export const QueryValidator = {
   /**
    * Validate that required variables are provided
    */
-  static validateVariables(
+  validateVariables(
     query: string,
     variables: Record<string, unknown> = {},
   ): string[] {
@@ -322,24 +322,26 @@ export class QueryValidator {
     }
 
     return errors
-  }
+  },
 
   /**
    * Check if query has specific field
    */
-  static hasField(query: string, fieldName: string): boolean {
+  hasField(query: string, fieldName: string): boolean {
     return query.includes(fieldName)
-  }
+  },
 
   /**
    * Extract operation type from query
    */
-  static getOperationType(
+  getOperationType(
     query: string,
   ): 'query' | 'mutation' | 'subscription' | null {
     const match = query.match(/^\s*(query|mutation|subscription)/i)
-    return match ? (match[1]?.toLowerCase() as any) : null
-  }
+    return match
+      ? (match[1]?.toLowerCase() as 'query' | 'mutation' | 'subscription')
+      : null
+  },
 }
 
 // =============================================================================
@@ -353,7 +355,7 @@ export const devTools = {
   /**
    * Pretty print GraphQL query
    */
-  prettyPrint: (query: string | any): string => {
+  prettyPrint: (query: string | DocumentNode): string => {
     const queryString = typeof query === 'string' ? query : print(query)
     return queryString
       .replace(/\s+/g, ' ')
@@ -419,7 +421,7 @@ export const schemaUtils = {
   /**
    * Type-safe field selector builder
    */
-  selectFields: <T extends Record<string, any>>(
+  selectFields: <T extends Record<string, unknown>>(
     fields: (keyof T)[],
   ): string => {
     return fields.join('\n  ')

@@ -5,6 +5,7 @@
  * This service contains reusable business logic that can be used by resolvers and other services.
  */
 
+import type { Post, Prisma } from '@prisma/client'
 import { container } from 'tsyringe'
 import { AuthorizationError, NotFoundError } from '../../core/errors/types'
 import type { ILogger } from '../../core/services/logger.interface'
@@ -56,7 +57,7 @@ export class PostsService {
   /**
    * Create a new post
    */
-  async createPost(data: CreatePostData, authorId: UserId): Promise<any> {
+  async createPost(data: CreatePostData, authorId: UserId): Promise<Post> {
     this.logger.info('Creating post', {
       authorId: authorId.value,
       title: data.title,
@@ -83,7 +84,7 @@ export class PostsService {
     postId: string,
     data: UpdatePostData,
     userId: UserId,
-  ): Promise<any> {
+  ): Promise<Post> {
     const numericPostId = parseGlobalId(postId, 'Post')
 
     this.logger.info('Updating post', {
@@ -95,7 +96,7 @@ export class PostsService {
     await this.checkPostOwnership(numericPostId, userId)
 
     // Build update data
-    const updateData: any = {}
+    const updateData: Prisma.PostUpdateInput = {}
     if (data.title !== undefined) updateData.title = data.title
     if (data.content !== undefined) updateData.content = data.content
     if (data.published !== undefined) updateData.published = data.published
@@ -134,7 +135,7 @@ export class PostsService {
   /**
    * Toggle post publish status
    */
-  async togglePublishPost(postId: string, userId: UserId): Promise<any> {
+  async togglePublishPost(postId: string, userId: UserId): Promise<Post> {
     const numericPostId = parseGlobalId(postId, 'Post')
 
     this.logger.info('Toggling post publish status', { postId: numericPostId })
@@ -158,7 +159,7 @@ export class PostsService {
   /**
    * Increment post view count
    */
-  async incrementViewCount(postId: string): Promise<any> {
+  async incrementViewCount(postId: string): Promise<Post> {
     const numericPostId = parseGlobalId(postId, 'Post')
 
     this.logger.info('Incrementing view count', { postId: numericPostId })
@@ -193,7 +194,11 @@ export class PostsService {
     filter: PostFilter = {},
     sort: PostSort = { field: 'createdAt', direction: 'desc' },
     pagination: { skip?: number; take?: number } = {},
-  ): Promise<any[]> {
+  ): Promise<
+    (Post & {
+      author: { id: number; name: string | null; email: string } | null
+    })[]
+  > {
     this.logger.debug('Getting posts', { filter, sort, pagination })
 
     const whereClause = this.buildWhereClause(filter)
@@ -254,7 +259,7 @@ export class PostsService {
   async getUserDrafts(
     userId: UserId,
     pagination: { skip?: number; take?: number } = {},
-  ): Promise<any[]> {
+  ): Promise<Post[]> {
     this.logger.debug('Getting user drafts', { userId: userId.value })
 
     return prisma.post.findMany({
@@ -275,13 +280,17 @@ export class PostsService {
     searchString: string,
     publishedOnly: boolean = true,
     pagination: { skip?: number; take?: number } = {},
-  ): Promise<any[]> {
+  ): Promise<
+    (Post & {
+      author: { id: number; name: string | null; email: string } | null
+    })[]
+  > {
     this.logger.debug('Searching posts', { searchString, publishedOnly })
 
-    const whereClause: any = {
+    const whereClause: Prisma.PostWhereInput = {
       OR: [
-        { title: { contains: searchString, mode: 'insensitive' } },
-        { content: { contains: searchString, mode: 'insensitive' } },
+        { title: { contains: searchString } },
+        { content: { contains: searchString } },
       ],
     }
 
@@ -305,7 +314,15 @@ export class PostsService {
   /**
    * Get post by ID with visibility check
    */
-  async getPostById(postId: string, userId?: UserId): Promise<any | null> {
+  async getPostById(
+    postId: string,
+    userId?: UserId,
+  ): Promise<
+    | (Post & {
+        author: { id: number; name: string | null; email: string } | null
+      })
+    | null
+  > {
     const numericPostId = parseGlobalId(postId, 'Post')
 
     this.logger.debug('Getting post by ID', {
@@ -329,6 +346,15 @@ export class PostsService {
     // Check visibility - unpublished posts can only be viewed by their author
     if (!post.published && (!userId || post.authorId !== userId.value)) {
       return null
+    }
+
+    // Ensure author is not null in the return type
+    if (!post.author) {
+      // This shouldn't happen due to foreign key constraints, but handle it safely
+      return {
+        ...post,
+        author: null,
+      }
     }
 
     return post
@@ -403,7 +429,7 @@ export class PostsService {
   private async checkPostOwnership(
     postId: number,
     userId: UserId,
-  ): Promise<any> {
+  ): Promise<{ authorId: number | null; published: boolean }> {
     const post = await prisma.post.findUnique({
       where: { id: postId },
       select: { authorId: true, published: true },
@@ -413,7 +439,7 @@ export class PostsService {
       throw new NotFoundError('Post', postId.toString())
     }
 
-    if (post.authorId !== userId.value) {
+    if (!post.authorId || post.authorId !== userId.value) {
       throw new AuthorizationError(
         'You can only modify posts that you have created',
       )
@@ -425,8 +451,8 @@ export class PostsService {
   /**
    * Private helper: Build where clause for filtering
    */
-  private buildWhereClause(filter: PostFilter): any {
-    const where: any = {}
+  private buildWhereClause(filter: PostFilter): Prisma.PostWhereInput {
+    const where: Prisma.PostWhereInput = {}
 
     if (filter.published !== undefined) {
       where.published = filter.published
@@ -438,8 +464,8 @@ export class PostsService {
 
     if (filter.searchString) {
       where.OR = [
-        { title: { contains: filter.searchString, mode: 'insensitive' } },
-        { content: { contains: filter.searchString, mode: 'insensitive' } },
+        { title: { contains: filter.searchString } },
+        { content: { contains: filter.searchString } },
       ]
     }
 

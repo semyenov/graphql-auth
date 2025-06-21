@@ -17,7 +17,7 @@ interface DatabaseConfig {
  */
 let instance: PrismaClient | null = null
 let config: DatabaseConfig = {
-  logLevels: DATABASE.LOG_LEVELS as Prisma.LogLevel[],
+  logLevels: [...DATABASE.LOG_LEVELS] as Prisma.LogLevel[],
   transactionTimeout: DATABASE.TRANSACTION_TIMEOUT_MS,
   url: env.DATABASE_URL,
 }

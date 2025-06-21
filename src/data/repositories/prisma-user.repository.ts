@@ -180,7 +180,10 @@ export class PrismaUserRepository
     emailContains?: string
     nameContains?: string
   }): Promise<number> {
-    const where: any = {}
+    const where: {
+      email?: { contains: string }
+      name?: { contains: string }
+    } = {}
 
     if (criteria?.emailContains) {
       where.email = { contains: criteria.emailContains }

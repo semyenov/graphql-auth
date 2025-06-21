@@ -394,7 +394,8 @@ describe('Relay Utilities', () => {
       })
 
       // Verify cursor encodes the offset
-      const decoded = decodeCursor(args.after!)
+      expect(args.after).toBeTruthy()
+      const decoded = decodeCursor(args.after as string)
       expect(decoded.id).toBe(20)
     })
 

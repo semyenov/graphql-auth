@@ -148,47 +148,43 @@ export interface FilterBuilderOptions {
 /**
  * Type guard for string filter
  */
-export function isStringFilter(filter: any): filter is StringFilter {
+export function isStringFilter(filter: unknown): filter is StringFilter {
   return (
-    filter &&
     typeof filter === 'object' &&
-    (filter.equals !== undefined ||
-      filter.contains !== undefined ||
-      filter.startsWith !== undefined ||
-      filter.endsWith !== undefined)
+    filter !== null &&
+    ((filter as StringFilter).equals !== undefined ||
+      (filter as StringFilter).contains !== undefined ||
+      (filter as StringFilter).startsWith !== undefined ||
+      (filter as StringFilter).endsWith !== undefined)
   )
 }
 
 /**
  * Type guard for number filter
  */
-export function isNumberFilter(filter: any): filter is NumberFilter {
+export function isNumberFilter(filter: unknown): filter is NumberFilter {
   return (
-    filter &&
     typeof filter === 'object' &&
-    (filter.equals !== undefined ||
-      filter.lt !== undefined ||
-      filter.lte !== undefined ||
-      filter.gt !== undefined ||
-      filter.gte !== undefined)
+    filter !== null &&
+    ((filter as NumberFilter).equals !== undefined ||
+      (filter as NumberFilter).lt !== undefined ||
+      (filter as NumberFilter).lte !== undefined ||
+      (filter as NumberFilter).gt !== undefined ||
+      (filter as NumberFilter).gte !== undefined)
   )
 }
 
 /**
  * Type guard for date filter
  */
-export function isDateFilter(filter: any): filter is DateFilter {
+export function isDateFilter(filter: unknown): filter is DateFilter {
   return (
-    filter &&
     typeof filter === 'object' &&
-    (filter.equals !== undefined ||
-      filter.lt !== undefined ||
-      filter.lte !== undefined ||
-      filter.gt !== undefined ||
-      filter.gte !== undefined) &&
-    (filter.equals instanceof Date ||
-      typeof filter.equals === 'string' ||
-      filter.equals === null ||
-      filter.equals === undefined)
+    filter !== null &&
+    ((filter as DateFilter).equals !== undefined ||
+      (filter as DateFilter).lt !== undefined ||
+      (filter as DateFilter).lte !== undefined ||
+      (filter as DateFilter).gt !== undefined ||
+      (filter as DateFilter).gte !== undefined)
   )
 }

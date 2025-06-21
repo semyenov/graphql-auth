@@ -89,7 +89,9 @@ builder.mutationField('loginWithTokens', (t) =>
         }
 
         // Check if password needs rehashing (e.g., upgrading from bcrypt to argon2)
-        const needsRehash = await passwordService.needsRehash(user.password)
+        const needsRehash =
+          passwordService.needsRehash &&
+          (await passwordService.needsRehash(user.password))
         if (needsRehash) {
           // Rehash the password with the new algorithm
           const newHash = await passwordService.hash(args.password)

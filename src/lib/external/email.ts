@@ -81,13 +81,13 @@ export class SmtpEmailService implements IEmailService {
  * Email template builder
  */
 export class EmailTemplateBuilder {
-  private templates = new Map<string, (data: any) => EmailMessage>()
+  private templates = new Map<string, (data: unknown) => EmailMessage>()
 
-  register(name: string, template: (data: any) => EmailMessage): void {
+  register(name: string, template: (data: unknown) => EmailMessage): void {
     this.templates.set(name, template)
   }
 
-  build(name: string, data: any): EmailMessage {
+  build(name: string, data: unknown): EmailMessage {
     const template = this.templates.get(name)
     if (!template) {
       throw new Error(`Email template "${name}" not found`)
@@ -150,15 +150,7 @@ export const emailTemplates = {
  */
 export function createEmailService(): IEmailService {
   if (process.env.NODE_ENV === 'production' && process.env.SMTP_HOST) {
-    return new SmtpEmailService({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587', 10),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER || '',
-        pass: process.env.SMTP_PASS || '',
-      },
-    })
+    return new SmtpEmailService()
   }
 
   return new ConsoleEmailService()

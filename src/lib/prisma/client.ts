@@ -41,11 +41,16 @@ function createPrismaClient() {
 /**
  * Global Prisma client instance
  */
-export const prisma = global.prisma || createPrismaClient()
+type GlobalThisWithPrisma = typeof globalThis & {
+  prisma?: PrismaClient
+}
+
+export const prisma =
+  (globalThis as GlobalThisWithPrisma).prisma || createPrismaClient()
 
 // Prevent multiple instances in development
 if (process.env.NODE_ENV !== 'production') {
-  global.prisma = prisma
+  ;(globalThis as GlobalThisWithPrisma).prisma = prisma
 }
 
 /**
@@ -65,9 +70,4 @@ export async function checkDatabaseConnection(): Promise<boolean> {
   } catch {
     return false
   }
-}
-
-// Type augmentation for global
-declare global {
-  var prisma: PrismaClient | undefined
 }

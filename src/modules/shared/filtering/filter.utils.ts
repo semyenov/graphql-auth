@@ -12,6 +12,7 @@ import type {
   FilterValidationResult,
   NumberFilter,
   OrderByInput,
+  SortOrder,
   StringFilter,
 } from './filter.types'
 
@@ -20,10 +21,10 @@ import type {
  */
 export function transformStringFilter(
   filter: StringFilter | undefined | null,
-): any {
+): Record<string, unknown> | undefined {
   if (!filter) return undefined
 
-  const prismaFilter: any = {}
+  const prismaFilter: Record<string, unknown> = {}
 
   if (filter.equals !== undefined) prismaFilter.equals = filter.equals
   if (filter.not !== undefined) prismaFilter.not = filter.not
@@ -56,10 +57,10 @@ export function transformStringFilter(
  */
 export function transformNumberFilter(
   filter: NumberFilter | undefined | null,
-): any {
+): Record<string, unknown> | undefined {
   if (!filter) return undefined
 
-  const prismaFilter: any = {}
+  const prismaFilter: Record<string, unknown> = {}
 
   if (filter.equals !== undefined) prismaFilter.equals = filter.equals
   if (filter.not !== undefined) prismaFilter.not = filter.not
@@ -78,10 +79,10 @@ export function transformNumberFilter(
  */
 export function transformDateFilter(
   filter: DateFilter | undefined | null,
-): any {
+): Record<string, unknown> | undefined {
   if (!filter) return undefined
 
-  const prismaFilter: any = {}
+  const prismaFilter: Record<string, unknown> = {}
 
   const toDate = (value: Date | string | null | undefined) => {
     if (!value) return value
@@ -105,7 +106,7 @@ export function transformDateFilter(
  */
 export function transformBooleanFilter(
   filter: BooleanFilter | undefined | null,
-): any {
+): boolean | Record<string, unknown> | undefined {
   if (!filter) return undefined
 
   if (filter.equals !== undefined) return filter.equals
@@ -119,7 +120,7 @@ export function transformBooleanFilter(
  */
 export function transformOrderBy<T extends string>(
   orderBy: OrderByInput<T> | undefined | null,
-): any {
+): Record<T, SortOrder> | undefined {
   if (!orderBy) return undefined
 
   return {
@@ -132,7 +133,7 @@ export function transformOrderBy<T extends string>(
  */
 export function transformOrderByArray<T extends string>(
   orderBy: OrderByInput<T>[] | undefined | null,
-): any[] | undefined {
+): Record<T, SortOrder>[] | undefined {
   if (!orderBy || orderBy.length === 0) return undefined
 
   return orderBy.map(transformOrderBy).filter(Boolean)
@@ -144,7 +145,7 @@ export function transformOrderByArray<T extends string>(
 export function buildSearchQuery(
   search: string | undefined | null,
   fields: string[],
-): any {
+): { OR: Record<string, { contains: string; mode: string }>[] } | undefined {
   if (!search || search.trim().length === 0) return undefined
 
   const searchTerm = search.trim()
@@ -179,8 +180,10 @@ export function combineFilters<T>(
 /**
  * Apply base filter logic (AND, OR, NOT)
  */
-export function applyBaseFilter<T>(filter: T & BaseFilter<T>): any {
-  const result: any = { ...filter }
+export function applyBaseFilter<T>(
+  filter: T & BaseFilter<T>,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...filter }
 
   // Remove base filter properties from main object
   delete result.AND
@@ -269,13 +272,13 @@ export function validateFilterDepth<T>(
 /**
  * Sanitize filter to remove denied fields
  */
-export function sanitizeFilter<T extends Record<string, any>>(
+export function sanitizeFilter<T extends Record<string, unknown>>(
   filter: T,
   options: FilterBuilderOptions,
 ): T {
   const { allowedFields, deniedFields } = options
 
-  const sanitized: any = {}
+  const sanitized: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(filter)) {
     // Skip if field is denied
@@ -302,7 +305,7 @@ export function sanitizeFilter<T extends Record<string, any>>(
 /**
  * Convert case-insensitive search to appropriate format
  */
-export function applyCaseInsensitive<T extends Record<string, any>>(
+export function applyCaseInsensitive<T extends Record<string, unknown>>(
   filter: T,
   fields: string[],
 ): T {
@@ -329,10 +332,10 @@ export function applyCaseInsensitive<T extends Record<string, any>>(
 /**
  * Get filter summary for logging/debugging
  */
-export function getFilterSummary(filter: any): string[] {
+export function getFilterSummary(filter: Record<string, unknown>): string[] {
   const summary: string[] = []
 
-  const addToSummary = (obj: any, prefix: string = '') => {
+  const addToSummary = (obj: Record<string, unknown>, prefix: string = '') => {
     for (const [key, value] of Object.entries(obj)) {
       if (value === null || value === undefined) continue
 

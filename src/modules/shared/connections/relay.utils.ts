@@ -156,11 +156,19 @@ export function createPageInfo<T extends Node>(
 /**
  * Apply connection arguments to a query
  */
-export function applyConnectionArgs(query: any, args: ConnectionArgs): any {
+export function applyConnectionArgs<T extends Record<string, unknown>>(
+  query: T,
+  args: ConnectionArgs,
+): T & {
+  take: number
+  skip: number | undefined
+  cursor: { id: number } | undefined
+  orderBy: Record<string, unknown>
+} {
   let take: number | undefined
   let skip: number | undefined
   let cursor: { id: number } | undefined
-  let orderBy: any = { id: 'asc' }
+  let orderBy: Record<string, unknown> = { id: 'asc' }
 
   // Forward pagination
   if (args.first) {
@@ -176,7 +184,7 @@ export function applyConnectionArgs(query: any, args: ConnectionArgs): any {
   // Backward pagination
   else if (args.last) {
     take = -Math.min(args.last, CONNECTION_DEFAULTS.MAX_FIRST)
-    orderBy = { id: 'desc' }
+    orderBy = { id: 'desc' } as Record<string, unknown>
 
     if (args.before) {
       const { id } = decodeCursor(args.before)
@@ -192,10 +200,10 @@ export function applyConnectionArgs(query: any, args: ConnectionArgs): any {
 
   return {
     ...query,
-    take,
+    take: take ?? CONNECTION_DEFAULTS.DEFAULT_FIRST,
     skip,
     cursor,
-    orderBy: query.orderBy || orderBy,
+    orderBy: (query.orderBy as Record<string, unknown>) || orderBy,
   }
 }
 
@@ -203,10 +211,10 @@ export function applyConnectionArgs(query: any, args: ConnectionArgs): any {
  * Get connection slice (for custom implementations)
  */
 export async function getConnectionSlice<T extends { id: number }>(
-  fetchFn: (options: any) => Promise<T[]>,
+  fetchFn: (options: Record<string, unknown>) => Promise<T[]>,
   countFn: () => Promise<number>,
   args: ConnectionArgs,
-  queryOptions: any = {},
+  queryOptions: Record<string, unknown> = {},
 ): Promise<ConnectionSlice<T>> {
   const connectionQuery = applyConnectionArgs(queryOptions, args)
 

@@ -39,18 +39,20 @@ export function createHttpLoggingMiddleware() {
 
     // Intercept response
     const originalSend = res.send
-    res.send = function (data: unknown) {
-      const duration = Date.now() - start
+    if (originalSend) {
+      res.send = function (data: unknown) {
+        const duration = Date.now() - start
 
-      // Log response
-      logger.info('HTTP Response', {
-        method,
-        url,
-        statusCode: res.statusCode,
-        duration: `${duration}ms`,
-      })
+        // Log response
+        logger.info('HTTP Response', {
+          method,
+          url,
+          statusCode: res.statusCode,
+          duration: `${duration}ms`,
+        })
 
-      return originalSend.call(this, data)
+        return originalSend.call(this, data)
+      }
     }
 
     await next()

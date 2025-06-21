@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs'
+import type { ResultOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { UserId } from '../../../src/core/value-objects/user-id.vo'
@@ -194,9 +195,9 @@ describe('Enhanced Permissions System', () => {
       expect(result.body.kind).toBe('single')
       if (result.body.kind === 'single') {
         expect(result.body.singleResult.errors).toBeUndefined()
-        const data = result.body.singleResult.data as any
+        const data = result.body.singleResult.data as ResultOf<typeof FeedQuery>
         // At least 2 posts should be returned (may include posts from other tests)
-        expect(data?.feed?.edges.length).toBeGreaterThanOrEqual(2)
+        expect(data?.feed?.edges?.length).toBeGreaterThanOrEqual(2)
       }
     })
 
@@ -232,7 +233,9 @@ describe('Enhanced Permissions System', () => {
       expect(authResult.body.kind).toBe('single')
       if (authResult.body.kind === 'single') {
         expect(authResult.body.singleResult.errors).toBeUndefined()
-        const data = authResult.body.singleResult.data as any
+        const data = authResult.body.singleResult.data as ResultOf<
+          typeof MeQuery
+        >
         // The me query should work since testUserId was created in beforeEach
         expect(data?.me).toBeTruthy()
         if (data?.me) {
@@ -292,9 +295,15 @@ describe('Enhanced Permissions System', () => {
       expect(ownDraftsResult.body.kind).toBe('single')
       if (ownDraftsResult.body.kind === 'single') {
         expect(ownDraftsResult.body.singleResult.errors).toBeUndefined()
-        const data = ownDraftsResult.body.singleResult.data as any
+        const data = ownDraftsResult.body.singleResult.data as {
+          drafts?: {
+            edges: Array<{
+              node: { id: string; title: string; published: boolean }
+            }>
+          }
+        }
         expect(data?.drafts?.edges).toHaveLength(1)
-        expect(data?.drafts?.edges[0].node.title).toBe('User 1 Draft')
+        expect(data?.drafts?.edges?.[0]?.node?.title).toBe('User 1 Draft')
       }
 
       // Other user should see their own drafts
@@ -309,9 +318,15 @@ describe('Enhanced Permissions System', () => {
       if (otherDraftsResult.body.kind === 'single') {
         // Should return only their own drafts
         expect(otherDraftsResult.body.singleResult.errors).toBeUndefined()
-        const data = otherDraftsResult.body.singleResult.data as any
+        const data = otherDraftsResult.body.singleResult.data as {
+          drafts?: {
+            edges: Array<{
+              node: { id: string; title: string; published: boolean }
+            }>
+          }
+        }
         expect(data?.drafts?.edges).toHaveLength(1)
-        expect(data?.drafts?.edges[0].node.title).toBe('User 2 Draft')
+        expect(data?.drafts?.edges?.[0]?.node?.title).toBe('User 2 Draft')
       }
     })
 
@@ -445,9 +460,11 @@ describe('Enhanced Permissions System', () => {
       expect(unauthResult.body.kind).toBe('single')
       if (unauthResult.body.kind === 'single') {
         expect(unauthResult.body.singleResult.errors).toBeUndefined()
-        const data = unauthResult.body.singleResult.data as any
+        const data = unauthResult.body.singleResult.data as ResultOf<
+          typeof PostQuery
+        >
         expect(data?.post).toBeDefined()
-        expect(data?.post.id).toBe(toPostId(post.id))
+        expect(data?.post?.id).toBe(toPostId(post.id))
       }
 
       // With authentication - should succeed
@@ -461,9 +478,11 @@ describe('Enhanced Permissions System', () => {
       expect(authResult.body.kind).toBe('single')
       if (authResult.body.kind === 'single') {
         expect(authResult.body.singleResult.errors).toBeUndefined()
-        const data = authResult.body.singleResult.data as any
+        const data = authResult.body.singleResult.data as ResultOf<
+          typeof PostQuery
+        >
         expect(data?.post).toBeDefined()
-        expect(data?.post.id).toBe(toPostId(post.id))
+        expect(data?.post?.id).toBe(toPostId(post.id))
       }
     })
   })

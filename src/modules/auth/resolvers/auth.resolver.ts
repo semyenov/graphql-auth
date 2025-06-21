@@ -160,15 +160,17 @@ builder.mutationField('login', (t) =>
       }
 
       // Check if password needs rehashing (e.g., upgrading from bcrypt to argon2)
-      const needsRehash = await passwordService.needsRehash(user.password)
-      if (needsRehash) {
-        // Rehash the password with the new algorithm
-        const newHash = await passwordService.hash(args.password)
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { password: newHash },
-        })
-        logger.info('Password rehashed during login', { userId: user.id })
+      if (passwordService.needsRehash) {
+        const needsRehash = await passwordService.needsRehash(user.password)
+        if (needsRehash) {
+          // Rehash the password with the new algorithm
+          const newHash = await passwordService.hash(args.password)
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { password: newHash },
+          })
+          logger.info('Password rehashed during login', { userId: user.id })
+        }
       }
 
       logger.info('Login successful', { email: args.email, userId: user.id })

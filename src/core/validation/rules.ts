@@ -344,11 +344,6 @@ export function createRule<T>(
 /**
  * Merge multiple Zod object schemas
  */
-export function mergeSchemas(
-  ...schemas: z.AnyZodObject[]
-): z.ZodObject<any, any, any> {
-  return schemas.reduce(
-    (acc, schema) => acc.merge(schema),
-    z.object({}),
-  );
+export function mergeSchemas(...schemas: z.AnyZodObject[]): z.AnyZodObject {
+  return schemas.reduce((acc, schema) => acc.merge(schema), z.object({}))
 }

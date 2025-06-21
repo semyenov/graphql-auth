@@ -202,12 +202,12 @@ export interface AuthContext extends Context {
  */
 export interface PostContext extends Context {
   operationName:
-  | 'createPost'
-  | 'updatePost'
-  | 'deletePost'
-  | 'feed'
-  | 'post'
-  | 'drafts'
+    | 'createPost'
+    | 'updatePost'
+    | 'deletePost'
+    | 'feed'
+    | 'post'
+    | 'drafts'
 }
 
 /**

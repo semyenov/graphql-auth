@@ -224,7 +224,7 @@ describe('Rate Limiting', () => {
           server,
           print(SignupMutation),
           {
-            email: emails[i]!,
+            email: emails[i] || `user${i}@example.com`,
             password: 'password123',
             name: `User ${i}`,
           },

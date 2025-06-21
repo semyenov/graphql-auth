@@ -8,7 +8,7 @@ import * as rules from './rules'
  * GraphQL Shield permissions configuration
  * Maps GraphQL operations to permission rules
  */
-export const permissions = shield<any, Context, any>(
+export const permissions = shield<Record<string, unknown>, Context>(
   {
     Query: {
       // User-related queries

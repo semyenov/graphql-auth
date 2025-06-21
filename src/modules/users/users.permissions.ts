@@ -252,15 +252,7 @@ export const usersPermissions = {
   },
   Mutation: {
     // Profile management
-    updateUserProfile: rule()(async (_parent, _args, context) => {
-      return canEditUser.resolve(
-        _parent,
-        { id: context.userId?.value.toString() || '' },
-        context,
-        {} as any,
-        {} as any,
-      )
-    }),
+    updateUserProfile: isAuthenticated,
     updateUserPreferences: isAuthenticated,
     uploadAvatar: isAuthenticated,
     deleteAvatar: isAuthenticated,
@@ -293,7 +285,7 @@ export const usersPermissions = {
     createdAt: allow,
 
     // Private fields
-    email: rule()(async (parent: any, _args, context) => {
+    email: rule()(async (parent: { id: number }, _args, context) => {
       // User can see their own email
       if (context.userId?.value === parent.id) return true
 

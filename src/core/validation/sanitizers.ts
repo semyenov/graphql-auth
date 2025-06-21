@@ -34,7 +34,7 @@ export function sanitizeHtml(html: string): string {
  * Sanitize plain text
  */
 export function sanitizeText(text: string): string {
-  // eslint-disable-next-line no-control-regex
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: Control characters need to be removed for security
   const controlCharsRegex = /[\x00-\x1F\x7F]/g
   return text.trim().replace(/\s+/g, ' ').replace(controlCharsRegex, '')
 }

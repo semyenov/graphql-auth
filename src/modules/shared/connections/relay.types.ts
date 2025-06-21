@@ -103,7 +103,7 @@ export interface ConnectionBuilderOptions {
  */
 export interface CursorData {
   id: string | number
-  value?: any // For sorting by non-id fields
+  value?: unknown // For sorting by non-id fields
 }
 
 /**
@@ -119,17 +119,30 @@ export interface ConnectionSlice<T> {
 /**
  * Type guards
  */
-export function isNode(obj: any): obj is Node {
-  return obj && typeof obj.id === 'string'
+export function isNode(obj: unknown): obj is Node {
+  return (
+    obj !== null &&
+    typeof obj === 'object' &&
+    'id' in obj &&
+    typeof (obj as Node).id === 'string'
+  )
 }
 
-export function isConnection<T extends Node>(obj: any): obj is Connection<T> {
+export function isConnection<T extends Node>(
+  obj: unknown,
+): obj is Connection<T> {
   return (
-    obj &&
-    Array.isArray(obj.edges) &&
-    obj.pageInfo &&
-    typeof obj.pageInfo.hasNextPage === 'boolean' &&
-    typeof obj.pageInfo.hasPreviousPage === 'boolean'
+    obj !== null &&
+    typeof obj === 'object' &&
+    'edges' in obj &&
+    'pageInfo' in obj &&
+    Array.isArray((obj as Connection<T>).edges) &&
+    (obj as Connection<T>).pageInfo !== null &&
+    typeof (obj as Connection<T>).pageInfo === 'object' &&
+    'hasNextPage' in (obj as Connection<T>).pageInfo &&
+    'hasPreviousPage' in (obj as Connection<T>).pageInfo &&
+    typeof (obj as Connection<T>).pageInfo.hasNextPage === 'boolean' &&
+    typeof (obj as Connection<T>).pageInfo.hasPreviousPage === 'boolean'
   )
 }
 

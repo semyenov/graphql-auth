@@ -48,16 +48,16 @@ export function createLogger(config: LoggerConfig): ILogger {
 /**
  * Creates a logger based on environment variables
  */
-export function createLoggerFromEnv(): ILogger {
+export function createLoggerFromEnv(config?: Partial<LoggerConfig>): ILogger {
   const type = (process.env.LOGGER_TYPE as LoggerType) || LoggerType.CONSOLE
   const level = (process.env.LOG_LEVEL as LogLevel) || LogLevel.INFO
   const filePath = process.env.LOG_FILE_PATH
 
   return createLogger({
-    type,
-    level,
-    filePath,
-    context: {
+    type: config?.type || type,
+    level: config?.level || level,
+    filePath: config?.filePath || filePath,
+    context: config?.context || {
       service: 'graphql-auth',
       environment: process.env.NODE_ENV || 'development',
     },

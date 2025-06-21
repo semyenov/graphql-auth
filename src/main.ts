@@ -138,10 +138,10 @@ async function bootstrap() {
 }
 
 // Helper functions for H3
-async function readBody(req: any): Promise<any> {
+async function readBody(req: IncomingMessage): Promise<unknown> {
   return new Promise((resolve, reject) => {
     let body = ''
-    req.on('data', (chunk: any) => {
+    req.on('data', (chunk: Buffer) => {
       body += chunk.toString()
     })
     req.on('end', () => {
@@ -155,7 +155,7 @@ async function readBody(req: any): Promise<any> {
   })
 }
 
-function getQuery(req: any): string {
+function getQuery(req: IncomingMessage): string {
   const url = new URL(req.url || '', `http://localhost`)
   return url.search
 }

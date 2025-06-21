@@ -17,9 +17,9 @@ let globalPrisma: PrismaClientType | null = null
  */
 function createPrismaClient(): PrismaClientType {
   return new PrismaClient({
-    log: DATABASE.LOG_LEVELS as unknown as any,
+    log: [...DATABASE.LOG_LEVELS],
     transactionOptions: {
-      timeout: DATABASE.TRANSACTION_TIMEOUT_MS as unknown as number,
+      timeout: DATABASE.TRANSACTION_TIMEOUT_MS,
     },
     datasources: {
       db: {

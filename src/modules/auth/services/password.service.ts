@@ -24,4 +24,18 @@ export class BcryptPasswordService implements IPasswordService {
   async verify(password: string, hash: string): Promise<boolean> {
     return bcrypt.compare(password, hash)
   }
+
+  /**
+   * Check if a hash needs to be rehashed.
+   * For bcrypt, this could check if the cost factor has changed.
+   */
+  async needsRehash(hash: string): Promise<boolean> {
+    try {
+      const rounds = bcrypt.getRounds(hash)
+      return rounds !== this.saltRounds
+    } catch {
+      // If we can't get rounds, assume it needs rehashing
+      return true
+    }
+  }
 }

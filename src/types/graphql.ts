@@ -11,7 +11,12 @@ import type { Context } from '../graphql/context/context.types'
 /**
  * GraphQL resolver function types
  */
-export type Resolver<TResult, TParent = {}, TArgs = {}, TContext = Context> = (
+export type Resolver<
+  TResult,
+  TParent = Record<string, never>,
+  TArgs = Record<string, never>,
+  TContext = Context,
+> = (
   parent: TParent,
   args: TArgs,
   context: TContext,
@@ -20,8 +25,8 @@ export type Resolver<TResult, TParent = {}, TArgs = {}, TContext = Context> = (
 
 export type SubscriptionResolver<
   TResult,
-  TParent = {},
-  TArgs = {},
+  TParent = Record<string, never>,
+  TArgs = Record<string, never>,
   TContext = Context,
 > = {
   subscribe: Resolver<AsyncIterator<TResult>, TParent, TArgs, TContext>
@@ -42,7 +47,7 @@ export type FieldResolver<
  */
 export type MutationResolver<TResult = unknown, TArgs = unknown> = Resolver<
   TResult,
-  {},
+  Record<string, never>,
   TArgs,
   Context
 >
@@ -52,7 +57,7 @@ export type MutationResolver<TResult = unknown, TArgs = unknown> = Resolver<
  */
 export type QueryResolver<TResult = unknown, TArgs = unknown> = Resolver<
   TResult,
-  {},
+  Record<string, never>,
   TArgs,
   Context
 >
@@ -64,14 +69,14 @@ export interface DateTimeScalarConfig {
   name: 'DateTime'
   serialize: (value: Date) => string
   parseValue: (value: string) => Date
-  parseLiteral: (ast: any) => Date
+  parseLiteral: (ast: unknown) => Date
 }
 
 export interface EmailScalarConfig {
   name: 'Email'
   serialize: (value: string) => string
   parseValue: (value: string) => string
-  parseLiteral: (ast: any) => string
+  parseLiteral: (ast: unknown) => string
 }
 
 /**

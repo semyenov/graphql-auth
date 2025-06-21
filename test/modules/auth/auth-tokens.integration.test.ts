@@ -183,7 +183,7 @@ describe('Refresh Token', () => {
       // Create authenticated context
       const authContext = {
         ...createMockContext(),
-        userId: { value: user?.id } as any,
+        userId: { value: user?.id } as { value: number },
         security: {
           isAuthenticated: true,
           userId: user?.id,

@@ -32,7 +32,9 @@ export class Argon2PasswordService implements IPasswordService {
     try {
       return await argon2.hash(password, this.options)
     } catch (error) {
-      throw new Error(`Failed to hash password: ${error}`)
+      throw new Error(
+        `Failed to hash password: ${error instanceof Error ? error.message : String(error)}`,
+      )
     }
   }
 

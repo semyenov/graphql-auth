@@ -133,15 +133,12 @@ export async function benchmarkConcurrent(
       const op = operations[(i + j) % operations.length]
       if (op) {
         batch.push(
-          measureOperation(
-            server,
-            op.operation,
-            op.variables,
-            op.context,
-          ).then(({ metrics }) => {
-            const name = extractOperationName(op.operation)
-            results.get(name)?.push(metrics)
-          }),
+          measureOperation(server, op.operation, op.variables, op.context).then(
+            ({ metrics }) => {
+              const name = extractOperationName(op.operation)
+              results.get(name)?.push(metrics)
+            },
+          ),
         )
       }
     }

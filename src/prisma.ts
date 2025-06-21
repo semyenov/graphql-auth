@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { type Prisma, PrismaClient } from '@prisma/client'
 import { env } from './app/config/environment'
 import { DATABASE } from './constants'
 
@@ -17,9 +17,9 @@ let globalPrisma: PrismaClientType | null = null
  */
 function createPrismaClient(): PrismaClientType {
   return new PrismaClient({
-    log: DATABASE.LOG_LEVELS as any,
+    log: DATABASE.LOG_LEVELS as unknown as Prisma.LogLevel[],
     transactionOptions: {
-      timeout: DATABASE.TRANSACTION_TIMEOUT_MS as any,
+      timeout: DATABASE.TRANSACTION_TIMEOUT_MS,
     },
     datasources: {
       db: {

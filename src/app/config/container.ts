@@ -8,7 +8,7 @@ import type { PrismaClient } from '@prisma/client'
 import 'reflect-metadata'
 import { container } from 'tsyringe'
 // Infrastructure implementations
-import { LoggerFactory } from '../../core/logging/logger-factory'
+import { createLoggerFromEnv } from '../../core/logging/logger-factory'
 // Repositories (for refresh tokens)
 import type { IUserRepository } from '../../core/repositories/user.repository.interface'
 // Core interfaces
@@ -47,7 +47,7 @@ export function configureContainer(): void {
   )
 
   // Register logger using factory
-  const logger = LoggerFactory.createFromEnv()
+  const logger = createLoggerFromEnv()
   container.registerInstance<ILogger>('ILogger', logger)
 
   // Register services

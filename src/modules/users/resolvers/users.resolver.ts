@@ -4,6 +4,7 @@
  * Implements user operations directly in Pothos resolvers without use cases.
  */
 
+import type { Prisma } from '@prisma/client'
 import { container } from 'tsyringe'
 import { z } from 'zod'
 import { ConflictError } from '../../../core/errors/types'
@@ -188,12 +189,13 @@ builder.mutationField('updateUserProfile', (t) =>
       logger.info('Updating user profile', { userId: userId.value })
 
       // Build update data
-      const updateData: any = {}
-      if (args.input.name !== undefined) updateData.name = args.input.name
+      const updateData: Prisma.UserUpdateInput = {}
+      if (args.input.name !== undefined)
+        updateData.name = args.input.name ?? null
       if (args.input.email !== undefined) {
         // Check if email is already taken
         const existingUser = await prisma.user.findUnique({
-          where: { email: args.input.email ?? undefined },
+          where: { email: args.input.email },
           select: { id: true },
         })
 
@@ -201,7 +203,7 @@ builder.mutationField('updateUserProfile', (t) =>
           throw new ConflictError('Email already in use')
         }
 
-        updateData.email = args.input.email
+        updateData.email = args.input.email ?? undefined
       }
 
       const user = await prisma.user.update({

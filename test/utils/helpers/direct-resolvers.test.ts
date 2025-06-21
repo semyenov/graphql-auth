@@ -93,7 +93,7 @@ describe('Direct Resolvers', () => {
 
       const authContext = {
         ...createMockContext(),
-        userId: { value: 1 } as any,
+        userId: { value: 1 } as unknown as { value: number },
         security: {
           isAuthenticated: true,
           userId: 1,
@@ -134,7 +134,7 @@ describe('Direct Resolvers', () => {
 
       const authContext = {
         ...createMockContext(),
-        userId: { value: 1 } as any,
+        userId: { value: 1 } as unknown as { value: number },
         security: {
           isAuthenticated: true,
           userId: 1,
@@ -257,7 +257,7 @@ describe('Direct Resolvers', () => {
 
       const authContext = {
         ...createMockContext(),
-        userId: { value: 1 } as any,
+        userId: { value: 1 } as unknown as { value: number },
         security: {
           isAuthenticated: true,
           userId: 1,

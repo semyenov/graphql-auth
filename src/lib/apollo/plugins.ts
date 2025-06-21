@@ -95,7 +95,9 @@ export const complexityPlugin: ApolloServerPlugin<Context> = {
         const { document, operationName } = requestContext
 
         // Simple complexity estimation based on selection set depth
-        const complexity = estimateComplexity(document)
+        const complexity = estimateComplexity(
+          document as unknown as GraphQLDocument,
+        )
 
         if (complexity > 100) {
           console.warn(
@@ -155,19 +157,29 @@ export const errorFormattingPlugin: ApolloServerPlugin<Context> = {
 /**
  * Simple complexity estimation
  */
-function estimateComplexity(document: any): number {
+interface GraphQLNode {
+  selectionSet?: {
+    selections: GraphQLNode[]
+  }
+}
+
+interface GraphQLDocument {
+  definitions: GraphQLNode[]
+}
+
+function estimateComplexity(document: GraphQLDocument): number {
   let complexity = 0
 
-  const visit = (node: any, depth = 0) => {
+  const visit = (node: GraphQLNode, depth = 0) => {
     if (node.selectionSet) {
       complexity += depth * node.selectionSet.selections.length
-      node.selectionSet.selections.forEach((selection: any) => {
+      node.selectionSet.selections.forEach((selection: GraphQLNode) => {
         visit(selection, depth + 1)
       })
     }
   }
 
-  document.definitions.forEach((def: any) => {
+  document.definitions.forEach((def: GraphQLNode) => {
     if (def.selectionSet) {
       visit(def, 1)
     }

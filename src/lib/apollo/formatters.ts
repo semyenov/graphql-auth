@@ -36,7 +36,10 @@ export function formatError(
     typeof originalError === 'object' &&
     'code' in originalError
   ) {
-    const prismaError = originalError as any
+    const prismaError = originalError as {
+      code: string
+      meta?: { target?: string }
+    }
 
     if (prismaError.code === 'P2002') {
       return {
@@ -82,12 +85,16 @@ export function formatError(
 /**
  * Format successful response
  */
-export function formatResponse(response: any): any {
+export function formatResponse(response: unknown): unknown {
+  if (typeof response !== 'object' || response === null) {
+    return response
+  }
+
   // Add metadata to response
   return {
     ...response,
     extensions: {
-      ...response.extensions,
+      ...(response as { extensions?: Record<string, unknown> }).extensions,
       timestamp: new Date().toISOString(),
       version: process.env.API_VERSION || '1.0.0',
     },
@@ -158,7 +165,10 @@ export function extractValidationErrors(
     return null
   }
 
-  const validationErrors = error.extensions.validationErrors as any
+  const validationErrors = error.extensions.validationErrors as Record<
+    string,
+    string[]
+  > | null
   if (!validationErrors) {
     return null
   }
@@ -167,7 +177,7 @@ export function extractValidationErrors(
   const fieldErrors: Record<string, string[]> = {}
 
   if (Array.isArray(validationErrors)) {
-    validationErrors.forEach((err: any) => {
+    validationErrors.forEach((err: { field: string; message: string }) => {
       const field = err.field || 'general'
       if (!fieldErrors[field]) {
         fieldErrors[field] = []

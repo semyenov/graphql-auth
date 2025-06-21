@@ -4,6 +4,7 @@
  * Implements post operations directly in Pothos resolvers without use cases.
  */
 
+import type { Prisma } from '@prisma/client'
 import { container } from 'tsyringe'
 import { z } from 'zod'
 import {
@@ -143,12 +144,13 @@ builder.mutationField('updatePost', (t) =>
       logger.info('Updating post', { postId, userId: userId.value })
 
       // Build update data
-      const updateData: any = {}
-      if (args.input.title !== undefined) updateData.title = args.input.title
+      const updateData: Prisma.PostUpdateInput = {}
+      if (args.input.title !== undefined)
+        updateData.title = args.input.title || undefined
       if (args.input.content !== undefined)
-        updateData.content = args.input.content
+        updateData.content = args.input.content ?? null
       if (args.input.published !== undefined)
-        updateData.published = args.input.published
+        updateData.published = args.input.published ?? false
 
       const post = await prisma.post.update({
         ...query,
@@ -317,12 +319,12 @@ builder.queryField('feed', (t) =>
       }),
     },
     resolve: (query, _parent, args, _context) => {
-      const whereClause: any = { published: true }
+      const whereClause: Prisma.PostWhereInput = { published: true }
 
       if (args.searchString) {
         whereClause.OR = [
-          { title: { contains: args.searchString, mode: 'insensitive' } },
-          { content: { contains: args.searchString, mode: 'insensitive' } },
+          { title: { contains: args.searchString } },
+          { content: { contains: args.searchString } },
         ]
       }
 
@@ -333,12 +335,12 @@ builder.queryField('feed', (t) =>
       })
     },
     totalCount: (_parent, args, _context) => {
-      const whereClause: any = { published: true }
+      const whereClause: Prisma.PostWhereInput = { published: true }
 
       if (args.searchString) {
         whereClause.OR = [
-          { title: { contains: args.searchString, mode: 'insensitive' } },
-          { content: { contains: args.searchString, mode: 'insensitive' } },
+          { title: { contains: args.searchString } },
+          { content: { contains: args.searchString } },
         ]
       }
 

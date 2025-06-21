@@ -125,26 +125,39 @@ export const PAGINATION_DEFAULTS = {
 /**
  * Type guard for cursor pagination
  */
-export function isCursorPagination(args: any): args is CursorPaginationArgs {
+export function isCursorPagination(
+  args: unknown,
+): args is CursorPaginationArgs {
   return (
-    args &&
-    (args.first !== undefined ||
-      args.after !== undefined ||
-      args.last !== undefined ||
-      args.before !== undefined)
+    args !== null &&
+    args !== undefined &&
+    typeof args === 'object' &&
+    ('first' in args || 'after' in args || 'last' in args || 'before' in args)
   )
 }
 
 /**
  * Type guard for offset pagination
  */
-export function isOffsetPagination(args: any): args is OffsetPaginationArgs {
-  return args && (args.limit !== undefined || args.offset !== undefined)
+export function isOffsetPagination(
+  args: unknown,
+): args is OffsetPaginationArgs {
+  return (
+    args !== null &&
+    args !== undefined &&
+    typeof args === 'object' &&
+    ('limit' in args || 'offset' in args)
+  )
 }
 
 /**
  * Type guard for page pagination
  */
-export function isPagePagination(args: any): args is PagePaginationArgs {
-  return args && (args.page !== undefined || args.perPage !== undefined)
+export function isPagePagination(args: unknown): args is PagePaginationArgs {
+  return (
+    args !== null &&
+    args !== undefined &&
+    typeof args === 'object' &&
+    ('page' in args || 'perPage' in args)
+  )
 }

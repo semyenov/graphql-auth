@@ -302,19 +302,25 @@ export const postsPermissions = {
     author: allow,
 
     // Draft content is restricted
-    content: rule()(async (parent: any, _args, context) => {
-      if (parent.published) return true
+    content: rule()(
+      async (
+        parent: { published: boolean; authorId: string },
+        _args,
+        context,
+      ) => {
+        if (parent.published) return true
 
-      if (!context.userId) {
-        return false // Hide content for unauthenticated users
-      }
+        if (!context.userId) {
+          return false // Hide content for unauthenticated users
+        }
 
-      if (parent.authorId !== context.userId.value) {
-        return false // Hide content from non-authors
-      }
+        if (parent.authorId !== context.userId.value) {
+          return false // Hide content from non-authors
+        }
 
-      return true
-    }),
+        return true
+      },
+    ),
   },
 }
 

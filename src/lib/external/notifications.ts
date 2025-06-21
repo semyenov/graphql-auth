@@ -21,7 +21,7 @@ export interface Notification {
   title: string
   body: string
   type?: NotificationType
-  data?: Record<string, any>
+  data?: Record<string, unknown>
   icon?: string
   badge?: string
   sound?: string
@@ -176,7 +176,7 @@ export class NotificationBuilder {
     return this
   }
 
-  data(data: Record<string, any>): this {
+  data(data: Record<string, unknown>): this {
     this.notification.data = data
     return this
   }
@@ -306,11 +306,7 @@ export class NotificationQueue {
  */
 export function createNotificationService(): INotificationService {
   if (process.env.FCM_PROJECT_ID) {
-    return new FCMNotificationService({
-      projectId: process.env.FCM_PROJECT_ID,
-      privateKey: process.env.FCM_PRIVATE_KEY || '',
-      clientEmail: process.env.FCM_CLIENT_EMAIL || '',
-    })
+    return new FCMNotificationService()
   }
 
   return new ConsoleNotificationService()
