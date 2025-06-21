@@ -4,7 +4,6 @@
  * Tests for refresh token functionality
  */
 
-import * as argon2 from 'argon2'
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -16,20 +15,24 @@ import {
   RefreshTokenMutation,
 } from '../../../src/gql/mutations-auth-tokens'
 import { prisma } from '../../../src/prisma'
-import { createMockContext, createTestServer, gqlHelpers } from '../../utils'
+import {
+  cleanDatabase,
+  createAuthContext,
+  createMockContext,
+  createTestServer,
+  createTestUser,
+  gqlHelpers,
+} from '../../utils'
 
 describe('Refresh Token', () => {
   const server = createTestServer()
 
   beforeEach(async () => {
-    // Create a test user
-    await prisma.user.deleteMany()
-    await prisma.user.create({
-      data: {
-        email: 'test@example.com',
-        password: await argon2.hash('password123'),
-        name: 'Test User',
-      },
+    await cleanDatabase()
+    // Create a test user using helper
+    await createTestUser({
+      email: 'test@example.com',
+      name: 'Test User',
     })
   })
 
@@ -183,17 +186,8 @@ describe('Refresh Token', () => {
       expect(userId).toBeDefined()
       expect(userId).toBeGreaterThan(0)
 
-      // Create authenticated context
-      const authContext = {
-        ...createMockContext(),
-        userId: UserId.create(userId),
-        security: {
-          isAuthenticated: true,
-          userId: user?.id,
-          roles: [],
-          permissions: [],
-        },
-      }
+      // Create authenticated context using helper
+      const authContext = createAuthContext(UserId.create(userId))
 
       // Logout
       const logoutResult = await gqlHelpers.expectSuccessfulMutation<

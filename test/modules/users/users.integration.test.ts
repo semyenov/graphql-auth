@@ -1,14 +1,16 @@
-import * as argon2 from 'argon2'
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { UserId } from '../../../src/core/value-objects/user-id.vo'
 import { TogglePublishPostMutation } from '../../../src/gql/mutations'
 import { MeQuery } from '../../../src/gql/queries'
 import { prisma } from '../../../src/prisma'
 import {
+  cleanDatabase,
   createAuthContext,
   createMockContext,
   createTestServer,
+  createTestUser,
   gqlHelpers,
 } from '../../utils'
 import { extractNumericId, toPostId } from '../../utils/helpers/relay'
@@ -36,14 +38,12 @@ describe('User queries', () => {
   let testUserEmail: string
 
   beforeEach(async () => {
-    // Create a test user
+    await cleanDatabase()
+    // Create a test user using helper
     testUserEmail = `metest-${Date.now()}@example.com`
-    const user = await prisma.user.create({
-      data: {
-        email: testUserEmail,
-        password: await argon2.hash('password123'),
-        name: 'Me Test User',
-      },
+    const user = await createTestUser({
+      email: testUserEmail,
+      name: 'Me Test User',
     })
     testUserId = user.id
   })
@@ -54,7 +54,7 @@ describe('User queries', () => {
         const data = await gqlHelpers.expectSuccessfulQuery<
           ResultOf<typeof MeQuery>,
           VariablesOf<typeof MeQuery>
-        >(server, print(MeQuery), {}, createAuthContext(testUserId))
+        >(server, print(MeQuery), {}, createAuthContext(UserId.create(testUserId)))
 
         expect(data.me).toBeDefined()
         if (data.me) {
@@ -107,7 +107,7 @@ describe('User queries', () => {
         server,
         print(TogglePublishPostMutation),
         variables,
-        createAuthContext(testUserId),
+        createAuthContext(UserId.create(testUserId)),
       )
 
       expect(data1.togglePublishPost?.published).toBe(true)
@@ -120,7 +120,7 @@ describe('User queries', () => {
         server,
         print(TogglePublishPostMutation),
         variables,
-        createAuthContext(testUserId),
+        createAuthContext(UserId.create(testUserId)),
       )
 
       expect(data2.togglePublishPost?.published).toBe(false)
@@ -133,13 +133,10 @@ describe('User queries', () => {
     })
 
     it('should not allow toggling posts by other users', async () => {
-      // Create another user
-      const otherUser = await prisma.user.create({
-        data: {
-          email: `other-${Date.now()}@example.com`,
-          password: await argon2.hash('password'),
-          name: 'Other User',
-        },
+      // Create another user using helper
+      const otherUser = await createTestUser({
+        email: `other-${Date.now()}@example.com`,
+        name: 'Other User',
       })
 
       // Create a post by other user
@@ -158,7 +155,7 @@ describe('User queries', () => {
         server,
         print(TogglePublishPostMutation),
         variables,
-        createAuthContext(testUserId), // Different user
+        createAuthContext(UserId.create(testUserId)), // Different user
         'You can only modify posts that you have created',
       )
 
@@ -176,7 +173,7 @@ describe('User queries', () => {
         server,
         print(TogglePublishPostMutation),
         variables,
-        createAuthContext(testUserId),
+        createAuthContext(UserId.create(testUserId)),
         'Post with identifier',
       )
     })
