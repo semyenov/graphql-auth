@@ -7,7 +7,7 @@
 import * as argon2 from 'argon2'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createDataLoaders } from '../../src/data/loaders'
-import { prisma } from '../helpers/db'
+import { prisma } from '../../src/prisma'
 
 describe('DataLoaders', () => {
   let loaders: ReturnType<typeof createDataLoaders>

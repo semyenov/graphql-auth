@@ -11,8 +11,8 @@ import {
   createAuthContext,
   createMockContext,
   executeOperation,
-} from '../../utils/helpers/database.helpers'
-import { createTestServer } from '../../test-utils'
+  createTestServer,
+} from '../../utils'
 import { toPostId, toUserId } from '../../utils/helpers/relay.helpers'
 
 describe('Enhanced Permissions System', () => {
@@ -23,6 +23,10 @@ describe('Enhanced Permissions System', () => {
 
   beforeEach(async () => {
     testCounter++
+
+    // Clean up database
+    await prisma.post.deleteMany()
+    await prisma.user.deleteMany()
 
     // Create test users
     const user1 = await prisma.user.create({

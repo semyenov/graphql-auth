@@ -2,6 +2,8 @@
 
 This directory contains a comprehensive testing framework for the GraphQL authentication API, featuring sophisticated utilities for unit, integration, performance, and snapshot testing.
 
+**Important Note**: This project uses **Bun** as the primary test runner. While Vitest is configured, it may encounter GraphQL module resolution conflicts. Use `bun test` for reliable test execution.
+
 ## Test Structure
 
 ```
@@ -193,24 +195,44 @@ const numericId = extractNumericId(globalPostId) // 1
 
 ## Running Tests
 
+### Using Bun (Recommended)
+
 ```bash
 # Run all tests
+bun test
 bun run test
 
+# Run tests in watch mode
+bun test --watch
+bun run test:watch
+
+# Run tests with coverage
+bun test --coverage
+bun run test:coverage
+
 # Run specific test file
-bun test auth.test.ts
+bun test test/modules/auth/auth.integration.test.ts
 
 # Run tests matching pattern
-bun test -t "should create user"
+bun test -t "authentication"
 
 # Update snapshots
 UPDATE_SNAPSHOTS=true bun test
+```
 
-# Run with coverage
-bun run test:coverage
+### Using Vitest (Alternative - May Have Issues)
 
-# Run with UI
-bun run test:ui
+> **Warning**: Vitest may encounter "Duplicate graphql modules" errors due to module resolution conflicts. This is a known issue with GraphQL and certain bundlers. Use Bun test for reliable execution.
+
+```bash
+# Run all tests with vitest
+bunx vitest run
+
+# Run tests in UI mode
+bunx vitest --ui
+
+# Run tests with coverage
+bunx vitest --coverage
 ```
 
 ## Test Database

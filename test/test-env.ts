@@ -28,3 +28,4 @@ setTestPrismaClient(testPrisma)
 configureContainer()
 
 export const TEST_DATABASE_URL = testDbUrl
+export const prisma = testPrisma

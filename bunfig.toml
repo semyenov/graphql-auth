@@ -1,2 +1,6 @@
 [build]
 target = "bun"
+
+[test]
+# Configure test path mappings
+preload = ["./test/test-env.ts", "./test/bun-setup.ts"]

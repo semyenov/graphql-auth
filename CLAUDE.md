@@ -7,12 +7,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 # Development
 bun run dev                             # Start dev server (port 4000)
-bun run test --run                      # Run all tests once (no watch)
-bun run test                            # Run tests in watch mode
-bun test test/auth.test.ts              # Run specific test file
-bun run test -t "test name"             # Run tests matching pattern
-bun run test:ui                         # Run tests with UI
-bun run test:coverage                   # Run tests with coverage
+bun test                                # Run all tests
+bun test --watch                        # Run tests in watch mode
+bun test test/modules/auth/auth.integration.test.ts  # Run specific test file
+bun test -t "authentication"            # Run tests matching pattern
+bun test --coverage                     # Run tests with coverage
 
 # Database
 bunx prisma migrate dev --name feature  # Create migration
@@ -27,12 +26,12 @@ bun run clean                          # Clean build directory
 
 # Code Quality
 bunx tsc --noEmit                      # Type check all files
-bun run lint                          # Run Biome linter
-bun run lint:fix                      # Auto-fix linting issues
-bun run format                        # Check formatting
-bun run format:fix                    # Auto-fix formatting
-bun run check                         # Run all Biome checks
-bun run check:fix                     # Auto-fix all issues
+bun run lint                           # Run Biome linter
+bun run lint:fix                       # Auto-fix linting issues
+bun run format                         # Check formatting
+bun run format:fix                     # Auto-fix formatting
+bun run check                          # Run all Biome checks
+bun run check:fix                      # Auto-fix all issues
 
 # GraphQL Schema
 bun run gen:schema                      # Generate GraphQL schema file
@@ -63,7 +62,7 @@ bun run demo                            # Run demo script
 - **Authentication**: JWT tokens with argon2 (hybrid bcrypt support) + refresh token rotation
 - **Authorization**: Dual authorization system using Pothos Scope Auth + GraphQL Shield Plugin
 - **Type Safety**: GraphQL Tada for compile-time GraphQL typing
-- **Testing**: Vitest with comprehensive test utilities
+- **Testing**: Bun test as primary runner (Vitest configured but may have conflicts)
 - **Validation**: Zod schema validation with custom async refinements
 - **Rate Limiting**: rate-limiter-flexible with configurable presets
 - **Dependency Injection**: TSyringe for service management
@@ -487,6 +486,20 @@ When working with GraphQL operations:
 - **Lint errors**: `bun run check:fix` to auto-fix all Biome issues
 - **Format issues**: `bun run format:fix` to auto-format code
 
+## Test Runner Information
+
+**Important**: This project primarily uses **Bun test** as the test runner. While Vitest is configured, it may encounter GraphQL module resolution conflicts.
+
+```bash
+# Recommended test commands
+bun test                                # Run all tests with Bun
+bun test --watch                        # Run tests in watch mode
+bun test --coverage                     # Run tests with coverage
+
+# Alternative (may have issues)
+bunx vitest run                         # Vitest may have GraphQL conflicts
+```
+
 ## Recent Architecture Changes
 
 1. **Modular Structure**: Migrated from scattered files to organized modules
@@ -499,6 +512,7 @@ When working with GraphQL operations:
 8. **Enhanced Security**: Added security headers middleware
 9. **ShieldPlugin Integration**: Migrated from middleware-based Shield to inline plugin approach
 10. **Dual Authorization**: Combined Pothos Scope Auth with GraphQL Shield for flexible permissions
+11. **Test Utilities Reorganization**: Consolidated test utilities under test/utils/ with proper exports
 
 ## Critical Rules from .cursor/rules
 
@@ -535,3 +549,10 @@ Based on the Cursor rules in this project:
 - Use `print(operation)` to convert typed operations to strings
 - Generate types with `bun run generate:gql` after schema changes
 - Extract result and variable types for reuse
+
+## Important Dependencies
+
+- **GraphQL**: Version locked at 16.11.0 to avoid module conflicts
+- **Pothos Plugins**: Ensure all @pothos/* packages are compatible versions
+- **Prisma**: Version 5.21.2+ for latest features
+- **Happy-DOM**: Required for vitest environment (even if using bun test)

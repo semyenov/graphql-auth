@@ -11,12 +11,12 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { rateLimiter } from '../../../src/app/services/rate-limiter.service'
 import { LoginMutation, SignupMutation } from '../../../src/gql/mutations'
 import { prisma } from '../../../src/prisma'
-import { createTestServer } from '../../test-utils'
 import {
+  createTestServer,
   createMockContext,
   executeOperation,
   gqlHelpers,
-} from '../../utils/helpers/database.helpers'
+} from '../../utils'
 
 describe('Rate Limiting', () => {
   const server = createTestServer()

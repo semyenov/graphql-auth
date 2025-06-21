@@ -3,7 +3,7 @@
  */
 
 import type { Post, User } from '@prisma/client'
-import { createTestPost, createTestUser } from '../factories'
+import { createTestPost, createTestUser } from '../factories/test.factory'
 
 /**
  * Create a complete blog scenario with multiple users and posts

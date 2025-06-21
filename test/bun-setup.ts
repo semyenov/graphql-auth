@@ -1,15 +1,11 @@
+import { afterAll, beforeAll, beforeEach } from 'bun:test'
 import { execSync } from 'child_process'
 import { rm } from 'fs/promises'
-import path from 'path'
-import { afterAll, beforeAll, beforeEach } from 'vitest'
 import { configureContainer } from '../src/app/config/container'
 import { rateLimiter } from '../src/app/services/rate-limiter.service'
 import { resetSchemaCache } from '../src/graphql/schema'
-import { prisma } from '../src/prisma'
 import { TEST_DATABASE_URL } from './test-database-url'
-
-const __filename = '' // This will be replaced by vitest
-const __dirname = path.dirname(__filename)
+import { prisma } from './utils/database/prisma'
 
 const dbFilePath = TEST_DATABASE_URL.replace('file:', '')
 
@@ -34,7 +30,7 @@ beforeAll(async () => {
     console.error('Failed to set up test database:', error)
     throw error
   }
-}, 60000)
+})
 
 afterAll(async () => {
   try {
@@ -49,11 +45,17 @@ afterAll(async () => {
 
 beforeEach(async () => {
   resetSchemaCache()
-  const tableNames = await prisma.$queryRaw<
-    { name: string }[]
-  >`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma_migrations';`
 
-  for (const { name } of tableNames) {
-    await prisma.$executeRawUnsafe(`DELETE FROM "${name}";`)
+  // Use transactions to ensure atomic cleanup
+  await prisma.$transaction([
+    prisma.post.deleteMany({}),
+    prisma.user.deleteMany({}),
+  ])
+
+  // Reset rate limiter between tests
+  try {
+    await rateLimiter.resetAll()
+  } catch (rateLimitError) {
+    console.error('Error resetting rate limiter:', rateLimitError)
   }
 })

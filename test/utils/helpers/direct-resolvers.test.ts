@@ -12,8 +12,7 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { UserId } from '../../../src/core/value-objects/user-id.vo'
 import { type Context } from '../../../src/graphql/context/context.types'
 import { prisma } from '../../../src/prisma'
-import { createTestServer } from '../../test-utils'
-import { createMockContext, gqlHelpers } from './database.helpers'
+import { createMockContext, createTestServer, gqlHelpers } from '../../utils'
 
 describe('Direct Resolvers', () => {
     let server: ApolloServer<Context>

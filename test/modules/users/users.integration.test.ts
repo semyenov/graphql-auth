@@ -8,10 +8,10 @@ import { prisma } from '../../../src/prisma'
 import {
   createAuthContext,
   createMockContext,
+  createTestServer,
   gqlHelpers,
-} from '../../utils/helpers/database.helpers'
-import { createTestServer } from '../../test-utils'
-import { extractNumericId, toPostId } from '../../utils/helpers/relay.helpers'
+} from '../../utils'
+import { extractNumericId, toPostId } from '../../utils/helpers/relay'
 
 // Type definitions for GraphQL responses
 interface User {

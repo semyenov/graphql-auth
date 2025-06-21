@@ -19,8 +19,8 @@ import { prisma } from '../../../src/prisma'
 import {
   createMockContext,
   gqlHelpers,
-} from '../../utils/helpers/database.helpers'
-import { createTestServer } from '../../test-utils'
+  createTestServer,
+} from '../../utils'
 
 describe('Refresh Token', () => {
   const server = createTestServer()

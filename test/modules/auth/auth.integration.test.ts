@@ -5,9 +5,9 @@ import { LoginMutation, SignupMutation } from '../../../src/gql/mutations'
 import { prisma } from '../../../src/prisma'
 import {
   createMockContext,
+  createTestServer,
   gqlHelpers,
-} from '../../utils/helpers/database.helpers'
-import { createTestServer } from '../../test-utils'
+} from '../../utils'
 
 interface AuthMutationResponse {
   signup?: string
@@ -69,15 +69,13 @@ describe('Authentication', () => {
       }
 
       // Using the new helper to expect and verify errors
-      const errors = await gqlHelpers.expectGraphQLError<AuthMutationResponse>(
+      await gqlHelpers.expectGraphQLError<AuthMutationResponse>(
         server,
         print(SignupMutation),
         variables,
         createMockContext(),
         'An account with this email already exists',
       )
-
-      expect(errors.some((error) => error.includes('email'))).toBe(true)
     })
   })
 

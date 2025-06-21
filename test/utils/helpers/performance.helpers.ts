@@ -4,7 +4,7 @@
 
 import type { ApolloServer, GraphQLResponse } from '@apollo/server'
 import type { Context } from '../../../src/graphql/context/context.types'
-import { executeOperation } from './database.helpers'
+import { executeOperation } from '../core/graphql'
 
 export interface PerformanceMetrics {
   operationName: string
