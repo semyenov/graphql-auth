@@ -1,6 +1,6 @@
 /**
  * Authentication Module Validation Schemas
- * 
+ *
  * Contains all validation schemas and rules specific to authentication
  */
 
@@ -15,7 +15,7 @@ export const emailSchema = z
   .min(1, ERROR_MESSAGES.INVALID_EMAIL)
   .email(ERROR_MESSAGES.INVALID_EMAIL)
   .max(VALIDATION.MAX_EMAIL_LENGTH, ERROR_MESSAGES.INVALID_EMAIL)
-  .transform(email => email.toLowerCase().trim())
+  .transform((email) => email.toLowerCase().trim())
 
 /**
  * Password validation with strength requirements
@@ -31,19 +31,19 @@ export const passwordSchema = z
 export const strongPasswordSchema = passwordSchema
   .refine(
     (password) => /[A-Z]/.test(password),
-    'Password must contain at least one uppercase letter'
+    'Password must contain at least one uppercase letter',
   )
   .refine(
     (password) => /[a-z]/.test(password),
-    'Password must contain at least one lowercase letter'
+    'Password must contain at least one lowercase letter',
   )
   .refine(
     (password) => /[0-9]/.test(password),
-    'Password must contain at least one number'
+    'Password must contain at least one number',
   )
   .refine(
     (password) => /[^A-Za-z0-9]/.test(password),
-    'Password must contain at least one special character'
+    'Password must contain at least one special character',
   )
 
 /**
@@ -52,10 +52,11 @@ export const strongPasswordSchema = passwordSchema
 export const signupSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
-  name: z.string()
+  name: z
+    .string()
     .max(VALIDATION.MAX_NAME_LENGTH, ERROR_MESSAGES.NAME_TOO_LONG)
     .optional()
-    .transform(name => name?.trim())
+    .transform((name) => name?.trim()),
 })
 
 /**
@@ -70,35 +71,39 @@ export const loginSchema = z.object({
  * Refresh token validation
  */
 export const refreshTokenSchema = z.object({
-  refreshToken: z.string()
+  refreshToken: z
+    .string()
     .min(1, ERROR_MESSAGES.REFRESH_TOKEN_REQUIRED)
-    .regex(/^[A-Za-z0-9+/=]+$/, ERROR_MESSAGES.INVALID_REFRESH_TOKEN)
+    .regex(/^[A-Za-z0-9+/=]+$/, ERROR_MESSAGES.INVALID_REFRESH_TOKEN),
 })
 
 /**
  * Update profile validation
  */
-export const updateProfileSchema = z.object({
-  name: z.string()
-    .max(VALIDATION.MAX_NAME_LENGTH, ERROR_MESSAGES.NAME_TOO_LONG)
-    .optional()
-    .transform(name => name?.trim()),
-  email: emailSchema.optional(),
-  currentPassword: passwordSchema.optional(),
-  newPassword: passwordSchema.optional(),
-}).refine(
-  (data) => {
-    // If changing password, current password is required
-    if (data.newPassword && !data.currentPassword) {
-      return false
-    }
-    return true
-  },
-  {
-    message: ERROR_MESSAGES.CURRENT_PASSWORD_REQUIRED,
-    path: ['currentPassword'],
-  }
-)
+export const updateProfileSchema = z
+  .object({
+    name: z
+      .string()
+      .max(VALIDATION.MAX_NAME_LENGTH, ERROR_MESSAGES.NAME_TOO_LONG)
+      .optional()
+      .transform((name) => name?.trim()),
+    email: emailSchema.optional(),
+    currentPassword: passwordSchema.optional(),
+    newPassword: passwordSchema.optional(),
+  })
+  .refine(
+    (data) => {
+      // If changing password, current password is required
+      if (data.newPassword && !data.currentPassword) {
+        return false
+      }
+      return true
+    },
+    {
+      message: ERROR_MESSAGES.CURRENT_PASSWORD_REQUIRED,
+      path: ['currentPassword'],
+    },
+  )
 
 /**
  * Password reset request validation
@@ -119,7 +124,8 @@ export const passwordResetSchema = z.object({
  * Two-factor authentication validation
  */
 export const twoFactorSchema = z.object({
-  code: z.string()
+  code: z
+    .string()
     .length(6, ERROR_MESSAGES.INVALID_CODE)
     .regex(/^\d+$/, ERROR_MESSAGES.INVALID_CODE),
 })
@@ -137,10 +143,7 @@ export const sessionSchema = z.object({
 /**
  * Validate and transform authentication input
  */
-export function validateAuthInput<T>(
-  schema: z.ZodSchema<T>,
-  data: unknown
-): T {
+export function validateAuthInput<T>(schema: z.ZodSchema<T>, data: unknown): T {
   return schema.parse(data)
 }
 
@@ -149,7 +152,7 @@ export function validateAuthInput<T>(
  */
 export function safeValidateAuthInput<T>(
   schema: z.ZodSchema<T>,
-  data: unknown
+  data: unknown,
 ): { success: true; data: T } | { success: false; errors: z.ZodError } {
   const result = schema.safeParse(data)
   if (result.success) {

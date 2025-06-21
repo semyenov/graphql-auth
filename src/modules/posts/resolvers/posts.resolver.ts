@@ -1,12 +1,16 @@
 /**
  * Posts GraphQL Resolvers (Direct Implementation)
- * 
+ *
  * Implements post operations directly in Pothos resolvers without use cases.
  */
 
 import { container } from 'tsyringe'
 import { z } from 'zod'
-import { AuthorizationError, NotFoundError, RateLimitError } from '../../../core/errors/types'
+import {
+  AuthorizationError,
+  NotFoundError,
+  RateLimitError,
+} from '../../../core/errors/types'
 import type { ILogger } from '../../../core/services/logger.interface'
 import { parseGlobalId } from '../../../core/utils/relay'
 import { builder } from '../../../graphql/schema/builder'
@@ -77,7 +81,7 @@ builder.mutationField('createPost', (t) =>
       logger.info('Creating new post', {
         authorId: userId.value,
         title: args.input.title,
-        published: args.input.published
+        published: args.input.published,
       })
 
       const post = await prisma.post.create({
@@ -93,12 +97,12 @@ builder.mutationField('createPost', (t) =>
       logger.info('Post created successfully', {
         postId: post.id,
         authorId: userId.value,
-        published: post.published
+        published: post.published,
       })
 
       return post
     },
-  })
+  }),
 )
 
 // Update post mutation
@@ -131,7 +135,9 @@ builder.mutationField('updatePost', (t) =>
       }
 
       if (existingPost.authorId !== userId.value) {
-        throw new AuthorizationError('You can only modify posts that you have created')
+        throw new AuthorizationError(
+          'You can only modify posts that you have created',
+        )
       }
 
       logger.info('Updating post', { postId, userId: userId.value })
@@ -139,8 +145,10 @@ builder.mutationField('updatePost', (t) =>
       // Build update data
       const updateData: any = {}
       if (args.input.title !== undefined) updateData.title = args.input.title
-      if (args.input.content !== undefined) updateData.content = args.input.content
-      if (args.input.published !== undefined) updateData.published = args.input.published
+      if (args.input.content !== undefined)
+        updateData.content = args.input.content
+      if (args.input.published !== undefined)
+        updateData.published = args.input.published
 
       const post = await prisma.post.update({
         ...query,
@@ -152,7 +160,7 @@ builder.mutationField('updatePost', (t) =>
 
       return post
     },
-  })
+  }),
 )
 
 // Delete post mutation
@@ -180,8 +188,13 @@ builder.mutationField('deletePost', (t) =>
       }
 
       // Admin can delete any post, otherwise must be owner
-      if (existingPost.authorId !== userId.value && context.user?.role !== 'admin') {
-        throw new AuthorizationError('You can only modify posts that you have created')
+      if (
+        existingPost.authorId !== userId.value &&
+        context.user?.role !== 'admin'
+      ) {
+        throw new AuthorizationError(
+          'You can only modify posts that you have created',
+        )
       }
 
       logger.info('Deleting post', { postId, userId: userId.value })
@@ -194,7 +207,7 @@ builder.mutationField('deletePost', (t) =>
 
       return true
     },
-  })
+  }),
 )
 
 // Toggle publish post mutation
@@ -222,12 +235,14 @@ builder.mutationField('togglePublishPost', (t) =>
       }
 
       if (existingPost.authorId !== userId.value) {
-        throw new AuthorizationError('You can only modify posts that you have created')
+        throw new AuthorizationError(
+          'You can only modify posts that you have created',
+        )
       }
 
       logger.info('Toggling post publish status', {
         postId,
-        currentStatus: existingPost.published
+        currentStatus: existingPost.published,
       })
 
       const post = await prisma.post.update({
@@ -238,12 +253,12 @@ builder.mutationField('togglePublishPost', (t) =>
 
       logger.info('Post publish status toggled', {
         postId,
-        newStatus: post.published
+        newStatus: post.published,
       })
 
       return post
     },
-  })
+  }),
 )
 
 // Increment view count mutation
@@ -279,12 +294,12 @@ builder.mutationField('incrementPostViewCount', (t) =>
 
       logger.info('Post view count incremented', {
         postId,
-        newCount: post.viewCount
+        newCount: post.viewCount,
       })
 
       return post
     },
-  })
+  }),
 )
 
 // Feed query
@@ -329,7 +344,7 @@ builder.queryField('feed', (t) =>
 
       return prisma.post.count({ where: whereClause })
     },
-  })
+  }),
 )
 
 // User drafts query
@@ -361,7 +376,7 @@ builder.queryField('drafts', (t) =>
         },
       })
     },
-  })
+  }),
 )
 
 // Get post by ID query
@@ -379,7 +394,10 @@ builder.queryField('post', (t) =>
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
       // Use enhanced scopes to check visibility
-      if ('createScopes' in context && typeof context.createScopes === 'function') {
+      if (
+        'createScopes' in context &&
+        typeof context.createScopes === 'function'
+      ) {
         const scopes = context.createScopes()
         const canView = await scopes.canViewContent('Post', args.id.toString())
         if (!canView) {
@@ -392,7 +410,7 @@ builder.queryField('post', (t) =>
         where: { id: postId },
       })
     },
-  })
+  }),
 )
 
 // Moderate post mutation - requires moderation permission
@@ -420,7 +438,10 @@ builder.mutationField('moderatePost', (t) =>
       const logger = getLogger().child({ resolver: 'moderatePost' })
 
       // Check moderation permission using enhanced scopes
-      if ('createScopes' in context && typeof context.createScopes === 'function') {
+      if (
+        'createScopes' in context &&
+        typeof context.createScopes === 'function'
+      ) {
         const scopes = context.createScopes()
         const hasPermission = await scopes.hasPermission('post:moderate')
         if (!hasPermission) {
@@ -433,7 +454,7 @@ builder.mutationField('moderatePost', (t) =>
       logger.info('Moderating post', {
         postId,
         action: args.action,
-        moderatorId: context.userId?.value
+        moderatorId: context.userId?.value,
       })
 
       // Check if post exists
@@ -462,12 +483,12 @@ builder.mutationField('moderatePost', (t) =>
 
       logger.info('Post moderated successfully', {
         postId,
-        action: args.action
+        action: args.action,
       })
 
       return true
     },
-  })
+  }),
 )
 
 // Create comment mutation with rate limiting
@@ -489,9 +510,16 @@ builder.mutationField('createComment', (t) =>
       const logger = getLogger().child({ resolver: 'createComment' })
 
       // Check rate limit using enhanced scopes
-      if ('createScopes' in context && typeof context.createScopes === 'function') {
+      if (
+        'createScopes' in context &&
+        typeof context.createScopes === 'function'
+      ) {
         const scopes = context.createScopes()
-        const withinLimit = await scopes.withinRateLimit('createComment', 10, 3600000)
+        const withinLimit = await scopes.withinRateLimit(
+          'createComment',
+          10,
+          3600000,
+        )
         if (!withinLimit) {
           throw new RateLimitError('Too many comments. Please try again later.')
         }
@@ -515,12 +543,12 @@ builder.mutationField('createComment', (t) =>
 
       logger.info('Creating comment', {
         postId,
-        userId: context.userId?.value
+        userId: context.userId?.value,
       })
 
       // In a real implementation, you would create a comment record
       // For now, just return a success message
       return `Comment "${args.content}" created successfully on post ${args.postId}`
     },
-  })
+  }),
 )

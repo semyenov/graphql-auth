@@ -1,6 +1,6 @@
 /**
  * Data Layer Index
- * 
+ *
  * Central export point for all data-related functionality
  * as specified in IMPROVED-FILE-STRUCTURE.md
  */

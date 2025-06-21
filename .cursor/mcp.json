@@ -2,16 +2,12 @@
   "mcpServers": {
     "console-ninja": {
       "command": "node",
-      "args": [
-        "~/.console-ninja/mcp/"
-      ]
+      "args": ["~/.console-ninja/mcp/"]
     },
     "sequential-thinking": {
       "type": "stdio",
       "command": "bunx",
-      "args": [
-        "@modelcontextprotocol/server-sequential-thinking"
-      ]
+      "args": ["@modelcontextprotocol/server-sequential-thinking"]
     }
   }
 }

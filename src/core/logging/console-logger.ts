@@ -1,6 +1,6 @@
 /**
  * Console Logger Implementation
- * 
+ *
  * Implements the ILogger interface using console output.
  * Supports structured logging with context and configurable log levels.
  */
@@ -38,19 +38,22 @@ export class ConsoleLogger implements ILogger {
 
   error(message: string, error?: Error, context?: LogContext): void {
     if (this.shouldLog(LogLevel.ERROR)) {
-      const errorContext = error ? { 
-        error: {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        }
-      } : {}
-      
-      console.error(this.formatMessage(
-        LogLevel.ERROR, 
-        message, 
-        { ...errorContext, ...context }
-      ))
+      const errorContext = error
+        ? {
+            error: {
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+            },
+          }
+        : {}
+
+      console.error(
+        this.formatMessage(LogLevel.ERROR, message, {
+          ...errorContext,
+          ...context,
+        }),
+      )
     }
   }
 
@@ -63,21 +66,32 @@ export class ConsoleLogger implements ILogger {
   }
 
   private shouldLog(level: LogLevel): boolean {
-    const levels = [LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR]
+    const levels = [
+      LogLevel.DEBUG,
+      LogLevel.INFO,
+      LogLevel.WARN,
+      LogLevel.ERROR,
+    ]
     const currentLevelIndex = levels.indexOf(this.minLevel)
     const messageLevelIndex = levels.indexOf(level)
     return messageLevelIndex >= currentLevelIndex
   }
 
-  private formatMessage(level: LogLevel, message: string, context?: LogContext): string {
+  private formatMessage(
+    level: LogLevel,
+    message: string,
+    context?: LogContext,
+  ): string {
     const timestamp = new Date().toISOString()
     const mergedContext = { ...this.context, ...context }
-    
+
     const logObject = {
       timestamp,
       level: level.toUpperCase(),
       message,
-      ...(Object.keys(mergedContext).length > 0 ? { context: mergedContext } : {})
+      ...(Object.keys(mergedContext).length > 0
+        ? { context: mergedContext }
+        : {}),
     }
 
     if (process.env.NODE_ENV === 'production') {
@@ -85,9 +99,10 @@ export class ConsoleLogger implements ILogger {
       return JSON.stringify(logObject)
     } else {
       // In development, use a more readable format
-      const contextStr = Object.keys(mergedContext).length > 0 
-        ? ` | ${JSON.stringify(mergedContext)}` 
-        : ''
+      const contextStr =
+        Object.keys(mergedContext).length > 0
+          ? ` | ${JSON.stringify(mergedContext)}`
+          : ''
       return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}`
     }
   }

@@ -3,6 +3,8 @@
  * Provides application-level rate limiting for HTTP requests
  */
 
+import type { IncomingMessage, ServerResponse } from 'http'
+import type { Socket } from 'net'
 import { RateLimiterMemory } from 'rate-limiter-flexible'
 import { config } from '../config'
 
@@ -18,10 +20,20 @@ const rateLimiter = new RateLimiterMemory({
 /**
  * Rate limiting middleware for HTTP requests
  */
+interface ExtendedRequest extends IncomingMessage {
+  ip?: string
+  connection: Socket & { remoteAddress?: string }
+}
+
+interface ExtendedResponse extends ServerResponse {
+  status: (code: number) => ExtendedResponse
+  json: (data: unknown) => void
+}
+
 export async function rateLimitMiddleware(
-  req: any,
-  res: any,
-  next: () => Promise<void>
+  req: ExtendedRequest,
+  res: ExtendedResponse,
+  next: () => Promise<void>,
 ) {
   try {
     // Use IP address as key
@@ -32,15 +44,25 @@ export async function rateLimitMiddleware(
 
     // Continue to next middleware
     await next()
-  } catch (rateLimiterRes: any) {
+  } catch (error) {
+    // Check if it's a rate limiter response
+    const rateLimiterRes = error as {
+      msBeforeNext?: number
+      remainingPoints?: number
+    }
+
     // Rate limit exceeded
-    const retryAfter = Math.round(rateLimiterRes.msBeforeNext / 1000) || 60
+    const msBeforeNext = rateLimiterRes.msBeforeNext ?? 60000
+    const retryAfter = Math.round(msBeforeNext / 1000)
 
     // Set rate limit headers
     res.setHeader('Retry-After', retryAfter)
     res.setHeader('X-RateLimit-Limit', config.rateLimit.maxRequests)
-    res.setHeader('X-RateLimit-Remaining', rateLimiterRes.remainingPoints || 0)
-    res.setHeader('X-RateLimit-Reset', new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString())
+    res.setHeader('X-RateLimit-Remaining', rateLimiterRes.remainingPoints ?? 0)
+    res.setHeader(
+      'X-RateLimit-Reset',
+      new Date(Date.now() + msBeforeNext).toISOString(),
+    )
 
     // Send error response
     res.status(429).json({

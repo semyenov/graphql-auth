@@ -1,14 +1,14 @@
 /**
  * Apollo Server Configuration
- * 
+ *
  * Setup and configuration for Apollo GraphQL Server
  */
 
 import { ApolloServer } from '@apollo/server'
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
-import type { Server } from 'http'
 import type { GraphQLSchema } from 'graphql'
+import type { Server } from 'http'
 import type { Context } from '../../graphql/context/context.types'
 
 /**
@@ -25,7 +25,9 @@ export interface ApolloServerConfig {
 /**
  * Create configured Apollo Server instance
  */
-export function createApolloServer(config: ApolloServerConfig): ApolloServer<Context> {
+export function createApolloServer(
+  config: ApolloServerConfig,
+): ApolloServer<Context> {
   const {
     schema,
     httpServer,
@@ -47,7 +49,7 @@ export function createApolloServer(config: ApolloServerConfig): ApolloServer<Con
       ApolloServerPluginLandingPageLocalDefault({
         embed: true,
         includeCookies: true,
-      })
+      }),
     )
   }
 

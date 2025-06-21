@@ -1,13 +1,16 @@
 /**
  * Post Entity - Core business entity
- * 
+ *
  * Represents a blog post in our domain model.
  */
 
-import { VALIDATION_LIMITS, VALIDATION_MESSAGES } from '../../constants/validation'
+import {
+  VALIDATION_LIMITS,
+  VALIDATION_MESSAGES,
+} from '../../constants/validation'
 import { EntityValidationError } from '../../core/errors/types'
 import { PostId } from '../value-objects/post-id.vo'
-import { UserId } from '../value-objects/user-id.vo'
+import type { UserId } from '../value-objects/user-id.vo'
 
 export interface PostProps {
   id: PostId
@@ -21,7 +24,7 @@ export interface PostProps {
 }
 
 export class Post {
-  private constructor(private readonly props: PostProps) { }
+  private constructor(private readonly props: PostProps) {}
 
   // Factory method for creating a new post
   static create(props: {
@@ -37,7 +40,10 @@ export class Post {
       throw new EntityValidationError([], VALIDATION_MESSAGES.TITLE_TOO_LONG)
     }
 
-    if (props.content && props.content.length > VALIDATION_LIMITS.CONTENT_MAX_LENGTH) {
+    if (
+      props.content &&
+      props.content.length > VALIDATION_LIMITS.CONTENT_MAX_LENGTH
+    ) {
       throw new EntityValidationError([], VALIDATION_MESSAGES.CONTENT_TOO_LONG)
     }
 
@@ -104,8 +110,14 @@ export class Post {
     }
 
     if (props.content !== undefined) {
-      if (props.content && props.content.length > VALIDATION_LIMITS.CONTENT_MAX_LENGTH) {
-        throw new EntityValidationError([], VALIDATION_MESSAGES.CONTENT_TOO_LONG)
+      if (
+        props.content &&
+        props.content.length > VALIDATION_LIMITS.CONTENT_MAX_LENGTH
+      ) {
+        throw new EntityValidationError(
+          [],
+          VALIDATION_MESSAGES.CONTENT_TOO_LONG,
+        )
       }
       this.props.content = props.content
     }

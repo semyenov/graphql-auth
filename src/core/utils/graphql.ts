@@ -1,6 +1,9 @@
+import type { DocumentNode } from 'graphql'
 import { print } from 'graphql'
-import { GraphQLError, GraphQLResponse } from '../../graphql/context/context.types'
-
+import type {
+  GraphQLError,
+  GraphQLResponse,
+} from '../../graphql/context/context.types'
 
 // =============================================================================
 // ADVANCED QUERY UTILITIES
@@ -58,52 +61,54 @@ export class QueryBuilder {
 // =============================================================================
 
 /**
- * Transform GraphQL response data
+ * Extract data from GraphQL response or throw error
  */
-export class ResponseTransformer {
-  /**
-   * Extract data from GraphQL response or throw error
-   */
-  static unwrap<T>(response: GraphQLResponse<T>): T {
-    if (response.errors && response.errors.length > 0) {
-      throw new GraphQLResponseError(response.errors)
-    }
-    if (!response.data) {
-      throw new Error('GraphQL response contains no data')
-    }
-    return response.data
+export function unwrapResponse<T>(response: GraphQLResponse<T>): T {
+  if (response.errors && response.errors.length > 0) {
+    throw new GraphQLResponseError(response.errors)
   }
+  if (!response.data) {
+    throw new Error('GraphQL response contains no data')
+  }
+  return response.data
+}
 
-  /**
-   * Transform response data with a mapping function
-   */
-  static map<T, U>(
-    response: GraphQLResponse<T>,
-    mapper: (data: T) => U,
-  ): GraphQLResponse<U> {
+/**
+ * Transform response data with a mapping function
+ */
+export function mapResponse<T, U>(
+  response: GraphQLResponse<T>,
+  mapper: (data: T) => U,
+): GraphQLResponse<U> {
+  return {
+    ...response,
+    data: response.data ? mapper(response.data) : undefined,
+  }
+}
+
+/**
+ * Flatten nested response structure
+ */
+export function flattenResponse<T extends Record<string, unknown>>(
+  response: GraphQLResponse<T>,
+): GraphQLResponse<T[keyof T]> {
+  if (!response.data) return response as GraphQLResponse<T[keyof T]>
+
+  const keys = Object.keys(response.data)
+  if (keys.length === 1) {
     return {
       ...response,
-      data: response.data ? mapper(response.data) : undefined,
+      data: response.data[keys[0] as keyof T],
     }
   }
+  return response as GraphQLResponse<T[keyof T]>
+}
 
-  /**
-   * Flatten nested response structure
-   */
-  static flatten<T extends Record<string, any>>(
-    response: GraphQLResponse<T>,
-  ): GraphQLResponse<T[keyof T]> {
-    if (!response.data) return response as any
-
-    const keys = Object.keys(response.data)
-    if (keys.length === 1) {
-      return {
-        ...response,
-        data: response.data[keys[0] as keyof T],
-      }
-    }
-    return response as any
-  }
+// Legacy class for backward compatibility
+export const ResponseTransformer = {
+  unwrap: unwrapResponse,
+  map: mapResponse,
+  flatten: flattenResponse,
 }
 
 /**
@@ -138,7 +143,7 @@ interface CacheEntry<T> {
  * Simple in-memory cache for GraphQL responses
  */
 export class GraphQLCache {
-  private cache = new Map<string, CacheEntry<any>>()
+  private cache = new Map<string, CacheEntry<unknown>>()
   private defaultTTL = 5 * 60 * 1000 // 5 minutes
 
   /**
@@ -167,7 +172,7 @@ export class GraphQLCache {
       return null
     }
 
-    return entry.data
+    return entry.data as T | null
   }
 
   /**
@@ -277,7 +282,9 @@ export class GraphQLBatcher {
 
       requests.forEach((request, index) => {
         request.resolve(
-          responses[index] || { errors: [{ name: 'NoResponseError', message: 'No response' }] },
+          responses[index] || {
+            errors: [{ name: 'NoResponseError', message: 'No response' }],
+          },
         )
       })
     } catch (error) {
@@ -297,45 +304,46 @@ export class GraphQLBatcher {
 /**
  * GraphQL query validation utilities
  */
-export class QueryValidator {
+export const QueryValidator = {
   /**
-   * Validate that required variables are provided
+   * Validate that all required variables for a query are present
    */
-  static validateVariables(
+  validateVariables(
     query: string,
     variables: Record<string, unknown> = {},
   ): string[] {
     const errors: string[] = []
-
-    // Simple regex to find required variables (ending with !)
-    const requiredVars = query.match(/\$(\w+):\s*\w+!/g) || []
+    // Simplified regex to find declared variables: $varName:
+    const requiredVars = query.match(/\$\w+:/g) || []
 
     for (const match of requiredVars) {
       const varName = match.match(/\$(\w+):/)
-      if (varName && varName[1] && !(varName[1] in variables)) {
+      if (varName?.[1] && !(varName[1] in variables)) {
         errors.push(`Required variable $${varName[1]} is missing`)
       }
     }
-
     return errors
-  }
+  },
 
   /**
-   * Check if query has specific field
+   * Check if a query contains a specific field
    */
-  static hasField(query: string, fieldName: string): boolean {
-    return query.includes(fieldName)
-  }
+  hasField(query: string, fieldName: string): boolean {
+    const fieldRegex = new RegExp(`\\b${fieldName}\\b`)
+    return fieldRegex.test(query)
+  },
 
   /**
-   * Extract operation type from query
+   * Get the type of a GraphQL operation
    */
-  static getOperationType(
+  getOperationType(
     query: string,
   ): 'query' | 'mutation' | 'subscription' | null {
     const match = query.match(/^\s*(query|mutation|subscription)/i)
-    return match ? (match[1]?.toLowerCase() as any) : null
-  }
+    return match
+      ? (match[1]?.toLowerCase() as 'query' | 'mutation' | 'subscription')
+      : null
+  },
 }
 
 // =============================================================================
@@ -349,7 +357,7 @@ export const devTools = {
   /**
    * Pretty print GraphQL query
    */
-  prettyPrint: (query: string | any): string => {
+  prettyPrint: (query: string | DocumentNode): string => {
     const queryString = typeof query === 'string' ? query : print(query)
     return queryString
       .replace(/\s+/g, ' ')
@@ -415,10 +423,10 @@ export const schemaUtils = {
   /**
    * Type-safe field selector builder
    */
-  selectFields: <T extends Record<string, any>>(
+  selectFields: <T extends Record<string, unknown>>(
     fields: (keyof T)[],
   ): string => {
-    return fields.join('\n  ')
+    return fields.join('\n')
   },
 
   /**
@@ -437,6 +445,43 @@ export const schemaUtils = {
 }
 
 // =============================================================================
+// MISCELLANEOUS UTILITIES
+// =============================================================================
+
+/**
+ * Miscellaneous GraphQL utilities
+ */
+export const GraphQLUtils = {
+  /**
+   * Pretty print GraphQL query
+   */
+  prettyPrint: (query: string | DocumentNode): string => {
+    const queryString = typeof query === 'string' ? query : print(query)
+    return queryString
+  },
+
+  /**
+   * Add a new field to a GraphQL query string
+   */
+  addField: (query: string, newField: string): string => {
+    const insertionPoint = query.lastIndexOf('}')
+    if (insertionPoint === -1) return query
+    return `${query.slice(0, insertionPoint)}\n  ${newField}\n}${query.slice(
+      insertionPoint + 1,
+    )}`
+  },
+
+  /**
+   * Extract unique fragment names from a query
+   */
+  getFragmentNames: (query: string): string[] => {
+    const fragmentRegex = /fragment\s+(\w+)\s+on/g
+    const matches = query.matchAll(fragmentRegex)
+    return [...matches].map((match) => match[1]).filter(Boolean) as string[]
+  },
+}
+
+// =============================================================================
 // EXPORT DEFAULT UTILITIES
 // =============================================================================
 
@@ -449,6 +494,7 @@ export const graphqlUtils = {
   QueryValidator,
   devTools,
   schemaUtils,
+  GraphQLUtils,
 }
 
 export default graphqlUtils

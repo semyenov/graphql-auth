@@ -21,13 +21,18 @@ bun run db:reset                        # Reset database with seed data
 bunx prisma studio                      # Open database GUI
 
 # Build & Production
-bun run build                          # Build for production
-bun run start                          # Start production server
+bun run build                          # Build for production (builds src/main.ts)
+bun run start                          # Start production server (runs dist/app/server.js)
 bun run clean                          # Clean build directory
 
 # Code Quality
 bunx tsc --noEmit                      # Type check all files
-bunx prettier --write .                # Format code
+bun run lint                          # Run Biome linter
+bun run lint:fix                      # Auto-fix linting issues
+bun run format                        # Check formatting
+bun run format:fix                    # Auto-fix formatting
+bun run check                         # Run all Biome checks
+bun run check:fix                     # Auto-fix all issues
 
 # GraphQL Schema
 bun run gen:schema                      # Generate GraphQL schema file
@@ -41,6 +46,7 @@ bun run graphql:examples                # Run GraphQL query examples
 ## Architecture Overview
 
 ### Tech Stack
+
 - **Runtime**: Bun (fast JavaScript/TypeScript runtime)
 - **GraphQL Server**: Apollo Server 4 with H3 HTTP framework
 - **Schema Builder**: Pothos with advanced plugin integration:
@@ -51,12 +57,13 @@ bun run graphql:examples                # Run GraphQL query examples
   - **DataLoader Plugin**: Automatic batch loading for N+1 prevention
   - **Validation Plugin**: Zod integration with async refinements
 - **Database**: Prisma ORM with SQLite (dev.db) - accessed directly, not through context
-- **Authentication**: JWT tokens with bcryptjs + refresh token rotation
+- **Authentication**: JWT tokens with argon2 (hybrid bcrypt support) + refresh token rotation
 - **Authorization**: GraphQL Shield middleware with Pothos Scope Auth
 - **Type Safety**: GraphQL Tada for compile-time GraphQL typing
 - **Testing**: Vitest with comprehensive test utilities
 - **Validation**: Zod schema validation with custom async refinements
 - **Rate Limiting**: rate-limiter-flexible with configurable presets
+- **Dependency Injection**: TSyringe for service management
 
 ### Architecture: Modular Direct Resolvers
 
@@ -65,9 +72,15 @@ The project uses a **modular architecture** with direct Pothos resolvers organiz
 ```
 src/
 ├── app/                              # Application entry and configuration
-│   ├── server.ts                     # Main server setup
-│   ├── config/                       # Configuration (auth, database, environment)
+│   ├── server.ts                     # Main server setup (entry point: bun run dev)
+│   ├── config/                       # Configuration
+│   │   ├── container.ts              # TSyringe DI container setup
+│   │   ├── environment.ts            # Environment variable handling
+│   │   └── database.ts               # Database configuration
 │   └── middleware/                   # Application-level middleware
+│       ├── cors.ts                   # CORS configuration
+│       ├── rate-limiting.ts          # Rate limiter setup
+│       └── logging.ts                # Request/response logging
 │
 ├── modules/                          # Feature modules (domain-driven)
 │   ├── auth/                         # Authentication module
@@ -75,147 +88,119 @@ src/
 │   │   ├── auth.permissions.ts       # Authorization rules
 │   │   ├── auth.validation.ts        # Input validation schemas
 │   │   ├── resolvers/                # GraphQL resolvers
+│   │   │   ├── auth.resolver.ts      # Basic auth (signup/login/me)
+│   │   │   └── auth-tokens.resolver.ts # Refresh token operations
 │   │   ├── services/                 # Business logic services
+│   │   │   ├── password.service.ts   # Password hashing (bcryptjs)
+│   │   │   └── token.service.ts      # JWT token management
 │   │   └── types/                    # Module-specific types
-│   ├── posts/                        # Posts module (same structure)
-│   └── users/                        # Users module (same structure)
+│   ├── posts/                        # Posts module
+│   │   ├── posts.schema.ts           # Post type definitions
+│   │   ├── posts.permissions.ts      # Post authorization rules
+│   │   ├── posts.validation.ts       # Post input validation
+│   │   ├── posts.service.ts          # Post business logic
+│   │   └── resolvers/                # Post CRUD resolvers
+│   ├── users/                        # Users module
+│   │   ├── users.schema.ts           # User type definitions
+│   │   ├── users.permissions.ts      # User authorization rules
+│   │   ├── users.validation.ts       # User input validation
+│   │   ├── users.service.ts          # User business logic
+│   │   └── resolvers/                # User query resolvers
+│   └── shared/                       # Shared module utilities
+│       ├── pagination/               # Pagination utilities
+│       ├── filtering/                # Filter utilities
+│       └── connections/              # Relay connection helpers
 │
 ├── graphql/                          # GraphQL infrastructure
 │   ├── schema/                       # Schema building and assembly
 │   │   ├── builder.ts                # Pothos builder with plugins
-│   │   ├── plugins/                  # Schema plugins
-│   │   └── types/                    # GraphQL type definitions
+│   │   ├── index.ts                  # Schema assembly & export
+│   │   ├── inputs.ts                 # Shared input types
+│   │   ├── scalars.ts                # Custom scalars (DateTime)
+│   │   └── plugins/                  # Schema plugins
 │   ├── context/                      # GraphQL context
+│   │   ├── context.types.ts          # Context type definitions
+│   │   ├── context.factory.ts        # Context creation
+│   │   ├── context.auth.ts           # Authentication helpers
+│   │   └── context.utils.ts          # Context utilities
 │   ├── directives/                   # Custom GraphQL directives
 │   └── middleware/                   # GraphQL-specific middleware
+│       ├── shield-config.ts          # Permission mapping
+│       ├── rules.ts                  # Permission rules
+│       └── rule-utils.ts             # Rule helper functions
 │
 ├── core/                             # Core business logic and utilities
 │   ├── auth/                         # Authentication core
+│   │   ├── scopes.ts                 # Authorization scopes
+│   │   └── types.ts                  # Auth types
 │   ├── errors/                       # Error handling system
+│   │   ├── types.ts                  # Error class hierarchy
+│   │   ├── handlers.ts               # Error normalization
+│   │   └── constants.ts              # Error messages
 │   ├── logging/                      # Logging system
+│   │   ├── logger-factory.ts         # Logger creation
+│   │   └── console-logger.ts         # Console implementation
 │   ├── utils/                        # Core utilities
+│   │   ├── relay-helpers.ts          # Global ID encoding/decoding
+│   │   ├── jwt.ts                    # JWT utilities
+│   │   ├── crypto.ts                 # Cryptographic utilities
+│   │   ├── dates.ts                  # Date utilities
+│   │   ├── strings.ts                # String utilities
+│   │   └── types.ts                  # Type utilities
 │   └── validation/                   # Validation system
+│       ├── schemas.ts                # Common Zod schemas
+│       └── validators.ts             # Custom validators
 │
 ├── data/                             # Data access layer
 │   ├── database/                     # Database configuration
+│   │   └── client.ts                 # Prisma client setup
 │   ├── loaders/                      # DataLoader implementations
-│   ├── repositories/                 # Repository pattern (if needed)
+│   │   └── loaders.ts                # User/Post loaders
+│   ├── repositories/                 # Repository pattern
+│   │   └── refresh-token.repository.ts # Refresh token storage
 │   └── cache/                        # Caching layer
+│       ├── memory-cache.ts           # In-memory cache
+│       └── redis-cache.ts            # Redis cache (optional)
+│
+├── gql/                              # GraphQL client operations (for testing)
+│   ├── queries.ts                    # Query definitions
+│   ├── mutations.ts                  # Mutation definitions
+│   └── mutations-auth-tokens.ts      # Auth token mutations
 │
 ├── types/                            # Global type definitions
-└── constants/                        # Application constants
-```
-
-### Authorization System
-
-GraphQL Shield middleware with modular rule system:
-
-```
-src/graphql/middleware/
-├── shield-config.ts    # Maps rules to schema operations
-├── rules.ts           # Permission rules using rule-utils
-├── rule-utils.ts      # Extracted rule logic (ownership checks, validation)
-└── auth.middleware.ts # Authentication middleware
-```
-
-### Context System
-
-Type-safe context with enhanced authentication:
-
-```
-src/graphql/context/
-├── context.types.ts    # Context type definitions
-├── context.factory.ts  # Context creation with error handling
-├── context.auth.ts     # Authentication guards (isAuthenticated, requireAuthentication)
-└── context.utils.ts    # JWT and request utilities
-```
-
-### Error Handling
-
-Hierarchical error system with descriptive messages:
-
-```
-src/core/errors/
-├── types.ts        # Error class definitions
-├── handlers.ts     # Error handlers and normalizers
-├── formatters.ts   # Error formatters
-└── constants.ts    # Error messages and codes
-```
-
-Error hierarchy:
-- `BaseError` (400) - Base class with code and statusCode
-- `AuthenticationError` (401) - "You must be logged in to perform this action"
-- `AuthorizationError` (403) - "You can only modify posts that you have created"
-- `ValidationError` (400) - Field-specific validation errors
-- `NotFoundError` (404) - "Post with identifier 'X' not found"
-- `ConflictError` (409) - "An account with this email already exists"
-- `RateLimitError` (429) - Rate limiting with retry information
-
-### Testing Infrastructure
-
-Comprehensive testing utilities:
-
-```
-test/
-├── modules/                    # Module-specific tests
-│   ├── auth/                   # Auth module tests
-│   ├── posts/                  # Posts module tests
-│   └── users/                  # Users module tests
-├── core/                       # Core functionality tests
-├── utils/                      # Test utilities
-│   ├── helpers/                # Test helpers by category
-│   ├── fixtures/               # Test fixtures
-│   └── factories/              # Test data factories
-└── performance/                # Performance tests
+├── constants/                        # Application constants
+├── main.ts                           # Build entry point
+└── prisma.ts                         # Prisma client export
 ```
 
 ## Key Architectural Patterns
 
-### 1. Advanced Pothos Plugin Architecture
+### 1. Direct Pothos Resolvers with Direct Prisma Access
 
-The schema builder uses multiple Pothos plugins with advanced integration patterns:
-
-```typescript
-// Advanced builder configuration (src/graphql/schema/builder.ts)
-plugins: [PrismaPlugin, RelayPlugin, DataloaderPlugin, ErrorsPlugin, ScopeAuthPlugin, ValidationPlugin],
-prisma: {
-    client: prisma,
-    dmmf: prisma._runtimeDataModel, // Pre-load DMMF for faster startup
-    filterConnectionTotalCount: true,
-    onUnusedQuery: isProduction ? null : 'warn',
-},
-relay: {
-    clientMutationId: 'omit', // Modern Relay style
-    cursorType: 'String',
-},
-errors: {
-    defaultTypes: [Error, ValidationError, AuthenticationError, AuthorizationError, NotFoundError, ConflictError, RateLimitError],
-    directResult: true, // Enable direct result mode
-},
-```
-
-### 2. Direct Pothos Resolvers with Direct Prisma Access
-
-**Important**: Following Pothos best practices, Prisma is NOT included in the GraphQL context to improve TypeScript performance. Always import Prisma directly:
+**Critical**: Prisma is NOT included in GraphQL context. Always import directly:
 
 ```typescript
-// Import Prisma directly - NOT from context
+// ✅ CORRECT - Import Prisma directly
 import { prisma } from '../../../prisma'
 
-// Direct resolver pattern - business logic in resolver
+// ❌ WRONG - Never access Prisma from context
+// const prisma = context.prisma
+```
+
+### 2. Resolver Pattern with Query Spreading
+
+**Critical**: Always spread the `query` parameter for Prisma optimizations:
+
+```typescript
 builder.mutationField('createPost', (t) =>
   t.prismaField({
     type: 'Post',
     grantScopes: ['authenticated'],
-    args: {
-      title: t.arg.string({ required: true }),
-      content: t.arg.string({ required: false }),
-    },
-    resolve: async (query, _parent, args, context: EnhancedContext) => {
+    resolve: async (query, _parent, args, context) => {
       const userId = requireAuthentication(context)
-      
+
       return prisma.post.create({
-        ...query, // ALWAYS spread query for Prisma optimizations
+        ...query, // ⚠️ CRITICAL: Always spread query first
         data: {
           title: args.title,
           content: args.content,
@@ -223,247 +208,18 @@ builder.mutationField('createPost', (t) =>
         },
       })
     },
-  })
-)
-```
-
-### 3. Enhanced Relay Implementation
-
-All entities use global IDs with enhanced pagination:
-
-```typescript
-// Enhanced Node interface
-builder.prismaNode('User', {
-  id: { field: 'id' },
-  fields: (t) => ({
-    posts: t.relatedConnection('posts', {
-      cursor: 'id',
-      totalCount: true,
-      query: (args, context) => ({
-        orderBy: { createdAt: 'desc' },
-        where: args.published !== undefined 
-          ? { published: args.published }
-          : undefined,
-      }),
-    }),
   }),
-})
-```
-
-### 4. Error Handling Pattern
-
-Always use `normalizeError` in catch blocks:
-
-```typescript
-try {
-  // operation
-} catch (error) {
-  throw normalizeError(error) // Converts to BaseError
-}
-```
-
-### 5. Permission Rules Pattern
-
-Rules return errors instead of throwing:
-
-```typescript
-export const isPostOwner = rule({ cache: 'strict' })(
-  async (parent, args, context) => {
-    try {
-      const userId = requireAuthentication(context)
-      const postId = await parseAndValidateGlobalId(args.id, 'Post')
-      
-      const ownership = await checkPostOwnership(postId, userId)
-      if (!ownership.isOwner) {
-        throw new AuthorizationError('You can only modify posts that you have created')
-      }
-      
-      return true
-    } catch (error) {
-      return handleRuleError(error)
-    }
-  }
 )
 ```
 
-## Current Resolver Operations
+### 3. Error Handling
 
-The following operations are available and fully tested:
-
-### Authentication Operations
-- `signup` - Create new user account with email/password
-- `login` - Authenticate user and return JWT token  
-- `me` - Get current authenticated user profile
-
-### Authentication with Refresh Tokens
-- `loginWithTokens` - Login and receive access + refresh tokens
-- `refreshToken` - Refresh access token using refresh token 
-- `logout` - Revoke all refresh tokens for user
-
-### Post Operations
-- `createPost` - Create new post (draft by default)
-- `updatePost` - Update existing post (owner only)
-- `deletePost` - Delete post (owner only)
-- `togglePublishPost` - Toggle post publish status (owner only)
-- `incrementPostViewCount` - Increment post view count (public)
-
-### Post Queries
-- `feed` - Get published posts with search and pagination
-- `drafts` - Get user's draft posts (authenticated)
-- `post` - Get individual post by global ID
-
-### User Operations
-- `searchUsers` - Search users by name or email with pagination
-- `updateUserProfile` - Update the current user profile
-
-All operations support:
-- Global IDs for consistent entity references
-- Enhanced authentication and authorization
-- Input validation with Zod schemas
-- Rate limiting protection
-- Comprehensive error handling
-- DataLoader optimization for N+1 query prevention
-- Field-level Prisma optimizations
-
-## Working with Global IDs
+Use the error hierarchy and always normalize errors:
 
 ```typescript
-// In resolvers - use shared relay helpers
-import { parseAndValidateGlobalId, encodeGlobalId } from '../../core/utils/relay-helpers'
-const numericId = await parseAndValidateGlobalId(args.id, 'Post')
+import { normalizeError } from '../../../core/errors/handlers'
+import { AuthenticationError, NotFoundError } from '../../../core/errors/types'
 
-// In tests
-import { toPostId, extractNumericId } from './test/relay-utils'
-const globalId = toPostId(1)
-const numericId = extractNumericId(result.data.post.id)
-```
-
-## Running a Single Test
-
-```bash
-# Run a specific test file
-bun test test/auth.test.ts
-
-# Run tests matching a pattern
-bun run test -t "should create a new user"
-
-# Run tests with UI
-bun run test:ui
-
-# Run tests with coverage
-bun run test:coverage
-```
-
-## GraphQL Client Integration
-
-The project uses GraphQL Tada for type-safe GraphQL operations:
-
-```typescript
-// src/gql/ directory contains:
-- queries.ts                  # GraphQL queries (me, feed, etc.)
-- mutations.ts                # GraphQL mutations (signup, createPost, etc.)
-- mutations-auth-tokens.ts    # Token-based auth mutations (loginWithTokens, etc.)
-```
-
-All operations use `gql` template literals and are tested with the `print()` function from graphql package.
-
-## API Endpoints
-
-- **GraphQL Playground**: http://localhost:4000
-- **GraphQL Endpoint**: POST http://localhost:4000/graphql
-
-## Environment Variables
-
-```bash
-# .env
-DATABASE_URL="file:./dev.db"              # SQLite database path
-JWT_SECRET="your-secret-key"              # JWT signing secret
-BCRYPT_ROUNDS=10                          # Password hashing rounds
-NODE_ENV="development"                    # Environment mode
-```
-
-## Common Development Tasks
-
-### Adding a New Feature (Direct Resolver Approach)
-
-1. **Database Model**:
-   ```bash
-   # Update prisma/schema.prisma
-   bunx prisma migrate dev --name add-feature
-   bun run generate
-   ```
-
-2. **Create Module Structure**:
-   ```typescript
-   // src/modules/feature/feature.schema.ts - GraphQL schema definitions
-   // src/modules/feature/feature.permissions.ts - Authorization rules
-   // src/modules/feature/resolvers/feature.resolver.ts - Direct resolver
-   ```
-
-3. **Create Direct Resolver**:
-   ```typescript
-   // src/modules/feature/resolvers/feature.resolver.ts
-   import { prisma } from '../../../prisma'
-   
-   builder.mutationField('createFeature', (t) =>
-     t.prismaField({
-       type: 'Feature',
-       grantScopes: ['authenticated'],
-       args: {
-         name: t.arg.string({ required: true }),
-       },
-       resolve: async (query, _parent, args, context: EnhancedContext) => {
-         const userId = requireAuthentication(context)
-         
-         return prisma.feature.create({
-           ...query,
-           data: {
-             name: args.name,
-             userId: userId.value,
-           },
-         })
-       },
-     })
-   )
-   ```
-
-4. **Add Permissions**:
-   ```typescript
-   // src/graphql/middleware/shield-config.ts
-   Mutation: {
-     createFeature: isAuthenticatedUser,
-   }
-   ```
-
-## Debugging Tips
-
-- **Type errors**: Run `bun run generate`
-- **GraphQL Playground**: http://localhost:4000
-- **Database viewer**: `bunx prisma studio`
-- **Global ID format**: Base64("Type:id") e.g., "UG9zdDox" = "Post:1"
-- **Permission errors**: Check JWT token and shield-config.ts mappings
-- **Test failures**: Check error message changes in constants/index.ts
-- **Relay connections**: Always spread `query` in resolver functions
-- **Environment verification**: Run `bun run env:verify` to check setup
-- **Schema generation**: Run `bun run gen:schema` to update schema.graphql
-
-## Important Patterns to Remember
-
-### Always Spread Prisma Query Parameter
-When using Pothos with Prisma, ALWAYS spread the `query` parameter first:
-```typescript
-resolve: async (query, _parent, args, context) => {
-  return prisma.post.findMany({
-    ...query, // CRITICAL: This enables field-level optimization
-    where: { published: true },
-    orderBy: { createdAt: 'desc' },
-  })
-}
-```
-
-### Error Normalization
-Always normalize errors in catch blocks:
-```typescript
 try {
   // operation
 } catch (error) {
@@ -471,52 +227,154 @@ try {
 }
 ```
 
-### Global ID Handling
-Use the centralized relay helpers for consistency:
+### 4. Global IDs (Relay Pattern)
+
+Use centralized helpers for consistent ID handling:
+
 ```typescript
-import { parseAndValidateGlobalId, encodeGlobalId } from '../../core/utils/relay-helpers'
+import {
+  parseAndValidateGlobalId,
+  encodeGlobalId,
+} from '../../core/utils/relay-helpers'
+
+// Parse incoming global ID
+const numericId = await parseAndValidateGlobalId(args.id, 'Post')
+
+// Encode for response
+const globalId = encodeGlobalId('Post', post.id)
 ```
 
-## Sequential Thinking Workflow
+### 5. Authentication Guards
 
-This project follows the Context7 sequential thinking approach for complex tasks. When implementing features or solving problems:
+Use context authentication helpers:
 
-1. **Break down the task** into logical, sequential steps
-2. **Complete each step fully** before moving to the next
-3. **Verify each step** works correctly in isolation
-4. **Build incrementally** on verified foundations
+```typescript
+import { requireAuthentication } from '../../graphql/context/context.auth'
 
-Example workflow for adding a new feature:
-```
-Step 1: Update database schema → Verify migration works
-Step 2: Create types and inputs → Verify GraphQL schema compiles  
-Step 3: Implement resolver logic → Verify business logic works
-Step 4: Add permissions → Verify authorization works
-Step 5: Write tests → Verify all tests pass
-Step 6: Update documentation → Verify docs are accurate
+// In resolver
+const userId = requireAuthentication(context) // Throws if not authenticated
 ```
 
-This approach ensures robust, well-tested code by validating each component before building on it.
+### 6. Permission Rules
 
-Reference: https://blog.langdb.ai/smarter-coding-workflows-with-context7-sequential-thinking
+Rules should handle errors gracefully:
 
-### Setting up Context7 MCP
+```typescript
+export const isPostOwner = rule({ cache: 'strict' })(
+  async (_parent, args, context) => {
+    try {
+      const userId = requireAuthentication(context)
+      const postId = await parseAndValidateGlobalId(args.id, 'Post')
 
-Context7 MCP (Model Context Protocol) is configured for this project. The setup includes:
+      const post = await prisma.post.findUnique({
+        where: { id: postId },
+        select: { authorId: true },
+      })
 
-1. **Installation** (already added to devDependencies):
-   ```bash
-   # Install locally (recommended)
-   bun install
-   
-   # Or install globally
-   bun add -g @context7/mcp-server
+      if (!post) {
+        return new NotFoundError('Post', args.id)
+      }
+
+      if (post.authorId !== userId.value) {
+        return new AuthorizationError(
+          'You can only modify posts that you have created',
+        )
+      }
+
+      return true
+    } catch (error) {
+      return handleRuleError(error)
+    }
+  },
+)
+```
+
+## Environment Variables
+
+```bash
+# Required
+DATABASE_URL="file:./dev.db"     # SQLite database path
+JWT_SECRET="your-secret-key"      # JWT signing secret
+
+# Optional
+BCRYPT_ROUNDS=10                  # Password hashing rounds (default: 10)
+NODE_ENV="development"            # Environment mode
+PORT=4000                         # Server port
+HOST="localhost"                  # Server host
+```
+
+## Common Development Patterns
+
+### Adding a New Module
+
+1. Create module directory structure:
+
+   ```
+   src/modules/feature/
+   ├── feature.schema.ts       # GraphQL type definitions
+   ├── feature.permissions.ts  # Authorization rules
+   ├── feature.validation.ts   # Input validation
+   ├── feature.service.ts      # Business logic (optional)
+   ├── resolvers/
+   │   └── feature.resolver.ts # GraphQL resolvers
+   └── types/
+       └── feature.types.ts    # TypeScript types
    ```
 
-2. **Claude Desktop Configuration**:
-   The example configuration is in `claude-desktop-config.example.json`.
+2. Import resolver in schema index:
 
-3. **Project Configuration**:
-   The `.context7rc` file is configured with all project patterns.
+   ```typescript
+   // src/graphql/schema/index.ts
+   import '../../modules/feature/resolvers/feature.resolver'
+   ```
 
-For detailed setup instructions, see [CONTEXT7.md](./CONTEXT7.md).
+3. Add permissions to shield config:
+   ```typescript
+   // src/graphql/middleware/shield-config.ts
+   import { featurePermissions } from '../../modules/feature/feature.permissions'
+   ```
+
+### Testing Patterns
+
+Tests use typed GraphQL operations:
+
+```typescript
+import { print } from 'graphql'
+import { LoginMutation } from '../src/gql/mutations'
+
+const result = await executeOperation(
+  server,
+  print(LoginMutation),
+  { email: 'test@example.com', password: 'password' },
+  context,
+)
+```
+
+### DataLoader Usage
+
+DataLoaders are created in context for N+1 prevention:
+
+```typescript
+// In context.utils.ts
+loaders: {
+  users: createUserLoader(),
+  posts: createPostLoader(),
+}
+```
+
+## Debugging Quick Reference
+
+- **Type errors**: `bun run generate` (regenerates Prisma & GraphQL types)
+- **Permission denied**: Check JWT token and shield-config.ts mappings
+- **Global ID errors**: Verify Base64 encoding (e.g., "UG9zdDox" = "Post:1")
+- **Database issues**: `bunx prisma studio` for visual inspection
+- **GraphQL schema**: `bun run gen:schema` to update schema.graphql
+- **Test specific operation**: Use GraphQL Playground at http://localhost:4000
+
+## Recent Architecture Changes
+
+1. **Modular Structure**: Migrated from scattered files to organized modules
+2. **Direct Resolvers**: Removed abstraction layers, business logic in resolvers
+3. **Improved Error Handling**: Centralized error types with consistent messages
+4. **Enhanced Testing**: All tests use typed GraphQL operations from src/gql/
+5. **TypeScript Strict**: All files pass strict type checking

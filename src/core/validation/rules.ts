@@ -1,12 +1,12 @@
 /**
  * Validation Rules
- * 
+ *
  * Reusable validation rules and rule builders
  */
 
 import { z } from 'zod'
-import * as validators from './validators'
 import * as sanitizers from './sanitizers'
+import * as validators from './validators'
 
 /**
  * Common validation rules
@@ -51,7 +51,8 @@ export const rules = {
     .max(30, 'Username must be less than 30 characters')
     .transform(sanitizers.sanitizeUsername)
     .refine(validators.isValidUsername, {
-      message: 'Username can only contain letters, numbers, underscores, and hyphens',
+      message:
+        'Username can only contain letters, numbers, underscores, and hyphens',
     }),
 
   // URL rule
@@ -79,17 +80,13 @@ export const rules = {
     }),
 
   // Date rules
-  futureDate: z
-    .date()
-    .refine(validators.isDateInFuture, {
-      message: 'Date must be in the future',
-    }),
+  futureDate: z.date().refine(validators.isDateInFuture, {
+    message: 'Date must be in the future',
+  }),
 
-  pastDate: z
-    .date()
-    .refine(validators.isDateInPast, {
-      message: 'Date must be in the past',
-    }),
+  pastDate: z.date().refine(validators.isDateInPast, {
+    message: 'Date must be in the past',
+  }),
 
   // Number rules
   positiveInt: z
@@ -109,16 +106,12 @@ export const rules = {
 
   // Array rules
   uniqueStringArray: (itemSchema?: z.ZodSchema<string>) =>
-    z
-      .array(itemSchema || z.string())
-      .refine(validators.hasUniqueElements, {
-        message: 'All items must be unique',
-      }),
+    z.array(itemSchema || z.string()).refine(validators.hasUniqueElements, {
+      message: 'All items must be unique',
+    }),
 
   // File rules
-  fileName: z
-    .string()
-    .transform(sanitizers.sanitizeFileName),
+  fileName: z.string().transform(sanitizers.sanitizeFileName),
 
   // JSON rule
   jsonString: z
@@ -130,34 +123,26 @@ export const rules = {
 
   // Global ID rule
   globalId: (expectedType?: string) =>
-    z
-      .string()
-      .refine((id) => validators.isValidGlobalId(id, expectedType), {
-        message: expectedType
-          ? `Must be a valid ${expectedType} ID`
-          : 'Must be a valid global ID',
-      }),
+    z.string().refine((id) => validators.isValidGlobalId(id, expectedType), {
+      message: expectedType
+        ? `Must be a valid ${expectedType} ID`
+        : 'Must be a valid global ID',
+    }),
 
   // Hex color rule
-  hexColor: z
-    .string()
-    .refine(validators.isValidHexColor, {
-      message: 'Must be a valid hex color (e.g., #FF0000)',
-    }),
+  hexColor: z.string().refine(validators.isValidHexColor, {
+    message: 'Must be a valid hex color (e.g., #FF0000)',
+  }),
 
   // Timezone rule
-  timezone: z
-    .string()
-    .refine(validators.isValidTimezone, {
-      message: 'Must be a valid timezone',
-    }),
+  timezone: z.string().refine(validators.isValidTimezone, {
+    message: 'Must be a valid timezone',
+  }),
 
   // Locale rule
-  locale: z
-    .string()
-    .refine(validators.isValidLocale, {
-      message: 'Must be a valid locale',
-    }),
+  locale: z.string().refine(validators.isValidLocale, {
+    message: 'Must be a valid locale',
+  }),
 } as const
 
 /**
@@ -186,7 +171,7 @@ export const ruleBuilders = {
             ? `Date range cannot exceed ${maxDays} days`
             : 'End date must be after start date',
           path: ['end'],
-        }
+        },
       ),
 
   // File validation
@@ -201,28 +186,27 @@ export const ruleBuilders = {
         (file) => validators.isValidFileExtension(file.name, allowedExtensions),
         {
           message: `File must be one of: ${allowedExtensions.join(', ')}`,
-        }
+        },
       )
-      .refine(
-        (file) => !maxSizeMB || file.size <= maxSizeMB * 1024 * 1024,
-        {
-          message: `File size must not exceed ${maxSizeMB}MB`,
-        }
-      ),
+      .refine((file) => !maxSizeMB || file.size <= maxSizeMB * 1024 * 1024, {
+        message: `File size must not exceed ${maxSizeMB}MB`,
+      }),
 
   // Enum validation
-  enum: <T extends readonly string[]>(values: T) =>
-    z.enum(values as any),
+  enum: <T extends [string, ...string[]]>(values: T) => z.enum(values),
 
   // Conditional validation
   conditionalField: <T>(
-    condition: (value: any) => boolean,
+    condition: (value: unknown) => boolean,
     thenSchema: z.ZodSchema<T>,
-    elseSchema: z.ZodSchema<T> = z.any() as z.ZodSchema<T>
+    elseSchema: z.ZodSchema<T> = z.any() as z.ZodSchema<T>,
   ) =>
     z.union([
       z.any().refine(condition).pipe(thenSchema),
-      z.any().refine((v) => !condition(v)).pipe(elseSchema),
+      z
+        .any()
+        .refine((v) => !condition(v))
+        .pipe(elseSchema),
     ]) as z.ZodSchema<T>,
 
   // Array with size constraints
@@ -235,14 +219,14 @@ export const ruleBuilders = {
   // Async unique validation
   asyncUnique: <T>(
     checkFn: (value: T) => Promise<boolean>,
-    errorMessage: string
+    errorMessage: string,
   ) =>
     z.custom<T>(
       async (value) => {
         const isUnique = await checkFn(value)
         return isUnique
       },
-      { message: errorMessage }
+      { message: errorMessage },
     ),
 
   // Search query validation
@@ -270,11 +254,16 @@ export const ruleBuilders = {
 
   // Range validation
   numberInRange: (min: number, max: number) =>
-    z
-      .number()
-      .refine((n) => validators.isInRange(n, min, max), {
-        message: `Must be between ${min} and ${max}`,
-      }),
+    z.number().refine((n) => validators.isInRange(n, min, max), {
+      message: `Must be between ${min} and ${max}`,
+    }),
+
+  // Sorting options validation
+  sortOptions: <T extends [string, ...string[]]>(fields: T) =>
+    z.object({
+      field: z.enum(fields),
+      direction: z.enum(['asc', 'desc']).default('asc'),
+    }),
 } as const
 
 /**
@@ -303,12 +292,9 @@ export const compositeRules = {
       website: rules.url.optional(),
       phoneNumber: rules.phoneNumber.optional(),
     })
-    .refine(
-      (data) => Object.values(data).some((v) => v !== undefined),
-      {
-        message: 'At least one field must be provided',
-      }
-    ),
+    .refine((data) => Object.values(data).some((v) => v !== undefined), {
+      message: 'At least one field must be provided',
+    }),
 
   // Pagination
   pagination: z.object({
@@ -323,13 +309,6 @@ export const compositeRules = {
     last: rules.positiveInt.max(100).optional(),
     before: z.string().optional(),
   }),
-
-  // Sort options
-  sortOptions: <T extends readonly string[]>(fields: T) =>
-    z.object({
-      field: z.enum(fields as any),
-      direction: z.enum(['asc', 'desc']).default('asc'),
-    }),
 
   // Address
   address: z.object({
@@ -350,7 +329,7 @@ export function createRule<T>(
     check: (value: T) => boolean | Promise<boolean>
     message: string
     path?: string[]
-  }>
+  }>,
 ): z.ZodSchema<T> {
   return refinements.reduce(
     (schema, refinement) =>
@@ -358,18 +337,18 @@ export function createRule<T>(
         message: refinement.message,
         path: refinement.path,
       }),
-    baseSchema
+    baseSchema,
   )
 }
 
 /**
- * Merge multiple schemas
+ * Merge multiple Zod object schemas
  */
-export function mergeSchemas<T extends z.ZodRawShape>(
-  ...schemas: z.ZodObject<any>[]
-): z.ZodObject<T> {
+export function mergeSchemas(
+  ...schemas: z.AnyZodObject[]
+): z.ZodObject<any, any, any> {
   return schemas.reduce(
-    (merged, schema) => merged.merge(schema),
-    z.object({})
-  ) as z.ZodObject<T>
+    (acc, schema) => acc.merge(schema),
+    z.object({}),
+  );
 }

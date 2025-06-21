@@ -12,7 +12,7 @@ export interface SnapshotOptions {
   name: string
   directory?: string
   update?: boolean
-  normalizers?: Array<(data: any) => any>
+  normalizers?: Array<(data: unknown) => unknown>
   redactFields?: string[]
 }
 
@@ -20,8 +20,8 @@ export interface SnapshotResult {
   passed: boolean
   message?: string
   diff?: string
-  actual?: any
-  expected?: any
+  actual?: unknown
+  expected?: unknown
 }
 
 /**
@@ -33,7 +33,8 @@ export class GraphQLSnapshotTester {
 
   constructor(options: { baseDir?: string; update?: boolean } = {}) {
     this.snapshotDir = options.baseDir || join(process.cwd(), '__snapshots__')
-    this.updateSnapshots = options.update || process.env.UPDATE_SNAPSHOTS === 'true'
+    this.updateSnapshots =
+      options.update || process.env.UPDATE_SNAPSHOTS === 'true'
 
     // Ensure snapshot directory exists
     if (!existsSync(this.snapshotDir)) {
@@ -48,15 +49,21 @@ export class GraphQLSnapshotTester {
     response: GraphQLResponse,
     options: SnapshotOptions,
   ): Promise<SnapshotResult> {
-    const normalized = this.normalizeResponse(response, options)
+    // Generate snapshot path
     const snapshotPath = this.getSnapshotPath(options)
 
-    if (this.updateSnapshots || !existsSync(snapshotPath)) {
-      // Write/update snapshot
+    // Normalize response
+    const normalized = this.normalizeResponse(response, options)
+
+    // Check if snapshot exists
+    if (!existsSync(snapshotPath) || this.updateSnapshots) {
+      // Create or update snapshot
       this.writeSnapshot(snapshotPath, normalized)
       return {
         passed: true,
-        message: this.updateSnapshots ? 'Snapshot updated' : 'Snapshot created',
+        message: this.updateSnapshots
+          ? `Snapshot updated: ${options.name}`
+          : `Snapshot created: ${options.name}`,
       }
     }
 
@@ -65,16 +72,15 @@ export class GraphQLSnapshotTester {
     const passed = this.compareSnapshots(normalized, expected)
 
     if (!passed) {
-      const diffString = diff(expected, normalized, {
-        aAnnotation: 'Expected',
-        bAnnotation: 'Received',
-        expand: false,
-      })
-
       return {
         passed: false,
-        message: 'Snapshot mismatch',
-        diff: diffString || undefined,
+        message: `Snapshot mismatch: ${options.name}`,
+        diff:
+          diff(expected, normalized, {
+            aAnnotation: 'Expected',
+            bAnnotation: 'Received',
+            expand: false,
+          }) || undefined,
         actual: normalized,
         expected,
       }
@@ -84,43 +90,40 @@ export class GraphQLSnapshotTester {
   }
 
   /**
-   * Test multiple GraphQL operations in sequence
+   * Test multiple GraphQL responses
    */
-  async testSequence(
-    operations: Array<{
+  async testSnapshots(
+    snapshots: Array<{
       name: string
       response: GraphQLResponse
-      normalizers?: Array<(data: any) => any>
+      normalizers?: Array<(data: unknown) => unknown>
     }>,
     baseOptions: Omit<SnapshotOptions, 'name'>,
-  ): Promise<Map<string, SnapshotResult>> {
-    const results = new Map<string, SnapshotResult>()
+  ): Promise<SnapshotResult[]> {
+    const results: SnapshotResult[] = []
 
-    for (const operation of operations) {
-      const result = await this.testSnapshot(operation.response, {
+    for (const snapshot of snapshots) {
+      const result = await this.testSnapshot(snapshot.response, {
         ...baseOptions,
-        name: operation.name,
-        normalizers: operation.normalizers || baseOptions.normalizers,
+        ...snapshot,
       })
-      results.set(operation.name, result)
+      results.push(result)
     }
 
     return results
   }
 
   /**
-   * Normalize GraphQL response for consistent snapshots
+   * Normalize GraphQL response for snapshot comparison
    */
-  private normalizeResponse(response: GraphQLResponse, options: SnapshotOptions): any {
+  private normalizeResponse(
+    response: GraphQLResponse,
+    options: SnapshotOptions,
+  ): unknown {
     let normalized = JSON.parse(JSON.stringify(response))
 
     // Apply default normalizers
     normalized = this.applyDefaultNormalizers(normalized)
-
-    // Redact sensitive fields
-    if (options.redactFields) {
-      normalized = this.redactFields(normalized, options.redactFields)
-    }
 
     // Apply custom normalizers
     if (options.normalizers) {
@@ -129,17 +132,22 @@ export class GraphQLSnapshotTester {
       }
     }
 
+    // Redact sensitive fields
+    if (options.redactFields) {
+      normalized = this.redactFields(normalized, options.redactFields)
+    }
+
     return normalized
   }
 
   /**
    * Apply default normalizers
    */
-  private applyDefaultNormalizers(data: any): any {
+  private applyDefaultNormalizers(data: unknown): unknown {
     const normalized = JSON.parse(JSON.stringify(data))
 
     // Sort arrays for consistent ordering
-    const sortArrays = (obj: any): any => {
+    const sortArrays = (obj: unknown): unknown => {
       if (Array.isArray(obj)) {
         return obj.map(sortArrays).sort((a, b) => {
           const aStr = JSON.stringify(a)
@@ -148,11 +156,11 @@ export class GraphQLSnapshotTester {
         })
       }
       if (obj && typeof obj === 'object') {
-        const sorted: any = {}
-        Object.keys(obj)
+        const sorted: Record<string, unknown> = {}
+        Object.keys(obj as Record<string, unknown>)
           .sort()
-          .forEach(key => {
-            sorted[key] = sortArrays(obj[key])
+          .forEach((key) => {
+            sorted[key] = sortArrays((obj as Record<string, unknown>)[key])
           })
         return sorted
       }
@@ -165,16 +173,18 @@ export class GraphQLSnapshotTester {
   /**
    * Redact sensitive fields
    */
-  private redactFields(data: any, fields: string[]): any {
-    const redact = (obj: any, path: string = ''): any => {
+  private redactFields(data: unknown, fields: string[]): unknown {
+    const redact = (obj: unknown, path: string = ''): unknown => {
       if (Array.isArray(obj)) {
         return obj.map((item, index) => redact(item, `${path}[${index}]`))
       }
       if (obj && typeof obj === 'object') {
-        const result: any = {}
-        for (const [key, value] of Object.entries(obj)) {
+        const result: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(
+          obj as Record<string, unknown>,
+        )) {
           const currentPath = path ? `${path}.${key}` : key
-          if (fields.some(field => currentPath.endsWith(field))) {
+          if (fields.includes(currentPath)) {
             result[key] = '[REDACTED]'
           } else {
             result[key] = redact(value, currentPath)
@@ -192,28 +202,31 @@ export class GraphQLSnapshotTester {
    * Get snapshot file path
    */
   private getSnapshotPath(options: SnapshotOptions): string {
-    const dir = options.directory
+    const directory = options.directory
       ? join(this.snapshotDir, options.directory)
       : this.snapshotDir
 
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true })
+    // Ensure directory exists
+    if (!existsSync(directory)) {
+      mkdirSync(directory, { recursive: true })
     }
 
-    return join(dir, `${options.name}.snapshot.json`)
+    // Generate filename from name
+    const filename = `${options.name.replace(/[^a-zA-Z0-9-_]/g, '_')}.snap.json`
+    return join(directory, filename)
   }
 
   /**
    * Write snapshot to file
    */
-  private writeSnapshot(path: string, data: any): void {
+  private writeSnapshot(path: string, data: unknown): void {
     writeFileSync(path, JSON.stringify(data, null, 2))
   }
 
   /**
    * Read snapshot from file
    */
-  private readSnapshot(path: string): any {
+  private readSnapshot(path: string): unknown {
     const content = readFileSync(path, 'utf-8')
     return JSON.parse(content)
   }
@@ -221,141 +234,117 @@ export class GraphQLSnapshotTester {
   /**
    * Compare two snapshots
    */
-  private compareSnapshots(actual: any, expected: any): boolean {
+  private compareSnapshots(actual: unknown, expected: unknown): boolean {
     return JSON.stringify(actual) === JSON.stringify(expected)
   }
-}
-
-/**
- * Common normalizers for GraphQL responses
- */
-export const commonNormalizers = {
-  /**
-   * Replace timestamps with placeholders
-   */
-  timestamps: (data: any): any => {
-    const timestampRegex = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/g
-    const jsonStr = JSON.stringify(data)
-    const normalized = jsonStr.replace(timestampRegex, '[TIMESTAMP]')
-    return JSON.parse(normalized)
-  },
 
   /**
-   * Replace IDs with placeholders
+   * Generate a stable hash for snapshot naming
    */
-  ids: (data: any): any => {
-    const replaceIds = (obj: any): any => {
-      if (Array.isArray(obj)) {
-        return obj.map(replaceIds)
-      }
-      if (obj && typeof obj === 'object') {
-        const result: any = {}
-        for (const [key, value] of Object.entries(obj)) {
-          if (key === 'id' || key.endsWith('Id')) {
-            result[key] = `[${key.toUpperCase()}]`
-          } else {
-            result[key] = replaceIds(value)
-          }
-        }
-        return result
-      }
-      return obj
-    }
-    return replaceIds(data)
-  },
-
-  /**
-   * Replace JWT tokens with placeholders
-   */
-  tokens: (data: any): any => {
-    const tokenRegex = /[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*/g
-    const jsonStr = JSON.stringify(data)
-    const normalized = jsonStr.replace(tokenRegex, '[JWT_TOKEN]')
-    return JSON.parse(normalized)
-  },
-
-  /**
-   * Replace cursors with placeholders
-   */
-  cursors: (data: any): any => {
-    const replaceCursors = (obj: any): any => {
-      if (Array.isArray(obj)) {
-        return obj.map(replaceCursors)
-      }
-      if (obj && typeof obj === 'object') {
-        const result: any = {}
-        for (const [key, value] of Object.entries(obj)) {
-          if (key === 'cursor' || key === 'endCursor' || key === 'startCursor') {
-            result[key] = '[CURSOR]'
-          } else {
-            result[key] = replaceCursors(value)
-          }
-        }
-        return result
-      }
-      return obj
-    }
-    return replaceCursors(data)
-  },
-
-  /**
-   * Sort edges by a field
-   */
-  sortEdges: (field: string) => (data: any): any => {
-    const sortByField = (obj: any): any => {
-      if (Array.isArray(obj)) {
-        return obj.map(sortByField)
-      }
-      if (obj && typeof obj === 'object') {
-        const result: any = {}
-        for (const [key, value] of Object.entries(obj)) {
-          if (key === 'edges' && Array.isArray(value)) {
-            result[key] = value.sort((a, b) => {
-              const aVal = a.node?.[field]
-              const bVal = b.node?.[field]
-              if (aVal === undefined || bVal === undefined) return 0
-              return aVal < bVal ? -1 : aVal > bVal ? 1 : 0
-            })
-          } else {
-            result[key] = sortByField(value)
-          }
-        }
-        return result
-      }
-      return obj
-    }
-    return sortByField(data)
-  },
-}
-
-/**
- * Create a hash of GraphQL response for change detection
- */
-export function hashResponse(response: GraphQLResponse): string {
-  const normalized = JSON.stringify(response, Object.keys(response).sort())
-  return createHash('sha256').update(normalized).digest('hex')
-}
-
-/**
- * Assert snapshot matches
- */
-export function assertSnapshot(
-  actual: GraphQLResponse,
-  expected: GraphQLResponse,
-  options?: { message?: string },
-): void {
-  const actualNormalized = JSON.stringify(actual, null, 2)
-  const expectedNormalized = JSON.stringify(expected, null, 2)
-
-  if (actualNormalized !== expectedNormalized) {
-    const diffString = diff(expectedNormalized, actualNormalized, {
-      aAnnotation: 'Expected',
-      bAnnotation: 'Received',
-      expand: false,
-    })
-
-    throw new Error(
-      `${options?.message || 'Snapshot mismatch'}\n\n${diffString}`,
-    )
+  static generateSnapshotName(input: string | object): string {
+    const content = typeof input === 'string' ? input : JSON.stringify(input)
+    return createHash('sha256').update(content).digest('hex').slice(0, 8)
   }
+}
+
+/**
+ * Default snapshot normalizers
+ */
+export const defaultNormalizers = {
+  /**
+   * Remove timestamps
+   */
+  removeTimestamps: (data: unknown): unknown => {
+    const remove = (obj: unknown): unknown => {
+      if (Array.isArray(obj)) {
+        return obj.map(remove)
+      }
+      if (obj && typeof obj === 'object') {
+        const result: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(
+          obj as Record<string, unknown>,
+        )) {
+          if (
+            !(
+              key.toLowerCase().includes('timestamp') ||
+              key.toLowerCase().includes('createdat') ||
+              key.toLowerCase().includes('updatedat') ||
+              key.toLowerCase().includes('date')
+            )
+          ) {
+            result[key] = remove(value)
+          }
+        }
+        return result
+      }
+      return obj
+    }
+    return remove(data)
+  },
+
+  /**
+   * Remove IDs
+   */
+  removeIds: (data: unknown): unknown => {
+    const remove = (obj: unknown): unknown => {
+      if (Array.isArray(obj)) {
+        return obj.map(remove)
+      }
+      if (obj && typeof obj === 'object') {
+        const result: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(
+          obj as Record<string, unknown>,
+        )) {
+          if (key !== 'id' && !key.endsWith('Id')) {
+            result[key] = remove(value)
+          }
+        }
+        return result
+      }
+      return obj
+    }
+    return remove(data)
+  },
+
+  /**
+   * Replace dynamic values with placeholders
+   */
+  replaceDynamicValues: (
+    patterns: Array<{ pattern: RegExp; replacement: string }>,
+  ) => {
+    return (data: unknown): unknown => {
+      const replace = (obj: unknown): unknown => {
+        if (typeof obj === 'string') {
+          let result = obj
+          for (const { pattern, replacement } of patterns) {
+            result = result.replace(pattern, replacement)
+          }
+          return result
+        }
+        if (Array.isArray(obj)) {
+          return obj.map(replace)
+        }
+        if (obj && typeof obj === 'object') {
+          const result: Record<string, unknown> = {}
+          for (const [key, value] of Object.entries(
+            obj as Record<string, unknown>,
+          )) {
+            result[key] = replace(value)
+          }
+          return result
+        }
+        return obj
+      }
+      return replace(data)
+    }
+  },
+}
+
+/**
+ * Create a snapshot tester instance
+ */
+export function createSnapshotTester(
+  options: { baseDir?: string; update?: boolean } = {},
+): GraphQLSnapshotTester {
+  return new GraphQLSnapshotTester(options)
 }

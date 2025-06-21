@@ -1,6 +1,6 @@
 /**
  * Prisma Client Configuration
- * 
+ *
  * Centralized Prisma client setup with logging and extensions
  */
 
@@ -27,7 +27,7 @@ function createPrismaClient() {
       params.args.data.createdAt = params.args.data.createdAt || new Date()
       params.args.data.updatedAt = params.args.data.updatedAt || new Date()
     }
-    
+
     if (params.action === 'update' || params.action === 'updateMany') {
       params.args.data.updatedAt = new Date()
     }

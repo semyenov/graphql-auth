@@ -1,6 +1,6 @@
 /**
  * Direct GraphQL Mutations
- * 
+ *
  * Simple GraphQL operation strings for direct resolver mutations
  */
 

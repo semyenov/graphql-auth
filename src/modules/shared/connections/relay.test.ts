@@ -40,12 +40,17 @@ describe('Relay Utilities', () => {
     it('should decode global IDs correctly', () => {
       expect(decodeGlobalId('VXNlcjox')).toEqual({ type: 'User', id: '1' })
       expect(decodeGlobalId('UG9zdDo0Mg==')).toEqual({ type: 'Post', id: '42' })
-      expect(decodeGlobalId('Q29tbWVudDoxMjM=')).toEqual({ type: 'Comment', id: '123' })
+      expect(decodeGlobalId('Q29tbWVudDoxMjM=')).toEqual({
+        type: 'Comment',
+        id: '123',
+      })
     })
 
     it('should throw error for invalid global IDs', () => {
       expect(() => decodeGlobalId('invalid')).toThrow('Invalid global ID')
-      expect(() => decodeGlobalId('aW52YWxpZA==')).toThrow('Invalid global ID format') // 'invalid' in base64
+      expect(() => decodeGlobalId('aW52YWxpZA==')).toThrow(
+        'Invalid global ID format',
+      ) // 'invalid' in base64
     })
 
     it('should parse and validate global IDs', () => {
@@ -54,14 +59,16 @@ describe('Relay Utilities', () => {
     })
 
     it('should throw error for type mismatch', () => {
-      expect(() => parseAndValidateGlobalId('VXNlcjox', 'Post'))
-        .toThrow('Expected Post ID, got User ID')
+      expect(() => parseAndValidateGlobalId('VXNlcjox', 'Post')).toThrow(
+        'Expected Post ID, got User ID',
+      )
     })
 
     it('should throw error for non-numeric IDs', () => {
       const invalidId = encodeGlobalId('User', 'abc')
-      expect(() => parseAndValidateGlobalId(invalidId, 'User'))
-        .toThrow('Invalid numeric ID')
+      expect(() => parseAndValidateGlobalId(invalidId, 'User')).toThrow(
+        'Invalid numeric ID',
+      )
     })
   })
 
@@ -110,7 +117,11 @@ describe('Relay Utilities', () => {
         appliedFilters: ['active'],
       }
 
-      const connection = createEnhancedConnection(testNodes, { first: 10 }, metadata)
+      const connection = createEnhancedConnection(
+        testNodes,
+        { first: 10 },
+        metadata,
+      )
 
       expect(connection.edges).toHaveLength(3)
       expect(connection.metadata).toEqual(metadata)
@@ -191,42 +202,54 @@ describe('Relay Utilities', () => {
   describe('Connection arguments validation', () => {
     it('should accept valid forward pagination', () => {
       expect(() => validateConnectionArgs({ first: 10 })).not.toThrow()
-      expect(() => validateConnectionArgs({ first: 10, after: 'cursor' })).not.toThrow()
+      expect(() =>
+        validateConnectionArgs({ first: 10, after: 'cursor' }),
+      ).not.toThrow()
     })
 
     it('should accept valid backward pagination', () => {
       expect(() => validateConnectionArgs({ last: 10 })).not.toThrow()
-      expect(() => validateConnectionArgs({ last: 10, before: 'cursor' })).not.toThrow()
+      expect(() =>
+        validateConnectionArgs({ last: 10, before: 'cursor' }),
+      ).not.toThrow()
     })
 
     it('should reject conflicting arguments', () => {
-      expect(() => validateConnectionArgs({ first: 10, last: 10 }))
-        .toThrow('Cannot specify both "first" and "last"')
+      expect(() => validateConnectionArgs({ first: 10, last: 10 })).toThrow(
+        'Cannot specify both "first" and "last"',
+      )
 
-      expect(() => validateConnectionArgs({ after: 'a', before: 'b' }))
-        .toThrow('Cannot specify both "after" and "before"')
+      expect(() => validateConnectionArgs({ after: 'a', before: 'b' })).toThrow(
+        'Cannot specify both "after" and "before"',
+      )
 
-      expect(() => validateConnectionArgs({ after: 'a', last: 10 }))
-        .toThrow('Cannot use "after" with "last"')
+      expect(() => validateConnectionArgs({ after: 'a', last: 10 })).toThrow(
+        'Cannot use "after" with "last"',
+      )
 
-      expect(() => validateConnectionArgs({ before: 'b', first: 10 }))
-        .toThrow('Cannot use "before" with "first"')
+      expect(() => validateConnectionArgs({ before: 'b', first: 10 })).toThrow(
+        'Cannot use "before" with "first"',
+      )
     })
 
     it('should reject negative values', () => {
-      expect(() => validateConnectionArgs({ first: -1 }))
-        .toThrow('Argument "first" must be a non-negative integer')
+      expect(() => validateConnectionArgs({ first: -1 })).toThrow(
+        'Argument "first" must be a non-negative integer',
+      )
 
-      expect(() => validateConnectionArgs({ last: -1 }))
-        .toThrow('Argument "last" must be a non-negative integer')
+      expect(() => validateConnectionArgs({ last: -1 })).toThrow(
+        'Argument "last" must be a non-negative integer',
+      )
     })
 
     it('should reject values exceeding maximum', () => {
-      expect(() => validateConnectionArgs({ first: 101 }))
-        .toThrow('Argument "first" must not exceed 100')
+      expect(() => validateConnectionArgs({ first: 101 })).toThrow(
+        'Argument "first" must not exceed 100',
+      )
 
-      expect(() => validateConnectionArgs({ last: 101 }))
-        .toThrow('Argument "last" must not exceed 100')
+      expect(() => validateConnectionArgs({ last: 101 })).toThrow(
+        'Argument "last" must not exceed 100',
+      )
     })
   })
 
@@ -295,12 +318,7 @@ describe('Relay Utilities', () => {
       const fetchFn = vi.fn().mockResolvedValue(items)
       const countFn = vi.fn().mockResolvedValue(10)
 
-      const slice = await getConnectionSlice(
-        fetchFn,
-        countFn,
-        { first: 2 },
-        {}
-      )
+      const slice = await getConnectionSlice(fetchFn, countFn, { first: 2 }, {})
 
       expect(slice).toMatchObject({
         items: [{ id: 1 }, { id: 2 }],
@@ -310,19 +328,21 @@ describe('Relay Utilities', () => {
       })
 
       // Should fetch one extra item
-      expect(fetchFn).toHaveBeenCalledWith(expect.objectContaining({
-        take: 3,
-      }))
+      expect(fetchFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 3,
+        }),
+      )
     })
 
     it('should handle backward pagination', async () => {
       // All items in the database
       const allItems = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }]
-      
+
       const fetchFn = vi.fn().mockImplementation((query) => {
         // Simulate Prisma behavior with negative take
         const take = query.take || allItems.length
-        
+
         if (take < 0) {
           // Negative take: get last N items in descending order
           // This simulates ORDER BY id DESC LIMIT N
@@ -332,18 +352,13 @@ describe('Relay Utilities', () => {
           const lastItems = allItems.slice(-absT)
           return Promise.resolve(lastItems.reverse())
         }
-        
+
         // Positive take: get first N items
         return Promise.resolve(allItems.slice(0, take))
       })
       const countFn = vi.fn().mockResolvedValue(10)
 
-      const slice = await getConnectionSlice(
-        fetchFn,
-        countFn,
-        { last: 2 },
-        {}
-      )
+      const slice = await getConnectionSlice(fetchFn, countFn, { last: 2 }, {})
 
       expect(slice).toMatchObject({
         items: [{ id: 3 }, { id: 4 }], // With the current implementation logic

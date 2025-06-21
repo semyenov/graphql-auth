@@ -27,17 +27,19 @@ const MIN_SECRET_LENGTH = 32
  * Ensures all required environment variables are present and valid
  */
 const EnvironmentSchema = z.object({
-  NODE_ENV: z
-    .enum(ENVIRONMENTS)
-    .default('development'),
+  NODE_ENV: z.enum(ENVIRONMENTS).default('development'),
   PORT: z
     .string()
     .regex(/^\d+$/, 'PORT must be a number')
     .transform((val: string) => Number.parseInt(val, 10))
     .default(String(DEFAULT_PORT)),
   HOST: z.string().default(DEFAULT_HOST),
-  APP_SECRET: z.string().min(MIN_SECRET_LENGTH,
-    `APP_SECRET must be at least ${MIN_SECRET_LENGTH} characters`),
+  APP_SECRET: z
+    .string()
+    .min(
+      MIN_SECRET_LENGTH,
+      `APP_SECRET must be at least ${MIN_SECRET_LENGTH} characters`,
+    ),
   DATABASE_URL: z.string().url('DATABASE_URL must be a valid URL'),
   CORS_ORIGIN: z.string().optional(),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),

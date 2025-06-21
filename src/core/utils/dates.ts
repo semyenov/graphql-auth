@@ -1,6 +1,6 @@
 /**
  * Date Utilities
- * 
+ *
  * Common date and time helper functions
  */
 
@@ -82,7 +82,7 @@ export function diffInDays(date1: Date, date2: Date): number {
  * Format a date to ISO string without milliseconds
  */
 export function toISOStringWithoutMs(date: Date): string {
-  return date.toISOString().split('.')[0] + 'Z'
+  return `${date.toISOString().split('.')[0]}Z`
 }
 
 /**
@@ -127,10 +127,15 @@ export function parseDurationToSeconds(duration: string): number {
   const num = parseInt(value ?? '0', 10)
 
   switch (unit) {
-    case 'd': return num * 24 * 60 * 60
-    case 'h': return num * 60 * 60
-    case 'm': return num * 60
-    case 's': return num
-    default: throw new Error(`Invalid duration unit: ${unit}`)
+    case 'd':
+      return num * 24 * 60 * 60
+    case 'h':
+      return num * 60 * 60
+    case 'm':
+      return num * 60
+    case 's':
+      return num
+    default:
+      throw new Error(`Invalid duration unit: ${unit}`)
   }
 }

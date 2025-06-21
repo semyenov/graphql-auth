@@ -1,6 +1,6 @@
 /**
  * Global Type Definitions
- * 
+ *
  * Global TypeScript types and ambient declarations
  * as specified in IMPROVED-FILE-STRUCTURE.md
  */
@@ -31,9 +31,13 @@ export type Prettify<T> = {
   [K in keyof T]: T[K]
 } & {}
 
-export type OptionalExceptFor<T, TRequired extends keyof T> = Partial<T> & Pick<T, TRequired>
+export type OptionalExceptFor<T, TRequired extends keyof T> = Partial<T> &
+  Pick<T, TRequired>
 
-export type RequiredExceptFor<T, TOptional extends keyof T> = Required<Omit<T, TOptional>> & Pick<T, TOptional>
+export type RequiredExceptFor<T, TOptional extends keyof T> = Required<
+  Omit<T, TOptional>
+> &
+  Pick<T, TOptional>
 
 /**
  * Database-related types
@@ -187,7 +191,10 @@ export type PerformanceMetrics = {
 declare module 'graphql' {
   interface GraphQLResolveInfo {
     cacheControl?: {
-      setCacheHint: (hint: { maxAge?: number; scope?: 'PRIVATE' | 'PUBLIC' }) => void
+      setCacheHint: (hint: {
+        maxAge?: number
+        scope?: 'PRIVATE' | 'PUBLIC'
+      }) => void
     }
   }
 }
@@ -199,5 +206,3 @@ declare module 'prisma' {
     }
   }
 }
-
-export {}

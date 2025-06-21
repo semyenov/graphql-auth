@@ -11,13 +11,7 @@ export default defineConfig({
     },
     coverage: {
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'test/',
-        'prisma/',
-        'dist/',
-        'types/',
-      ],
+      exclude: ['node_modules/', 'test/', 'prisma/', 'dist/', 'types/'],
     },
     // Run tests sequentially to avoid database conflicts
     sequence: {
@@ -34,7 +28,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@prisma/client': path.resolve(__dirname, './node_modules/@prisma/client'),
+      '@prisma/client': path.resolve(
+        __dirname,
+        './node_modules/@prisma/client',
+      ),
     },
   },
 })

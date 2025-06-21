@@ -1,6 +1,6 @@
 /**
  * Prisma Client Extensions
- * 
+ *
  * Custom extensions for enhanced Prisma functionality
  */
 
@@ -15,7 +15,7 @@ export const softDeleteExtension = Prisma.defineExtension({
     $allModels: {
       async softDelete<T>(
         this: T,
-        args: Prisma.Args<T, 'update'>
+        args: Prisma.Args<T, 'update'>,
       ): Promise<Prisma.Result<T, Prisma.Args<T, 'update'>, 'update'>> {
         const context = Prisma.getExtensionContext(this)
         return (context as any).update({
@@ -29,7 +29,7 @@ export const softDeleteExtension = Prisma.defineExtension({
 
       async findManyActive<T>(
         this: T,
-        args?: Prisma.Args<T, 'findMany'>
+        args?: Prisma.Args<T, 'findMany'>,
       ): Promise<Prisma.Result<T, Prisma.Args<T, 'findMany'>, 'findMany'>> {
         const context = Prisma.getExtensionContext(this)
         return (context as any).findMany({
@@ -56,7 +56,7 @@ export const paginationExtension = Prisma.defineExtension({
         args: Prisma.Args<T, 'findMany'> & {
           page?: number
           perPage?: number
-        }
+        },
       ): Promise<{
         data: Prisma.Result<T, Prisma.Args<T, 'findMany'>, 'findMany'>
         meta: {
@@ -132,7 +132,6 @@ export const auditLogExtension = Prisma.defineExtension({
     },
   },
 })
-
 
 /**
  * Create extended Prisma client with all extensions

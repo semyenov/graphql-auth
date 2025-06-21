@@ -33,7 +33,8 @@ export class GraphQLSnapshotTester {
 
   constructor(options: { baseDir?: string; update?: boolean } = {}) {
     this.snapshotDir = options.baseDir || join(process.cwd(), '__snapshots__')
-    this.updateSnapshots = options.update || process.env.UPDATE_SNAPSHOTS === 'true'
+    this.updateSnapshots =
+      options.update || process.env.UPDATE_SNAPSHOTS === 'true'
 
     // Ensure snapshot directory exists
     if (!existsSync(this.snapshotDir)) {
@@ -111,7 +112,10 @@ export class GraphQLSnapshotTester {
   /**
    * Normalize GraphQL response for consistent snapshots
    */
-  private normalizeResponse(response: GraphQLResponse, options: SnapshotOptions): any {
+  private normalizeResponse(
+    response: GraphQLResponse,
+    options: SnapshotOptions,
+  ): any {
     let normalized = JSON.parse(JSON.stringify(response))
 
     // Apply default normalizers
@@ -151,7 +155,7 @@ export class GraphQLSnapshotTester {
         const sorted: any = {}
         Object.keys(obj)
           .sort()
-          .forEach(key => {
+          .forEach((key) => {
             sorted[key] = sortArrays(obj[key])
           })
         return sorted
@@ -174,7 +178,7 @@ export class GraphQLSnapshotTester {
         const result: any = {}
         for (const [key, value] of Object.entries(obj)) {
           const currentPath = path ? `${path}.${key}` : key
-          if (fields.some(field => currentPath.endsWith(field))) {
+          if (fields.some((field) => currentPath.endsWith(field))) {
             result[key] = '[REDACTED]'
           } else {
             result[key] = redact(value, currentPath)
@@ -285,7 +289,11 @@ export const commonNormalizers = {
       if (obj && typeof obj === 'object') {
         const result: any = {}
         for (const [key, value] of Object.entries(obj)) {
-          if (key === 'cursor' || key === 'endCursor' || key === 'startCursor') {
+          if (
+            key === 'cursor' ||
+            key === 'endCursor' ||
+            key === 'startCursor'
+          ) {
             result[key] = '[CURSOR]'
           } else {
             result[key] = replaceCursors(value)
@@ -301,31 +309,33 @@ export const commonNormalizers = {
   /**
    * Sort edges by a field
    */
-  sortEdges: (field: string) => (data: any): any => {
-    const sortByField = (obj: any): any => {
-      if (Array.isArray(obj)) {
-        return obj.map(sortByField)
-      }
-      if (obj && typeof obj === 'object') {
-        const result: any = {}
-        for (const [key, value] of Object.entries(obj)) {
-          if (key === 'edges' && Array.isArray(value)) {
-            result[key] = value.sort((a, b) => {
-              const aVal = a.node?.[field]
-              const bVal = b.node?.[field]
-              if (aVal === undefined || bVal === undefined) return 0
-              return aVal < bVal ? -1 : aVal > bVal ? 1 : 0
-            })
-          } else {
-            result[key] = sortByField(value)
-          }
+  sortEdges:
+    (field: string) =>
+    (data: any): any => {
+      const sortByField = (obj: any): any => {
+        if (Array.isArray(obj)) {
+          return obj.map(sortByField)
         }
-        return result
+        if (obj && typeof obj === 'object') {
+          const result: any = {}
+          for (const [key, value] of Object.entries(obj)) {
+            if (key === 'edges' && Array.isArray(value)) {
+              result[key] = value.sort((a, b) => {
+                const aVal = a.node?.[field]
+                const bVal = b.node?.[field]
+                if (aVal === undefined || bVal === undefined) return 0
+                return aVal < bVal ? -1 : aVal > bVal ? 1 : 0
+              })
+            } else {
+              result[key] = sortByField(value)
+            }
+          }
+          return result
+        }
+        return obj
       }
-      return obj
-    }
-    return sortByField(data)
-  },
+      return sortByField(data)
+    },
 }
 
 /**

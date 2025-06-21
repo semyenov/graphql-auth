@@ -1,14 +1,17 @@
 /**
  * Users Module Permissions
- * 
+ *
  * Defines authorization rules and permission checks for user operations
  */
 
 import { allow, rule, shield } from 'graphql-shield'
-import { UserStatus } from '@prisma/client'
-import type { Context } from '../../graphql/context/context.types'
+import {
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+} from '../../core/errors/types'
 import { parseAndValidateGlobalId } from '../../core/utils/relay'
-import { AuthenticationError, AuthorizationError, NotFoundError } from '../../core/errors/types'
+import type { Context } from '../../graphql/context/context.types'
 import { prisma } from '../../prisma'
 
 /**
@@ -17,7 +20,7 @@ import { prisma } from '../../prisma'
 export const isAuthenticated = rule({ cache: 'contextual' })(
   async (_parent, _args, context: Context) => {
     return !!context.userId
-  }
+  },
 )
 
 /**
@@ -40,7 +43,7 @@ export const isSelf = rule({ cache: 'strict' })(
       const userId = parseInt(targetId, 10)
       return userId === context.userId.value
     }
-  }
+  },
 )
 
 /**
@@ -56,7 +59,7 @@ export const isAdmin = rule({ cache: 'contextual' })(
     })
 
     return user?.role === 'admin'
-  }
+  },
 )
 
 /**
@@ -72,7 +75,7 @@ export const isModerator = rule({ cache: 'contextual' })(
     })
 
     return user?.role === 'admin' || user?.role === 'moderator'
-  }
+  },
 )
 
 /**
@@ -95,7 +98,7 @@ export const canViewProfile = rule({ cache: 'strict' })(
       }
 
       // Banned users are not visible
-      if (user.status === UserStatus.BANNED) {
+      if (user.status === 'BANNED') {
         return new NotFoundError('User', args.id)
       }
 
@@ -106,7 +109,7 @@ export const canViewProfile = rule({ cache: 'strict' })(
       }
       return new Error('Invalid user ID')
     }
-  }
+  },
 )
 
 /**
@@ -148,14 +151,16 @@ export const canEditUser = rule({ cache: 'strict' })(
         }
       }
 
-      return new AuthorizationError('You do not have permission to edit this user')
+      return new AuthorizationError(
+        'You do not have permission to edit this user',
+      )
     } catch (error) {
       if (error instanceof Error) {
         return error
       }
       return new Error('Invalid user ID')
     }
-  }
+  },
 )
 
 /**
@@ -179,7 +184,7 @@ export const notBlocked = rule({ cache: 'strict' })(
       }
       return new Error('Invalid user ID')
     }
-  }
+  },
 )
 
 /**
@@ -192,7 +197,10 @@ export const canSendMessage = rule({ cache: 'strict' })(
     }
 
     try {
-      const recipientId = await parseAndValidateGlobalId(args.recipientId, 'User')
+      const recipientId = await parseAndValidateGlobalId(
+        args.recipientId,
+        'User',
+      )
 
       // Can't message yourself
       if (recipientId === context.userId.value) {
@@ -211,7 +219,7 @@ export const canSendMessage = rule({ cache: 'strict' })(
         return new NotFoundError('User', args.recipientId)
       }
 
-      if (recipient.status === UserStatus.BANNED) {
+      if (recipient.status === 'BANNED') {
         return new AuthorizationError('Cannot send messages to this user')
       }
 
@@ -223,7 +231,7 @@ export const canSendMessage = rule({ cache: 'strict' })(
       }
       return new Error('Invalid recipient ID')
     }
-  }
+  },
 )
 
 /**
@@ -245,7 +253,13 @@ export const usersPermissions = {
   Mutation: {
     // Profile management
     updateUserProfile: rule()(async (_parent, _args, context) => {
-      return canEditUser.resolve(_parent, { id: context.userId?.value.toString() || '' }, context, {} as any, {} as any)
+      return canEditUser.resolve(
+        _parent,
+        { id: context.userId?.value.toString() || '' },
+        context,
+        {} as any,
+        {} as any,
+      )
     }),
     updateUserPreferences: isAuthenticated,
     uploadAvatar: isAuthenticated,
@@ -306,7 +320,10 @@ export const usersPermissions = {
 /**
  * Create users shield middleware
  */
-export const createUsersShield = () => shield(usersPermissions, {
-  allowExternalErrors: true,
-  fallbackError: new AuthorizationError('Not authorized to perform this action'),
-})
+export const createUsersShield = () =>
+  shield(usersPermissions, {
+    allowExternalErrors: true,
+    fallbackError: new AuthorizationError(
+      'Not authorized to perform this action',
+    ),
+  })

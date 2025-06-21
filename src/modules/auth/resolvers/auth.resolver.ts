@@ -1,6 +1,6 @@
 /**
  * Authentication GraphQL Resolvers (Direct Implementation)
- * 
+ *
  * Implements authentication logic directly in Pothos resolvers without use cases.
  */
 
@@ -13,11 +13,15 @@ import type { IPasswordService } from '../../../core/services/password.service.i
 import { signToken } from '../../../core/utils/jwt'
 import { builder } from '../../../graphql/schema/builder'
 import { commonValidations } from '../../../graphql/schema/helpers'
-import { applyRateLimit, createRateLimitConfig } from '../../../graphql/schema/plugins/rate-limit.plugin'
+import {
+  applyRateLimit,
+  createRateLimitConfig,
+} from '../../../graphql/schema/plugins/rate-limit.plugin'
 import { prisma } from '../../../prisma'
 
 // Get services from container
-const getPasswordService = () => container.resolve<IPasswordService>('IPasswordService')
+const getPasswordService = () =>
+  container.resolve<IPasswordService>('IPasswordService')
 const getLogger = () => container.resolve<ILogger>('ILogger')
 
 // Signup mutation with direct implementation
@@ -56,7 +60,7 @@ builder.mutationField('signup', (t) =>
           options: RateLimitPresets.signup,
         },
         args,
-        context
+        context,
       )
 
       // Check if user already exists
@@ -65,7 +69,9 @@ builder.mutationField('signup', (t) =>
       })
 
       if (existingUser) {
-        logger.warn('Signup failed - email already exists', { email: args.email })
+        logger.warn('Signup failed - email already exists', {
+          email: args.email,
+        })
         throw new ConflictError('An account with this email already exists')
       }
 
@@ -82,14 +88,17 @@ builder.mutationField('signup', (t) =>
         },
       })
 
-      logger.info('User created successfully', { userId: user.id, email: user.email })
+      logger.info('User created successfully', {
+        userId: user.id,
+        email: user.email,
+      })
 
       // Generate token
       const token = signToken({ userId: user.id, email: user.email })
 
       return token
     },
-  })
+  }),
 )
 
 // Login mutation with direct implementation
@@ -122,7 +131,7 @@ builder.mutationField('login', (t) =>
           options: RateLimitPresets.login,
         },
         args,
-        context
+        context,
       )
 
       // Find user by email
@@ -137,11 +146,29 @@ builder.mutationField('login', (t) =>
 
       // Verify password
       const passwordService = getPasswordService()
-      const isValidPassword = await passwordService.verify(args.password, user.password)
+      const isValidPassword = await passwordService.verify(
+        args.password,
+        user.password,
+      )
 
       if (!isValidPassword) {
-        logger.warn('Login failed - invalid password', { email: args.email, userId: user.id })
+        logger.warn('Login failed - invalid password', {
+          email: args.email,
+          userId: user.id,
+        })
         throw new AuthenticationError('Invalid email or password')
+      }
+
+      // Check if password needs rehashing (e.g., upgrading from bcrypt to argon2)
+      const needsRehash = await passwordService.needsRehash(user.password)
+      if (needsRehash) {
+        // Rehash the password with the new algorithm
+        const newHash = await passwordService.hash(args.password)
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { password: newHash },
+        })
+        logger.info('Password rehashed during login', { userId: user.id })
       }
 
       logger.info('Login successful', { email: args.email, userId: user.id })
@@ -151,7 +178,7 @@ builder.mutationField('login', (t) =>
 
       return token
     },
-  })
+  }),
 )
 
 // Me query with direct implementation
@@ -171,5 +198,5 @@ builder.queryField('me', (t) =>
         where: { id: context.userId.value },
       })
     },
-  })
+  }),
 )

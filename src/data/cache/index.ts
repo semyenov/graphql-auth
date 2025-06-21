@@ -1,15 +1,16 @@
 /**
  * Cache Layer Index
- * 
+ *
  * Central export point for all cache implementations
  * as specified in IMPROVED-FILE-STRUCTURE.md
  */
 
-export type { ICache, CacheOptions, CacheMetrics } from './cache.interface'
+export type { CacheMetrics, CacheOptions, ICache } from './cache.interface'
 export { MemoryCache } from './memory-cache'
 export { RedisCache } from './redis-cache'
 
 // Import ICache type for local use
+import type { Redis } from 'ioredis'
 import type { ICache } from './cache.interface'
 import { MemoryCache } from './memory-cache'
 import { RedisCache } from './redis-cache'
@@ -17,13 +18,16 @@ import { RedisCache } from './redis-cache'
 /**
  * Cache factory function
  */
-export function createCache(type: 'memory' | 'redis', options?: {
-  keyPrefix?: string
-  defaultTtl?: number
-  client?: any
-}): ICache {
+export function createCache(
+  type: 'memory' | 'redis',
+  options?: {
+    keyPrefix?: string
+    defaultTtl?: number
+    client?: Redis
+  },
+): ICache {
   const { keyPrefix = '', defaultTtl = 300, client } = options || {}
-  
+
   switch (type) {
     case 'memory':
       return new MemoryCache(defaultTtl, keyPrefix)

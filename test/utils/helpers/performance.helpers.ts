@@ -2,8 +2,7 @@
  * Performance testing utilities for measuring GraphQL operation performance
  */
 
-import type { GraphQLResponse } from '@apollo/server'
-import { ApolloServer } from '@apollo/server'
+import type { ApolloServer, GraphQLResponse } from '@apollo/server'
 import type { Context } from '../../../src/graphql/context/context.types'
 import { executeOperation } from './database.helpers'
 
@@ -12,7 +11,7 @@ export interface PerformanceMetrics {
   executionTime: number
   memoryUsed: number
   timestamp: number
-  variables?: Record<string, any>
+  variables?: Record<string, unknown>
 }
 
 export interface PerformanceReport {
@@ -33,16 +32,21 @@ export interface PerformanceReport {
 /**
  * Measure the performance of a GraphQL operation
  */
-export async function measureOperation<T = any>(
+export async function measureOperation<T = unknown>(
   server: ApolloServer<Context>,
   operation: string,
-  variables: Record<string, any>,
+  variables: Record<string, unknown>,
   context: Context,
 ): Promise<{ result: GraphQLResponse<T>; metrics: PerformanceMetrics }> {
   const startMemory = process.memoryUsage().heapUsed
   const startTime = performance.now()
 
-  const result = await executeOperation<T>(server, operation, variables, context)
+  const result = await executeOperation<T>(
+    server,
+    operation,
+    variables,
+    context,
+  )
 
   const endTime = performance.now()
   const endMemory = process.memoryUsage().heapUsed
@@ -64,7 +68,7 @@ export async function measureOperation<T = any>(
 export async function benchmark(
   server: ApolloServer<Context>,
   operation: string,
-  variables: Record<string, any>,
+  variables: Record<string, unknown>,
   context: Context,
   options: {
     iterations?: number
@@ -102,7 +106,7 @@ export async function benchmarkConcurrent(
   server: ApolloServer<Context>,
   operations: Array<{
     operation: string
-    variables: Record<string, any>
+    variables: Record<string, unknown>
     context: Context
   }>,
   options: {
@@ -127,14 +131,19 @@ export async function benchmarkConcurrent(
 
     for (let j = 0; j < concurrency && i + j < iterations; j++) {
       const op = operations[(i + j) % operations.length]
-      batch.push(
-        measureOperation(server, op!.operation, op!.variables, op!.context).then(
-          ({ metrics }) => {
-            const name = extractOperationName(op!.operation)
-            results.get(name)!.push(metrics)
-          },
-        ),
-      )
+      if (op) {
+        batch.push(
+          measureOperation(
+            server,
+            op.operation,
+            op.variables,
+            op.context,
+          ).then(({ metrics }) => {
+            const name = extractOperationName(op.operation)
+            results.get(name)?.push(metrics)
+          }),
+        )
+      }
     }
 
     await Promise.all(batch)
@@ -155,7 +164,7 @@ export async function benchmarkConcurrent(
 export async function loadTest(
   server: ApolloServer<Context>,
   operation: string,
-  variables: Record<string, any>,
+  variables: Record<string, unknown>,
   context: Context,
   options: {
     maxConcurrency?: number
@@ -169,7 +178,11 @@ export async function loadTest(
 
   const results: Array<{ concurrency: number; report: PerformanceReport }> = []
 
-  for (let concurrency = step; concurrency <= maxConcurrency; concurrency += step) {
+  for (
+    let concurrency = step;
+    concurrency <= maxConcurrency;
+    concurrency += step
+  ) {
     const metrics: PerformanceMetrics[] = []
     const endTime = Date.now() + duration
 
@@ -215,8 +228,8 @@ function generateReport(metrics: PerformanceMetrics[]): PerformanceReport {
     throw new Error('No metrics to generate report from')
   }
 
-  const times = metrics.map(m => m.executionTime).sort((a, b) => a - b)
-  const memories = metrics.map(m => m.memoryUsed)
+  const times = metrics.map((m) => m.executionTime).sort((a, b) => a - b)
+  const memories = metrics.map((m) => m.memoryUsed)
 
   const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0)
   const avg = (arr: number[]) => sum(arr) / arr.length
@@ -253,7 +266,10 @@ export function assertPerformance(
     maxMemory?: number
   },
 ): void {
-  if (requirements.maxAverageTime && report.averageTime > requirements.maxAverageTime) {
+  if (
+    requirements.maxAverageTime &&
+    report.averageTime > requirements.maxAverageTime
+  ) {
     throw new Error(
       `Average execution time ${report.averageTime.toFixed(2)}ms exceeds maximum ${requirements.maxAverageTime}ms`,
     )
@@ -271,7 +287,10 @@ export function assertPerformance(
     )
   }
 
-  if (requirements.maxMemory && report.memoryStats.peak > requirements.maxMemory) {
+  if (
+    requirements.maxMemory &&
+    report.memoryStats.peak > requirements.maxMemory
+  ) {
     throw new Error(
       `Peak memory usage ${(report.memoryStats.peak / 1024 / 1024).toFixed(2)}MB exceeds maximum ${(requirements.maxMemory / 1024 / 1024).toFixed(2)}MB`,
     )

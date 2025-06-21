@@ -1,6 +1,6 @@
 /**
  * GraphQL Middleware Index
- * 
+ *
  * Central export point for all GraphQL middleware
  * as specified in IMPROVED-FILE-STRUCTURE.md
  */
@@ -8,34 +8,31 @@
 import { authMiddleware } from './auth.middleware'
 
 // Export individual middleware
-export { authMiddleware } from './auth.middleware'
-export { rateLimitMiddleware } from './rate-limit.middleware'
-export { validationMiddleware } from './validation.middleware'
-
 // Export individual rules for composition
 export {
-    isAdminRule,
-    isAuthenticatedRule,
-    isResourceOwnerRule,
-    requireAuthenticationRule
+  authMiddleware,
+  isAdminRule,
+  isAuthenticatedRule,
+  isResourceOwnerRule,
+  requireAuthenticationRule,
 } from './auth.middleware'
-
 export {
-    authRateLimitRule,
-    createRateLimitRule,
-    mutationRateLimitRule,
-    queryRateLimitRule,
-    RATE_LIMIT_CONFIGS,
-    strictRateLimitRule
+  authRateLimitRule,
+  createRateLimitRule,
+  mutationRateLimitRule,
+  queryRateLimitRule,
+  RATE_LIMIT_CONFIGS,
+  rateLimitMiddleware,
+  strictRateLimitRule,
 } from './rate-limit.middleware'
-
 export {
-    emailValidationRule,
-    paginationValidationRule,
-    passwordValidationRule,
-    postContentValidationRule,
-    postTitleValidationRule,
-    userNameValidationRule
+  emailValidationRule,
+  paginationValidationRule,
+  passwordValidationRule,
+  postContentValidationRule,
+  postTitleValidationRule,
+  userNameValidationRule,
+  validationMiddleware,
 } from './validation.middleware'
 
 /**

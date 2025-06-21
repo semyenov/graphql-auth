@@ -1,6 +1,6 @@
 /**
  * GraphQL-specific Type Definitions
- * 
+ *
  * Types specific to GraphQL operations and schema
  * as specified in IMPROVED-FILE-STRUCTURE.md
  */
@@ -15,10 +15,15 @@ export type Resolver<TResult, TParent = {}, TArgs = {}, TContext = Context> = (
   parent: TParent,
   args: TArgs,
   context: TContext,
-  info: GraphQLResolveInfo
+  info: GraphQLResolveInfo,
 ) => Promise<TResult> | TResult
 
-export type SubscriptionResolver<TResult, TParent = {}, TArgs = {}, TContext = Context> = {
+export type SubscriptionResolver<
+  TResult,
+  TParent = {},
+  TArgs = {},
+  TContext = Context,
+> = {
   subscribe: Resolver<AsyncIterator<TResult>, TParent, TArgs, TContext>
   resolve?: Resolver<TResult, TParent, TArgs, TContext>
 }
@@ -26,12 +31,11 @@ export type SubscriptionResolver<TResult, TParent = {}, TArgs = {}, TContext = C
 /**
  * Field resolver types
  */
-export type FieldResolver<TResult = unknown, TParent = unknown, TArgs = unknown> = Resolver<
-  TResult,
-  TParent,
-  TArgs,
-  Context
->
+export type FieldResolver<
+  TResult = unknown,
+  TParent = unknown,
+  TArgs = unknown,
+> = Resolver<TResult, TParent, TArgs, Context>
 
 /**
  * Mutation resolver types
@@ -94,22 +98,32 @@ export type GraphQLResult<T = unknown> = {
  * GraphQL middleware types
  */
 export type GraphQLMiddleware = (
-  resolve: (root: unknown, args: unknown, context: Context, info: GraphQLResolveInfo) => unknown,
+  resolve: (
+    root: unknown,
+    args: unknown,
+    context: Context,
+    info: GraphQLResolveInfo,
+  ) => unknown,
   root: unknown,
   args: unknown,
   context: Context,
-  info: GraphQLResolveInfo
+  info: GraphQLResolveInfo,
 ) => unknown
 
 /**
  * GraphQL directive types
  */
 export type DirectiveResolver<TArgs = Record<string, unknown>> = (
-  next: (root: unknown, args: unknown, context: Context, info: GraphQLResolveInfo) => unknown,
+  next: (
+    root: unknown,
+    args: unknown,
+    context: Context,
+    info: GraphQLResolveInfo,
+  ) => unknown,
   root: unknown,
   args: TArgs,
   context: Context,
-  info: GraphQLResolveInfo
+  info: GraphQLResolveInfo,
 ) => unknown
 
 /**
@@ -119,12 +133,12 @@ export type WhereInput<T> = {
   [K in keyof T]?: T[K] extends string
     ? StringFilter
     : T[K] extends number
-    ? IntFilter
-    : T[K] extends boolean
-    ? BooleanFilter
-    : T[K] extends Date
-    ? DateTimeFilter
-    : T[K]
+      ? IntFilter
+      : T[K] extends boolean
+        ? BooleanFilter
+        : T[K] extends Date
+          ? DateTimeFilter
+          : T[K]
 } & {
   AND?: WhereInput<T>[]
   OR?: WhereInput<T>[]
@@ -214,7 +228,7 @@ export type SubscriptionPayload<T = unknown> = {
 export type SubscriptionFilter<T = unknown> = (
   payload: T,
   variables: Record<string, unknown>,
-  context: Context
+  context: Context,
 ) => boolean | Promise<boolean>
 
 /**

@@ -1,11 +1,16 @@
 /**
  * Core Error Handlers
- * 
- * Error handling utilities and error conversion functions following the 
+ *
+ * Error handling utilities and error conversion functions following the
  * IMPROVED-FILE-STRUCTURE.md specification.
  */
 
-import { BaseError, AuthorizationError, NotFoundError, ConflictError } from './types'
+import {
+  AuthorizationError,
+  BaseError,
+  ConflictError,
+  NotFoundError,
+} from './types'
 
 /**
  * Type guard to check if error is a BaseError
@@ -50,9 +55,7 @@ export function normalizeError(error: unknown): BaseError {
     if (hasErrorCode(error)) {
       switch (error.code) {
         case 'P2002':
-          return new ConflictError(
-            'A record with this value already exists',
-          )
+          return new ConflictError('A record with this value already exists')
         case 'P2025':
           return new NotFoundError('Record')
         default:
@@ -63,11 +66,7 @@ export function normalizeError(error: unknown): BaseError {
     return new BaseError(error.message, 'INTERNAL_ERROR', 500)
   }
 
-  return new BaseError(
-    'An unexpected error occurred',
-    'UNKNOWN_ERROR',
-    500,
-  )
+  return new BaseError('An unexpected error occurred', 'UNKNOWN_ERROR', 500)
 }
 
 /**
@@ -75,19 +74,23 @@ export function normalizeError(error: unknown): BaseError {
  */
 export function handleGraphQLError(error: unknown): BaseError {
   const normalized = normalizeError(error)
-  
+
   // Add GraphQL-specific error handling
   if (error instanceof Error) {
     if (error.message.includes('ValidationError')) {
       // Handle validation errors from GraphQL
       return normalized
     }
-    
+
     if (error.message.includes('syntax error')) {
-      return new BaseError('Invalid GraphQL syntax', 'GRAPHQL_SYNTAX_ERROR', 400)
+      return new BaseError(
+        'Invalid GraphQL syntax',
+        'GRAPHQL_SYNTAX_ERROR',
+        400,
+      )
     }
   }
-  
+
   return normalized
 }
 
@@ -96,22 +99,26 @@ export function handleGraphQLError(error: unknown): BaseError {
  */
 export function handleAuthError(error: unknown): BaseError {
   const normalized = normalizeError(error)
-  
+
   if (error instanceof Error) {
     // JWT-specific errors
     if (error.message.includes('jwt expired')) {
       return new BaseError('Token has expired', 'TOKEN_EXPIRED', 401)
     }
-    
+
     if (error.message.includes('jwt malformed')) {
       return new BaseError('Invalid token format', 'TOKEN_MALFORMED', 401)
     }
-    
+
     if (error.message.includes('invalid signature')) {
-      return new BaseError('Token signature is invalid', 'TOKEN_INVALID_SIGNATURE', 401)
+      return new BaseError(
+        'Token signature is invalid',
+        'TOKEN_INVALID_SIGNATURE',
+        401,
+      )
     }
   }
-  
+
   return normalized
 }
 
@@ -122,37 +129,64 @@ export function handleDatabaseError(error: unknown): BaseError {
   if (hasErrorCode(error)) {
     switch (error.code) {
       case 'P2000':
-        return new BaseError('The provided value is too long', 'VALUE_TOO_LONG', 400)
+        return new BaseError(
+          'The provided value is too long',
+          'VALUE_TOO_LONG',
+          400,
+        )
       case 'P2001':
         return new NotFoundError('Record')
       case 'P2002':
         return new ConflictError('Unique constraint violation')
       case 'P2003':
-        return new BaseError('Foreign key constraint violation', 'FOREIGN_KEY_VIOLATION', 400)
+        return new BaseError(
+          'Foreign key constraint violation',
+          'FOREIGN_KEY_VIOLATION',
+          400,
+        )
       case 'P2004':
-        return new BaseError('Database constraint violation', 'CONSTRAINT_VIOLATION', 400)
+        return new BaseError(
+          'Database constraint violation',
+          'CONSTRAINT_VIOLATION',
+          400,
+        )
       case 'P2025':
         return new NotFoundError('Record')
       default:
-        return new BaseError(`Database error: ${error.message}`, `DB_${error.code}`, 500)
+        return new BaseError(
+          `Database error: ${error.message}`,
+          `DB_${error.code}`,
+          500,
+        )
     }
   }
-  
+
   return normalizeError(error)
 }
 
 /**
  * Handle rate limiting errors
  */
-export function handleRateLimitError(error: unknown, retryAfter?: number): BaseError {
+export function handleRateLimitError(
+  error: unknown,
+  retryAfter?: number,
+): BaseError {
   if (error instanceof Error) {
-    const rateLimitError = new BaseError(error.message, 'RATE_LIMIT_EXCEEDED', 429)
+    const rateLimitError = new BaseError(
+      error.message,
+      'RATE_LIMIT_EXCEEDED',
+      429,
+    )
     if (retryAfter) {
-      (rateLimitError as any).retryAfter = retryAfter
+      // Add retryAfter to the error object
+      Object.defineProperty(rateLimitError, 'retryAfter', {
+        value: retryAfter,
+        enumerable: true,
+      })
     }
     return rateLimitError
   }
-  
+
   return normalizeError(error)
 }
 
@@ -168,14 +202,14 @@ export function createErrorResponse(error: BaseError) {
       code: error.code,
       statusCode: error.statusCode,
       timestamp: new Date().toISOString(),
-    }
+    },
   }
 }
 
 /**
  * Log error with context information
  */
-export function logError(error: BaseError, context?: Record<string, any>) {
+export function logError(error: BaseError, context?: Record<string, unknown>) {
   const errorInfo = {
     name: error.name,
     message: error.message,
@@ -185,7 +219,7 @@ export function logError(error: BaseError, context?: Record<string, any>) {
     context,
     timestamp: new Date().toISOString(),
   }
-  
+
   // In a real implementation, you would use your logger service here
   console.error('Application Error:', errorInfo)
 }
@@ -201,8 +235,8 @@ export function shouldReportError(error: BaseError): boolean {
     'FORBIDDEN',
     'NOT_FOUND',
     'CONFLICT',
-    'RATE_LIMIT_EXCEEDED'
+    'RATE_LIMIT_EXCEEDED',
   ]
-  
+
   return !ignoredCodes.includes(error.code)
 }

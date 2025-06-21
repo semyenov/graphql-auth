@@ -48,7 +48,8 @@ export const VALIDATION_MESSAGES = {
   PASSWORD_REQUIRED: 'Password is required',
   PASSWORD_TOO_SHORT: 'Password must be at least 8 characters',
   PASSWORD_TOO_LONG: 'Password must be less than 128 characters',
-  PASSWORD_WEAK: 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+  PASSWORD_WEAK:
+    'Password must contain at least one uppercase letter, one lowercase letter, and one number',
 
   // Name
   NAME_TOO_SHORT: 'Name must be at least 2 characters',

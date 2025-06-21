@@ -1,6 +1,6 @@
 /**
  * Logger Service Interface
- * 
+ *
  * Defines logging operations for the application.
  * Supports different log levels and structured logging with context.
  */
@@ -9,11 +9,11 @@ export enum LogLevel {
   DEBUG = 'debug',
   INFO = 'info',
   WARN = 'warn',
-  ERROR = 'error'
+  ERROR = 'error',
 }
 
 export interface LogContext {
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface ILogger {

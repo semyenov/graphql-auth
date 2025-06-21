@@ -1,70 +1,67 @@
 /**
  * Global Types Index
- * 
+ *
  * Central export point for all global types
  * as specified in IMPROVED-FILE-STRUCTURE.md
  */
 
-// Re-export types, avoiding conflicts
-export type {
-  Prettify,
-  OptionalExceptFor,
-  RequiredExceptFor,
-  EntityId,
-  Timestamps,
-  SoftDeleteTimestamps,
-  PaginationInput,
-  PaginationInfo,
-  ApiResponse,
-  ApiError,
-  AuthTokens,
-  TokenPayload,
-  UserRole,
-  Permission,
-  RequestMetadata,
-  SecurityContext,
-  User,
-  LogLevel,
-  LogContext,
-  PerformanceMetrics,
-} from './global'
-
-export type {
-  Resolver,
-  SubscriptionResolver,
-  FieldResolver,
-  MutationResolver,
-  QueryResolver,
-  DateTimeScalarConfig,
-  EmailScalarConfig,
-  GraphQLOperation,
-  GraphQLResult,
-  GraphQLMiddleware,
-  DirectiveResolver,
-  WhereInput,
-  StringFilter,
-  IntFilter,
-  BooleanFilter,
-  DateTimeFilter,
-  OrderByInput,
-  ConnectionArgs,
-  Edge,
-  PageInfo,
-  SubscriptionPayload,
-  SubscriptionFilter,
-  GraphQLErrorExtensions,
-  ValidationRule,
-  ValidationContext,
-} from './graphql'
-
-// Use specific names to avoid conflicts
-export type { Connection as GraphQLConnection } from './global'
-export type { Connection as RelayConnection } from './graphql'
-
+export type { Email } from '../core/value-objects/email.vo'
+export type { UserId as UserIdVO } from '../core/value-objects/user-id.vo'
 // Re-export types from other modules for convenience
 export type { Context, EnhancedContext } from '../graphql/context/context.types'
-export type { UserId as UserIdVO } from '../core/value-objects/user-id.vo'
-export type { Email } from '../core/value-objects/email.vo'
+// Re-export types, avoiding conflicts
+// Use specific names to avoid conflicts
+export type {
+  ApiError,
+  ApiResponse,
+  AuthTokens,
+  Connection as GraphQLConnection,
+  EntityId,
+  LogContext,
+  LogLevel,
+  OptionalExceptFor,
+  PaginationInfo,
+  PaginationInput,
+  PerformanceMetrics,
+  Permission,
+  Prettify,
+  RequestMetadata,
+  RequiredExceptFor,
+  SecurityContext,
+  SoftDeleteTimestamps,
+  Timestamps,
+  TokenPayload,
+  User,
+  UserRole,
+} from './global'
+export type {
+  BooleanFilter,
+  Connection as RelayConnection,
+  ConnectionArgs,
+  DateTimeFilter,
+  DateTimeScalarConfig,
+  DirectiveResolver,
+  Edge,
+  EmailScalarConfig,
+  FieldResolver,
+  GraphQLErrorExtensions,
+  GraphQLMiddleware,
+  GraphQLOperation,
+  GraphQLResult,
+  IntFilter,
+  MutationResolver,
+  OrderByInput,
+  PageInfo,
+  QueryResolver,
+  Resolver,
+  StringFilter,
+  SubscriptionFilter,
+  SubscriptionPayload,
+  SubscriptionResolver,
+  ValidationContext,
+  ValidationRule,
+  WhereInput,
+} from './graphql'
 
 /**
  * Commonly used type combinations
@@ -90,17 +87,20 @@ export type DeepRequired<T> = {
 /**
  * Function utility types
  */
-export type AsyncFunction<TArgs extends readonly unknown[] = [], TReturn = unknown> = (
-  ...args: TArgs
-) => Promise<TReturn>
+export type AsyncFunction<
+  TArgs extends readonly unknown[] = [],
+  TReturn = unknown,
+> = (...args: TArgs) => Promise<TReturn>
 
-export type SyncFunction<TArgs extends readonly unknown[] = [], TReturn = unknown> = (
-  ...args: TArgs
-) => TReturn
+export type SyncFunction<
+  TArgs extends readonly unknown[] = [],
+  TReturn = unknown,
+> = (...args: TArgs) => TReturn
 
-export type AnyFunction<TArgs extends readonly unknown[] = [], TReturn = unknown> =
-  | AsyncFunction<TArgs, TReturn>
-  | SyncFunction<TArgs, TReturn>
+export type AnyFunction<
+  TArgs extends readonly unknown[] = [],
+  TReturn = unknown,
+> = AsyncFunction<TArgs, TReturn> | SyncFunction<TArgs, TReturn>
 
 /**
  * Object utility types
@@ -122,27 +122,43 @@ export type SymbolKeys<T> = Extract<keyof T, symbol>
  */
 export type ArrayElement<T> = T extends readonly (infer U)[] ? U : never
 
-export type Head<T extends readonly unknown[]> = T extends readonly [infer H, ...unknown[]] ? H : never
+export type Head<T extends readonly unknown[]> = T extends readonly [
+  infer H,
+  ...unknown[],
+]
+  ? H
+  : never
 
-export type Tail<T extends readonly unknown[]> = T extends readonly [unknown, ...infer Rest] ? Rest : []
+export type Tail<T extends readonly unknown[]> = T extends readonly [
+  unknown,
+  ...infer Rest,
+]
+  ? Rest
+  : []
 
 /**
  * Promise utility types
  */
 export type Awaited<T> = T extends Promise<infer U> ? U : T
 
-export type PromiseType<T extends Promise<unknown>> = T extends Promise<infer U> ? U : never
+export type PromiseType<T extends Promise<unknown>> = T extends Promise<infer U>
+  ? U
+  : never
 
 /**
  * Union utility types
  */
-export type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends (
-  k: infer I
-) => void
+export type UnionToIntersection<U> = (
+  U extends unknown
+    ? (k: U) => void
+    : never
+) extends (k: infer I) => void
   ? I
   : never
 
-export type LastOfUnion<T> = UnionToIntersection<T extends unknown ? () => T : never> extends () => infer R
+export type LastOfUnion<T> = UnionToIntersection<
+  T extends unknown ? () => T : never
+> extends () => infer R
   ? R
   : never
 

@@ -1,6 +1,6 @@
 /**
  * Auth Module Tests
- * 
+ *
  * Consolidated test file for all authentication functionality following the
  * IMPROVED-FILE-STRUCTURE.md specification.
  */

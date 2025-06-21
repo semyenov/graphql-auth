@@ -1,6 +1,6 @@
 /**
  * Direct GraphQL Queries
- * 
+ *
  * Simple GraphQL operation strings for direct resolver queries
  */
 

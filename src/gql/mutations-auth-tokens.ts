@@ -1,6 +1,6 @@
 /**
  * Direct GraphQL Auth Tokens Mutations
- * 
+ *
  * Simple GraphQL operation strings for authentication with tokens
  */
 

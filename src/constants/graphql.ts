@@ -41,7 +41,7 @@ export const GRAPHQL_OPERATIONS = {
   POSTS: 'posts',
   FEED: 'feed',
   DRAFTS: 'drafts',
-  
+
   // Mutations
   SIGNUP: 'signup',
   LOGIN: 'login',

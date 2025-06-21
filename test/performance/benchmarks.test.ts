@@ -1,12 +1,13 @@
 /**
  * Benchmark Testing
- * 
+ *
  * Performance benchmarks for critical operations following the
  * IMPROVED-FILE-STRUCTURE.md specification.
  */
 
 import { performance } from 'perf_hooks'
 import { beforeEach, describe, expect, it } from 'vitest'
+
 // import { createTestServer } from '../utils/helpers/database.helpers'
 
 describe('Benchmarks', () => {

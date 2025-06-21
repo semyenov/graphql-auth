@@ -1,7 +1,7 @@
 import { print } from 'graphql'
 import type {
   GraphQLError,
-  GraphQLResponse
+  GraphQLResponse,
 } from './graphql/context/context.types'
 
 // =============================================================================
@@ -279,7 +279,9 @@ export class GraphQLBatcher {
 
       requests.forEach((request, index) => {
         request.resolve(
-          responses[index] || { errors: [{ name: 'NoResponseError', message: 'No response' }] },
+          responses[index] || {
+            errors: [{ name: 'NoResponseError', message: 'No response' }],
+          },
         )
       })
     } catch (error) {
@@ -314,7 +316,7 @@ export class QueryValidator {
 
     for (const match of requiredVars) {
       const varName = match.match(/\$(\w+):/)
-      if (varName && varName[1] && !(varName[1] in variables)) {
+      if (varName?.[1] && !(varName[1] in variables)) {
         errors.push(`Required variable $${varName[1]} is missing`)
       }
     }

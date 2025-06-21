@@ -7,7 +7,8 @@
     "module": "ESNext",
     "target": "ESNext",
     "lib": ["ESNext", "DOM"],
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
     "allowJs": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -22,10 +23,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "types": ["bun"],
-    "typeRoots": [
-      "./node_modules/@types",
-      "./types"
-    ],
+    "typeRoots": ["./node_modules/@types", "./types"],
     "plugins": [
       {
         "name": "gql.tada/ts-plugin",
@@ -40,8 +38,5 @@
       "@": ["./src"]
     }
   },
-  "include": [
-    "src/**/*",
-    "test/**/*"
-  ]
+  "include": ["src/**/*", "test/**/*"]
 }

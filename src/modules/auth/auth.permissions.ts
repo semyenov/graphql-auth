@@ -1,12 +1,14 @@
 /**
  * Authentication Module Permissions
- * 
+ *
  * Defines authorization rules and permission checks for authentication operations
  */
 
-import { UserStatus } from '@prisma/client'
 import { allow, rule, shield } from 'graphql-shield'
-import { AuthenticationError, AuthorizationError } from '../../core/errors/types'
+import {
+  AuthenticationError,
+  AuthorizationError,
+} from '../../core/errors/types'
 import type { Context } from '../../graphql/context/context.types'
 import { prisma } from '../../prisma'
 
@@ -16,7 +18,7 @@ import { prisma } from '../../prisma'
 export const isAuthenticated = rule({ cache: 'contextual' })(
   async (_parent, _args, context: Context) => {
     return !!context.userId
-  }
+  },
 )
 
 /**
@@ -25,7 +27,7 @@ export const isAuthenticated = rule({ cache: 'contextual' })(
 export const isNotAuthenticated = rule({ cache: 'contextual' })(
   async (_parent, _args, context: Context) => {
     return !context.userId
-  }
+  },
 )
 
 /**
@@ -41,7 +43,7 @@ export const isAdmin = rule({ cache: 'contextual' })(
     })
 
     return user?.role === 'admin'
-  }
+  },
 )
 
 /**
@@ -57,7 +59,7 @@ export const isModerator = rule({ cache: 'contextual' })(
     })
 
     return user?.role === 'admin' || user?.role === 'moderator'
-  }
+  },
 )
 
 /**
@@ -75,50 +77,46 @@ export const isAccountOwner = rule({ cache: 'strict' })(
     }
 
     return true
-  }
+  },
 )
 
 /**
  * Check if user has specific permission
  */
 export const hasPermission = (permission: string) =>
-  rule({ cache: 'contextual' })(
-    async (_parent, _args, context: Context) => {
-      if (!context.userId) return false
+  rule({ cache: 'contextual' })(async (_parent, _args, context: Context) => {
+    if (!context.userId) return false
 
-      const user = await prisma.user.findUnique({
-        where: { id: context.userId.value },
-        select: { role: true },
-      })
+    const user = await prisma.user.findUnique({
+      where: { id: context.userId.value },
+      select: { role: true },
+    })
 
-      if (!user) return false
+    if (!user) return false
 
-      // Admin has all permissions
-      if (user.role === 'admin') return true
+    // Admin has all permissions
+    if (user.role === 'admin') return true
 
-      // Check specific permissions (assuming permissions field exists)
-      // This is a simplified example - in real app, you'd have a proper permission system
-      const rolePermissions: Record<string, string[]> = {
-        moderator: ['user:suspend', 'post:moderate', 'comment:moderate'],
-        user: ['profile:edit', 'post:create', 'comment:create'],
-      }
-
-      const userPermissions = rolePermissions[user.role || 'user'] || []
-      return userPermissions.includes(permission)
+    // Check specific permissions (assuming permissions field exists)
+    // This is a simplified example - in real app, you'd have a proper permission system
+    const rolePermissions: Record<string, string[]> = {
+      moderator: ['user:suspend', 'post:moderate', 'comment:moderate'],
+      user: ['profile:edit', 'post:create', 'comment:create'],
     }
-  )
+
+    const userPermissions = rolePermissions[user.role || 'user'] || []
+    return userPermissions.includes(permission)
+  })
 
 /**
  * Rate limiting check (integrates with rate limiter)
  */
 export const withinRateLimit = (_operation: string) =>
-  rule({ cache: 'no_cache' })(
-    async (_parent, _args, _context: Context) => {
-      // This is handled by the rate limiter plugin
-      // This rule is just for documentation/type safety
-      return true
-    }
-  )
+  rule({ cache: 'no_cache' })(async (_parent, _args, _context: Context) => {
+    // This is handled by the rate limiter plugin
+    // This rule is just for documentation/type safety
+    return true
+  })
 
 /**
  * Check if user's account is active
@@ -132,16 +130,16 @@ export const isActiveAccount = rule({ cache: 'contextual' })(
       select: { status: true },
     })
 
-    if (user?.status === UserStatus.BANNED) {
+    if (user?.status === 'BANNED') {
       return new AuthorizationError('Your account has been banned')
     }
 
-    if (user?.status === UserStatus.SUSPENDED) {
+    if (user?.status === 'SUSPENDED') {
       return new AuthorizationError('Your account is suspended')
     }
 
     return true
-  }
+  },
 )
 
 /**
@@ -161,7 +159,7 @@ export const isEmailVerified = rule({ cache: 'contextual' })(
     }
 
     return true
-  }
+  },
 )
 
 /**
@@ -218,7 +216,8 @@ export const authPermissions = {
 /**
  * Create auth shield middleware
  */
-export const createAuthShield = () => shield(authPermissions, {
-  allowExternalErrors: true,
-  fallbackError: new AuthorizationError('Not authorized'),
-})
+export const createAuthShield = () =>
+  shield(authPermissions, {
+    allowExternalErrors: true,
+    fallbackError: new AuthorizationError('Not authorized'),
+  })

@@ -104,29 +104,36 @@ describe('Pagination Utilities', () => {
   describe('Cursor Pagination', () => {
     describe('validateCursorArgs', () => {
       it('should throw error for conflicting arguments', () => {
-        expect(() => validateCursorArgs({ first: 10, last: 10 }))
-          .toThrowError('Cannot specify both "first" and "last"')
+        expect(() => validateCursorArgs({ first: 10, last: 10 })).toThrowError(
+          'Cannot specify both "first" and "last"',
+        )
 
-        expect(() => validateCursorArgs({ after: 'cursor', before: 'cursor' }))
-          .toThrowError('Cannot specify both "after" and "before"')
+        expect(() =>
+          validateCursorArgs({ after: 'cursor', before: 'cursor' }),
+        ).toThrowError('Cannot specify both "after" and "before"')
       })
 
       it('should throw error for negative values', () => {
-        expect(() => validateCursorArgs({ first: -1 }))
-          .toThrowError('Argument "first" must be a non-negative integer')
+        expect(() => validateCursorArgs({ first: -1 })).toThrowError(
+          'Argument "first" must be a non-negative integer',
+        )
 
-        expect(() => validateCursorArgs({ last: -1 }))
-          .toThrowError('Argument "last" must be a non-negative integer')
+        expect(() => validateCursorArgs({ last: -1 })).toThrowError(
+          'Argument "last" must be a non-negative integer',
+        )
       })
 
       it('should throw error for exceeding max values', () => {
-        expect(() => validateCursorArgs({ first: 101 }))
-          .toThrowError('Argument "first" must not exceed 100')
+        expect(() => validateCursorArgs({ first: 101 })).toThrowError(
+          'Argument "first" must not exceed 100',
+        )
       })
 
       it('should accept valid arguments', () => {
         expect(() => validateCursorArgs({ first: 10 })).not.toThrow()
-        expect(() => validateCursorArgs({ last: 10, before: 'cursor' })).not.toThrow()
+        expect(() =>
+          validateCursorArgs({ last: 10, before: 'cursor' }),
+        ).not.toThrow()
         expect(() => validateCursorArgs({})).not.toThrow()
       })
     })
@@ -153,21 +160,26 @@ describe('Pagination Utilities', () => {
   describe('Offset Pagination', () => {
     describe('validateOffsetArgs', () => {
       it('should throw error for negative values', () => {
-        expect(() => validateOffsetArgs({ offset: -1, limit: 10 }))
-          .toThrowError('Offset must be non-negative')
+        expect(() =>
+          validateOffsetArgs({ offset: -1, limit: 10 }),
+        ).toThrowError('Offset must be non-negative')
 
-        expect(() => validateOffsetArgs({ offset: 0, limit: -1 }))
-          .toThrowError('Limit must be positive')
+        expect(() => validateOffsetArgs({ offset: 0, limit: -1 })).toThrowError(
+          'Limit must be positive',
+        )
       })
 
       it('should throw error for exceeding max limit', () => {
-        expect(() => validateOffsetArgs({ offset: 0, limit: 101 }))
-          .toThrowError('Limit must not exceed 100')
+        expect(() =>
+          validateOffsetArgs({ offset: 0, limit: 101 }),
+        ).toThrowError('Limit must not exceed 100')
       })
 
       it('should accept valid arguments', () => {
         expect(() => validateOffsetArgs({ offset: 0, limit: 10 })).not.toThrow()
-        expect(() => validateOffsetArgs({ offset: 100, limit: 50 })).not.toThrow()
+        expect(() =>
+          validateOffsetArgs({ offset: 100, limit: 50 }),
+        ).not.toThrow()
       })
     })
 
@@ -200,19 +212,23 @@ describe('Pagination Utilities', () => {
   describe('Page Pagination', () => {
     describe('validatePageArgs', () => {
       it('should throw error for invalid page numbers', () => {
-        expect(() => validatePageArgs({ page: 0, perPage: 10 }))
-          .toThrowError('Page must be positive')
+        expect(() => validatePageArgs({ page: 0, perPage: 10 })).toThrowError(
+          'Page must be positive',
+        )
 
-        expect(() => validatePageArgs({ page: -1, perPage: 10 }))
-          .toThrowError('Page must be positive')
+        expect(() => validatePageArgs({ page: -1, perPage: 10 })).toThrowError(
+          'Page must be positive',
+        )
       })
 
       it('should throw error for invalid page size', () => {
-        expect(() => validatePageArgs({ page: 1, perPage: 0 }))
-          .toThrowError('Page size must be positive')
+        expect(() => validatePageArgs({ page: 1, perPage: 0 })).toThrowError(
+          'Page size must be positive',
+        )
 
-        expect(() => validatePageArgs({ page: 1, perPage: 101 }))
-          .toThrowError('Page size must not exceed 100')
+        expect(() => validatePageArgs({ page: 1, perPage: 101 })).toThrowError(
+          'Page size must not exceed 100',
+        )
       })
 
       it('should accept valid arguments', () => {

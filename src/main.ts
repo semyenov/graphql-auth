@@ -1,12 +1,12 @@
 /**
  * Application Entry Point
- * 
+ *
  * Bootstraps the application with clean architecture.
  */
 
-import { ApolloServer, HeaderMap } from '@apollo/server'
+import { ApolloServer, type HeaderMap } from '@apollo/server'
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
-import { createServer, IncomingMessage, ServerResponse } from 'http'
+import { createServer, type IncomingMessage, type ServerResponse } from 'http'
 import 'reflect-metadata'
 
 // Import configuration and DI
@@ -36,9 +36,7 @@ async function bootstrap() {
     const apolloServer = new ApolloServer({
       schema: getSchema(),
       introspection: config.server.environment !== 'production',
-      plugins: [
-        ApolloServerPluginDrainHttpServer({ httpServer }),
-      ],
+      plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
       formatError: (error) => {
         // Log errors in development
         if (config.server.environment === 'development') {
@@ -54,7 +52,10 @@ async function bootstrap() {
 
     // Apply GraphQL middleware
     httpServer.on('request', async (req, res) => {
-      const context = await createContext({ req, res: res as unknown as ServerResponse })
+      const context = await createContext({
+        req,
+        res: res as unknown as ServerResponse,
+      })
 
       return apolloServer.executeHTTPGraphQLRequest({
         httpGraphQLRequest: {
@@ -68,42 +69,58 @@ async function bootstrap() {
     })
 
     // Health check endpoint
-    httpServer.on('request', async (req: IncomingMessage, res: ServerResponse) => {
-      if (req.url === '/health') {
-        return new Response(JSON.stringify({
-          status: 'ok',
-          timestamp: new Date().toISOString(),
-        }), {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-      }
+    httpServer.on(
+      'request',
+      async (req: IncomingMessage, res: ServerResponse) => {
+        if (req.url === '/health') {
+          return new Response(
+            JSON.stringify({
+              status: 'ok',
+              timestamp: new Date().toISOString(),
+            }),
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            },
+          )
+        }
 
-      if (req.url === '/graphql') {
-        return apolloServer.executeHTTPGraphQLRequest({
-          httpGraphQLRequest: {
-            method: req.method || 'POST',
-            headers: new Map(Object.entries(req.headers)) as unknown as HeaderMap,
-            body: await readBody(req),
-            search: getQuery(req),
-          },
-          context: async () => createContext({ req: req as unknown as IncomingMessage, res: res as unknown as ServerResponse }),
-        })
-      }
+        if (req.url === '/graphql') {
+          return apolloServer.executeHTTPGraphQLRequest({
+            httpGraphQLRequest: {
+              method: req.method || 'POST',
+              headers: new Map(
+                Object.entries(req.headers),
+              ) as unknown as HeaderMap,
+              body: await readBody(req),
+              search: getQuery(req),
+            },
+            context: async () =>
+              createContext({
+                req: req as unknown as IncomingMessage,
+                res: res as unknown as ServerResponse,
+              }),
+          })
+        }
 
-      return new Response(null, {
-        status: 404,
-      })
-    })
+        return new Response(null, {
+          status: 404,
+        })
+      },
+    )
 
     // Start HTTP server
     await new Promise<void>((resolve) => {
       httpServer.listen(config.server.port, resolve)
     })
 
-    console.log(`🚀 Server ready at http://localhost:${config.server.port}/graphql`)
-    console.log(`🚀 Subscriptions ready at ws://localhost:${config.server.port}/graphql`)
+    console.log(
+      `🚀 Server ready at http://localhost:${config.server.port}/graphql`,
+    )
+    console.log(
+      `🚀 Subscriptions ready at ws://localhost:${config.server.port}/graphql`,
+    )
 
     // Graceful shutdown
     process.on('SIGTERM', async () => {
@@ -114,7 +131,6 @@ async function bootstrap() {
         process.exit(0)
       })
     })
-
   } catch (error) {
     console.error('❌ Failed to start application:', error)
     process.exit(1)

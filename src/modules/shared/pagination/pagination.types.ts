@@ -1,6 +1,6 @@
 /**
  * Pagination Types
- * 
+ *
  * Common types and interfaces for pagination across all modules
  */
 
@@ -107,7 +107,8 @@ export interface SortOrder<T = string> {
 /**
  * Combined pagination and sorting args
  */
-export interface PaginatedQueryArgs<TSortField = string> extends CursorPaginationArgs {
+export interface PaginatedQueryArgs<TSortField = string>
+  extends CursorPaginationArgs {
   orderBy?: SortOrder<TSortField>[]
 }
 

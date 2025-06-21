@@ -1,12 +1,12 @@
 /**
  * Posts Module GraphQL Schema
- * 
+ *
  * Defines GraphQL types, inputs, and schema elements specific to posts.
  * Follows the IMPROVED-FILE-STRUCTURE.md specification for module organization.
  */
 
-import { builder } from '../../graphql/schema/builder'
 import { z } from 'zod'
+import { builder } from '../../graphql/schema/builder'
 
 // Input types for post operations
 export const CreatePostInput = builder.inputType('CreatePostInput', {
@@ -156,29 +156,32 @@ export const ModeratePostInput = builder.inputType('ModeratePostInput', {
 // Note: Post stats and connection types should be defined in resolvers where they have access to resolve functions
 
 // Batch operations input
-export const BatchPostOperationInput = builder.inputType('BatchPostOperationInput', {
-  description: 'Input for batch operations on posts',
-  fields: (t) => ({
-    postIds: t.idList({
-      required: true,
-      description: 'List of post IDs to operate on',
+export const BatchPostOperationInput = builder.inputType(
+  'BatchPostOperationInput',
+  {
+    description: 'Input for batch operations on posts',
+    fields: (t) => ({
+      postIds: t.idList({
+        required: true,
+        description: 'List of post IDs to operate on',
+      }),
+      operation: t.string({
+        required: true,
+        description: 'Operation to perform',
+        validate: {
+          schema: z.enum(['publish', 'unpublish', 'delete', 'flag']),
+        },
+      }),
+      reason: t.string({
+        required: false,
+        description: 'Reason for the batch operation',
+        validate: {
+          schema: z.string().max(500),
+        },
+      }),
     }),
-    operation: t.string({
-      required: true,
-      description: 'Operation to perform',
-      validate: {
-        schema: z.enum(['publish', 'unpublish', 'delete', 'flag']),
-      },
-    }),
-    reason: t.string({
-      required: false,
-      description: 'Reason for the batch operation',
-      validate: {
-        schema: z.string().max(500),
-      },
-    }),
-  }),
-})
+  },
+)
 
 // Export schema types for use in resolvers
 export const PostSchemaTypes = {

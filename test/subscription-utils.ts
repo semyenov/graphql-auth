@@ -2,10 +2,9 @@
  * GraphQL subscription testing utilities
  */
 
-import type { GraphQLResponse } from '@apollo/server'
-import { ApolloServer } from '@apollo/server'
+import type { ApolloServer, GraphQLResponse } from '@apollo/server'
 import { parse } from 'graphql'
-import { Context } from '../src/graphql/context/context.types'
+import type { Context } from '../src/graphql/context/context.types'
 
 export interface SubscriptionTestHelper {
   subscribe: () => Promise<AsyncIterator<GraphQLResponse>>
@@ -38,7 +37,8 @@ export async function createSubscriptionHelper(
     throw new Error('Expected subscription to return incremental result')
   }
 
-  const asyncIterator = result.body.subsequentResults as unknown as AsyncIterator<GraphQLResponse>
+  const asyncIterator = result.body
+    .subsequentResults as unknown as AsyncIterator<GraphQLResponse>
   let closed = false
 
   return {
@@ -94,7 +94,12 @@ export async function testSubscriptionWithTimeout(
     validator?: (event: any) => void
   },
 ): Promise<GraphQLResponse[]> {
-  const helper = await createSubscriptionHelper(server, subscription, variables, context)
+  const helper = await createSubscriptionHelper(
+    server,
+    subscription,
+    variables,
+    context,
+  )
   const timeout = options.timeout ?? 5000
   const results: GraphQLResponse[] = []
 
@@ -108,7 +113,11 @@ export async function testSubscriptionWithTimeout(
         const event = await helper.getNext()
         results.push(event)
 
-        if (options.validator && event.body.kind === 'single' && event.body.singleResult.data) {
+        if (
+          options.validator &&
+          event.body.kind === 'single' &&
+          event.body.singleResult.data
+        ) {
           options.validator(event.body.singleResult.data)
         }
       }
@@ -133,7 +142,7 @@ export class MockSubscriptionEmitter<T = any> {
   }
 
   emit(value: T): void {
-    this.subscribers.forEach(callback => callback(value))
+    this.subscribers.forEach((callback) => callback(value))
   }
 
   getSubscriberCount(): number {
@@ -236,7 +245,7 @@ export async function waitForSubscription(
     if (Date.now() - startTime > timeout) {
       throw new Error('Timeout waiting for subscription')
     }
-    await new Promise(resolve => setTimeout(resolve, interval))
+    await new Promise((resolve) => setTimeout(resolve, interval))
   }
 }
 
@@ -252,7 +261,12 @@ export function createSubscriptionTester(server: ApolloServer<Context>) {
       triggerFn: () => Promise<void>,
       validator?: (data: T) => void,
     ): Promise<T> {
-      const helper = await createSubscriptionHelper(server, subscription, variables, context)
+      const helper = await createSubscriptionHelper(
+        server,
+        subscription,
+        variables,
+        context,
+      )
 
       try {
         // Trigger the event
@@ -282,14 +296,21 @@ export function createSubscriptionTester(server: ApolloServer<Context>) {
       triggerFn: () => Promise<void>,
       waitTime: number = 1000,
     ): Promise<void> {
-      const helper = await createSubscriptionHelper(server, subscription, variables, context)
+      const helper = await createSubscriptionHelper(
+        server,
+        subscription,
+        variables,
+        context,
+      )
 
       try {
         // Trigger the event
         await triggerFn()
 
         // Wait and ensure no event is received
-        const timeoutPromise = new Promise<void>(resolve => setTimeout(resolve, waitTime))
+        const timeoutPromise = new Promise<void>((resolve) =>
+          setTimeout(resolve, waitTime),
+        )
         const eventPromise = helper.getNext().then(() => {
           throw new Error('Unexpected subscription event received')
         })

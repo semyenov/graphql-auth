@@ -1,9 +1,6 @@
 // Export database client
-export { DatabaseClient, db } from './client'
-export type { Database } from './client'
 
 // Export repositories
-export {
-  BaseRepository
-} from '../../data/repositories/base'
-
+export { BaseRepository } from '../../data/repositories/base'
+export type { Database } from './client'
+export { DatabaseClient, db } from './client'

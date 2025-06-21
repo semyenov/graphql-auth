@@ -1,6 +1,6 @@
 /**
  * Core Validation Schemas
- * 
+ *
  * Common Zod schemas used across the application
  */
 
@@ -19,7 +19,7 @@ export const passwordSchema = z
   .max(128, 'Password must be less than 128 characters')
   .regex(
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-    'Password must contain at least one lowercase letter, one uppercase letter, and one number'
+    'Password must contain at least one lowercase letter, one uppercase letter, and one number',
   )
 
 export const nameSchema = z
@@ -29,9 +29,7 @@ export const nameSchema = z
   .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces')
 
 // ID validation schemas
-export const globalIdSchema = z
-  .string()
-  .min(1, 'ID is required')
+export const globalIdSchema = z.string().min(1, 'ID is required')
 
 export const numericIdSchema = z
   .number()
@@ -78,7 +76,7 @@ export const signupSchema = z.object({
 export const createRequiredStringSchema = (
   fieldName: string,
   minLength = 1,
-  maxLength = 255
+  maxLength = 255,
 ) =>
   z
     .string()

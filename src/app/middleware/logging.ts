@@ -4,6 +4,7 @@
  */
 
 import type { ApolloServerPlugin } from '@apollo/server'
+import type { IncomingMessage, ServerResponse } from 'http'
 import { createLogger } from '../../core/logging'
 import type { Context } from '../../graphql/context/context.types'
 
@@ -13,7 +14,17 @@ const logger = createLogger('middleware')
  * HTTP request logging middleware
  */
 export function createHttpLoggingMiddleware() {
-  return async (req: any, res: any, next: () => Promise<void>) => {
+  return async (
+    req: IncomingMessage & {
+      ip?: string
+      connection?: { remoteAddress?: string }
+    },
+    res: ServerResponse & {
+      send?: (data: unknown) => void
+      statusCode: number
+    },
+    next: () => Promise<void>,
+  ) => {
     const start = Date.now()
     const method = req.method
     const url = req.url
@@ -28,7 +39,7 @@ export function createHttpLoggingMiddleware() {
 
     // Intercept response
     const originalSend = res.send
-    res.send = function (data: any) {
+    res.send = function (data: unknown) {
       const duration = Date.now() - start
 
       // Log response
@@ -63,7 +74,10 @@ export function createGraphQLLoggingPlugin(): ApolloServerPlugin<Context> {
             query: request.query,
             variables: request.variables,
             duration: `${duration}ms`,
-            errors: response.body.kind === 'single' ? response.body.singleResult.errors : undefined,
+            errors:
+              response.body.kind === 'single'
+                ? response.body.singleResult.errors
+                : undefined,
             userId: contextValue.userId?.value,
           })
         },
@@ -73,7 +87,7 @@ export function createGraphQLLoggingPlugin(): ApolloServerPlugin<Context> {
 
           // Log GraphQL errors
           logger.error('GraphQL Errors', errors[0], {
-            allErrors: errors.map(err => ({
+            allErrors: errors.map((err) => ({
               message: err.message,
               path: err.path,
               extensions: err.extensions,
@@ -90,7 +104,11 @@ export function createGraphQLLoggingPlugin(): ApolloServerPlugin<Context> {
  * Performance logging middleware
  */
 export function createPerformanceLoggingMiddleware() {
-  return async (req: any, res: any, next: () => Promise<void>) => {
+  return async (
+    req: IncomingMessage & { url?: string },
+    res: ServerResponse,
+    next: () => Promise<void>,
+  ) => {
     const start = process.hrtime()
 
     // Add performance tracking

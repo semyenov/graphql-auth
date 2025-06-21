@@ -1,10 +1,10 @@
 /**
  * Filtering Utilities
- * 
+ *
  * Helper functions for implementing filtering across modules
  */
 
-import {
+import type {
   BaseFilter,
   BooleanFilter,
   DateFilter,
@@ -12,13 +12,15 @@ import {
   FilterValidationResult,
   NumberFilter,
   OrderByInput,
-  StringFilter
+  StringFilter,
 } from './filter.types'
 
 /**
  * Convert string filter to Prisma format
  */
-export function transformStringFilter(filter: StringFilter | undefined | null): any {
+export function transformStringFilter(
+  filter: StringFilter | undefined | null,
+): any {
   if (!filter) return undefined
 
   const prismaFilter: any = {}
@@ -52,7 +54,9 @@ export function transformStringFilter(filter: StringFilter | undefined | null): 
 /**
  * Convert number filter to Prisma format
  */
-export function transformNumberFilter(filter: NumberFilter | undefined | null): any {
+export function transformNumberFilter(
+  filter: NumberFilter | undefined | null,
+): any {
   if (!filter) return undefined
 
   const prismaFilter: any = {}
@@ -72,7 +76,9 @@ export function transformNumberFilter(filter: NumberFilter | undefined | null): 
 /**
  * Convert date filter to Prisma format
  */
-export function transformDateFilter(filter: DateFilter | undefined | null): any {
+export function transformDateFilter(
+  filter: DateFilter | undefined | null,
+): any {
   if (!filter) return undefined
 
   const prismaFilter: any = {}
@@ -97,7 +103,9 @@ export function transformDateFilter(filter: DateFilter | undefined | null): any 
 /**
  * Convert boolean filter to Prisma format
  */
-export function transformBooleanFilter(filter: BooleanFilter | undefined | null): any {
+export function transformBooleanFilter(
+  filter: BooleanFilter | undefined | null,
+): any {
   if (!filter) return undefined
 
   if (filter.equals !== undefined) return filter.equals
@@ -110,7 +118,7 @@ export function transformBooleanFilter(filter: BooleanFilter | undefined | null)
  * Transform order by input to Prisma format
  */
 export function transformOrderBy<T extends string>(
-  orderBy: OrderByInput<T> | undefined | null
+  orderBy: OrderByInput<T> | undefined | null,
 ): any {
   if (!orderBy) return undefined
 
@@ -123,7 +131,7 @@ export function transformOrderBy<T extends string>(
  * Transform multiple order by inputs
  */
 export function transformOrderByArray<T extends string>(
-  orderBy: OrderByInput<T>[] | undefined | null
+  orderBy: OrderByInput<T>[] | undefined | null,
 ): any[] | undefined {
   if (!orderBy || orderBy.length === 0) return undefined
 
@@ -135,14 +143,14 @@ export function transformOrderByArray<T extends string>(
  */
 export function buildSearchQuery(
   search: string | undefined | null,
-  fields: string[]
+  fields: string[],
 ): any {
   if (!search || search.trim().length === 0) return undefined
 
   const searchTerm = search.trim()
 
   return {
-    OR: fields.map(field => ({
+    OR: fields.map((field) => ({
       [field]: {
         contains: searchTerm,
         mode: 'insensitive',
@@ -156,7 +164,7 @@ export function buildSearchQuery(
  */
 export function combineFilters<T>(
   filters: (T | undefined)[],
-  logic: 'AND' | 'OR' = 'AND'
+  logic: 'AND' | 'OR' = 'AND',
 ): T | undefined {
   const validFilters = filters.filter(Boolean) as T[]
 
@@ -171,9 +179,7 @@ export function combineFilters<T>(
 /**
  * Apply base filter logic (AND, OR, NOT)
  */
-export function applyBaseFilter<T>(
-  filter: T & BaseFilter<T>
-): any {
+export function applyBaseFilter<T>(filter: T & BaseFilter<T>): any {
   const result: any = { ...filter }
 
   // Remove base filter properties from main object
@@ -183,11 +189,11 @@ export function applyBaseFilter<T>(
 
   // Apply logical operators
   if (filter.AND && filter.AND.length > 0) {
-    result.AND = filter.AND.map(f => applyBaseFilter(f as T & BaseFilter<T>))
+    result.AND = filter.AND.map((f) => applyBaseFilter(f as T & BaseFilter<T>))
   }
 
   if (filter.OR && filter.OR.length > 0) {
-    result.OR = filter.OR.map(f => applyBaseFilter(f as T & BaseFilter<T>))
+    result.OR = filter.OR.map((f) => applyBaseFilter(f as T & BaseFilter<T>))
   }
 
   if (filter.NOT) {
@@ -203,7 +209,7 @@ export function applyBaseFilter<T>(
 export function validateFilterDepth<T>(
   filter: T & BaseFilter<T>,
   maxDepth: number = 3,
-  currentDepth: number = 0
+  currentDepth: number = 0,
 ): FilterValidationResult {
   if (currentDepth > maxDepth) {
     return {
@@ -217,7 +223,11 @@ export function validateFilterDepth<T>(
   // Check AND filters
   if (filter.AND) {
     for (const andFilter of filter.AND) {
-      const result = validateFilterDepth(andFilter as T & BaseFilter<T>, maxDepth, currentDepth + 1)
+      const result = validateFilterDepth(
+        andFilter as T & BaseFilter<T>,
+        maxDepth,
+        currentDepth + 1,
+      )
       if (!result.valid && result.errors) {
         errors.push(...result.errors)
       }
@@ -227,7 +237,11 @@ export function validateFilterDepth<T>(
   // Check OR filters
   if (filter.OR) {
     for (const orFilter of filter.OR) {
-      const result = validateFilterDepth(orFilter as T & BaseFilter<T>, maxDepth, currentDepth + 1)
+      const result = validateFilterDepth(
+        orFilter as T & BaseFilter<T>,
+        maxDepth,
+        currentDepth + 1,
+      )
       if (!result.valid && result.errors) {
         errors.push(...result.errors)
       }
@@ -236,7 +250,11 @@ export function validateFilterDepth<T>(
 
   // Check NOT filter
   if (filter.NOT) {
-    const result = validateFilterDepth(filter.NOT as T & BaseFilter<T>, maxDepth, currentDepth + 1)
+    const result = validateFilterDepth(
+      filter.NOT as T & BaseFilter<T>,
+      maxDepth,
+      currentDepth + 1,
+    )
     if (!result.valid && result.errors) {
       errors.push(...result.errors)
     }
@@ -253,7 +271,7 @@ export function validateFilterDepth<T>(
  */
 export function sanitizeFilter<T extends Record<string, any>>(
   filter: T,
-  options: FilterBuilderOptions
+  options: FilterBuilderOptions,
 ): T {
   const { allowedFields, deniedFields } = options
 
@@ -269,7 +287,7 @@ export function sanitizeFilter<T extends Record<string, any>>(
     // Handle base filter properties recursively
     if (key === 'AND' || key === 'OR') {
       if (Array.isArray(value)) {
-        sanitized[key] = value.map(f => sanitizeFilter(f, options))
+        sanitized[key] = value.map((f) => sanitizeFilter(f, options))
       }
     } else if (key === 'NOT') {
       sanitized[key] = sanitizeFilter(value, options)
@@ -286,13 +304,17 @@ export function sanitizeFilter<T extends Record<string, any>>(
  */
 export function applyCaseInsensitive<T extends Record<string, any>>(
   filter: T,
-  fields: string[]
+  fields: string[],
 ): T {
   const result = { ...filter }
 
   for (const field of fields) {
     if (result[field] && typeof result[field] === 'object') {
-      if (result[field].contains || result[field].startsWith || result[field].endsWith) {
+      if (
+        result[field].contains ||
+        result[field].startsWith ||
+        result[field].endsWith
+      ) {
         result[field as keyof T] = {
           ...result[field],
           mode: 'insensitive',
@@ -323,7 +345,11 @@ export function getFilterSummary(filter: any): string[] {
         } else {
           addToSummary(value, fieldName)
         }
-      } else if (typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+      } else if (
+        typeof value === 'object' &&
+        !Array.isArray(value) &&
+        !(value instanceof Date)
+      ) {
         // For nested objects, add the parent field
         summary.push(fieldName)
         addToSummary(value, fieldName)

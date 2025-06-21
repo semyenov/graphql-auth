@@ -1,6 +1,6 @@
 /**
  * Input Sanitizers
- * 
+ *
  * Functions to clean and normalize user input
  */
 
@@ -34,10 +34,9 @@ export function sanitizeHtml(html: string): string {
  * Sanitize plain text
  */
 export function sanitizeText(text: string): string {
-  return text
-    .trim()
-    .replace(/\s+/g, ' ') // Multiple spaces to single
-    .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
+  // eslint-disable-next-line no-control-regex
+  const controlCharsRegex = /[\x00-\x1F\x7F]/g
+  return text.trim().replace(/\s+/g, ' ').replace(controlCharsRegex, '')
 }
 
 /**
@@ -153,24 +152,28 @@ export function escapeHtml(text: string): string {
     '"': '&quot;',
     "'": '&#39;',
   }
-  
+
   return text.replace(/[&<>"']/g, (char) => map[char] || char)
 }
 
 /**
  * Truncate text with ellipsis
  */
-export function truncateText(text: string, maxLength: number, ellipsis = '...'): string {
+export function truncateText(
+  text: string,
+  maxLength: number,
+  ellipsis = '...',
+): string {
   if (text.length <= maxLength) return text
-  
+
   const truncated = text.slice(0, maxLength - ellipsis.length)
   // Try to break at word boundary
   const lastSpace = truncated.lastIndexOf(' ')
-  
+
   if (lastSpace > maxLength * 0.8) {
     return truncated.slice(0, lastSpace) + ellipsis
   }
-  
+
   return truncated + ellipsis
 }
 
@@ -180,21 +183,26 @@ export function truncateText(text: string, maxLength: number, ellipsis = '...'):
 export function removeEmojis(text: string): string {
   return text.replace(
     /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,
-    ''
+    '',
   )
 }
 
 /**
  * Sanitize array of strings
  */
-export function sanitizeStringArray(arr: string[], sanitizer: (s: string) => string): string[] {
+export function sanitizeStringArray(
+  arr: string[],
+  sanitizer: (s: string) => string,
+): string[] {
   return arr.map(sanitizer).filter(Boolean)
 }
 
 /**
  * Create custom sanitizer pipeline
  */
-export function createSanitizer(...sanitizers: Array<(value: string) => string>) {
+export function createSanitizer(
+  ...sanitizers: Array<(value: string) => string>
+) {
   return (value: string): string => {
     return sanitizers.reduce((acc, sanitizer) => sanitizer(acc), value)
   }
@@ -206,8 +214,16 @@ export function createSanitizer(...sanitizers: Array<(value: string) => string>)
 export const sanitizers = {
   email: createSanitizer(sanitizeText, sanitizeEmail),
   username: createSanitizer(sanitizeText, sanitizeUsername),
-  name: createSanitizer(sanitizeText, removeInvisibleChars, normalizeWhitespace),
-  content: createSanitizer(sanitizeText, removeInvisibleChars, normalizeWhitespace),
+  name: createSanitizer(
+    sanitizeText,
+    removeInvisibleChars,
+    normalizeWhitespace,
+  ),
+  content: createSanitizer(
+    sanitizeText,
+    removeInvisibleChars,
+    normalizeWhitespace,
+  ),
   html: createSanitizer(sanitizeHtml, removeInvisibleChars),
   url: createSanitizer(sanitizeText, sanitizeUrl),
   phone: createSanitizer(sanitizeText, sanitizePhoneNumber),

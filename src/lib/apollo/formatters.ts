@@ -1,6 +1,6 @@
 /**
  * Apollo Server Formatters
- * 
+ *
  * Response and error formatters for Apollo Server
  */
 
@@ -12,7 +12,7 @@ import { BaseError } from '../../core/errors/types'
  */
 export function formatError(
   formattedError: GraphQLFormattedError,
-  error: unknown
+  error: unknown,
 ): GraphQLFormattedError {
   // Get the original error
   const originalError = (error as GraphQLError).originalError || error
@@ -31,9 +31,13 @@ export function formatError(
   }
 
   // Handle Prisma errors
-  if (originalError && typeof originalError === 'object' && 'code' in originalError) {
+  if (
+    originalError &&
+    typeof originalError === 'object' &&
+    'code' in originalError
+  ) {
     const prismaError = originalError as any
-    
+
     if (prismaError.code === 'P2002') {
       return {
         message: 'A record with this value already exists',
@@ -46,7 +50,7 @@ export function formatError(
         locations: formattedError.locations,
       }
     }
-    
+
     if (prismaError.code === 'P2025') {
       return {
         message: 'Record not found',
@@ -99,18 +103,18 @@ export function sanitizeErrorMessage(message: string): string {
     // Replace sensitive patterns
     const patterns = [
       /at \S+:\d+:\d+/g, // Stack trace locations
-      /\/[\w\/\-\.]+/g, // File paths
+      /\/[\w/\-.]+/g, // File paths
       /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, // IP addresses
     ]
-    
+
     let sanitized = message
-    patterns.forEach(pattern => {
+    patterns.forEach((pattern) => {
       sanitized = sanitized.replace(pattern, '[REDACTED]')
     })
-    
+
     return sanitized
   }
-  
+
   return message
 }
 
@@ -123,22 +127,22 @@ export function createUserFriendlyMessage(error: GraphQLError): string {
   switch (code) {
     case 'UNAUTHENTICATED':
       return 'You need to be logged in to perform this action'
-    
+
     case 'FORBIDDEN':
       return 'You do not have permission to perform this action'
-    
+
     case 'BAD_USER_INPUT':
       return 'The information you provided is invalid. Please check and try again'
-    
+
     case 'NOT_FOUND':
       return 'The requested resource could not be found'
-    
+
     case 'INTERNAL_SERVER_ERROR':
       return 'Something went wrong on our end. Please try again later'
-    
+
     case 'RATE_LIMITED':
       return 'You are making too many requests. Please slow down and try again'
-    
+
     default:
       return error.message || 'An unexpected error occurred'
   }
@@ -147,7 +151,9 @@ export function createUserFriendlyMessage(error: GraphQLError): string {
 /**
  * Extract validation errors from GraphQL error
  */
-export function extractValidationErrors(error: GraphQLError): Record<string, string[]> | null {
+export function extractValidationErrors(
+  error: GraphQLError,
+): Record<string, string[]> | null {
   if (error.extensions?.code !== 'BAD_USER_INPUT') {
     return null
   }
@@ -159,7 +165,7 @@ export function extractValidationErrors(error: GraphQLError): Record<string, str
 
   // Transform to field -> errors map
   const fieldErrors: Record<string, string[]> = {}
-  
+
   if (Array.isArray(validationErrors)) {
     validationErrors.forEach((err: any) => {
       const field = err.field || 'general'

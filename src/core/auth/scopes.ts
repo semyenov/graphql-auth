@@ -1,6 +1,6 @@
 /**
  * Enhanced Authorization Scopes for Pothos Scope Auth Plugin
- * 
+ *
  * Implements dynamic scopes, scope loaders, and complex authorization patterns
  */
 
@@ -25,19 +25,41 @@ export interface EnhancedAuthScopes {
   hasAllPermissions: (permissions: string[]) => boolean | Promise<boolean>
 
   // Content-based scopes
-  canViewContent: (contentType: string, contentId: string | number) => boolean | Promise<boolean>
-  canEditContent: (contentType: string, contentId: string | number) => boolean | Promise<boolean>
-  canDeleteContent: (contentType: string, contentId: string | number) => boolean | Promise<boolean>
+  canViewContent: (
+    contentType: string,
+    contentId: string | number,
+  ) => boolean | Promise<boolean>
+  canEditContent: (
+    contentType: string,
+    contentId: string | number,
+  ) => boolean | Promise<boolean>
+  canDeleteContent: (
+    contentType: string,
+    contentId: string | number,
+  ) => boolean | Promise<boolean>
 
   // Time-based scopes
-  withinTimeLimit: (action: string, timeLimit: number) => boolean | Promise<boolean>
+  withinTimeLimit: (
+    action: string,
+    timeLimit: number,
+  ) => boolean | Promise<boolean>
 
   // Rate limit scopes
-  withinRateLimit: (action: string, limit: number, window: number) => boolean | Promise<boolean>
+  withinRateLimit: (
+    action: string,
+    limit: number,
+    window: number,
+  ) => boolean | Promise<boolean>
 
   // Complex conditional scopes
-  canAccessIfPublic: (resourceType: string, resourceId: string | number) => boolean | Promise<boolean>
-  canAccessIfOwnerOrPublic: (resourceType: string, resourceId: string | number) => boolean | Promise<boolean>
+  canAccessIfPublic: (
+    resourceType: string,
+    resourceId: string | number,
+  ) => boolean | Promise<boolean>
+  canAccessIfOwnerOrPublic: (
+    resourceType: string,
+    resourceId: string | number,
+  ) => boolean | Promise<boolean>
 }
 
 // Enhanced scope auth configuration
@@ -53,7 +75,8 @@ export function createEnhancedAuthScopes(context: Context): EnhancedAuthScopes {
       if (!context.userId) return false
 
       try {
-        const numericPostId = typeof postId === 'string' ? parseGlobalId(postId, 'Post') : postId
+        const numericPostId =
+          typeof postId === 'string' ? parseGlobalId(postId, 'Post') : postId
 
         // Fallback to direct query
         const post = await prisma.post.findUnique({
@@ -61,7 +84,7 @@ export function createEnhancedAuthScopes(context: Context): EnhancedAuthScopes {
           select: { authorId: true },
         })
         return post?.authorId === context.userId.value
-      } catch (error) {
+      } catch (_error) {
         // If there's an error parsing the ID or finding the post, return false
         return false
       }
@@ -69,7 +92,8 @@ export function createEnhancedAuthScopes(context: Context): EnhancedAuthScopes {
 
     userOwner: async (userId: string | number) => {
       if (!context.userId) return false
-      const numericUserId = typeof userId === 'string' ? parseGlobalId(userId, 'User') : userId
+      const numericUserId =
+        typeof userId === 'string' ? parseGlobalId(userId, 'User') : userId
       return numericUserId === context.userId.value
     },
 
@@ -92,12 +116,15 @@ export function createEnhancedAuthScopes(context: Context): EnhancedAuthScopes {
       }
 
       const userPermissions = rolePermissions[user?.role || 'user'] || []
-      return userPermissions.includes('*') || userPermissions.includes(permission)
+      return (
+        userPermissions.includes('*') || userPermissions.includes(permission)
+      )
     },
 
     hasAnyPermission: async (permissions: string[]) => {
       for (const permission of permissions) {
-        const hasPermission = await createEnhancedAuthScopes(context).hasPermission(permission)
+        const hasPermission =
+          await createEnhancedAuthScopes(context).hasPermission(permission)
         if (hasPermission) return true
       }
       return false
@@ -105,7 +132,8 @@ export function createEnhancedAuthScopes(context: Context): EnhancedAuthScopes {
 
     hasAllPermissions: async (permissions: string[]) => {
       for (const permission of permissions) {
-        const hasPermission = await createEnhancedAuthScopes(context).hasPermission(permission)
+        const hasPermission =
+          await createEnhancedAuthScopes(context).hasPermission(permission)
         if (!hasPermission) return false
       }
       return true
@@ -116,7 +144,10 @@ export function createEnhancedAuthScopes(context: Context): EnhancedAuthScopes {
       if (!context.userId) {
         // Check if content is public
         if (contentType === 'Post') {
-          const numericId = typeof contentId === 'string' ? parseGlobalId(contentId, 'Post') : contentId
+          const numericId =
+            typeof contentId === 'string'
+              ? parseGlobalId(contentId, 'Post')
+              : contentId
           const post = await prisma.post.findUnique({
             where: { id: numericId },
             select: { published: true },
@@ -148,7 +179,10 @@ export function createEnhancedAuthScopes(context: Context): EnhancedAuthScopes {
       return false
     },
 
-    canDeleteContent: async (contentType: string, contentId: string | number) => {
+    canDeleteContent: async (
+      contentType: string,
+      contentId: string | number,
+    ) => {
       if (!context.userId) return false
 
       const scopes = createEnhancedAuthScopes(context)
@@ -178,7 +212,11 @@ export function createEnhancedAuthScopes(context: Context): EnhancedAuthScopes {
     },
 
     // Rate limiting integration
-    withinRateLimit: async (_action: string, _limit: number, _window: number) => {
+    withinRateLimit: async (
+      _action: string,
+      _limit: number,
+      _window: number,
+    ) => {
       if (!context.userId) return false
 
       // This would integrate with your rate limiting system
@@ -187,9 +225,15 @@ export function createEnhancedAuthScopes(context: Context): EnhancedAuthScopes {
     },
 
     // Complex conditional scopes
-    canAccessIfPublic: async (resourceType: string, resourceId: string | number) => {
+    canAccessIfPublic: async (
+      resourceType: string,
+      resourceId: string | number,
+    ) => {
       if (resourceType === 'Post') {
-        const numericId = typeof resourceId === 'string' ? parseGlobalId(resourceId, 'Post') : resourceId
+        const numericId =
+          typeof resourceId === 'string'
+            ? parseGlobalId(resourceId, 'Post')
+            : resourceId
         const post = await prisma.post.findUnique({
           where: { id: numericId },
           select: { published: true },
@@ -201,15 +245,18 @@ export function createEnhancedAuthScopes(context: Context): EnhancedAuthScopes {
       return false
     },
 
-    canAccessIfOwnerOrPublic: async (resourceType: string, resourceId: string | number) => {
+    canAccessIfOwnerOrPublic: async (
+      resourceType: string,
+      resourceId: string | number,
+    ) => {
       const scopes = createEnhancedAuthScopes(context)
 
       // Check ownership first
-      if (resourceType === 'Post' && await scopes.postOwner(resourceId)) {
+      if (resourceType === 'Post' && (await scopes.postOwner(resourceId))) {
         return true
       }
 
-      if (resourceType === 'User' && await scopes.userOwner(resourceId)) {
+      if (resourceType === 'User' && (await scopes.userOwner(resourceId))) {
         return true
       }
 
@@ -220,9 +267,14 @@ export function createEnhancedAuthScopes(context: Context): EnhancedAuthScopes {
 }
 
 // Scope loader for batch authorization checks
+interface CacheEntry {
+  value: unknown
+  expires: number
+}
+
 export class ScopeLoader {
   private context: Context
-  private cache: Map<string, any> = new Map()
+  private cache: Map<string, CacheEntry> = new Map()
 
   constructor(context: Context) {
     this.context = context
@@ -239,8 +291,8 @@ export class ScopeLoader {
       select: { id: true, authorId: true },
     })
 
-    return postIds.map(id => {
-      const post = posts.find(p => p.id === id)
+    return postIds.map((id) => {
+      const post = posts.find((p) => p.id === id)
       return post?.authorId === this.context.userId?.value
     })
   }
@@ -265,17 +317,17 @@ export class ScopeLoader {
     const userPermissions = rolePermissions[user?.role || 'user'] || []
     const hasWildcard = userPermissions.includes('*')
 
-    return permissions.map(permission =>
-      hasWildcard || userPermissions.includes(permission)
+    return permissions.map(
+      (permission) => hasWildcard || userPermissions.includes(permission),
     )
   }
 
   // Cache management
-  setCacheKey(key: string, value: any, ttl: number = 60000) {
+  setCacheKey(key: string, value: unknown, ttl: number = 60000) {
     this.cache.set(key, { value, expires: Date.now() + ttl })
   }
 
-  getCacheKey(key: string): any | null {
+  getCacheKey(key: string): unknown | null {
     const cached = this.cache.get(key)
     if (!cached) return null
 

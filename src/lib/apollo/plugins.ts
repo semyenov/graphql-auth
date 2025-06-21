@@ -1,6 +1,6 @@
 /**
  * Apollo Server Plugins
- * 
+ *
  * Custom plugins for Apollo Server
  */
 
@@ -60,7 +60,9 @@ export const performancePlugin: ApolloServerPlugin<Context> = {
 
               // Warn about slow fields
               if (duration > 100) {
-                console.warn(`Slow field detected: ${fieldName} took ${duration}ms`)
+                console.warn(
+                  `Slow field detected: ${fieldName} took ${duration}ms`,
+                )
               }
             }
           },
@@ -96,7 +98,9 @@ export const complexityPlugin: ApolloServerPlugin<Context> = {
         const complexity = estimateComplexity(document)
 
         if (complexity > 100) {
-          console.warn(`High complexity query detected: ${operationName} (complexity: ${complexity})`)
+          console.warn(
+            `High complexity query detected: ${operationName} (complexity: ${complexity})`,
+          )
         }
 
         // Could throw error if complexity is too high
@@ -138,7 +142,8 @@ export const errorFormattingPlugin: ApolloServerPlugin<Context> = {
         if (requestContext.errors) {
           // Add request ID to errors
           requestContext.errors.forEach((error) => {
-            error.extensions.requestId = requestContext.request.http?.headers.get('x-request-id')
+            error.extensions.requestId =
+              requestContext.request.http?.headers.get('x-request-id')
             error.extensions.timestamp = new Date().toISOString()
           })
         }

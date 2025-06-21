@@ -15,7 +15,7 @@ export {
   UserOrderByInput,
   UserSearchInput,
   UserUniqueInput,
-  UserWhereInput
+  UserWhereInput,
 } from './inputs'
 
 // Re-export from posts-direct.resolver for consistency

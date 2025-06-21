@@ -1,23 +1,28 @@
-import { HTTPMethod } from 'fetchdts'
+import type { HTTPMethod } from 'fetchdts'
 import { DEFAULT_VALUES, HEADER_KEYS } from '../../constants/context'
-import { RequestMetadata, SecurityContext } from '../../types.d'
+import type {
+  Context,
+  GraphQLIncomingMessage,
+} from '../../graphql/context/context.types'
+import type { RequestMetadata, SecurityContext } from '../../types.d'
 import { getUserIdFromAuthHeader } from './jwt'
-import type { Context, GraphQLIncomingMessage } from '../../graphql/context/context.types'
 
 /**
  * Context creation utilities
- * 
+ *
  * This module contains helper functions for creating and processing
  * GraphQL context components in a clean, testable way.
  */
 
 /**
  * Extracts and normalizes HTTP headers from the incoming request
- * 
+ *
  * @param req - The incoming GraphQL request
  * @returns Normalized headers object with string values
  */
-export function extractHeaders(req: GraphQLIncomingMessage): Record<string, string> {
+export function extractHeaders(
+  req: GraphQLIncomingMessage,
+): Record<string, string> {
   const headers: Record<string, string> = {}
 
   for (const [key, value] of Object.entries(req.headers || {})) {
@@ -32,7 +37,7 @@ export function extractHeaders(req: GraphQLIncomingMessage): Record<string, stri
 
 /**
  * Determines the HTTP method with fallback to default
- * 
+ *
  * @param req - The incoming GraphQL request
  * @returns The HTTP method as HTTPMethod type
  */
@@ -40,7 +45,15 @@ export function determineHttpMethod(req: GraphQLIncomingMessage): HTTPMethod {
   const method = req.method?.toUpperCase()
 
   // Validate that it's a supported HTTP method
-  const supportedMethods: HTTPMethod[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
+  const supportedMethods: HTTPMethod[] = [
+    'GET',
+    'POST',
+    'PUT',
+    'DELETE',
+    'PATCH',
+    'HEAD',
+    'OPTIONS',
+  ]
 
   if (method && supportedMethods.includes(method as HTTPMethod)) {
     return method as HTTPMethod
@@ -51,7 +64,7 @@ export function determineHttpMethod(req: GraphQLIncomingMessage): HTTPMethod {
 
 /**
  * Extracts the content type from headers with fallback
- * 
+ *
  * @param headers - The normalized headers object
  * @returns The content type string
  */
@@ -61,19 +74,21 @@ export function extractContentType(headers: Record<string, string>): string {
 
 /**
  * Extracts the client IP address from various header sources
- * 
+ *
  * @param headers - The normalized headers object
  * @returns The client IP address or default value
  */
 export function extractClientIp(headers: Record<string, string>): string {
-  return headers[HEADER_KEYS.X_FORWARDED_FOR] ||
+  return (
+    headers[HEADER_KEYS.X_FORWARDED_FOR] ||
     headers[HEADER_KEYS.X_REAL_IP] ||
     DEFAULT_VALUES.IP_ADDRESS
+  )
 }
 
 /**
  * Extracts the user agent from headers
- * 
+ *
  * @param headers - The normalized headers object
  * @returns The user agent string or default value
  */
@@ -83,7 +98,7 @@ export function extractUserAgent(headers: Record<string, string>): string {
 
 /**
  * Creates request metadata from the incoming request
- * 
+ *
  * @param headers - The normalized headers object
  * @param operationName - The GraphQL operation name (optional)
  * @param variables - The GraphQL variables (optional)
@@ -92,7 +107,7 @@ export function extractUserAgent(headers: Record<string, string>): string {
 export function createRequestMetadata(
   headers: Record<string, string>,
   operationName?: string,
-  variables?: Record<string, unknown>
+  variables?: Record<string, unknown>,
 ): RequestMetadata {
   return {
     ip: extractClientIp(headers),
@@ -106,14 +121,14 @@ export function createRequestMetadata(
 
 /**
  * Creates a basic security context structure
- * 
+ *
  * @param isAuthenticated - Whether the user is authenticated
  * @param userId - The authenticated user's ID (optional)
  * @returns Basic security context object
  */
 export function createSecurityContext(
   isAuthenticated: boolean,
-  userId?: number
+  userId?: number,
 ): SecurityContext {
   return {
     isAuthenticated,
@@ -126,7 +141,7 @@ export function createSecurityContext(
 
 /**
  * Creates the basic request object for the context
- * 
+ *
  * @param req - The incoming GraphQL request
  * @param headers - The normalized headers object
  * @param method - The determined HTTP method
@@ -135,7 +150,7 @@ export function createSecurityContext(
 export function createRequestObject(
   req: GraphQLIncomingMessage,
   headers: Record<string, string>,
-  method: HTTPMethod
+  method: HTTPMethod,
 ) {
   return {
     url: req.url || DEFAULT_VALUES.GRAPHQL_ENDPOINT,
@@ -147,7 +162,7 @@ export function createRequestObject(
 
 /**
  * Validates the incoming request structure
- * 
+ *
  * @param req - The incoming GraphQL request
  * @returns True if the request structure is valid
  */
@@ -162,11 +177,11 @@ export function isValidRequest(req: GraphQLIncomingMessage): boolean {
 
 /**
  * Extracts the user ID from the JWT token in the Authorization header
- * 
+ *
  * @param context - The GraphQL context
  * @returns The user ID if authenticated, null otherwise
  */
 export function getUserId(context: Context): number | null {
   const authHeader = context.headers[HEADER_KEYS.AUTHORIZATION]
   return getUserIdFromAuthHeader(authHeader)
-} 
+}

@@ -1,12 +1,18 @@
 /**
  * GraphQL Directives Index
- * 
+ *
  * Central export point for all GraphQL directives
  * as specified in IMPROVED-FILE-STRUCTURE.md
  */
 
-export { authDirectiveTransformer, authDirectiveTypeDefs } from './auth.directive'
-export { rateLimitDirectiveTransformer, rateLimitDirectiveTypeDefs } from './rate-limit.directive'
+export {
+  authDirectiveTransformer,
+  authDirectiveTypeDefs,
+} from './auth.directive'
+export {
+  rateLimitDirectiveTransformer,
+  rateLimitDirectiveTypeDefs,
+} from './rate-limit.directive'
 
 // Combined type definitions for easy schema integration
 export const directiveTypeDefs = `

@@ -1,6 +1,6 @@
 /**
  * User Entity - Core business entity
- * 
+ *
  * This represents the user in our domain model.
  * It's independent of any infrastructure concerns.
  */
@@ -19,7 +19,7 @@ export interface UserProps {
 }
 
 export class User {
-  private constructor(private readonly props: UserProps) { }
+  private constructor(private readonly props: UserProps) {}
 
   // Factory method for creating a new user
   static create(props: {

@@ -2,15 +2,27 @@
  * Integration testing utilities for comprehensive GraphQL API testing
  */
 
-import { ApolloServer, type GraphQLResponse } from '@apollo/server'
+import type { ApolloServer, GraphQLResponse } from '@apollo/server'
 import type { Post, User } from '@prisma/client'
 import { print } from 'graphql'
-import { Context } from '../src/graphql/context/context.types'
-import { createBlogScenario, createPermissionScenario } from './utils/fixtures/graphql.fixtures'
+import type { Context } from '../src/graphql/context/context.types'
+import {
+  createBlogScenario,
+  createPermissionScenario,
+} from './utils/fixtures/graphql.fixtures'
 import { createTestServer } from './utils/helpers/database.helpers'
-import { measureOperation, type PerformanceMetrics } from './utils/helpers/performance.helpers'
-import { GraphQLSnapshotTester, type SnapshotResult } from './utils/helpers/snapshot.helpers'
-import { createSubscriptionHelper, type SubscriptionTestHelper } from './utils/helpers/subscription.helpers'
+import {
+  measureOperation,
+  type PerformanceMetrics,
+} from './utils/helpers/performance.helpers'
+import {
+  GraphQLSnapshotTester,
+  type SnapshotResult,
+} from './utils/helpers/snapshot.helpers'
+import {
+  createSubscriptionHelper,
+  type SubscriptionTestHelper,
+} from './utils/helpers/subscription.helpers'
 
 export interface IntegrationTestContext {
   server: ApolloServer<Context>
@@ -88,7 +100,8 @@ export class E2ETestFlow {
     authContext?: Context,
   ): E2ETestFlow {
     this.steps.push(async () => {
-      const operationStr = typeof operation === 'string' ? operation : print(operation)
+      const operationStr =
+        typeof operation === 'string' ? operation : print(operation)
       const ctx = authContext || createMockContext()
 
       const { result, metrics } = await measureOperation<T>(
@@ -102,10 +115,13 @@ export class E2ETestFlow {
       this.performanceMetrics.set(name, metrics)
 
       // Test snapshot
-      const snapshotResult = await this.context.snapshotTester.testSnapshot(result as GraphQLResponse, {
-        name: `${name}-query`,
-        normalizers: [commonNormalizers.timestamps, commonNormalizers.ids],
-      })
+      const snapshotResult = await this.context.snapshotTester.testSnapshot(
+        result as GraphQLResponse,
+        {
+          name: `${name}-query`,
+          normalizers: [commonNormalizers.timestamps, commonNormalizers.ids],
+        },
+      )
       this.snapshotResults.set(name, snapshotResult)
 
       return result
@@ -124,7 +140,8 @@ export class E2ETestFlow {
     authContext?: Context,
   ): E2ETestFlow {
     this.steps.push(async () => {
-      const operationStr = typeof operation === 'string' ? operation : print(operation)
+      const operationStr =
+        typeof operation === 'string' ? operation : print(operation)
       const ctx = authContext || createMockContext()
 
       const { result, metrics } = await measureOperation<T>(
@@ -138,10 +155,17 @@ export class E2ETestFlow {
       this.performanceMetrics.set(name, metrics)
 
       // Test snapshot
-      const snapshotResult = await this.context.snapshotTester.testSnapshot(result as GraphQLResponse, {
-        name: `${name}-mutation`,
-        normalizers: [commonNormalizers.timestamps, commonNormalizers.ids, commonNormalizers.tokens],
-      })
+      const snapshotResult = await this.context.snapshotTester.testSnapshot(
+        result as GraphQLResponse,
+        {
+          name: `${name}-mutation`,
+          normalizers: [
+            commonNormalizers.timestamps,
+            commonNormalizers.ids,
+            commonNormalizers.tokens,
+          ],
+        },
+      )
       this.snapshotResults.set(name, snapshotResult)
 
       return result
@@ -162,7 +186,8 @@ export class E2ETestFlow {
     let helper: SubscriptionTestHelper | null = null
 
     this.steps.push(async () => {
-      const operationStr = typeof operation === 'string' ? operation : print(operation)
+      const operationStr =
+        typeof operation === 'string' ? operation : print(operation)
       const ctx = authContext || createMockContext()
 
       helper = await createSubscriptionHelper(
@@ -189,7 +214,10 @@ export class E2ETestFlow {
   /**
    * Add an assertion step
    */
-  assert(name: string, assertion: (results: Map<string, any>) => void | Promise<void>): E2ETestFlow {
+  assert(
+    name: string,
+    assertion: (results: Map<string, any>) => void | Promise<void>,
+  ): E2ETestFlow {
     this.steps.push(async () => {
       try {
         await assertion(this.results)
@@ -204,7 +232,10 @@ export class E2ETestFlow {
   /**
    * Add a custom step
    */
-  step(name: string, fn: (results: Map<string, any>) => Promise<any>): E2ETestFlow {
+  step(
+    name: string,
+    fn: (results: Map<string, any>) => Promise<any>,
+  ): E2ETestFlow {
     this.steps.push(async () => {
       const result = await fn(this.results)
       this.results.set(name, result)
@@ -218,7 +249,7 @@ export class E2ETestFlow {
    * Add a delay step
    */
   delay(ms: number): E2ETestFlow {
-    this.steps.push(() => new Promise(resolve => setTimeout(resolve, ms)))
+    this.steps.push(() => new Promise((resolve) => setTimeout(resolve, ms)))
     return this
   }
 
@@ -257,7 +288,10 @@ export class E2ETestFlow {
       })
       .join('\n')
 
-    const totalTime = metrics.reduce((sum, [, metric]) => sum + metric.executionTime, 0)
+    const totalTime = metrics.reduce(
+      (sum, [, metric]) => sum + metric.executionTime,
+      0,
+    )
     const avgTime = totalTime / metrics.length
 
     return `Performance Summary:\n${summary}\n\nTotal: ${totalTime.toFixed(2)}ms\nAverage: ${avgTime.toFixed(2)}ms`
@@ -281,7 +315,10 @@ export const commonScenarios = {
       .mutation('signup', SignupMutation, credentials)
       .assert('signup-success', (results) => {
         const response = results.get('signup')
-        if (response.body.kind !== 'single' || !response.body.singleResult.data?.signup) {
+        if (
+          response.body.kind !== 'single' ||
+          !response.body.singleResult.data?.signup
+        ) {
           throw new Error('Signup failed')
         }
       })
@@ -291,7 +328,10 @@ export const commonScenarios = {
       })
       .assert('login-success', (results) => {
         const response = results.get('login')
-        if (response.body.kind !== 'single' || !response.body.singleResult.data?.login) {
+        if (
+          response.body.kind !== 'single' ||
+          !response.body.singleResult.data?.login
+        ) {
           throw new Error('Login failed')
         }
       })
@@ -329,14 +369,20 @@ export const commonScenarios = {
       )
       .assert('draft-created', (results) => {
         const response = results.get('create-draft')
-        if (response.body.kind !== 'single' || !response.body.singleResult.data?.createDraft) {
+        if (
+          response.body.kind !== 'single' ||
+          !response.body.singleResult.data?.createDraft
+        ) {
           throw new Error('Failed to create draft')
         }
       })
       .query('my-drafts', DraftsQuery, { first: 10 }, authContext)
       .assert('drafts-fetched', (results) => {
         const response = results.get('my-drafts')
-        if (response.body.kind !== 'single' || !response.body.singleResult.data?.drafts) {
+        if (
+          response.body.kind !== 'single' ||
+          !response.body.singleResult.data?.drafts
+        ) {
           throw new Error('Failed to fetch drafts')
         }
       })
@@ -385,27 +431,40 @@ export const commonScenarios = {
       .query('owner-access', PostQuery, { id: postId }, users.owner)
       .assert('owner-can-access', (results) => {
         const response = results.get('owner-access')
-        if (response.body.kind !== 'single' || response.body.singleResult.errors) {
+        if (
+          response.body.kind !== 'single' ||
+          response.body.singleResult.errors
+        ) {
           throw new Error('Owner should be able to access their post')
         }
       })
       // Other user cannot delete owner's post
-      .mutation('other-delete-attempt', DeletePostMutation, { id: postId, }, users.other)
+      .mutation(
+        'other-delete-attempt',
+        DeletePostMutation,
+        { id: postId },
+        users.other,
+      )
       .assert('other-cannot-delete', (results) => {
         const response = results.get('other-delete-attempt')
         if (
           response.body.kind !== 'single' ||
           !response.body.singleResult.errors ||
-          !response.body.singleResult.errors[0].message.includes('only modify posts')
+          !response.body.singleResult.errors[0].message.includes(
+            'only modify posts',
+          )
         ) {
           throw new Error('Other user should not be able to delete post')
         }
       })
       // Owner can delete their post
-      .mutation('owner-delete', DeletePostMutation, { id: postId, }, users.owner)
+      .mutation('owner-delete', DeletePostMutation, { id: postId }, users.owner)
       .assert('owner-can-delete', (results) => {
         const response = results.get('owner-delete')
-        if (response.body.kind !== 'single' || response.body.singleResult.errors) {
+        if (
+          response.body.kind !== 'single' ||
+          response.body.singleResult.errors
+        ) {
           throw new Error('Owner should be able to delete their post')
         }
       })
@@ -415,9 +474,13 @@ export const commonScenarios = {
 
 // Import required operations
 import type { DocumentNode } from 'graphql'
-import { CreatePostMutation, DeletePostMutation, LoginMutation, SignupMutation, TogglePublishPostMutation } from '../src/gql/mutations'
+import {
+  CreatePostMutation,
+  DeletePostMutation,
+  LoginMutation,
+  SignupMutation,
+  TogglePublishPostMutation,
+} from '../src/gql/mutations'
 import { DraftsQuery, FeedQuery, PostQuery } from '../src/gql/queries'
 import { createMockContext } from './utils/helpers/database.helpers'
 import { commonNormalizers } from './utils/helpers/snapshot.helpers'
-
-

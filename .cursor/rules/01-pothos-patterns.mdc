@@ -258,3 +258,40 @@ fields: (t) => ({
 4. **Use global IDs for all entity references** - Consistent with Relay spec
 5. **Validate inputs early** - Use Pothos validation or Zod schemas
 6. **Handle errors consistently** - Use the error hierarchy
+
+## 1. Direct Pothos Resolvers with Direct Prisma Access
+
+**Critical**: Prisma is NOT included in the GraphQL context. Always import it directly from [prisma.ts](mdc:src/prisma.ts) to ensure testability and type safety.
+
+```typescript
+// ✅ CORRECT - Import Prisma directly
+import { prisma } from '../../../prisma'
+
+// ❌ WRONG - Never access Prisma from context
+// const prisma = context.prisma
+```
+
+## 2. Resolver Pattern with Query Spreading
+
+**Critical**: In `t.prismaField` or `t.prismaConnection`, always spread the `query` parameter into your Prisma call. This is essential for Prisma-Pothos optimizations, allowing the schema to drive the database query for optimal performance.
+
+```typescript
+builder.mutationField('createPost', (t) =>
+  t.prismaField({
+    type: 'Post',
+    grantScopes: ['authenticated'],
+    resolve: async (query, _parent, args, context) => {
+      const userId = requireAuthentication(context)
+
+      return prisma.post.create({
+        ...query, // ⚠️ CRITICAL: Always spread query first
+        data: {
+          title: args.title,
+          content: args.content,
+          authorId: userId.value,
+        },
+      })
+    },
+  }),
+)
+```

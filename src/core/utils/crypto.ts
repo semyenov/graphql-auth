@@ -1,6 +1,6 @@
 /**
  * Cryptographic Utilities
- * 
+ *
  * Common cryptographic helper functions
  */
 
@@ -10,7 +10,10 @@ import crypto from 'crypto'
  * Generate a random string of specified length
  */
 export function generateRandomString(length: number): string {
-  return crypto.randomBytes(Math.ceil(length / 2)).toString('hex').slice(0, length)
+  return crypto
+    .randomBytes(Math.ceil(length / 2))
+    .toString('hex')
+    .slice(0, length)
 }
 
 /**
@@ -37,16 +40,28 @@ export function sha512(data: string): string {
 /**
  * Create HMAC signature
  */
-export function createHmac(data: string, secret: string, algorithm: 'sha256' | 'sha512' = 'sha256'): string {
+export function createHmac(
+  data: string,
+  secret: string,
+  algorithm: 'sha256' | 'sha512' = 'sha256',
+): string {
   return crypto.createHmac(algorithm, secret).update(data).digest('hex')
 }
 
 /**
  * Verify HMAC signature
  */
-export function verifyHmac(data: string, signature: string, secret: string, algorithm: 'sha256' | 'sha512' = 'sha256'): boolean {
+export function verifyHmac(
+  data: string,
+  signature: string,
+  secret: string,
+  algorithm: 'sha256' | 'sha512' = 'sha256',
+): boolean {
   const expectedSignature = createHmac(data, secret, algorithm)
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature),
+  )
 }
 
 /**

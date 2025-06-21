@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from '@prisma/client'
+import type { Prisma, PrismaClient } from '@prisma/client'
 import { prisma } from '../../prisma'
 
 /**
@@ -17,7 +17,7 @@ export abstract class BaseRepository {
    * Execute a function within a database transaction
    */
   protected async transaction<T>(
-    fn: Parameters<typeof this.db.$transaction>[0]
+    fn: Parameters<typeof this.db.$transaction>[0],
   ): Promise<T> {
     return this.db.$transaction(fn) as Prisma.PrismaPromise<T>
   }
@@ -25,14 +25,20 @@ export abstract class BaseRepository {
   /**
    * Execute raw SQL query
    */
-  protected async executeRaw<T = unknown>(sql: Prisma.Sql, ...args: unknown[]): Promise<T> {
+  protected async executeRaw<T = unknown>(
+    sql: Prisma.Sql,
+    ...args: unknown[]
+  ): Promise<T> {
     return this.db.$executeRaw<T>(sql, ...args) as Prisma.PrismaPromise<T>
   }
 
   /**
    * Query raw SQL
    */
-  protected async queryRaw<T = unknown>(sql: Prisma.Sql, ...args: unknown[]): Promise<T> {
+  protected async queryRaw<T = unknown>(
+    sql: Prisma.Sql,
+    ...args: unknown[]
+  ): Promise<T> {
     return this.db.$queryRaw<T>(sql, ...args) as Prisma.PrismaPromise<T>
   }
 

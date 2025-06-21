@@ -1,6 +1,6 @@
 /**
  * Prisma Helper Functions
- * 
+ *
  * Utility functions for common Prisma operations
  */
 
@@ -12,10 +12,13 @@ import { Prisma } from '@prisma/client'
 export function handlePrismaError(error: unknown): Error {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     switch (error.code) {
-      case 'P2002':
+      case 'P2002': {
         // Unique constraint violation
         const field = error.meta?.target as string[] | undefined
-        return new Error(`A record with this ${field?.[0] || 'value'} already exists`)
+        return new Error(
+          `A record with this ${field?.[0] || 'value'} already exists`,
+        )
+      }
 
       case 'P2003':
         // Foreign key constraint violation
@@ -50,7 +53,7 @@ export function handlePrismaError(error: unknown): Error {
  */
 export async function withTransaction<T>(
   prisma: any,
-  fn: (tx: any) => Promise<T>
+  fn: (tx: any) => Promise<T>,
 ): Promise<T> {
   return prisma.$transaction(async (tx: any) => {
     try {
@@ -95,9 +98,10 @@ export function buildWhereClause(filters: Record<string, any>): any {
 /**
  * Build dynamic orderBy clause
  */
-export function buildOrderByClause(
-  sort?: { field: string; direction: 'asc' | 'desc' }
-): any {
+export function buildOrderByClause(sort?: {
+  field: string
+  direction: 'asc' | 'desc'
+}): any {
   if (!sort) return { createdAt: 'desc' }
 
   return { [sort.field]: sort.direction }
@@ -109,7 +113,7 @@ export function buildOrderByClause(
 export function applyCursorPagination(
   query: any,
   cursor?: string,
-  take = 20
+  take = 20,
 ): any {
   if (!cursor) {
     return { ...query, take }
@@ -126,11 +130,7 @@ export function applyCursorPagination(
 /**
  * Apply offset-based pagination
  */
-export function applyOffsetPagination(
-  query: any,
-  page = 1,
-  perPage = 20
-): any {
+export function applyOffsetPagination(query: any, page = 1, perPage = 20): any {
   return {
     ...query,
     skip: (page - 1) * perPage,
@@ -144,7 +144,7 @@ export function applyOffsetPagination(
 export async function batchOperation<T, R>(
   items: T[],
   batchSize: number,
-  operation: (batch: T[]) => Promise<R[]>
+  operation: (batch: T[]) => Promise<R[]>,
 ): Promise<R[]> {
   const results: R[] = []
 
@@ -164,7 +164,7 @@ export async function safeUpsert<T>(
   model: any,
   where: any,
   create: any,
-  update: any
+  update: any,
 ): Promise<T> {
   try {
     return await model.upsert({
@@ -180,10 +180,7 @@ export async function safeUpsert<T>(
 /**
  * Check if record exists
  */
-export async function exists(
-  model: any,
-  where: any
-): Promise<boolean> {
+export async function exists(model: any, where: any): Promise<boolean> {
   const count = await model.count({ where })
   return count > 0
 }
@@ -194,7 +191,7 @@ export async function exists(
 export async function getOrCreate<T>(
   model: any,
   where: any,
-  create: any
+  create: any,
 ): Promise<{ record: T; created: boolean }> {
   const existing = await model.findUnique({ where })
 
@@ -212,14 +209,14 @@ export async function getOrCreate<T>(
 export async function bulkCreateWithConflictHandling<T>(
   model: any,
   data: any[],
-  _conflictFields: string[]
+  _conflictFields: string[],
 ): Promise<T[]> {
   try {
     return await model.createMany({
       data,
       skipDuplicates: true,
     })
-  } catch (error) {
+  } catch (_error) {
     // Fallback to individual creates if bulk fails
     const results: T[] = []
 
@@ -229,7 +226,10 @@ export async function bulkCreateWithConflictHandling<T>(
         results.push(result)
       } catch (err) {
         // Skip duplicates
-        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        if (
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === 'P2002'
+        ) {
           continue
         }
         throw err
@@ -246,7 +246,7 @@ export async function bulkCreateWithConflictHandling<T>(
 export async function executeRawSql<T>(
   prisma: any,
   sql: string,
-  params: any[] = []
+  params: any[] = [],
 ): Promise<T> {
   try {
     return await prisma.$queryRawUnsafe(sql, ...params)

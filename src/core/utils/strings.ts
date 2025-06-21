@@ -1,6 +1,6 @@
 /**
  * String Utilities
- * 
+ *
  * Common string manipulation and validation helper functions
  */
 
@@ -110,7 +110,10 @@ export function slugify(str: string): string {
  * Count words in a string
  */
 export function countWords(str: string): number {
-  return str.trim().split(/\s+/).filter(word => word.length > 0).length
+  return str
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0).length
 }
 
 /**
@@ -118,23 +121,26 @@ export function countWords(str: string): number {
  */
 export function getInitials(name: string, maxLength = 2): string {
   const words = name.trim().split(/\s+/)
-  const initials = words
-    .map(word => word.charAt(0).toUpperCase())
-    .join('')
+  const initials = words.map((word) => word.charAt(0).toUpperCase()).join('')
   return initials.slice(0, maxLength)
 }
 
 /**
  * Mask sensitive information in a string
  */
-export function mask(str: string, showFirst = 0, showLast = 0, maskChar = '*'): string {
+export function mask(
+  str: string,
+  showFirst = 0,
+  showLast = 0,
+  maskChar = '*',
+): string {
   if (str.length <= showFirst + showLast) return str
-  
+
   const firstPart = str.slice(0, showFirst)
   const lastPart = str.slice(-showLast)
   const maskedLength = str.length - showFirst - showLast
   const maskedPart = maskChar.repeat(maskedLength)
-  
+
   return firstPart + maskedPart + lastPart
 }
 
@@ -149,8 +155,8 @@ export function escapeHtml(str: string): string {
     '"': '&quot;',
     "'": '&#39;',
   }
-  
-  return str.replace(/[&<>"']/g, char => htmlEscapes[char] || char)
+
+  return str.replace(/[&<>"']/g, (char) => htmlEscapes[char] || char)
 }
 
 /**
@@ -164,8 +170,11 @@ export function unescapeHtml(str: string): string {
     '&quot;': '"',
     '&#39;': "'",
   }
-  
-  return str.replace(/&(?:amp|lt|gt|quot|#39);/g, entity => htmlUnescapes[entity] || entity)
+
+  return str.replace(
+    /&(?:amp|lt|gt|quot|#39);/g,
+    (entity) => htmlUnescapes[entity] || entity,
+  )
 }
 
 /**
@@ -188,8 +197,8 @@ export function removeAccents(str: string): string {
 export function parseCommaSeparated(str: string): string[] {
   return str
     .split(',')
-    .map(item => item.trim())
-    .filter(item => item.length > 0)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
 }
 
 /**
@@ -197,12 +206,12 @@ export function parseCommaSeparated(str: string): string[] {
  */
 export function formatBytes(bytes: number, decimals = 2): string {
   if (bytes === 0) return '0 Bytes'
-  
+
   const k = 1024
   const dm = decimals < 0 ? 0 : decimals
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-  
+
   const i = Math.floor(Math.log(bytes) / Math.log(k))
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
+
+  return `${parseFloat((bytes / k ** i).toFixed(dm))} ${sizes[i]}`
 }

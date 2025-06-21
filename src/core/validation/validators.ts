@@ -1,6 +1,6 @@
 /**
  * Custom Validators
- * 
+ *
  * Reusable validation functions for complex validation logic
  */
 
@@ -10,15 +10,18 @@ import { prisma } from '../../prisma'
 /**
  * Validate email uniqueness
  */
-export async function isEmailUnique(email: string, excludeUserId?: number): Promise<boolean> {
+export async function isEmailUnique(
+  email: string,
+  excludeUserId?: number,
+): Promise<boolean> {
   const existingUser = await prisma.user.findUnique({
     where: { email },
     select: { id: true },
   })
-  
+
   if (!existingUser) return true
   if (excludeUserId && existingUser.id === excludeUserId) return true
-  
+
   return false
 }
 
@@ -30,7 +33,7 @@ export function isStrongPassword(password: string): boolean {
   if (!/[A-Z]/.test(password)) return false
   if (!/[a-z]/.test(password)) return false
   if (!/[0-9]/.test(password)) return false
-  
+
   return true
 }
 
@@ -49,16 +52,19 @@ export function isValidUrl(url: string): boolean {
 /**
  * Validate global ID format
  */
-export function isValidGlobalId(globalId: string, expectedType?: string): boolean {
+export function isValidGlobalId(
+  globalId: string,
+  expectedType?: string,
+): boolean {
   try {
     const decoded = Buffer.from(globalId, 'base64').toString('utf-8')
     const [type, id] = decoded.split(':')
-    
-    if (!type || !id) return false
+
+    if (!(type && id)) return false
     if (expectedType && type !== expectedType) return false
-    
+
     const numericId = parseInt(id, 10)
-    return !isNaN(numericId) && numericId > 0
+    return !Number.isNaN(numericId) && numericId > 0
   } catch {
     return false
   }
@@ -102,24 +108,32 @@ export function isDateInPast(date: Date): boolean {
 /**
  * Validate date range
  */
-export function isValidDateRange(startDate: Date, endDate: Date, maxDays?: number): boolean {
+export function isValidDateRange(
+  startDate: Date,
+  endDate: Date,
+  maxDays?: number,
+): boolean {
   if (startDate > endDate) return false
-  
+
   if (maxDays) {
-    const diffInDays = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+    const diffInDays =
+      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
     if (diffInDays > maxDays) return false
   }
-  
+
   return true
 }
 
 /**
  * Validate file extension
  */
-export function isValidFileExtension(filename: string, allowedExtensions: string[]): boolean {
+export function isValidFileExtension(
+  filename: string,
+  allowedExtensions: string[],
+): boolean {
   const ext = filename.split('.').pop()?.toLowerCase()
   if (!ext) return false
-  
+
   return allowedExtensions.includes(ext)
 }
 
@@ -129,7 +143,7 @@ export function isValidFileExtension(filename: string, allowedExtensions: string
 export async function isValidImageDimensions(
   _imageUrl: string,
   _maxWidth: number,
-  _maxHeight: number
+  _maxHeight: number,
 ): Promise<boolean> {
   // This would require an image processing library
   // For now, return true as placeholder
@@ -141,14 +155,14 @@ export async function isValidImageDimensions(
  */
 export function createAsyncValidator<T>(
   validatorFn: (value: T) => Promise<boolean> | boolean,
-  errorMessage: string
+  errorMessage: string,
 ) {
   return z.custom<T>(
     async (value) => {
       const isValid = await validatorFn(value)
       return isValid
     },
-    { message: errorMessage }
+    { message: errorMessage },
   )
 }
 
@@ -158,7 +172,7 @@ export function createAsyncValidator<T>(
 export function createConditionalValidator<T>(
   condition: (value: T) => boolean,
   validator: z.ZodSchema<T>,
-  fallback: z.ZodSchema<T> = z.any()
+  fallback: z.ZodSchema<T> = z.any(),
 ) {
   return z.union([
     z.custom<T>((value) => condition(value)).pipe(validator),
@@ -205,24 +219,27 @@ export function isInRange(value: number, min: number, max: number): boolean {
 export function isValidCreditCard(cardNumber: string): boolean {
   const digits = cardNumber.replace(/\s/g, '')
   if (!/^\d+$/.test(digits)) return false
-  
+
   let sum = 0
   let isEven = false
-  
+
   for (let i = digits.length - 1; i >= 0; i--) {
-    let digit = parseInt(digits[i]!, 10)
-    
-    if (isEven) {
-      digit *= 2
-      if (digit > 9) {
-        digit -= 9
+    const digitChar = digits[i]
+    if (digitChar) {
+      let digit = parseInt(digitChar, 10)
+
+      if (isEven) {
+        digit *= 2
+        if (digit > 9) {
+          digit -= 9
+        }
       }
+
+      sum += digit
+      isEven = !isEven
     }
-    
-    sum += digit
-    isEven = !isEven
   }
-  
+
   return sum % 10 === 0
 }
 

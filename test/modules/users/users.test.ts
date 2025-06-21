@@ -1,6 +1,6 @@
 /**
  * Users Module Tests
- * 
+ *
  * Consolidated test file for all users functionality following the
  * IMPROVED-FILE-STRUCTURE.md specification.
  */

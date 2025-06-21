@@ -5,17 +5,15 @@ import { UserId } from '../../../src/core/value-objects/user-id.vo'
 import {
   CreatePostMutation,
   DeletePostMutation,
-  IncrementPostViewCountMutation
+  IncrementPostViewCountMutation,
 } from '../../../src/gql/mutations'
-import {
-  FeedQuery
-} from '../../../src/gql/queries'
+import { FeedQuery } from '../../../src/gql/queries'
 import { prisma } from '../../setup'
 import {
   createAuthContext,
   createMockContext,
   createTestServer,
-  gqlHelpers
+  gqlHelpers,
 } from '../../utils/helpers/database.helpers'
 import { toPostId } from '../../utils/helpers/relay.helpers'
 
@@ -58,7 +56,6 @@ interface GetDraftsResponse {
 interface CreatePostResponse {
   createPost: Post
 }
-
 
 interface IncrementPostViewCountResponse {
   incrementPostViewCount: Post
@@ -112,11 +109,11 @@ describe('Posts', () => {
         server,
         print(FeedQuery),
         { first: 10 },
-        createMockContext()
+        createMockContext(),
       )
 
       expect(data.feed.edges).toHaveLength(2)
-      expect(data.feed.edges.every(edge => edge.node.published)).toBe(true)
+      expect(data.feed.edges.every((edge) => edge.node.published)).toBe(true)
     })
 
     it('should fetch user drafts when authenticated', async () => {
@@ -162,18 +159,20 @@ describe('Posts', () => {
       `
 
       const variables = {
-        first: 10
+        first: 10,
       }
 
       const data = await gqlHelpers.expectSuccessfulQuery<GetDraftsResponse>(
         server,
         query,
         variables,
-        createAuthContext(testUserId)
+        createAuthContext(testUserId),
       )
 
       expect(data.drafts?.edges).toHaveLength(2)
-      expect(data.drafts?.edges.every(edge => !edge.node.published)).toBe(true)
+      expect(data.drafts?.edges.every((edge) => !edge.node.published)).toBe(
+        true,
+      )
     })
 
     it('should require authentication for drafts', async () => {
@@ -201,7 +200,7 @@ describe('Posts', () => {
       `
 
       const variables = {
-        first: 10
+        first: 10,
       }
 
       await gqlHelpers.expectGraphQLError(
@@ -209,7 +208,7 @@ describe('Posts', () => {
         query,
         variables,
         createMockContext(), // No auth
-        'Authentication required'
+        'Authentication required',
       )
     })
   })
@@ -223,12 +222,13 @@ describe('Posts', () => {
         },
       }
 
-      const data = await gqlHelpers.expectSuccessfulMutation<CreatePostResponse>(
-        server,
-        print(CreatePostMutation),
-        variables,
-        createAuthContext(testUserId)
-      )
+      const data =
+        await gqlHelpers.expectSuccessfulMutation<CreatePostResponse>(
+          server,
+          print(CreatePostMutation),
+          variables,
+          createAuthContext(testUserId),
+        )
 
       expect(data.createPost).toBeDefined()
       expect(data.createPost.title).toBe(variables.input.title)
@@ -240,7 +240,7 @@ describe('Posts', () => {
         where: { authorId: testUserId.value },
       })
       expect(posts).toHaveLength(1)
-      expect(posts[0]!.title).toBe(variables.input.title)
+      expect(posts[0]?.title).toBe(variables.input.title)
     })
 
     it('should require authentication to create drafts', async () => {
@@ -256,7 +256,7 @@ describe('Posts', () => {
         print(CreatePostMutation),
         variables,
         createMockContext(), // No auth
-        'Authentication required'
+        'Authentication required',
       )
     })
   })
@@ -275,7 +275,9 @@ describe('Posts', () => {
 
       const variables = { id: toPostId(post.id) }
 
-      const data = await gqlHelpers.expectSuccessfulMutation<{ deletePost: boolean }>(
+      const data = await gqlHelpers.expectSuccessfulMutation<{
+        deletePost: boolean
+      }>(
         server,
         print(DeletePostMutation),
         variables,
@@ -318,7 +320,7 @@ describe('Posts', () => {
         print(DeletePostMutation),
         variables,
         createAuthContext(testUserId), // Different user
-        'You can only modify posts that you have created'
+        'You can only modify posts that you have created',
       )
 
       // Verify post still exists
@@ -346,7 +348,7 @@ describe('Posts', () => {
         print(DeletePostMutation),
         variables,
         createMockContext(), // No authentication
-        'You must be logged in to perform this action. Please authenticate and try again.'
+        'You must be logged in to perform this action. Please authenticate and try again.',
       )
 
       // Verify post still exists
@@ -373,22 +375,24 @@ describe('Posts', () => {
       const variables = { id: toPostId(post.id) }
 
       // First increment
-      const data1 = await gqlHelpers.expectSuccessfulMutation<IncrementPostViewCountResponse>(
-        server,
-        print(IncrementPostViewCountMutation),
-        variables,
-        createMockContext() // No auth required
-      )
+      const data1 =
+        await gqlHelpers.expectSuccessfulMutation<IncrementPostViewCountResponse>(
+          server,
+          print(IncrementPostViewCountMutation),
+          variables,
+          createMockContext(), // No auth required
+        )
 
       expect(data1.incrementPostViewCount.viewCount).toBe(1)
 
       // Second increment
-      const data2 = await gqlHelpers.expectSuccessfulMutation<IncrementPostViewCountResponse>(
-        server,
-        print(IncrementPostViewCountMutation),
-        variables,
-        createMockContext()
-      )
+      const data2 =
+        await gqlHelpers.expectSuccessfulMutation<IncrementPostViewCountResponse>(
+          server,
+          print(IncrementPostViewCountMutation),
+          variables,
+          createMockContext(),
+        )
 
       expect(data2.incrementPostViewCount.viewCount).toBe(2)
 
@@ -407,7 +411,7 @@ describe('Posts', () => {
         print(IncrementPostViewCountMutation),
         variables,
         createMockContext(),
-        'Post with identifier'
+        'Post with identifier',
       )
     })
   })

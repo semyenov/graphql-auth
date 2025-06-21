@@ -57,7 +57,9 @@ export function verifyToken(token: string): JWTPayload {
 /**
  * Extract Bearer token from Authorization header
  */
-export function extractBearerToken(authHeader: string | undefined): string | null {
+export function extractBearerToken(
+  authHeader: string | undefined,
+): string | null {
   if (!authHeader) {
     return null
   }
@@ -87,7 +89,7 @@ export function decodeToken(token: string): JWTPayload | null {
  */
 export function isTokenExpired(token: string): boolean {
   const decoded = decodeToken(token)
-  if (!decoded || !decoded.exp) {
+  if (!decoded?.exp) {
     return true
   }
 
@@ -97,7 +99,9 @@ export function isTokenExpired(token: string): boolean {
 /**
  * Get user ID from authorization header
  */
-export function getUserIdFromAuthHeader(authHeader: string | undefined): number | null {
+export function getUserIdFromAuthHeader(
+  authHeader: string | undefined,
+): number | null {
   const token = extractBearerToken(authHeader)
   if (!token) {
     return null

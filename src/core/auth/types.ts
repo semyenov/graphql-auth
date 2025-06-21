@@ -1,6 +1,6 @@
 /**
  * Core Authentication Types
- * 
+ *
  * Central type definitions for authentication and authorization
  */
 
@@ -38,7 +38,7 @@ export interface AuthTokens {
 export enum UserRole {
   USER = 'user',
   MODERATOR = 'moderator',
-  ADMIN = 'admin'
+  ADMIN = 'admin',
 }
 
 export interface Permission {
@@ -57,8 +57,8 @@ export interface AuthContext {
 // Authorization scope types
 export interface AuthScope {
   type: string
-  value: any
-  condition?: (context: any) => boolean | Promise<boolean>
+  value: unknown
+  condition?: (context: unknown) => boolean | Promise<boolean>
 }
 
 // Token verification result
@@ -72,5 +72,5 @@ export interface TokenVerificationResult {
 export interface AuthError {
   code: string
   message: string
-  details?: any
+  details?: unknown
 }

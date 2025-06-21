@@ -1,105 +1,114 @@
+import type { Prisma } from '@prisma/client'
 import { PrismaClient } from '@prisma/client'
-import { DATABASE } from '../../constants'
 import { env } from '../../app/config/environment'
+import { DATABASE } from '../../constants'
 
 /**
  * Database client configuration type
  */
 interface DatabaseConfig {
-  logLevels: readonly string[]
+  logLevels: Prisma.LogLevel[]
   transactionTimeout: number
   url: string
 }
 
 /**
- * Database client manager class
- * Provides singleton access to Prisma client with proper configuration
+ * Singleton instance and configuration
  */
-export class DatabaseClient {
-  private static instance: PrismaClient | null = null
-  private static config: DatabaseConfig = {
-    logLevels: DATABASE.LOG_LEVELS,
-    transactionTimeout: DATABASE.TRANSACTION_TIMEOUT_MS,
-    url: env.DATABASE_URL,
-  }
+let instance: PrismaClient | null = null
+let config: DatabaseConfig = {
+  logLevels: DATABASE.LOG_LEVELS as Prisma.LogLevel[],
+  transactionTimeout: DATABASE.TRANSACTION_TIMEOUT_MS,
+  url: env.DATABASE_URL,
+}
 
-  /**
-   * Get the Prisma client instance
-   * Creates a new instance if one doesn't exist
-   */
-  public static getClient(): PrismaClient {
-    if (!DatabaseClient.instance) {
-      DatabaseClient.instance = new PrismaClient({
-        log: DatabaseClient.config.logLevels as any,
-        transactionOptions: {
-          timeout: DatabaseClient.config.transactionTimeout as any,
+/**
+ * Get the Prisma client instance
+ * Creates a new instance if one doesn't exist
+ */
+export function getClient(): PrismaClient {
+  if (!instance) {
+    instance = new PrismaClient({
+      log: config.logLevels,
+      transactionOptions: {
+        timeout: config.transactionTimeout,
+      },
+      datasources: {
+        db: {
+          url: config.url,
         },
-        datasources: {
-          db: {
-            url: DatabaseClient.config.url,
-          },
-        },
-      })
-    }
-
-    return DatabaseClient.instance
+      },
+    })
   }
 
-  /**
-   * Set a test client instance
-   * Primarily used for testing with isolated database instances
-   */
-  public static setTestClient(client: PrismaClient): void {
-    DatabaseClient.instance = client
-  }
+  return instance
+}
 
-  /**
-   * Reset the client instance
-   * Forces creation of a new client on next access
-   */
-  public static reset(): void {
-    DatabaseClient.instance = null
-  }
+/**
+ * Set a test client instance
+ * Primarily used for testing with isolated database instances
+ */
+export function setTestClient(client: PrismaClient): void {
+  instance = client
+}
 
-  /**
-   * Disconnect the client and clean up resources
-   * Should be called on application shutdown
-   */
-  public static async disconnect(): Promise<void> {
-    if (DatabaseClient.instance) {
-      await DatabaseClient.instance.$disconnect()
-      DatabaseClient.instance = null
-    }
-  }
+/**
+ * Reset the client instance
+ * Forces creation of a new client on next access
+ */
+export function reset(): void {
+  instance = null
+}
 
-  /**
-   * Check if client is connected
-   */
-  public static isConnected(): boolean {
-    return DatabaseClient.instance !== null
-  }
-
-  /**
-   * Get current configuration
-   */
-  public static getConfig(): Readonly<DatabaseConfig> {
-    return { ...DatabaseClient.config }
-  }
-
-  /**
-   * Update configuration (primarily for testing)
-   */
-  public static updateConfig(newConfig: Partial<DatabaseConfig>): void {
-    DatabaseClient.config = { ...DatabaseClient.config, ...newConfig }
-    // Force reconnection with new config
-    if (DatabaseClient.instance) {
-      DatabaseClient.reset()
-    }
+/**
+ * Disconnect the client and clean up resources
+ * Should be called on application shutdown
+ */
+export async function disconnect(): Promise<void> {
+  if (instance) {
+    await instance.$disconnect()
+    instance = null
   }
 }
 
+/**
+ * Check if client is connected
+ */
+export function isConnected(): boolean {
+  return instance !== null
+}
+
+/**
+ * Get current configuration
+ */
+export function getConfig(): Readonly<DatabaseConfig> {
+  return { ...config }
+}
+
+/**
+ * Update configuration (primarily for testing)
+ */
+export function updateConfig(newConfig: Partial<DatabaseConfig>): void {
+  config = { ...config, ...newConfig }
+  // Force reconnection with new config
+  if (instance) {
+    reset()
+  }
+}
+
+// Legacy class for backward compatibility
+export const DatabaseClient = {
+  getClient,
+  setTestClient,
+  reset,
+  disconnect,
+  isConnected,
+  getConfig,
+  updateConfig,
+}
+
 // Export a singleton instance for direct use
-export const db = DatabaseClient.getClient()
+export const db = getClient()
 
 // Export type for dependency injection
 export type Database = PrismaClient

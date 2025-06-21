@@ -1,26 +1,30 @@
 /**
  * Direct Authentication with Tokens GraphQL Resolvers
- * 
+ *
  * Handles authentication with refresh tokens using direct implementation
  */
 
 import { container } from 'tsyringe'
 import { z } from 'zod'
+import { RateLimitPresets } from '../../../app/services/rate-limiter.service'
+import { normalizeError } from '../../../core/errors/handlers'
+import { AuthenticationError } from '../../../core/errors/types'
 import type { ILogger } from '../../../core/services/logger.interface'
 import type { IPasswordService } from '../../../core/services/password.service.interface'
 import type { ITokenService } from '../../../core/services/token.service.interface'
-import { AuthenticationError } from '../../../core/errors/types'
-import { normalizeError } from '../../../core/errors/handlers'
 import { builder } from '../../../graphql/schema/builder'
 import { commonValidations } from '../../../graphql/schema/helpers'
-import { applyRateLimit, createRateLimitConfig } from '../../../graphql/schema/plugins/rate-limit.plugin'
-import { RateLimitPresets } from '../../../app/services/rate-limiter.service'
+import {
+  applyRateLimit,
+  createRateLimitConfig,
+} from '../../../graphql/schema/plugins/rate-limit.plugin'
 import { prisma } from '../../../prisma'
 import { requireAuthentication } from '../guards/auth.guards'
 import { AuthTokensType } from '../types/auth.types'
 
 // Get services from container
-const getPasswordService = () => container.resolve<IPasswordService>('IPasswordService')
+const getPasswordService = () =>
+  container.resolve<IPasswordService>('IPasswordService')
 const getLogger = () => container.resolve<ILogger>('ILogger')
 const getTokenService = () => container.resolve<ITokenService>('ITokenService')
 
@@ -56,7 +60,7 @@ builder.mutationField('loginWithTokens', (t) =>
             options: RateLimitPresets.login,
           },
           args,
-          context
+          context,
         )
 
         // Find user by email
@@ -71,11 +75,29 @@ builder.mutationField('loginWithTokens', (t) =>
 
         // Verify password
         const passwordService = getPasswordService()
-        const isValidPassword = await passwordService.verify(args.password, user.password)
+        const isValidPassword = await passwordService.verify(
+          args.password,
+          user.password,
+        )
 
         if (!isValidPassword) {
-          logger.warn('Login failed - invalid password', { email: args.email, userId: user.id })
+          logger.warn('Login failed - invalid password', {
+            email: args.email,
+            userId: user.id,
+          })
           throw new AuthenticationError('Invalid email or password')
+        }
+
+        // Check if password needs rehashing (e.g., upgrading from bcrypt to argon2)
+        const needsRehash = await passwordService.needsRehash(user.password)
+        if (needsRehash) {
+          // Rehash the password with the new algorithm
+          const newHash = await passwordService.hash(args.password)
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { password: newHash },
+          })
+          logger.info('Password rehashed during login', { userId: user.id })
         }
 
         // Generate tokens
@@ -85,18 +107,23 @@ builder.mutationField('loginWithTokens', (t) =>
           email: user.email,
         })
 
-        logger.info('Login with tokens successful', { email: args.email, userId: user.id })
+        logger.info('Login with tokens successful', {
+          email: args.email,
+          userId: user.id,
+        })
 
         return {
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
         }
       } catch (error) {
-        logger.error('Login with tokens error', error as Error, { email: args.email })
+        logger.error('Login with tokens error', error as Error, {
+          email: args.email,
+        })
         throw normalizeError(error)
       }
     },
-  })
+  }),
 )
 
 // Refresh token mutation (direct implementation)
@@ -129,7 +156,7 @@ builder.mutationField('refreshToken', (t) =>
         throw normalizeError(error)
       }
     },
-  })
+  }),
 )
 
 // Logout mutation (direct implementation)
@@ -156,5 +183,5 @@ builder.mutationField('logout', (t) =>
         throw normalizeError(error)
       }
     },
-  })
+  }),
 )

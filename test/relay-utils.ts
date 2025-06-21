@@ -1,6 +1,6 @@
 /**
  * Utilities for working with Relay global IDs in tests
- * 
+ *
  * These utilities help convert between numeric database IDs and
  * Relay-style global IDs (base64-encoded "Type:id" strings)
  */
@@ -8,7 +8,7 @@
 /**
  * Convert a numeric ID to a Relay global ID
  * Uses base64 encoding to match Pothos Relay plugin
- * 
+ *
  * @param type - The GraphQL type name (e.g., "User", "Post")
  * @param id - The numeric database ID
  * @returns Base64-encoded global ID
@@ -21,7 +21,7 @@ export function toGlobalId(type: string, id: number | string): string {
 
 /**
  * Parse a global ID back to its components
- * 
+ *
  * @param globalId - Base64-encoded global ID
  * @returns Object with type and id fields
  */
@@ -53,7 +53,7 @@ export function toPostId(id: number): string {
 
 /**
  * Extract numeric ID from a global ID
- * 
+ *
  * @param globalId - Base64-encoded global ID
  * @returns Numeric database ID
  * @throws Error if ID cannot be parsed as a number

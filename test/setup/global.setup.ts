@@ -43,10 +43,10 @@ beforeAll(async () => {
     execSync('bunx prisma db push --force-reset --skip-generate', {
       env: {
         ...process.env,
-        DATABASE_URL: TEST_DATABASE_URL
+        DATABASE_URL: TEST_DATABASE_URL,
       },
       stdio: 'pipe',
-      timeout: 30000
+      timeout: 30000,
     })
 
     // Test the connection and write access
@@ -58,7 +58,7 @@ beforeAll(async () => {
         email: 'test-write-access@example.com',
         password: 'test',
         name: 'Test Write Access',
-      }
+      },
     })
     await prisma.user.delete({ where: { id: testUser.id } })
 
@@ -78,7 +78,7 @@ afterAll(async () => {
     try {
       await rm(dbFilePath)
       console.log('Test database file cleaned up')
-    } catch (unlinkError) {
+    } catch (_unlinkError) {
       // File might not exist or already be deleted, which is fine
       console.log('Database file cleanup: file may already be deleted')
     }

@@ -50,7 +50,7 @@ export const RATE_LIMIT_CONFIG = {
 } as const
 
 export const LOG_LEVELS = ['debug', 'info', 'warn', 'error'] as const
-export type LogLevel = typeof LOG_LEVELS[number]
+export type LogLevel = (typeof LOG_LEVELS)[number]
 
 export const ENVIRONMENTS = ['development', 'production', 'test'] as const
-export type Environment = typeof ENVIRONMENTS[number]
+export type Environment = (typeof ENVIRONMENTS)[number]

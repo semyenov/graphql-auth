@@ -1,14 +1,18 @@
 /**
  * Email Value Object
- * 
+ *
  * Ensures email addresses are valid and provides email-specific behavior.
  */
 
-import { VALIDATION_LIMITS, VALIDATION_MESSAGES, VALIDATION_PATTERNS } from '../../constants/validation'
+import {
+  VALIDATION_LIMITS,
+  VALIDATION_MESSAGES,
+  VALIDATION_PATTERNS,
+} from '../../constants/validation'
 import { ValidationError } from '../../core/errors/types'
 
 export class Email {
-  private constructor(private readonly _value: string) { }
+  private constructor(private readonly _value: string) {}
 
   static create(value: string): Email {
     if (!value || value.trim().length === 0) {

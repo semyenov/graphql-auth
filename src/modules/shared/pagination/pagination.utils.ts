@@ -1,18 +1,18 @@
 /**
  * Pagination Utilities
- * 
+ *
  * Helper functions for implementing pagination across modules
  */
 
 import {
-  Connection,
-  CursorPaginationArgs,
-  Edge,
-  OffsetPaginationArgs,
-  PageInfo,
-  PagePaginationArgs,
-  PaginatedResponse,
+  type Connection,
+  type CursorPaginationArgs,
+  type Edge,
+  type OffsetPaginationArgs,
   PAGINATION_DEFAULTS,
+  type PageInfo,
+  type PagePaginationArgs,
+  type PaginatedResponse,
 } from './pagination.types'
 
 /**
@@ -40,9 +40,9 @@ export function decodeCursor(cursor: string): string {
 export function createConnection<T extends { id: string | number }>(
   items: T[],
   args: CursorPaginationArgs,
-  totalCount?: number
+  totalCount?: number,
 ): Connection<T> {
-  const edges: Edge<T>[] = items.map(item => ({
+  const edges: Edge<T>[] = items.map((item) => ({
     cursor: encodeCursor(item.id),
     node: item,
   }))
@@ -72,7 +72,10 @@ export function createConnection<T extends { id: string | number }>(
 /**
  * Convert cursor pagination args to offset/limit
  */
-export function cursorToOffset(args: CursorPaginationArgs): { offset: number; limit: number } {
+export function cursorToOffset(args: CursorPaginationArgs): {
+  offset: number
+  limit: number
+} {
   let offset = 0
   let limit: number = PAGINATION_DEFAULTS.DEFAULT_LIMIT
 
@@ -95,7 +98,10 @@ export function cursorToOffset(args: CursorPaginationArgs): { offset: number; li
 /**
  * Convert page pagination to offset/limit
  */
-export function pageToOffset(args: PagePaginationArgs): { offset: number; limit: number } {
+export function pageToOffset(args: PagePaginationArgs): {
+  offset: number
+  limit: number
+} {
   const page = args.page || PAGINATION_DEFAULTS.DEFAULT_PAGE
   const perPage = args.perPage || PAGINATION_DEFAULTS.DEFAULT_LIMIT
   const limit = Math.min(perPage, PAGINATION_DEFAULTS.MAX_LIMIT)
@@ -110,7 +116,7 @@ export function pageToOffset(args: PagePaginationArgs): { offset: number; limit:
 export function createPaginatedResponse<T>(
   items: T[],
   total: number,
-  args: PagePaginationArgs
+  args: PagePaginationArgs,
 ): PaginatedResponse<T> {
   const page = args.page || PAGINATION_DEFAULTS.DEFAULT_PAGE
   const perPage = args.perPage || PAGINATION_DEFAULTS.DEFAULT_LIMIT
@@ -132,7 +138,7 @@ export function createPaginatedResponse<T>(
  */
 export function applyPagination(
   query: any,
-  args: CursorPaginationArgs | OffsetPaginationArgs | PagePaginationArgs
+  args: CursorPaginationArgs | OffsetPaginationArgs | PagePaginationArgs,
 ): any {
   let skip: number | undefined
   let take: number | undefined
@@ -151,7 +157,8 @@ export function applyPagination(
   } else if ('limit' in args || 'offset' in args) {
     // Offset pagination
     skip = (args as OffsetPaginationArgs).offset || 0
-    take = (args as OffsetPaginationArgs).limit || PAGINATION_DEFAULTS.DEFAULT_LIMIT
+    take =
+      (args as OffsetPaginationArgs).limit || PAGINATION_DEFAULTS.DEFAULT_LIMIT
   } else if ('page' in args || 'perPage' in args) {
     // Page pagination
     const { offset, limit } = pageToOffset(args as PagePaginationArgs)
@@ -173,7 +180,7 @@ export function applyPagination(
 export function calculatePaginationMeta(
   total: number,
   page: number,
-  perPage: number
+  perPage: number,
 ) {
   const totalPages = Math.ceil(total / perPage)
   const from = (page - 1) * perPage + 1
@@ -234,12 +241,12 @@ export function getDefaultPaginationArgs(): CursorPaginationArgs {
  * Merge pagination args with defaults
  */
 export function mergePaginationArgs(
-  args: Partial<CursorPaginationArgs>
+  args: Partial<CursorPaginationArgs>,
 ): CursorPaginationArgs {
   const defaults = getDefaultPaginationArgs()
 
   // If no pagination args provided, use defaults
-  if (!args.first && !args.last && !args.after && !args.before) {
+  if (!(args.first || args.last || args.after || args.before)) {
     return defaults
   }
 
@@ -254,7 +261,10 @@ export function calculateOffset(page: number, pageSize: number): number {
   return Math.max(0, (page - 1) * pageSize)
 }
 
-export function calculateTotalPages(totalItems: number, pageSize: number): number {
+export function calculateTotalPages(
+  totalItems: number,
+  pageSize: number,
+): number {
   return Math.ceil(totalItems / pageSize)
 }
 
@@ -294,21 +304,32 @@ export function offsetToCursor(offset: number): string {
 
 export function parsePageNumber(value: any): number {
   const num = parseInt(value, 10)
-  return isNaN(num) || num < 1 ? 1 : num
+  return Number.isNaN(num) || num < 1 ? 1 : num
 }
 
 export function getDefaultPageSize(size?: number | null): number {
-  if (size === null || size === undefined) return PAGINATION_DEFAULTS.DEFAULT_LIMIT
+  if (size === null || size === undefined)
+    return PAGINATION_DEFAULTS.DEFAULT_LIMIT
   if (size < 1) return PAGINATION_DEFAULTS.MIN_LIMIT
   return Math.min(size, PAGINATION_DEFAULTS.MAX_LIMIT)
 }
 
 export function validateCursorArgs(args: CursorPaginationArgs): void {
-  if (args.first !== null && args.first !== undefined && args.last !== null && args.last !== undefined) {
+  if (
+    args.first !== null &&
+    args.first !== undefined &&
+    args.last !== null &&
+    args.last !== undefined
+  ) {
     throw new Error('Cannot specify both "first" and "last"')
   }
 
-  if (args.after !== null && args.after !== undefined && args.before !== null && args.before !== undefined) {
+  if (
+    args.after !== null &&
+    args.after !== undefined &&
+    args.before !== null &&
+    args.before !== undefined
+  ) {
     throw new Error('Cannot specify both "after" and "before"')
   }
 
@@ -321,11 +342,15 @@ export function validateCursorArgs(args: CursorPaginationArgs): void {
   }
 
   if (args.first && args.first > PAGINATION_DEFAULTS.MAX_LIMIT) {
-    throw new Error(`Argument "first" must not exceed ${PAGINATION_DEFAULTS.MAX_LIMIT}`)
+    throw new Error(
+      `Argument "first" must not exceed ${PAGINATION_DEFAULTS.MAX_LIMIT}`,
+    )
   }
 
   if (args.last && args.last > PAGINATION_DEFAULTS.MAX_LIMIT) {
-    throw new Error(`Argument "last" must not exceed ${PAGINATION_DEFAULTS.MAX_LIMIT}`)
+    throw new Error(
+      `Argument "last" must not exceed ${PAGINATION_DEFAULTS.MAX_LIMIT}`,
+    )
   }
 
   if (args.after && args.last) {
@@ -354,7 +379,7 @@ export function validateOffsetArgs(args: OffsetPaginationArgs): void {
 export function validatePageArgs(args: PagePaginationArgs): void {
   const page = args.page ?? 1
   const perPage = args.perPage ?? PAGINATION_DEFAULTS.DEFAULT_LIMIT
-  
+
   if (page <= 0) {
     throw new Error('Page must be positive')
   }
@@ -364,11 +389,15 @@ export function validatePageArgs(args: PagePaginationArgs): void {
   }
 
   if (perPage > PAGINATION_DEFAULTS.MAX_LIMIT) {
-    throw new Error(`Page size must not exceed ${PAGINATION_DEFAULTS.MAX_LIMIT}`)
+    throw new Error(
+      `Page size must not exceed ${PAGINATION_DEFAULTS.MAX_LIMIT}`,
+    )
   }
 }
 
-export function transformToCursorPagination(args: OffsetPaginationArgs): CursorPaginationArgs {
+export function transformToCursorPagination(
+  args: OffsetPaginationArgs,
+): CursorPaginationArgs {
   return {
     first: args.limit || PAGINATION_DEFAULTS.DEFAULT_LIMIT,
     after: args.offset && args.offset > 0 ? offsetToCursor(args.offset) : null,
@@ -377,7 +406,9 @@ export function transformToCursorPagination(args: OffsetPaginationArgs): CursorP
   }
 }
 
-export function transformToOffsetPagination(args: CursorPaginationArgs): OffsetPaginationArgs {
+export function transformToOffsetPagination(
+  args: CursorPaginationArgs,
+): OffsetPaginationArgs {
   let offset = 0
   let limit: number = PAGINATION_DEFAULTS.DEFAULT_LIMIT
 
@@ -397,7 +428,9 @@ export function transformToOffsetPagination(args: CursorPaginationArgs): OffsetP
   return { offset, limit }
 }
 
-export function transformToPagePagination(args: OffsetPaginationArgs): PagePaginationArgs {
+export function transformToPagePagination(
+  args: OffsetPaginationArgs,
+): PagePaginationArgs {
   const offset = args.offset || 0
   const limit = args.limit || PAGINATION_DEFAULTS.DEFAULT_LIMIT
   const page = Math.floor(offset / limit) + 1

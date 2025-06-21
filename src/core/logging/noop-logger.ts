@@ -1,12 +1,15 @@
 /**
  * No-op Logger Implementation
- * 
+ *
  * A logger that does nothing - useful for testing or when logging is disabled.
  */
 
 import { injectable } from 'tsyringe'
-import type { ILogger, LogContext } from '../../core/services/logger.interface'
-import { LogLevel } from '../../core/services/logger.interface'
+import type {
+  ILogger,
+  LogContext,
+  LogLevel,
+} from '../../core/services/logger.interface'
 
 @injectable()
 export class NoopLogger implements ILogger {

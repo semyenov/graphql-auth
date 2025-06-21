@@ -1,11 +1,15 @@
 /**
  * Posts Module Permissions
- * 
+ *
  * Defines authorization rules and permission checks for post operations
  */
 
 import { allow, rule, shield } from 'graphql-shield'
-import { AuthenticationError, AuthorizationError, NotFoundError } from '../../core/errors/types'
+import {
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+} from '../../core/errors/types'
 import { parseAndValidateGlobalId } from '../../core/utils/relay'
 import type { Context } from '../../graphql/context/context.types'
 import { prisma } from '../../prisma'
@@ -16,7 +20,7 @@ import { prisma } from '../../prisma'
 export const isAuthenticated = rule({ cache: 'contextual' })(
   async (_parent, _args, context: Context) => {
     return !!context.userId
-  }
+  },
 )
 
 /**
@@ -41,7 +45,9 @@ export const isPostOwner = rule({ cache: 'strict' })(
       }
 
       if (post.authorId !== context.userId.value) {
-        return new AuthorizationError('You can only modify posts that you have created')
+        return new AuthorizationError(
+          'You can only modify posts that you have created',
+        )
       }
 
       return true
@@ -51,7 +57,7 @@ export const isPostOwner = rule({ cache: 'strict' })(
       }
       return new Error('Invalid post ID')
     }
-  }
+  },
 )
 
 /**
@@ -79,7 +85,9 @@ export const canViewPost = rule({ cache: 'strict' })(
 
       // Draft posts can only be viewed by the author
       if (!context.userId) {
-        return new AuthorizationError('You must be logged in to view draft posts')
+        return new AuthorizationError(
+          'You must be logged in to view draft posts',
+        )
       }
 
       if (post.authorId !== context.userId.value) {
@@ -93,7 +101,7 @@ export const canViewPost = rule({ cache: 'strict' })(
       }
       return new Error('Invalid post ID')
     }
-  }
+  },
 )
 
 /**
@@ -109,7 +117,7 @@ export const isModerator = rule({ cache: 'contextual' })(
     })
 
     return user?.role === 'admin' || user?.role === 'moderator'
-  }
+  },
 )
 
 /**
@@ -147,7 +155,7 @@ export const canModeratePost = rule({ cache: 'strict' })(
       if (error instanceof Error) return error
       return new Error('Failed to check post ownership')
     }
-  }
+  },
 )
 
 /**
@@ -174,9 +182,12 @@ export const isPostEditable = rule({ cache: 'strict' })(
       if (!post.published) return true
 
       // Published posts can only be edited within 24 hours
-      const hoursSinceCreation = (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60)
+      const hoursSinceCreation =
+        (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60)
       if (hoursSinceCreation > 24) {
-        return new AuthorizationError('Published posts can only be edited within 24 hours of creation')
+        return new AuthorizationError(
+          'Published posts can only be edited within 24 hours of creation',
+        )
       }
 
       return true
@@ -186,7 +197,7 @@ export const isPostEditable = rule({ cache: 'strict' })(
       }
       return new Error('Invalid post ID')
     }
-  }
+  },
 )
 
 /**
@@ -207,11 +218,13 @@ export const withinPostLimit = rule({ cache: 'contextual' })(
 
     const MAX_POSTS_PER_DAY = 10
     if (postCount >= MAX_POSTS_PER_DAY) {
-      return new AuthorizationError(`You can only create ${MAX_POSTS_PER_DAY} posts per day`)
+      return new AuthorizationError(
+        `You can only create ${MAX_POSTS_PER_DAY} posts per day`,
+      )
     }
 
     return true
-  }
+  },
 )
 
 /**
@@ -258,9 +271,12 @@ export const postsPermissions = {
 
         // Check if editable (draft posts always editable, published only within 24 hours)
         if (post.published) {
-          const hoursSinceCreation = (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60)
+          const hoursSinceCreation =
+            (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60)
           if (hoursSinceCreation > 24) {
-            return new AuthorizationError('Published posts can only be edited within 24 hours of creation')
+            return new AuthorizationError(
+              'Published posts can only be edited within 24 hours of creation',
+            )
           }
         }
 
@@ -305,7 +321,10 @@ export const postsPermissions = {
 /**
  * Create posts shield middleware
  */
-export const createPostsShield = () => shield(postsPermissions, {
-  allowExternalErrors: true,
-  fallbackError: new AuthorizationError('Not authorized to perform this action'),
-})
+export const createPostsShield = () =>
+  shield(postsPermissions, {
+    allowExternalErrors: true,
+    fallbackError: new AuthorizationError(
+      'Not authorized to perform this action',
+    ),
+  })

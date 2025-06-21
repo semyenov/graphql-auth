@@ -1,6 +1,6 @@
 /**
  * Filtering Types
- * 
+ *
  * Common types and interfaces for filtering across all modules
  */
 

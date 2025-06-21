@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client'
-import { DATABASE } from './constants'
 import { env } from './app/config/environment'
+import { DATABASE } from './constants'
 
 /**
  * Type alias for PrismaClient to improve readability
@@ -16,17 +16,17 @@ let globalPrisma: PrismaClientType | null = null
  * Factory function to create a configured Prisma client
  */
 function createPrismaClient(): PrismaClientType {
-    return new PrismaClient({
-        log: DATABASE.LOG_LEVELS as any,
-        transactionOptions: {
-            timeout: DATABASE.TRANSACTION_TIMEOUT_MS as any,
-        },
-        datasources: {
-            db: {
-                url: env.DATABASE_URL,
-            },
-        },
-    })
+  return new PrismaClient({
+    log: DATABASE.LOG_LEVELS as any,
+    transactionOptions: {
+      timeout: DATABASE.TRANSACTION_TIMEOUT_MS as any,
+    },
+    datasources: {
+      db: {
+        url: env.DATABASE_URL,
+      },
+    },
+  })
 }
 
 /**
@@ -34,12 +34,12 @@ function createPrismaClient(): PrismaClientType {
  * Implements singleton pattern for connection pooling
  */
 function getPrismaClient(): PrismaClientType {
-    if (globalPrisma) {
-        return globalPrisma
-    }
-
-    globalPrisma = createPrismaClient()
+  if (globalPrisma) {
     return globalPrisma
+  }
+
+  globalPrisma = createPrismaClient()
+  return globalPrisma
 }
 
 /**
@@ -47,7 +47,7 @@ function getPrismaClient(): PrismaClientType {
  * @param prismaInstance - The Prisma client instance to use globally
  */
 export function setTestPrismaClient(prismaInstance: PrismaClientType): void {
-    globalPrisma = prismaInstance
+  globalPrisma = prismaInstance
 }
 
 /**
@@ -57,21 +57,21 @@ export function setTestPrismaClient(prismaInstance: PrismaClientType): void {
  * access and delegates to the current Prisma instance.
  */
 export const prisma = new Proxy({} as PrismaClientType, {
-    get<K extends keyof PrismaClientType>(
-        _target: PrismaClientType,
-        prop: K,
-    ): PrismaClientType[K] {
-        const currentPrisma = getPrismaClient()
-        return currentPrisma[prop]
-    },
+  get<K extends keyof PrismaClientType>(
+    _target: PrismaClientType,
+    prop: K,
+  ): PrismaClientType[K] {
+    const currentPrisma = getPrismaClient()
+    return currentPrisma[prop]
+  },
 
-    has<K extends keyof PrismaClientType>(
-        _target: PrismaClientType,
-        prop: K,
-    ): boolean {
-        const currentPrisma = getPrismaClient()
-        return prop in currentPrisma
-    },
+  has<K extends keyof PrismaClientType>(
+    _target: PrismaClientType,
+    prop: K,
+  ): boolean {
+    const currentPrisma = getPrismaClient()
+    return prop in currentPrisma
+  },
 })
 
 /**
@@ -79,10 +79,10 @@ export const prisma = new Proxy({} as PrismaClientType, {
  * Should be called on application shutdown
  */
 export async function disconnectPrisma(): Promise<void> {
-    if (globalPrisma) {
-        await globalPrisma.$disconnect()
-        globalPrisma = null
-    }
+  if (globalPrisma) {
+    await globalPrisma.$disconnect()
+    globalPrisma = null
+  }
 }
 
 /**

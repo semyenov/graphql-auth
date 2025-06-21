@@ -7,29 +7,29 @@ import './test-env'
 // =============================================================================
 /**
  * This file provides testing utilities that follow the GraphQL Architecture Guide patterns:
- * 
+ *
  * ARCHITECTURE COMPLIANCE:
  * ✅ Imports from unified `src/gql` directory (not old `src/graphql`)
  * ✅ Uses convenience functions from `src/gql/client.ts` when appropriate
  * ✅ Provides both low-level (gqlHelpers) and high-level (convenienceHelpers) testing patterns
  * ✅ Demonstrates proper type-safe imports with `type` keyword
  * ✅ Shows single source of truth pattern for GraphQL operations
- * 
+ *
  * AVAILABLE PATTERNS:
  * 1. gqlHelpers - Apollo Server testing with GraphQL operations
  * 2. Context helpers - createMockContext, createAuthContext
- * 
- * RECOMMENDED USAGE: 
+ *
+ * RECOMMENDED USAGE:
  * - Use gqlHelpers for comprehensive server-side testing
  * - See test/auth.test.ts for proper testing patterns
  */
 
-import { ApolloServer, GraphQLResponse } from '@apollo/server'
+import { ApolloServer, type GraphQLResponse } from '@apollo/server'
 import jwt from 'jsonwebtoken'
 import { env } from '../src/app/config/environment'
+import { UserId } from '../src/core/value-objects/user-id.vo'
 import { enhanceContext } from '../src/graphql/context'
 import type { Context } from '../src/graphql/context/context.types'
-import { UserId } from '../src/core/value-objects/user-id.vo'
 import { getSchema } from '../src/graphql/schema'
 
 // Create test context
@@ -68,7 +68,8 @@ export function createMockContext(overrides?: Partial<Context>): Context {
 
 // Create authenticated context
 export function createAuthContext(userId: number | UserId): Context {
-  const userIdObject = typeof userId === 'number' ? UserId.create(userId) : userId
+  const userIdObject =
+    typeof userId === 'number' ? UserId.create(userId) : userId
   const token = generateTestToken(userIdObject)
 
   return createMockContext({
@@ -112,7 +113,10 @@ export function generateTestToken(userId: UserId): string {
 export type VariableValues = { [name: string]: unknown }
 
 // GraphQL query helper with improved error handling
-export async function executeOperation<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
+export async function executeOperation<
+  TData = unknown,
+  TVariables extends Record<string, unknown> = Record<string, unknown>,
+>(
   server: ApolloServer<Context>,
   query: string,
   variables?: TVariables,
@@ -125,7 +129,7 @@ export async function executeOperation<TData = unknown, TVariables extends Recor
     },
     {
       contextValue: context || createMockContext(),
-    }
+    },
   )
 
   return response
@@ -140,7 +144,9 @@ export function extractGraphQLData<T>(response: GraphQLResponse<T>): T {
   const { singleResult } = response.body
 
   if (singleResult.errors && singleResult.errors.length > 0) {
-    throw new Error(`GraphQL Error: ${singleResult.errors.map(e => e.message).join(', ')}`)
+    throw new Error(
+      `GraphQL Error: ${singleResult.errors.map((e) => e.message).join(', ')}`,
+    )
   }
 
   if (!singleResult.data) {
@@ -152,9 +158,11 @@ export function extractGraphQLData<T>(response: GraphQLResponse<T>): T {
 
 // Helper to check if GraphQL response has errors
 export function hasGraphQLErrors<T>(response: GraphQLResponse<T>): boolean {
-  return response.body.kind === 'single' &&
+  return (
+    response.body.kind === 'single' &&
     !!response.body.singleResult.errors &&
     response.body.singleResult.errors.length > 0
+  )
 }
 
 // Helper to get GraphQL errors from response
@@ -163,42 +171,66 @@ export function getGraphQLErrors<T>(response: GraphQLResponse<T>): string[] {
     return []
   }
 
-  return response.body.singleResult.errors?.map(e => e.message) || []
+  return response.body.singleResult.errors?.map((e) => e.message) || []
 }
 
 // Type-safe GraphQL operation helpers
 export const gqlHelpers = {
   // Execute a query and expect success
-  async expectSuccessfulQuery<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
+  async expectSuccessfulQuery<
+    TData = unknown,
+    TVariables extends Record<string, unknown> = Record<string, unknown>,
+  >(
     server: ApolloServer<Context>,
     query: string,
     variables?: TVariables,
     context?: Context,
   ): Promise<TData> {
-    const response = await executeOperation<TData, TVariables>(server, query, variables, context)
+    const response = await executeOperation<TData, TVariables>(
+      server,
+      query,
+      variables,
+      context,
+    )
     return extractGraphQLData(response)
   },
 
   // Execute a mutation and expect success
-  async expectSuccessfulMutation<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
+  async expectSuccessfulMutation<
+    TData = unknown,
+    TVariables extends Record<string, unknown> = Record<string, unknown>,
+  >(
     server: ApolloServer<Context>,
     mutation: string,
     variables?: TVariables,
     context?: Context,
   ): Promise<TData> {
-    const response = await executeOperation<TData, TVariables>(server, mutation, variables, context)
+    const response = await executeOperation<TData, TVariables>(
+      server,
+      mutation,
+      variables,
+      context,
+    )
     return extractGraphQLData(response)
   },
 
   // Execute an operation and expect it to fail with specific error
-  async expectGraphQLError<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
+  async expectGraphQLError<
+    TData = unknown,
+    TVariables extends Record<string, unknown> = Record<string, unknown>,
+  >(
     server: ApolloServer<Context>,
     operation: string,
     variables?: TVariables,
     context?: Context,
     expectedErrorSubstring?: string,
   ): Promise<string[]> {
-    const response = await executeOperation<TData, TVariables>(server, operation, variables, context)
+    const response = await executeOperation<TData, TVariables>(
+      server,
+      operation,
+      variables,
+      context,
+    )
 
     if (!hasGraphQLErrors(response)) {
       throw new Error('Expected GraphQL operation to fail, but it succeeded')
@@ -207,9 +239,13 @@ export const gqlHelpers = {
     const errors = getGraphQLErrors(response)
 
     if (expectedErrorSubstring) {
-      const hasExpectedError = errors.some(error => error.includes(expectedErrorSubstring))
+      const hasExpectedError = errors.some((error) =>
+        error.includes(expectedErrorSubstring),
+      )
       if (!hasExpectedError) {
-        throw new Error(`Expected error containing "${expectedErrorSubstring}", but got: "${errors.join(', ')}"`)
+        throw new Error(
+          `Expected error containing "${expectedErrorSubstring}", but got: "${errors.join(', ')}"`,
+        )
       }
     }
 
@@ -224,10 +260,10 @@ export const gqlHelpers = {
 /*
  * NOTE: The convenience functions from src/gql/client.ts (mutateLogin, queryMe, etc.)
  * are designed for runtime use with real HTTP requests, not for server-side testing.
- * 
+ *
  * They use fetch() internally and expect a running GraphQL server, which doesn't work
  * with Apollo Server's executeOperation test setup.
- * 
+ *
  * For testing, use the gqlHelpers patterns shown throughout this file and in the test files.
  * The convenience functions are perfect for frontend applications and integration tests
  * with a running server, but not for unit tests of the GraphQL schema itself.

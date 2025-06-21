@@ -1,10 +1,10 @@
 /**
  * Token Service Interface
- * 
+ *
  * Defines the contract for JWT token generation and verification.
  */
 
-import { UserId } from '../value-objects/user-id.vo'
+import type { UserId } from '../value-objects/user-id.vo'
 
 export interface TokenPayload {
   userId: number
@@ -27,7 +27,7 @@ export interface TokenConfig {
 export interface ITokenService {
   /**
    * Generate both access and refresh tokens for a user.
-   * 
+   *
    * @param payload - The token payload containing user information
    * @returns The generated access and refresh tokens
    */
@@ -35,7 +35,7 @@ export interface ITokenService {
 
   /**
    * Verify an access token and extract the user ID.
-   * 
+   *
    * @param token - The access token to verify
    * @returns The user ID if the token is valid, null otherwise
    */
@@ -43,7 +43,7 @@ export interface ITokenService {
 
   /**
    * Refresh an access token using a refresh token.
-   * 
+   *
    * @param refreshToken - The refresh token to use for refresh
    * @returns The new access token
    */
@@ -51,8 +51,8 @@ export interface ITokenService {
 
   /**
    * Revoke all tokens for a user.
-   * 
+   *
    * @param userId - The user ID to revoke tokens for
    */
   revokeAllTokens(userId: number): Promise<void>
-} 
+}

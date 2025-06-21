@@ -1,6 +1,6 @@
 /**
  * Posts Module Tests
- * 
+ *
  * Consolidated test file for all posts functionality following the
  * IMPROVED-FILE-STRUCTURE.md specification.
  */

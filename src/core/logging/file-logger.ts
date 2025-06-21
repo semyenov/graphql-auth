@@ -1,13 +1,13 @@
 /**
  * File Logger Implementation (Example)
- * 
+ *
  * Example of an alternative logger implementation that writes to files.
  * This demonstrates how easy it is to swap logger implementations.
  */
 
-import { injectable } from 'tsyringe'
 import { appendFileSync } from 'fs'
 import { join } from 'path'
+import { injectable } from 'tsyringe'
 import type { ILogger, LogContext } from '../../core/services/logger.interface'
 import { LogLevel } from '../../core/services/logger.interface'
 
@@ -42,14 +42,16 @@ export class FileLogger implements ILogger {
 
   error(message: string, error?: Error, context?: LogContext): void {
     if (this.shouldLog(LogLevel.ERROR)) {
-      const errorContext = error ? { 
-        error: {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        }
-      } : {}
-      
+      const errorContext = error
+        ? {
+            error: {
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+            },
+          }
+        : {}
+
       this.writeLog(LogLevel.ERROR, message, { ...errorContext, ...context })
     }
   }
@@ -63,25 +65,36 @@ export class FileLogger implements ILogger {
   }
 
   private shouldLog(level: LogLevel): boolean {
-    const levels = [LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR]
+    const levels = [
+      LogLevel.DEBUG,
+      LogLevel.INFO,
+      LogLevel.WARN,
+      LogLevel.ERROR,
+    ]
     const currentLevelIndex = levels.indexOf(this.minLevel)
     const messageLevelIndex = levels.indexOf(level)
     return messageLevelIndex >= currentLevelIndex
   }
 
-  private writeLog(level: LogLevel, message: string, context?: LogContext): void {
+  private writeLog(
+    level: LogLevel,
+    message: string,
+    context?: LogContext,
+  ): void {
     const timestamp = new Date().toISOString()
     const mergedContext = { ...this.context, ...context }
-    
+
     const logEntry = {
       timestamp,
       level: level.toUpperCase(),
       message,
-      ...(Object.keys(mergedContext).length > 0 ? { context: mergedContext } : {})
+      ...(Object.keys(mergedContext).length > 0
+        ? { context: mergedContext }
+        : {}),
     }
 
     try {
-      appendFileSync(this.logFilePath, JSON.stringify(logEntry) + '\n')
+      appendFileSync(this.logFilePath, `${JSON.stringify(logEntry)}\n`)
     } catch (error) {
       // Fallback to console if file writing fails
       console.error('Failed to write to log file:', error)

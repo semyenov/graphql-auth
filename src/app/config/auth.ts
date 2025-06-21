@@ -10,8 +10,20 @@ import { z } from 'zod'
  */
 const AuthConfigSchema = z.object({
   jwtSecret: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
-  jwtExpiresIn: z.string().regex(/^\d+[hdwmy]$/, 'JWT_EXPIRES_IN must be a valid time string (e.g., 7d, 24h)').default('7d'),
-  refreshTokenExpiresIn: z.string().regex(/^\d+[hdwmy]$/, 'REFRESH_TOKEN_EXPIRES_IN must be a valid time string').default('30d'),
+  jwtExpiresIn: z
+    .string()
+    .regex(
+      /^\d+[hdwmy]$/,
+      'JWT_EXPIRES_IN must be a valid time string (e.g., 7d, 24h)',
+    )
+    .default('7d'),
+  refreshTokenExpiresIn: z
+    .string()
+    .regex(
+      /^\d+[hdwmy]$/,
+      'REFRESH_TOKEN_EXPIRES_IN must be a valid time string',
+    )
+    .default('30d'),
   bcryptRounds: z.number().int().min(8).max(15).default(10),
   passwordMinLength: z.number().int().positive().default(8),
   passwordMaxLength: z.number().int().positive().default(100),
@@ -35,7 +47,7 @@ function parseAuthConfig() {
     maxLoginAttempts: parseInt(process.env.MAX_LOGIN_ATTEMPTS || '5', 10),
     lockoutDuration: parseInt(process.env.LOCKOUT_DURATION || '900', 10),
   }
-  
+
   return AuthConfigSchema.parse(config)
 }
 
@@ -60,7 +72,8 @@ export const AUTH_DEFAULTS = {
  */
 export const AUTH_ERRORS = {
   INVALID_CREDENTIALS: 'Invalid email or password',
-  ACCOUNT_LOCKED: 'Account temporarily locked due to too many failed login attempts',
+  ACCOUNT_LOCKED:
+    'Account temporarily locked due to too many failed login attempts',
   SESSION_EXPIRED: 'Your session has expired. Please log in again',
   INVALID_TOKEN: 'Invalid or expired token',
   UNAUTHORIZED: 'You must be logged in to perform this action',

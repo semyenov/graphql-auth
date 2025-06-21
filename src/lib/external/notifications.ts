@@ -1,6 +1,6 @@
 /**
  * Notification Service Adapter
- * 
+ *
  * Interface and implementations for push notifications
  */
 
@@ -46,8 +46,14 @@ export interface NotificationRecipient {
  * Notification service interface
  */
 export interface INotificationService {
-  send(recipient: NotificationRecipient, notification: Notification): Promise<void>
-  sendBatch(recipients: NotificationRecipient[], notification: Notification): Promise<void>
+  send(
+    recipient: NotificationRecipient,
+    notification: Notification,
+  ): Promise<void>
+  sendBatch(
+    recipients: NotificationRecipient[],
+    notification: Notification,
+  ): Promise<void>
   subscribe(userId: string, token: string): Promise<void>
   unsubscribe(userId: string, token: string): Promise<void>
 }
@@ -58,7 +64,10 @@ export interface INotificationService {
 export class ConsoleNotificationService implements INotificationService {
   private subscriptions = new Map<string, Set<string>>()
 
-  async send(recipient: NotificationRecipient, notification: Notification): Promise<void> {
+  async send(
+    recipient: NotificationRecipient,
+    notification: Notification,
+  ): Promise<void> {
     console.log('🔔 Notification sent:')
     console.log('To:', recipient.userId)
     console.log('Title:', notification.title)
@@ -67,7 +76,10 @@ export class ConsoleNotificationService implements INotificationService {
     console.log('---')
   }
 
-  async sendBatch(recipients: NotificationRecipient[], notification: Notification): Promise<void> {
+  async sendBatch(
+    recipients: NotificationRecipient[],
+    notification: Notification,
+  ): Promise<void> {
     for (const recipient of recipients) {
       await this.send(recipient, notification)
     }
@@ -77,7 +89,7 @@ export class ConsoleNotificationService implements INotificationService {
     if (!this.subscriptions.has(userId)) {
       this.subscriptions.set(userId, new Set())
     }
-    this.subscriptions.get(userId)!.add(token)
+    this.subscriptions.get(userId)?.add(token)
     console.log(`User ${userId} subscribed with token ${token}`)
   }
 
@@ -91,18 +103,10 @@ export class ConsoleNotificationService implements INotificationService {
  * Firebase Cloud Messaging service
  */
 export class FCMNotificationService implements INotificationService {
-  // private _admin: any
-
-  constructor(_config: {
-    projectId: string
-    privateKey: string
-    clientEmail: string
-  }) {
-    // In real implementation, initialize Firebase Admin SDK
-    // this._admin = config
-  }
-
-  async send(recipient: NotificationRecipient, notification: Notification): Promise<void> {
+  async send(
+    recipient: NotificationRecipient,
+    notification: Notification,
+  ): Promise<void> {
     if (!recipient.tokens || recipient.tokens.length === 0) {
       return
     }
@@ -120,8 +124,11 @@ export class FCMNotificationService implements INotificationService {
     console.log('FCM: Sending notification', message)
   }
 
-  async sendBatch(recipients: NotificationRecipient[], notification: Notification): Promise<void> {
-    const tokens = recipients.flatMap(r => r.tokens || [])
+  async sendBatch(
+    recipients: NotificationRecipient[],
+    notification: Notification,
+  ): Promise<void> {
+    const tokens = recipients.flatMap((r) => r.tokens || [])
     if (tokens.length === 0) return
 
     // FCM supports multicast
@@ -180,7 +187,7 @@ export class NotificationBuilder {
   }
 
   build(): Notification {
-    if (!this.notification.title || !this.notification.body) {
+    if (!(this.notification.title && this.notification.body)) {
       throw new Error('Title and body are required')
     }
     return this.notification as Notification
@@ -198,7 +205,10 @@ export const notificationTemplates = {
     data: { action: 'view_post' },
   }),
 
-  newComment: (data: { commenterName: string; postTitle: string }): Notification => ({
+  newComment: (data: {
+    commenterName: string
+    postTitle: string
+  }): Notification => ({
     title: 'New Comment',
     body: `${data.commenterName} commented on "${data.postTitle}"`,
     type: NotificationType.INFO,
@@ -235,7 +245,7 @@ export class NotificationQueue {
 
   constructor(
     service: INotificationService,
-    options: { batchSize?: number; flushInterval?: number } = {}
+    options: { batchSize?: number; flushInterval?: number } = {},
   ) {
     this.service = service
     this.batchSize = options.batchSize || 100
@@ -244,7 +254,10 @@ export class NotificationQueue {
     this.startAutoFlush()
   }
 
-  async add(recipient: NotificationRecipient, notification: Notification): Promise<void> {
+  async add(
+    recipient: NotificationRecipient,
+    notification: Notification,
+  ): Promise<void> {
     this.queue.push({ recipient, notification })
 
     if (this.queue.length >= this.batchSize) {
@@ -256,16 +269,16 @@ export class NotificationQueue {
     if (this.queue.length === 0) return
 
     const batch = this.queue.splice(0, this.batchSize)
-    
+
     // Group by notification for efficiency
     const groups = new Map<string, NotificationRecipient[]>()
-    
+
     for (const item of batch) {
       const key = JSON.stringify(item.notification)
       if (!groups.has(key)) {
         groups.set(key, [])
       }
-      groups.get(key)!.push(item.recipient)
+      groups.get(key)?.push(item.recipient)
     }
 
     // Send batches

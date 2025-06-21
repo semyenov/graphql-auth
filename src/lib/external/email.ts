@@ -1,6 +1,6 @@
 /**
  * Email Service Adapter
- * 
+ *
  * Interface and implementations for email sending
  */
 
@@ -36,7 +36,10 @@ export interface IEmailService {
 export class ConsoleEmailService implements IEmailService {
   async send(message: EmailMessage): Promise<void> {
     console.log('📧 Email sent:')
-    console.log('To:', Array.isArray(message.to) ? message.to.join(', ') : message.to)
+    console.log(
+      'To:',
+      Array.isArray(message.to) ? message.to.join(', ') : message.to,
+    )
     console.log('Subject:', message.subject)
     console.log('Content:', message.text || message.html)
     console.log('---')
@@ -58,21 +61,6 @@ export class ConsoleEmailService implements IEmailService {
  * SMTP email service (using nodemailer)
  */
 export class SmtpEmailService implements IEmailService {
-  // private _transporter: any
-
-  constructor(_config: {
-    host: string
-    port: number
-    secure: boolean
-    auth: {
-      user: string
-      pass: string
-    }
-  }) {
-    // In real implementation, initialize nodemailer transporter
-    // this._transporter = config
-  }
-
   async send(message: EmailMessage): Promise<void> {
     // In real implementation, use nodemailer to send
     console.log('SMTP: Sending email to', message.to)
@@ -80,7 +68,7 @@ export class SmtpEmailService implements IEmailService {
 
   async sendBatch(messages: EmailMessage[]): Promise<void> {
     // Could optimize with connection pooling
-    await Promise.all(messages.map(msg => this.send(msg)))
+    await Promise.all(messages.map((msg) => this.send(msg)))
   }
 
   validateEmail(email: string): boolean {
@@ -123,7 +111,11 @@ export const emailTemplates = {
     text: `Welcome, ${data.name}! Thank you for joining our platform.`,
   }),
 
-  passwordReset: (data: { name: string; email: string; resetUrl: string }): EmailMessage => ({
+  passwordReset: (data: {
+    name: string
+    email: string
+    resetUrl: string
+  }): EmailMessage => ({
     to: data.email,
     subject: 'Reset Your Password',
     html: `
@@ -136,7 +128,11 @@ export const emailTemplates = {
     text: `Hi ${data.name}, Reset your password: ${data.resetUrl}`,
   }),
 
-  emailVerification: (data: { name: string; email: string; verifyUrl: string }): EmailMessage => ({
+  emailVerification: (data: {
+    name: string
+    email: string
+    verifyUrl: string
+  }): EmailMessage => ({
     to: data.email,
     subject: 'Verify Your Email Address',
     html: `

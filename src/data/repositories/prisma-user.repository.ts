@@ -1,22 +1,27 @@
 /**
  * Prisma User Repository
- * 
+ *
  * Implements the user repository interface using Prisma.
  */
 
-import { Prisma, PrismaClient } from '@prisma/client'
+import type { Prisma, PrismaClient } from '@prisma/client'
 import { inject, injectable } from 'tsyringe'
 import { User } from '../../core/entities/user.entity'
-import { IUserRepository, UserFilter, UserOrderBy } from '../../core/repositories/user.repository.interface'
+import type {
+  IUserRepository,
+  UserFilter,
+  UserOrderBy,
+} from '../../core/repositories/user.repository.interface'
 import { Email } from '../../core/value-objects/email.vo'
 import { UserId } from '../../core/value-objects/user-id.vo'
 import { BaseRepository } from './base'
 
 @injectable()
-export class PrismaUserRepository extends BaseRepository implements IUserRepository {
-  constructor(
-    @inject('PrismaClient') db: PrismaClient,
-  ) {
+export class PrismaUserRepository
+  extends BaseRepository
+  implements IUserRepository
+{
+  constructor(@inject('PrismaClient') db: PrismaClient) {
     super(db)
   }
 
@@ -59,18 +64,20 @@ export class PrismaUserRepository extends BaseRepository implements IUserReposit
   async findByIds(ids: UserId[]): Promise<User[]> {
     const data = await this.db.user.findMany({
       where: {
-        id: { in: ids.map(id => id.value) },
+        id: { in: ids.map((id) => id.value) },
       },
     })
 
-    return data.map(user => User.fromPersistence({
-      id: UserId.from(user.id),
-      email: Email.create(user.email),
-      name: user.name,
-      passwordHash: user.password, // Map 'password' field to 'passwordHash'
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    }))
+    return data.map((user) =>
+      User.fromPersistence({
+        id: UserId.from(user.id),
+        email: Email.create(user.email),
+        name: user.name,
+        passwordHash: user.password, // Map 'password' field to 'passwordHash'
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      }),
+    )
   }
 
   async save(user: User): Promise<User> {
@@ -157,14 +164,16 @@ export class PrismaUserRepository extends BaseRepository implements IUserReposit
       },
     })
 
-    return data.map(user => User.fromPersistence({
-      id: UserId.from(user.id),
-      email: Email.create(user.email),
-      name: user.name,
-      passwordHash: user.password,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    }))
+    return data.map((user) =>
+      User.fromPersistence({
+        id: UserId.from(user.id),
+        email: Email.create(user.email),
+        name: user.name,
+        passwordHash: user.password,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      }),
+    )
   }
 
   async count(criteria?: {
@@ -191,11 +200,14 @@ export class PrismaUserRepository extends BaseRepository implements IUserReposit
     return count > 0
   }
 
-  async search(filter?: UserFilter, options?: {
-    skip?: number
-    take?: number
-    orderBy?: UserOrderBy
-  }): Promise<User[]> {
+  async search(
+    filter?: UserFilter,
+    options?: {
+      skip?: number
+      take?: number
+      orderBy?: UserOrderBy
+    },
+  ): Promise<User[]> {
     const { skip = 0, take = 10, orderBy } = options || {}
     const where: UserFilter = {
       ...filter,
@@ -218,13 +230,15 @@ export class PrismaUserRepository extends BaseRepository implements IUserReposit
       orderBy,
     })
 
-    return data.map(user => User.fromPersistence({
-      id: UserId.from(user.id),
-      email: Email.create(user.email),
-      name: user.name,
-      passwordHash: user.password,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    }))
+    return data.map((user) =>
+      User.fromPersistence({
+        id: UserId.from(user.id),
+        email: Email.create(user.email),
+        name: user.name,
+        passwordHash: user.password,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      }),
+    )
   }
 }

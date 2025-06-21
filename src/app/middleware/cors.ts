@@ -9,7 +9,14 @@ import { serverConfig } from '../config'
  * CORS options type
  */
 export interface CorsOptions {
-  origin?: string | boolean | string[] | ((origin: string, callback: (err: Error | null, allow?: boolean) => void) => void)
+  origin?:
+    | string
+    | boolean
+    | string[]
+    | ((
+        origin: string,
+        callback: (err: Error | null, allow?: boolean) => void,
+      ) => void)
   credentials?: boolean
   maxAge?: number
   methods?: string[]
@@ -22,12 +29,12 @@ export interface CorsOptions {
  */
 export function getCorsOptions(): CorsOptions | boolean {
   const { cors } = serverConfig
-  
+
   // If origin is a boolean, return it directly
   if (typeof cors.origin === 'boolean') {
     return cors.origin
   }
-  
+
   // Return full CORS configuration
   return {
     origin: cors.origin as CorsOptions['origin'],

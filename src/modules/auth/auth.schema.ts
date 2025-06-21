@@ -1,13 +1,13 @@
 /**
  * Authentication Module GraphQL Schema
- * 
+ *
  * Defines GraphQL types, inputs, and schema elements specific to authentication.
  * Follows the IMPROVED-FILE-STRUCTURE.md specification for module organization.
  */
 
+import { z } from 'zod'
 import { builder } from '../../graphql/schema/builder'
 import { commonValidations } from '../../graphql/schema/helpers'
-import { z } from 'zod'
 
 // Input types for authentication operations
 export const LoginInput = builder.inputType('LoginInput', {

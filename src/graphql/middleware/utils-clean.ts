@@ -1,6 +1,11 @@
 import { ROLE_HIERARCHY } from '../../constants'
-import { hasPermission, hasRole, isAuthenticated, requireAuthentication } from '../../modules/auth/guards/auth.guards'
 import type { Context } from '../../graphql/context/context.types'
+import {
+  hasPermission,
+  hasRole,
+  isAuthenticated,
+  requireAuthentication,
+} from '../../modules/auth/guards/auth.guards'
 import { prisma } from '../../prisma'
 
 /**
@@ -10,7 +15,10 @@ export type PermissionUtilsType = {
   canAccessUserData: (context: Context, targetUserId: number) => boolean
   canModifyPost: (context: Context, postId: number) => Promise<boolean>
   canPublishPost: (context: Context) => boolean
-  hasRoleOrHigher: (context: Context, role: keyof typeof ROLE_HIERARCHY | string) => boolean
+  hasRoleOrHigher: (
+    context: Context,
+    role: keyof typeof ROLE_HIERARCHY | string,
+  ) => boolean
   validateOperation: (context: Context, operation: string) => boolean
 }
 
@@ -25,14 +33,17 @@ function canAccessUserData(context: Context, targetUserId: number): boolean {
 /**
  * Check if user can modify specific post
  */
-async function canModifyPost(context: Context, postId: number): Promise<boolean> {
+async function canModifyPost(
+  context: Context,
+  postId: number,
+): Promise<boolean> {
   try {
     const userId = requireAuthentication(context)
 
     // Check post ownership directly through Prisma
     // We can't use the GetPostUseCase here because it enforces viewing permissions
     const post = await prisma.post.findUnique({
-      where: { id: postId }
+      where: { id: postId },
     })
 
     if (!post) return false
@@ -47,14 +58,19 @@ async function canModifyPost(context: Context, postId: number): Promise<boolean>
  * Check if user can publish posts
  */
 function canPublishPost(context: Context): boolean {
-  return isAuthenticated(context) &&
+  return (
+    isAuthenticated(context) &&
     (hasPermission(context, 'write:posts') || hasRole(context, 'admin'))
+  )
 }
 
 /**
  * Enhanced role checking with hierarchy
  */
-function hasRoleOrHigher(context: Context, role: keyof typeof ROLE_HIERARCHY | string): boolean {
+function hasRoleOrHigher(
+  context: Context,
+  role: keyof typeof ROLE_HIERARCHY | string,
+): boolean {
   const normalizedRole = role.toUpperCase() as keyof typeof ROLE_HIERARCHY
   const requiredLevel = ROLE_HIERARCHY[normalizedRole]
 

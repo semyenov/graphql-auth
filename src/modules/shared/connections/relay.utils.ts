@@ -1,21 +1,21 @@
 /**
  * Relay Connection Utilities
- * 
+ *
  * Helper functions for implementing Relay-style connections
  */
 
 import {
-  Connection,
   CONNECTION_DEFAULTS,
-  ConnectionArgs,
-  ConnectionMetadata,
-  ConnectionSlice,
-  CursorData,
-  Edge,
-  EnhancedConnection,
-  GlobalIdComponents,
-  Node,
-  PageInfo
+  type Connection,
+  type ConnectionArgs,
+  type ConnectionMetadata,
+  type ConnectionSlice,
+  type CursorData,
+  type Edge,
+  type EnhancedConnection,
+  type GlobalIdComponents,
+  type Node,
+  type PageInfo,
 } from './relay.types'
 
 /**
@@ -33,13 +33,16 @@ export function decodeGlobalId(globalId: string): GlobalIdComponents {
     const decoded = Buffer.from(globalId, 'base64').toString('utf-8')
     const [type, id] = decoded.split(':')
 
-    if (!type || !id) {
+    if (!(type && id)) {
       throw new Error('Invalid global ID format')
     }
 
     return { type, id }
   } catch (error) {
-    if (error instanceof Error && error.message === 'Invalid global ID format') {
+    if (
+      error instanceof Error &&
+      error.message === 'Invalid global ID format'
+    ) {
       throw error
     }
     throw new Error('Invalid global ID')
@@ -49,7 +52,10 @@ export function decodeGlobalId(globalId: string): GlobalIdComponents {
 /**
  * Parse and validate a global ID
  */
-export function parseAndValidateGlobalId(globalId: string, expectedType: string): number {
+export function parseAndValidateGlobalId(
+  globalId: string,
+  expectedType: string,
+): number {
   const { type, id } = decodeGlobalId(globalId)
 
   if (type !== expectedType) {
@@ -57,7 +63,7 @@ export function parseAndValidateGlobalId(globalId: string, expectedType: string)
   }
 
   const numericId = parseInt(id.toString(), 10)
-  if (isNaN(numericId)) {
+  if (Number.isNaN(numericId)) {
     throw new Error('Invalid numeric ID')
   }
 
@@ -78,7 +84,7 @@ export function decodeCursor(cursor: string): CursorData {
   try {
     const decoded = Buffer.from(cursor, 'base64').toString('utf-8')
     return JSON.parse(decoded)
-  } catch (error) {
+  } catch (_error) {
     throw new Error('Invalid cursor')
   }
 }
@@ -89,9 +95,9 @@ export function decodeCursor(cursor: string): CursorData {
 export function createConnection<T extends Node>(
   items: T[],
   args: ConnectionArgs,
-  totalCount?: number
+  totalCount?: number,
 ): Connection<T> {
-  const edges = items.map(item => createEdge(item))
+  const edges = items.map((item) => createEdge(item))
   const pageInfo = createPageInfo(edges, args, items.length)
 
   return {
@@ -107,7 +113,7 @@ export function createConnection<T extends Node>(
 export function createEnhancedConnection<T extends Node>(
   items: T[],
   args: ConnectionArgs,
-  metadata?: ConnectionMetadata
+  metadata?: ConnectionMetadata,
 ): EnhancedConnection<T> {
   const connection = createConnection(items, args, metadata?.totalCount)
 
@@ -133,7 +139,7 @@ export function createEdge<T extends Node>(node: T): Edge<T> {
 export function createPageInfo<T extends Node>(
   edges: Edge<T>[],
   args: ConnectionArgs,
-  itemCount: number
+  itemCount: number,
 ): PageInfo {
   const hasRequestedMoreThanExists =
     (args.first && itemCount < args.first) ||
@@ -142,18 +148,15 @@ export function createPageInfo<T extends Node>(
   return {
     startCursor: edges[0]?.cursor || null,
     endCursor: edges[edges.length - 1]?.cursor || null,
-    hasPreviousPage: args.after ? true : false,
-    hasNextPage: args.first && !hasRequestedMoreThanExists ? true : false,
+    hasPreviousPage: !!args.after,
+    hasNextPage: !!(args.first && !hasRequestedMoreThanExists),
   }
 }
 
 /**
  * Apply connection arguments to a query
  */
-export function applyConnectionArgs(
-  query: any,
-  args: ConnectionArgs
-): any {
+export function applyConnectionArgs(query: any, args: ConnectionArgs): any {
   let take: number | undefined
   let skip: number | undefined
   let cursor: { id: number } | undefined
@@ -203,15 +206,13 @@ export async function getConnectionSlice<T extends { id: number }>(
   fetchFn: (options: any) => Promise<T[]>,
   countFn: () => Promise<number>,
   args: ConnectionArgs,
-  queryOptions: any = {}
+  queryOptions: any = {},
 ): Promise<ConnectionSlice<T>> {
   const connectionQuery = applyConnectionArgs(queryOptions, args)
 
   // Fetch one extra item to determine hasNextPage
   const originalTake = connectionQuery.take
-  connectionQuery.take = originalTake > 0
-    ? originalTake + 1
-    : originalTake - 1
+  connectionQuery.take = originalTake > 0 ? originalTake + 1 : originalTake - 1
 
   const items = await fetchFn(connectionQuery)
   const totalCount = await countFn()
@@ -250,7 +251,9 @@ export function validateConnectionArgs(args: ConnectionArgs): void {
       throw new Error('Argument "first" must be a non-negative integer')
     }
     if (args.first > CONNECTION_DEFAULTS.MAX_FIRST) {
-      throw new Error(`Argument "first" must not exceed ${CONNECTION_DEFAULTS.MAX_FIRST}`)
+      throw new Error(
+        `Argument "first" must not exceed ${CONNECTION_DEFAULTS.MAX_FIRST}`,
+      )
     }
   }
 
@@ -259,7 +262,9 @@ export function validateConnectionArgs(args: ConnectionArgs): void {
       throw new Error('Argument "last" must be a non-negative integer')
     }
     if (args.last > CONNECTION_DEFAULTS.MAX_FIRST) {
-      throw new Error(`Argument "last" must not exceed ${CONNECTION_DEFAULTS.MAX_FIRST}`)
+      throw new Error(
+        `Argument "last" must not exceed ${CONNECTION_DEFAULTS.MAX_FIRST}`,
+      )
     }
   }
 
@@ -295,11 +300,12 @@ export function getDefaultConnectionArgs(): ConnectionArgs {
 /**
  * Convert offset pagination to connection args
  */
-export function offsetToConnectionArgs(offset: number, limit: number): ConnectionArgs {
+export function offsetToConnectionArgs(
+  offset: number,
+  limit: number,
+): ConnectionArgs {
   // Create a cursor for the offset
-  const cursor = offset > 0
-    ? encodeCursor({ id: offset })
-    : null
+  const cursor = offset > 0 ? encodeCursor({ id: offset }) : null
 
   return {
     first: limit,

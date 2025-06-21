@@ -1,6 +1,6 @@
 /**
  * Relay Connection Types
- * 
+ *
  * Types and interfaces for Relay-style connections and global IDs
  */
 
@@ -133,11 +133,15 @@ export function isConnection<T extends Node>(obj: any): obj is Connection<T> {
   )
 }
 
-export function isForwardPagination(args: ConnectionArgs): args is ForwardPaginationArgs {
+export function isForwardPagination(
+  args: ConnectionArgs,
+): args is ForwardPaginationArgs {
   return args.first !== null && args.first !== undefined && args.first > 0
 }
 
-export function isBackwardPagination(args: ConnectionArgs): args is BackwardPaginationArgs {
+export function isBackwardPagination(
+  args: ConnectionArgs,
+): args is BackwardPaginationArgs {
   return args.last !== null && args.last !== undefined && args.last > 0
 }
 
@@ -161,4 +165,5 @@ export const GLOBAL_ID_TYPES = {
   CATEGORY: 'Category',
 } as const
 
-export type GlobalIdType = typeof GLOBAL_ID_TYPES[keyof typeof GLOBAL_ID_TYPES]
+export type GlobalIdType =
+  (typeof GLOBAL_ID_TYPES)[keyof typeof GLOBAL_ID_TYPES]

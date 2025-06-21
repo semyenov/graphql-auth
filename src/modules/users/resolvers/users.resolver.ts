@@ -1,17 +1,23 @@
 /**
  * Users GraphQL Resolvers (Direct Implementation)
- * 
+ *
  * Implements user operations directly in Pothos resolvers without use cases.
  */
 
 import { container } from 'tsyringe'
 import { z } from 'zod'
+import { ConflictError } from '../../../core/errors/types'
 import type { ILogger } from '../../../core/services/logger.interface'
 import { parseGlobalId } from '../../../core/utils/relay'
-import { ConflictError } from '../../../core/errors/types'
 import { builder } from '../../../graphql/schema/builder'
-import { UserOrderByInput, UserWhereInput } from '../../../graphql/schema/inputs'
-import { transformOrderBy, transformUserWhereInput } from '../../../graphql/schema/utils/filter-transform'
+import {
+  UserOrderByInput,
+  UserWhereInput,
+} from '../../../graphql/schema/inputs'
+import {
+  transformOrderBy,
+  transformUserWhereInput,
+} from '../../../graphql/schema/utils/filter-transform'
 import { prisma } from '../../../prisma'
 import { requireAuthentication } from '../../auth/guards/auth.guards'
 
@@ -46,7 +52,7 @@ builder.queryField('user', (t) =>
 
       return user
     },
-  })
+  }),
 )
 
 // Get all users query with filtering and pagination
@@ -68,10 +74,12 @@ builder.queryField('users', (t) =>
       })
     },
     totalCount: (_parent, args, _context) => {
-      const whereClause = args.where ? transformUserWhereInput(args.where) : undefined
+      const whereClause = args.where
+        ? transformUserWhereInput(args.where)
+        : undefined
       return prisma.user.count({ where: whereClause })
     },
-  })
+  }),
 )
 
 // Search users query
@@ -114,7 +122,7 @@ builder.queryField('searchUsers', (t) =>
         },
       })
     },
-  })
+  }),
 )
 
 // User type field resolvers
@@ -127,7 +135,7 @@ builder.prismaObjectField('User', 'postCount', (t) =>
         where: { authorId: user.id },
       })
     },
-  })
+  }),
 )
 
 builder.prismaObjectField('User', 'publishedPostCount', (t) =>
@@ -141,7 +149,7 @@ builder.prismaObjectField('User', 'publishedPostCount', (t) =>
         },
       })
     },
-  })
+  }),
 )
 
 // Update user profile mutation
@@ -206,5 +214,5 @@ builder.mutationField('updateUserProfile', (t) =>
 
       return user
     },
-  })
+  }),
 )

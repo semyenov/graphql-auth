@@ -1,9 +1,9 @@
 import { rule } from 'graphql-shield'
 import { ERROR_MESSAGES } from '../../constants'
-import { requireAuthentication } from '../context/context.auth'
-import type { Context } from '../context/context.types'
 import { AuthorizationError, NotFoundError } from '../../core/errors/types'
 import { prisma } from '../../prisma'
+import { requireAuthentication } from '../context/context.auth'
+import type { Context } from '../context/context.types'
 import {
   createAuthenticationCheck,
   createPermissionCheck,
@@ -18,7 +18,7 @@ import {
  * Ensures the user is authenticated
  */
 export const isAuthenticatedUser = rule({ cache: 'contextual' })(
-  (_parent, _args, context) => createAuthenticationCheck(context)
+  (_parent, _args, context) => createAuthenticationCheck(context),
 )
 
 /**
@@ -41,7 +41,7 @@ export const isPostOwner = rule({ cache: 'strict' })(
       // We can't use the GetPostUseCase here because it enforces viewing permissions
       // which would prevent checking ownership of unpublished posts
       const post = await prisma.post.findUnique({
-        where: { id: postId }
+        where: { id: postId },
       })
 
       if (!post) {
@@ -56,7 +56,7 @@ export const isPostOwner = rule({ cache: 'strict' })(
     } catch (error) {
       return handleRuleError(error)
     }
-  }
+  },
 )
 
 /**
@@ -64,13 +64,23 @@ export const isPostOwner = rule({ cache: 'strict' })(
  * Ensures users can only access their own data
  */
 export const isUserOwner = rule({ cache: 'strict' })(
-  async (_parent, args: { userUniqueInput?: { id?: number; email?: string }; userId?: string }, context: Context) => {
+  async (
+    _parent,
+    args: {
+      userUniqueInput?: { id?: number; email?: string }
+      userId?: string
+    },
+    context: Context,
+  ) => {
     try {
       const currentUserId = requireAuthentication(context.userId)
 
       // Handle drafts query with userId parameter
       if (args.userId) {
-        const requestedUserId = await parseAndValidateGlobalId(args.userId, 'User')
+        const requestedUserId = await parseAndValidateGlobalId(
+          args.userId,
+          'User',
+        )
         if (requestedUserId !== currentUserId.value) {
           throw new AuthorizationError('You can only access your own drafts')
         }
@@ -78,15 +88,20 @@ export const isUserOwner = rule({ cache: 'strict' })(
       }
 
       // Handle other queries with userUniqueInput
-      if (args.userUniqueInput?.id && args.userUniqueInput.id !== parseInt(currentUserId.toString())) {
-        throw new AuthorizationError('Access denied: cannot access other user\'s data')
+      if (
+        args.userUniqueInput?.id &&
+        args.userUniqueInput.id !== parseInt(currentUserId.toString())
+      ) {
+        throw new AuthorizationError(
+          "Access denied: cannot access other user's data",
+        )
       }
 
       return true
     } catch (error) {
       return handleRuleError(error)
     }
-  }
+  },
 )
 
 /**
@@ -94,7 +109,7 @@ export const isUserOwner = rule({ cache: 'strict' })(
  * Ensures the user has admin privileges
  */
 export const isAdmin = rule({ cache: 'contextual' })(
-  (_parent, _args, context) => createRoleCheck(context, 'admin')
+  (_parent, _args, context) => createRoleCheck(context, 'admin'),
 )
 
 /**
@@ -104,14 +119,22 @@ export const isAdmin = rule({ cache: 'contextual' })(
 export const isModerator = rule({ cache: 'contextual' })(
   (_parent, _args, context) => {
     // Check for either moderator or admin role
-    const moderatorCheck = createRoleCheck(context, 'moderator', 'Moderator privileges required')
+    const moderatorCheck = createRoleCheck(
+      context,
+      'moderator',
+      'Moderator privileges required',
+    )
     if (moderatorCheck === true) return true
 
-    const adminCheck = createRoleCheck(context, 'admin', 'Moderator privileges required')
+    const adminCheck = createRoleCheck(
+      context,
+      'admin',
+      'Moderator privileges required',
+    )
     if (adminCheck === true) return true
 
     return moderatorCheck // Return the first error
-  }
+  },
 )
 
 /**
@@ -123,7 +146,7 @@ export const rateLimitSensitiveOperations = rule({ cache: 'no_cache' })(
     // TODO: Implement actual rate limiting
     // This would check against a rate limiting store (Redis, etc.)
     return true
-  }
+  },
 )
 
 /**
@@ -132,7 +155,11 @@ export const rateLimitSensitiveOperations = rule({ cache: 'no_cache' })(
  */
 export const hasCreatePostPermission = rule({ cache: 'contextual' })(
   (_parent, _args, context) =>
-    createPermissionCheck(context, 'write:posts', 'Permission denied: cannot create posts')
+    createPermissionCheck(
+      context,
+      'write:posts',
+      'Permission denied: cannot create posts',
+    ),
 )
 
 /**
@@ -140,7 +167,7 @@ export const hasCreatePostPermission = rule({ cache: 'contextual' })(
  * Ensures the user can create draft posts
  */
 export const canCreateDraft = rule({ cache: 'contextual' })(
-  (_parent, _args, context) => createAuthenticationCheck(context)
+  (_parent, _args, context) => createAuthenticationCheck(context),
 )
 
 /**

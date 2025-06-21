@@ -23,4 +23,4 @@ console.log(`  isTest: ${isTest}`)
 console.log()
 
 console.log('✅ Environment configuration loaded successfully!')
-console.log('🎯 All environment variables are validated and type-safe.') 
+console.log('🎯 All environment variables are validated and type-safe.')

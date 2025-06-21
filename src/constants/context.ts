@@ -2,7 +2,15 @@
  * Context-related constants
  */
 
-export const ALLOWED_HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'] as const
+export const ALLOWED_HTTP_METHODS = [
+  'GET',
+  'POST',
+  'PUT',
+  'DELETE',
+  'PATCH',
+  'HEAD',
+  'OPTIONS',
+] as const
 
 export const DEFAULT_VALUES = {
   HTTP_METHOD: 'POST',

@@ -30,15 +30,18 @@ describe('Authentication', () => {
       }
 
       // Using the new helper for cleaner test code
-      const data = await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse>(
-        server,
-        print(SignupMutation),
-        variables,
-        createMockContext()
-      )
+      const data =
+        await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse>(
+          server,
+          print(SignupMutation),
+          variables,
+          createMockContext(),
+        )
 
       expect(data.signup).toBeDefined()
-      expect(data.signup).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/)
+      expect(data.signup).toMatch(
+        /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/,
+      )
 
       // Verify user was created in database
       const user = await prisma.user.findUnique({
@@ -71,10 +74,10 @@ describe('Authentication', () => {
         print(SignupMutation),
         variables,
         createMockContext(),
-        'An account with this email already exists'
+        'An account with this email already exists',
       )
 
-      expect(errors.some(error => error.includes('email'))).toBe(true)
+      expect(errors.some((error) => error.includes('email'))).toBe(true)
     })
   })
 
@@ -98,14 +101,17 @@ describe('Authentication', () => {
       }
 
       // Using the new helper for cleaner success case
-      const data = await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse>(
-        server,
-        print(LoginMutation),
-        variables,
-        createMockContext()
-      )
+      const data =
+        await gqlHelpers.expectSuccessfulMutation<AuthMutationResponse>(
+          server,
+          print(LoginMutation),
+          variables,
+          createMockContext(),
+        )
 
-      expect(data.login).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/)
+      expect(data.login).toMatch(
+        /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/,
+      )
     })
 
     it('should fail with invalid password', async () => {
@@ -133,7 +139,7 @@ describe('Authentication', () => {
         print(LoginMutation),
         variables,
         createMockContext(),
-        'Invalid email or password'
+        'Invalid email or password',
       )
     })
 
@@ -152,7 +158,7 @@ describe('Authentication', () => {
         print(LoginMutation),
         variables,
         createMockContext(),
-        'Invalid email or password'
+        'Invalid email or password',
       )
     })
   })
@@ -164,16 +170,16 @@ describe('Authentication', () => {
   /*
    * NOTE: Convenience functions (mutateLogin, mutateSignup, etc.) from src/gql/client.ts
    * are designed for runtime use with real HTTP requests, not for server-side testing.
-   * 
+   *
    * For testing GraphQL operations:
    * ✅ Use gqlHelpers with Apollo Server's executeOperation (as shown above)
    * ❌ Don't use convenience functions that make fetch() requests in tests
-   * 
+   *
    * The convenience functions are perfect for:
    * - Frontend applications making real API calls
    * - Integration tests with a running server
    * - Development scripts and tools
-   * 
+   *
    * But for unit/integration tests of the GraphQL schema itself,
    * use the Apollo Server test patterns shown in this file.
    */

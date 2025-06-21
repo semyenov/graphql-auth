@@ -1,16 +1,16 @@
 /**
  * Enhanced DataLoaders for Pothos Integration
- * 
+ *
  * Provides efficient batch loading for common queries to prevent N+1 problems
  */
 
-import type { PrismaClient } from '@prisma/client'
+import type { Post, PrismaClient, User } from '@prisma/client'
 import DataLoader from 'dataloader'
 
 export interface Loaders {
   // Entity loaders
-  user: DataLoader<number, any | null>
-  post: DataLoader<number, any | null>
+  user: DataLoader<number, User | null>
+  post: DataLoader<number, Post | null>
 
   // Count loaders for aggregations
   postCountByAuthor: DataLoader<number, number>
@@ -18,59 +18,30 @@ export interface Loaders {
   draftPostsCountByAuthor: DataLoader<number, number>
 
   // Relation loaders
-  postsByAuthor: DataLoader<number, any[]>
-  publishedPostsByAuthor: DataLoader<number, any[]>
-  draftPostsByAuthor: DataLoader<number, any[]>
+  postsByAuthor: DataLoader<number, Post[]>
+  publishedPostsByAuthor: DataLoader<number, Post[]>
+  draftPostsByAuthor: DataLoader<number, Post[]>
 }
 
 export function createEnhancedLoaders(prisma: PrismaClient): Loaders {
   // Entity loaders
-  const user = new DataLoader<number, any | null>(
-    async (userIds) => {
-      const users = await prisma.user.findMany({
-        where: { id: { in: userIds as number[] } },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      })
+  const user = new DataLoader<number, User | null>(async (userIds) => {
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds as number[] } },
+    });
 
-      return userIds.map(id => users.find(user => user.id === id) || null)
-    },
-    {
-      maxBatchSize: 100,
-      cacheKeyFn: (key) => key,
-    }
-  )
+    return userIds.map((id) => users.find((user) => user.id === id) || null);
+  });
 
-  const post = new DataLoader<number, any | null>(
-    async (postIds) => {
-      const posts = await prisma.post.findMany({
-        where: { id: { in: postIds as number[] } },
-        select: {
-          id: true,
-          title: true,
-          content: true,
-          published: true,
-          viewCount: true,
-          createdAt: true,
-          updatedAt: true,
-          authorId: true,
-        },
-      })
+  const post = new DataLoader<number, Post | null>(async (postIds) => {
+    const posts = await prisma.post.findMany({
+      where: { id: { in: postIds as number[] } },
+    });
 
-      return postIds.map(id => posts.find(post => post.id === id) || null)
-    },
-    {
-      maxBatchSize: 100,
-      cacheKeyFn: (key) => key,
-    }
-  )
+    return postIds.map((id) => posts.find((post) => post.id === id) || null);
+  });
 
-  // Count loaders for efficient aggregations
+  // Count loaders for aggregations
   const postCountByAuthor = new DataLoader<number, number>(
     async (authorIds) => {
       const counts = await prisma.post.groupBy({
@@ -79,15 +50,15 @@ export function createEnhancedLoaders(prisma: PrismaClient): Loaders {
         _count: { id: true },
       })
 
-      return authorIds.map(authorId => {
-        const found = counts.find(c => c.authorId === authorId)
+      return authorIds.map((authorId) => {
+        const found = counts.find((c) => c.authorId === authorId)
         return found?._count.id || 0
       })
     },
     {
       maxBatchSize: 50,
       cacheKeyFn: (key) => key,
-    }
+    },
   )
 
   const publishedPostCountByAuthor = new DataLoader<number, number>(
@@ -96,20 +67,20 @@ export function createEnhancedLoaders(prisma: PrismaClient): Loaders {
         by: ['authorId'],
         where: {
           authorId: { in: authorIds as number[] },
-          published: true
+          published: true,
         },
         _count: { id: true },
       })
 
-      return authorIds.map(authorId => {
-        const found = counts.find(c => c.authorId === authorId)
+      return authorIds.map((authorId) => {
+        const found = counts.find((c) => c.authorId === authorId)
         return found?._count.id || 0
       })
     },
     {
       maxBatchSize: 50,
       cacheKeyFn: (key) => key,
-    }
+    },
   )
 
   const draftPostsCountByAuthor = new DataLoader<number, number>(
@@ -118,109 +89,73 @@ export function createEnhancedLoaders(prisma: PrismaClient): Loaders {
         by: ['authorId'],
         where: {
           authorId: { in: authorIds as number[] },
-          published: false
+          published: false,
         },
         _count: { id: true },
       })
 
-      return authorIds.map(authorId => {
-        const found = counts.find(c => c.authorId === authorId)
+      return authorIds.map((authorId) => {
+        const found = counts.find((c) => c.authorId === authorId)
         return found?._count.id || 0
       })
     },
     {
       maxBatchSize: 50,
       cacheKeyFn: (key) => key,
-    }
+    },
   )
 
   // Relation loaders
-  const postsByAuthor = new DataLoader<number, any[]>(
-    async (authorIds) => {
-      const posts = await prisma.post.findMany({
-        where: { authorId: { in: authorIds as number[] } },
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          title: true,
-          content: true,
-          published: true,
-          viewCount: true,
-          createdAt: true,
-          updatedAt: true,
-          authorId: true,
-        },
-      })
+  const postsByAuthor = new DataLoader<number, Post[]>(async (authorIds) => {
+    const posts = await prisma.post.findMany({
+      where: { authorId: { in: authorIds as number[] } },
+      orderBy: { createdAt: 'desc' },
+    });
 
-      return authorIds.map(authorId =>
-        posts.filter(post => post.authorId === authorId)
-      )
-    },
-    {
-      maxBatchSize: 30,
-      cacheKeyFn: (key) => key,
-    }
-  )
+    return authorIds.map((authorId) =>
+      posts.filter((post) => post.authorId === authorId),
+    );
+  });
 
-  const publishedPostsByAuthor = new DataLoader<number, any[]>(
+  const publishedPostsByAuthor = new DataLoader<number, Post[]>(
     async (authorIds) => {
       const posts = await prisma.post.findMany({
         where: {
           authorId: { in: authorIds as number[] },
-          published: true
+          published: true,
         },
         orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          title: true,
-          content: true,
-          published: true,
-          viewCount: true,
-          createdAt: true,
-          updatedAt: true,
-          authorId: true,
-        },
-      })
+      });
 
-      return authorIds.map(authorId =>
-        posts.filter(post => post.authorId === authorId)
-      )
+      return authorIds.map((authorId) =>
+        posts.filter((post) => post.authorId === authorId),
+      );
     },
     {
       maxBatchSize: 30,
       cacheKeyFn: (key) => key,
-    }
-  )
+    },
+  );
 
-  const draftPostsByAuthor = new DataLoader<number, any[]>(
+  const draftPostsByAuthor = new DataLoader<number, Post[]>(
     async (authorIds) => {
       const posts = await prisma.post.findMany({
         where: {
           authorId: { in: authorIds as number[] },
-          published: false
+          published: false,
         },
         orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          title: true,
-          content: true,
-          published: true,
-          viewCount: true,
-          createdAt: true,
-          updatedAt: true,
-          authorId: true,
-        },
-      })
+      });
 
-      return authorIds.map(authorId =>
-        posts.filter(post => post.authorId === authorId)
-      )
+      return authorIds.map((authorId) =>
+        posts.filter((post) => post.authorId === authorId),
+      );
     },
     {
       maxBatchSize: 30,
       cacheKeyFn: (key) => key,
-    }
-  )
+    },
+  );
 
   return {
     user,

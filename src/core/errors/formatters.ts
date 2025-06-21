@@ -1,11 +1,11 @@
 /**
  * Core Error Formatters
- * 
- * Error formatting utilities for different output formats following the 
+ *
+ * Error formatting utilities for different output formats following the
  * IMPROVED-FILE-STRUCTURE.md specification.
  */
 
-import { BaseError } from './types'
+import type { BaseError } from './types'
 
 /**
  * Format error for GraphQL response
@@ -17,7 +17,7 @@ export function formatGraphQLError(error: BaseError) {
       code: error.code,
       statusCode: error.statusCode,
       timestamp: new Date().toISOString(),
-    }
+    },
   }
 }
 
@@ -31,14 +31,17 @@ export function formatRestError(error: BaseError) {
       code: error.code,
       statusCode: error.statusCode,
       timestamp: new Date().toISOString(),
-    }
+    },
   }
 }
 
 /**
  * Format error for logging
  */
-export function formatLogError(error: BaseError, context?: Record<string, any>) {
+export function formatLogError(
+  error: BaseError,
+  context?: Record<string, unknown>,
+) {
   return {
     level: getLogLevel(error),
     message: error.message,
@@ -56,7 +59,10 @@ export function formatLogError(error: BaseError, context?: Record<string, any>) 
 /**
  * Format error for monitoring/alerting systems
  */
-export function formatMonitoringError(error: BaseError, context?: Record<string, any>) {
+export function formatMonitoringError(
+  error: BaseError,
+  context?: Record<string, unknown>,
+) {
   return {
     alertLevel: getAlertLevel(error),
     service: 'graphql-auth',
@@ -75,19 +81,19 @@ export function formatMonitoringError(error: BaseError, context?: Record<string,
 /**
  * Format validation error with field details
  */
-export function formatValidationError(error: BaseError & { errors?: any }) {
+export function formatValidationError(error: BaseError & { errors?: unknown }) {
   const base = formatGraphQLError(error)
-  
+
   if (error.errors) {
     return {
       ...base,
       extensions: {
         ...base.extensions,
-        validationErrors: error.errors
-      }
+        validationErrors: error.errors,
+      },
     }
   }
-  
+
   return base
 }
 
@@ -97,14 +103,14 @@ export function formatValidationError(error: BaseError & { errors?: any }) {
 export function formatUserError(error: BaseError) {
   // Only show safe error messages to users
   const safeMessages: Record<string, string> = {
-    'UNAUTHENTICATED': 'Please log in to continue',
-    'FORBIDDEN': 'You do not have permission to perform this action',
-    'NOT_FOUND': 'The requested resource was not found',
-    'CONFLICT': 'This action conflicts with existing data',
-    'RATE_LIMIT_EXCEEDED': 'Too many requests. Please try again later',
-    'VALIDATION_ERROR': error.message, // Validation errors are safe to show
+    UNAUTHENTICATED: 'Please log in to continue',
+    FORBIDDEN: 'You do not have permission to perform this action',
+    NOT_FOUND: 'The requested resource was not found',
+    CONFLICT: 'This action conflicts with existing data',
+    RATE_LIMIT_EXCEEDED: 'Too many requests. Please try again later',
+    VALIDATION_ERROR: error.message, // Validation errors are safe to show
   }
-  
+
   return {
     message: safeMessages[error.code] || 'An error occurred. Please try again',
     code: error.code,
@@ -153,18 +159,21 @@ export function formatStackTrace(error: BaseError): string[] {
   if (!error.stack) {
     return []
   }
-  
+
   return error.stack
     .split('\n')
     .slice(1) // Remove the first line (error message)
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
 }
 
 /**
  * Create development-friendly error format
  */
-export function formatDevelopmentError(error: BaseError, context?: Record<string, any>) {
+export function formatDevelopmentError(
+  error: BaseError,
+  context?: Record<string, unknown>,
+) {
   return {
     message: error.message,
     code: error.code,

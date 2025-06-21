@@ -1,6 +1,6 @@
 /**
  * Direct Resolvers Tests
- * 
+ *
  * Tests for Pothos resolvers without use cases
  */
 
@@ -12,76 +12,76 @@ import { createMockContext, createTestServer } from './context.helpers'
 import { gqlHelpers } from './graphql.helpers'
 
 describe('Direct Resolvers', () => {
-    const server = createTestServer()
+  const server = createTestServer()
 
-    beforeEach(async () => {
-        // Create test data
-        await prisma.user.deleteMany()
-        await prisma.post.deleteMany()
+  beforeEach(async () => {
+    // Create test data
+    await prisma.user.deleteMany()
+    await prisma.post.deleteMany()
 
-        await prisma.user.create({
-            data: {
-                id: 1,
-                email: 'test@example.com',
-                password: await bcrypt.hash('password123', 10),
-                name: 'Test User',
-            },
-        })
+    await prisma.user.create({
+      data: {
+        id: 1,
+        email: 'test@example.com',
+        password: await bcrypt.hash('password123', 10),
+        name: 'Test User',
+      },
     })
+  })
 
-    describe('Authentication', () => {
-        it('should signup a new user', async () => {
-            const mutation = graphql(`
+  describe('Authentication', () => {
+    it('should signup a new user', async () => {
+      const mutation = graphql(`
                 mutation Signup($email: String!, $password: String!, $name: String) {
                     signup(email: $email, password: $password, name: $name)
                 }
             `)
 
-            const data = await gqlHelpers.expectSuccessfulMutation(
-                server,
-                mutation,
-                {
-                    email: 'newuser@example.com',
-                    password: 'password123',
-                    name: 'New User',
-                },
-                createMockContext()
-            )
+      const data = await gqlHelpers.expectSuccessfulMutation(
+        server,
+        mutation,
+        {
+          email: 'newuser@example.com',
+          password: 'password123',
+          name: 'New User',
+        },
+        createMockContext(),
+      )
 
-            expect(data.signup).toBeDefined()
-            expect(typeof data.signup).toBe('string')
+      expect(data.signup).toBeDefined()
+      expect(typeof data.signup).toBe('string')
 
-            // Verify user was created
-            const user = await prisma.user.findUnique({
-                where: { email: 'newuser@example.com' },
-            })
-            expect(user).toBeDefined()
-            expect(user?.name).toBe('New User')
-        })
+      // Verify user was created
+      const user = await prisma.user.findUnique({
+        where: { email: 'newuser@example.com' },
+      })
+      expect(user).toBeDefined()
+      expect(user?.name).toBe('New User')
+    })
 
-        it('should login with valid credentials', async () => {
-            const mutation = graphql(`
+    it('should login with valid credentials', async () => {
+      const mutation = graphql(`
                 mutation Login($email: String!, $password: String!) {
                     login(email: $email, password: $password)
                 }
             `)
 
-            const data = await gqlHelpers.expectSuccessfulMutation(
-                server,
-                mutation,
-                {
-                    email: 'test@example.com',
-                    password: 'password123',
-                },
-                createMockContext()
-            )
+      const data = await gqlHelpers.expectSuccessfulMutation(
+        server,
+        mutation,
+        {
+          email: 'test@example.com',
+          password: 'password123',
+        },
+        createMockContext(),
+      )
 
-            expect(data.login).toBeDefined()
-            expect(typeof data.login).toBe('string')
-        })
+      expect(data.login).toBeDefined()
+      expect(typeof data.login).toBe('string')
+    })
 
-        it('should get current user', async () => {
-            const query = graphql(`
+    it('should get current user', async () => {
+      const query = graphql(`
                 query Me {
                     me {
                         id
@@ -91,28 +91,33 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-            const authContext = {
-                ...createMockContext(),
-                userId: { value: 1 } as any,
-                security: { isAuthenticated: true, userId: 1, roles: [], permissions: [] }
-            }
+      const authContext = {
+        ...createMockContext(),
+        userId: { value: 1 } as any,
+        security: {
+          isAuthenticated: true,
+          userId: 1,
+          roles: [],
+          permissions: [],
+        },
+      }
 
-            const data = await gqlHelpers.expectSuccessfulQuery(
-                server,
-                query,
-                {},
-                authContext
-            )
+      const data = await gqlHelpers.expectSuccessfulQuery(
+        server,
+        query,
+        {},
+        authContext,
+      )
 
-            expect(data.me).toBeDefined()
-            expect(data.me?.email).toBe('test@example.com')
-            expect(data.me?.name).toBe('Test User')
-        })
+      expect(data.me).toBeDefined()
+      expect(data.me?.email).toBe('test@example.com')
+      expect(data.me?.name).toBe('Test User')
     })
+  })
 
-    describe('Posts', () => {
-        it('should create a post', async () => {
-            const mutation = graphql(`
+  describe('Posts', () => {
+    it('should create a post', async () => {
+      const mutation = graphql(`
                 mutation CreatePost($input: CreatePostInput!) {
                     createPost(input: $input) {
                         id
@@ -127,43 +132,63 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-            const authContext = {
-                ...createMockContext(),
-                userId: { value: 1 } as any,
-                security: { isAuthenticated: true, userId: 1, roles: [], permissions: [] }
-            }
+      const authContext = {
+        ...createMockContext(),
+        userId: { value: 1 } as any,
+        security: {
+          isAuthenticated: true,
+          userId: 1,
+          roles: [],
+          permissions: [],
+        },
+      }
 
-            const data = await gqlHelpers.expectSuccessfulMutation(
-                server,
-                mutation,
-                {
-                    input: {
-                        title: 'Test Post',
-                        content: 'This is a test post',
-                        published: false,
-                    },
-                },
-                authContext
-            )
+      const data = await gqlHelpers.expectSuccessfulMutation(
+        server,
+        mutation,
+        {
+          input: {
+            title: 'Test Post',
+            content: 'This is a test post',
+            published: false,
+          },
+        },
+        authContext,
+      )
 
-            expect(data.createPost).toBeDefined()
-            expect(data.createPost?.title).toBe('Test Post')
-            expect(data.createPost?.content).toBe('This is a test post')
-            expect(data.createPost?.published).toBe(false)
-            expect(data.createPost?.author?.email).toBe('test@example.com')
-        })
+      expect(data.createPost).toBeDefined()
+      expect(data.createPost?.title).toBe('Test Post')
+      expect(data.createPost?.content).toBe('This is a test post')
+      expect(data.createPost?.published).toBe(false)
+      expect(data.createPost?.author?.email).toBe('test@example.com')
+    })
 
-        it('should get posts feed', async () => {
-            // Create some posts
-            await prisma.post.createMany({
-                data: [
-                    { title: 'Post 1', content: 'Content 1', published: true, authorId: 1 },
-                    { title: 'Post 2', content: 'Content 2', published: true, authorId: 1 },
-                    { title: 'Draft', content: 'Draft content', published: false, authorId: 1 },
-                ],
-            })
+    it('should get posts feed', async () => {
+      // Create some posts
+      await prisma.post.createMany({
+        data: [
+          {
+            title: 'Post 1',
+            content: 'Content 1',
+            published: true,
+            authorId: 1,
+          },
+          {
+            title: 'Post 2',
+            content: 'Content 2',
+            published: true,
+            authorId: 1,
+          },
+          {
+            title: 'Draft',
+            content: 'Draft content',
+            published: false,
+            authorId: 1,
+          },
+        ],
+      })
 
-            const query = graphql(`
+      const query = graphql(`
                 query Feed {
                     feed {
                         edges {
@@ -177,29 +202,46 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-            const data = await gqlHelpers.expectSuccessfulQuery(
-                server,
-                query,
-                {},
-                createMockContext()
-            )
+      const data = await gqlHelpers.expectSuccessfulQuery(
+        server,
+        query,
+        {},
+        createMockContext(),
+      )
 
-            expect(data.feed?.edges?.length).toBe(2)
-            expect(data.feed?.totalCount).toBe(2)
-            expect(data.feed?.edges?.every(edge => edge?.node?.published)).toBe(true)
-        })
+      expect(data.feed?.edges?.length).toBe(2)
+      expect(data.feed?.totalCount).toBe(2)
+      expect(data.feed?.edges?.every((edge) => edge?.node?.published)).toBe(
+        true,
+      )
+    })
 
-        it('should get user drafts', async () => {
-            // Create some posts
-            await prisma.post.createMany({
-                data: [
-                    { title: 'Draft 1', content: 'Draft 1', published: false, authorId: 1 },
-                    { title: 'Draft 2', content: 'Draft 2', published: false, authorId: 1 },
-                    { title: 'Published', content: 'Published', published: true, authorId: 1 },
-                ],
-            })
+    it('should get user drafts', async () => {
+      // Create some posts
+      await prisma.post.createMany({
+        data: [
+          {
+            title: 'Draft 1',
+            content: 'Draft 1',
+            published: false,
+            authorId: 1,
+          },
+          {
+            title: 'Draft 2',
+            content: 'Draft 2',
+            published: false,
+            authorId: 1,
+          },
+          {
+            title: 'Published',
+            content: 'Published',
+            published: true,
+            authorId: 1,
+          },
+        ],
+      })
 
-            const query = graphql(`
+      const query = graphql(`
                 query Drafts {
                     drafts {
                         edges {
@@ -213,36 +255,43 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-            const authContext = {
-                ...createMockContext(),
-                userId: { value: 1 } as any,
-                security: { isAuthenticated: true, userId: 1, roles: [], permissions: [] }
-            }
+      const authContext = {
+        ...createMockContext(),
+        userId: { value: 1 } as any,
+        security: {
+          isAuthenticated: true,
+          userId: 1,
+          roles: [],
+          permissions: [],
+        },
+      }
 
-            const data = await gqlHelpers.expectSuccessfulQuery(
-                server,
-                query,
-                {},
-                authContext
-            )
+      const data = await gqlHelpers.expectSuccessfulQuery(
+        server,
+        query,
+        {},
+        authContext,
+      )
 
-            expect(data.drafts?.edges?.length).toBe(2)
-            expect(data.drafts?.totalCount).toBe(2)
-            expect(data.drafts?.edges?.every(edge => !edge?.node?.published)).toBe(true)
-        })
+      expect(data.drafts?.edges?.length).toBe(2)
+      expect(data.drafts?.totalCount).toBe(2)
+      expect(data.drafts?.edges?.every((edge) => !edge?.node?.published)).toBe(
+        true,
+      )
     })
+  })
 
-    describe('Users', () => {
-        it('should search users', async () => {
-            // Create more users
-            await prisma.user.createMany({
-                data: [
-                    { email: 'john@example.com', password: 'hash', name: 'John Doe' },
-                    { email: 'jane@example.com', password: 'hash', name: 'Jane Smith' },
-                ],
-            })
+  describe('Users', () => {
+    it('should search users', async () => {
+      // Create more users
+      await prisma.user.createMany({
+        data: [
+          { email: 'john@example.com', password: 'hash', name: 'John Doe' },
+          { email: 'jane@example.com', password: 'hash', name: 'Jane Smith' },
+        ],
+      })
 
-            const query = graphql(`
+      const query = graphql(`
                 query SearchUsers($search: String!) {
                     searchUsers(search: $search) {
                         edges {
@@ -255,15 +304,15 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-            const data = await gqlHelpers.expectSuccessfulQuery(
-                server,
-                query,
-                { search: 'john@example.com' },
-                createMockContext()
-            )
+      const data = await gqlHelpers.expectSuccessfulQuery(
+        server,
+        query,
+        { search: 'john@example.com' },
+        createMockContext(),
+      )
 
-            expect(data.searchUsers?.edges?.length).toBe(1)
-            expect(data.searchUsers?.edges?.[0]?.node?.email).toBe('john@example.com')
-        })
+      expect(data.searchUsers?.edges?.length).toBe(1)
+      expect(data.searchUsers?.edges?.[0]?.node?.email).toBe('john@example.com')
     })
+  })
 })

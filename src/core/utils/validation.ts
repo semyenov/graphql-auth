@@ -84,10 +84,7 @@ export const updatePostSchema = z.object({
  * Validate input data against a schema
  * @throws {ValidationError} if validation fails
  */
-export function validateInput<T>(
-  schema: z.ZodSchema<T>,
-  data: unknown,
-): T {
+export function validateInput<T>(schema: z.ZodSchema<T>, data: unknown): T {
   try {
     return schema.parse(data)
   } catch (error) {
@@ -112,7 +109,9 @@ export function validateInput<T>(
 export function safeValidateInput<T>(
   schema: z.ZodSchema<T>,
   data: unknown,
-): { success: true; data: T } | { success: false; errors: Record<string, string[]> } {
+):
+  | { success: true; data: T }
+  | { success: false; errors: Record<string, string[]> } {
   try {
     const result = schema.parse(data)
     return { success: true, data: result }

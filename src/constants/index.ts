@@ -9,7 +9,12 @@ export * from './graphql'
 export * from './validation'
 
 // Legacy exports for backward compatibility
-import { AUTH_CONFIG, DATABASE_CONFIG, RATE_LIMIT_CONFIG, SERVER_CONFIG } from './config'
+import {
+  AUTH_CONFIG,
+  DATABASE_CONFIG,
+  RATE_LIMIT_CONFIG,
+  SERVER_CONFIG,
+} from './config'
 import { VALIDATION_LIMITS } from './validation'
 
 /**
@@ -78,22 +83,31 @@ export const VALIDATION = {
  */
 export const ERROR_MESSAGES = {
   // Authentication
-  INVALID_CREDENTIALS: 'Invalid email or password. Please check your credentials and try again.',
+  INVALID_CREDENTIALS:
+    'Invalid email or password. Please check your credentials and try again.',
   USER_NOT_FOUND: 'No user found with the provided identifier',
-  EMAIL_ALREADY_EXISTS: 'An account with this email address already exists. Please use a different email or sign in.',
-  AUTHENTICATION_REQUIRED: 'You must be logged in to perform this action. Please authenticate and try again.',
-  INVALID_TOKEN: 'The provided authentication token is invalid or malformed. Please sign in again.',
-  TOKEN_EXPIRED: 'Your authentication token has expired. Please sign in again to continue.',
+  EMAIL_ALREADY_EXISTS:
+    'An account with this email address already exists. Please use a different email or sign in.',
+  AUTHENTICATION_REQUIRED:
+    'You must be logged in to perform this action. Please authenticate and try again.',
+  INVALID_TOKEN:
+    'The provided authentication token is invalid or malformed. Please sign in again.',
+  TOKEN_EXPIRED:
+    'Your authentication token has expired. Please sign in again to continue.',
   CURRENT_PASSWORD_REQUIRED: 'Current password is required to change password',
   NEW_PASSWORD_REQUIRED: 'New password is required to change password',
   PASSWORD_MISMATCH: 'The provided passwords do not match',
   PASSWORD_TOO_SHORT: `Password must be at least ${AUTH_CONFIG.MIN_PASSWORD_LENGTH} characters long for security`,
   PASSWORD_TOO_LONG: `Password cannot exceed ${AUTH_CONFIG.MAX_PASSWORD_LENGTH} characters`,
   REFRESH_TOKEN_REQUIRED: 'Refresh token is required to refresh authentication',
-  INVALID_REFRESH_TOKEN: 'The provided refresh token is invalid or malformed. Please request a new refresh token.',
-  INVALID_RESET_TOKEN: 'The provided reset token is invalid or malformed. Please request a new reset token.',
-  INVALID_CODE: 'The provided code is invalid or malformed. Please request a new code.',
-  INVALID_EMAIL: 'Please provide a valid email address (e.g., user@example.com)',
+  INVALID_REFRESH_TOKEN:
+    'The provided refresh token is invalid or malformed. Please request a new refresh token.',
+  INVALID_RESET_TOKEN:
+    'The provided reset token is invalid or malformed. Please request a new reset token.',
+  INVALID_CODE:
+    'The provided code is invalid or malformed. Please request a new code.',
+  INVALID_EMAIL:
+    'Please provide a valid email address (e.g., user@example.com)',
   INVALID_INPUT: 'Invalid input provided',
 
   // Validation
@@ -103,8 +117,10 @@ export const ERROR_MESSAGES = {
   NAME_TOO_LONG: `Name must not exceed ${VALIDATION_LIMITS.NAME_MAX_LENGTH} characters`,
 
   // Authorization
-  INSUFFICIENT_PERMISSIONS: 'You do not have the required permissions to perform this operation',
-  POST_NOT_FOUND: 'The requested post could not be found. It may have been deleted or the ID is incorrect.',
+  INSUFFICIENT_PERMISSIONS:
+    'You do not have the required permissions to perform this operation',
+  POST_NOT_FOUND:
+    'The requested post could not be found. It may have been deleted or the ID is incorrect.',
   NOT_POST_OWNER: 'You can only modify posts that you have created',
 
   // Generic

@@ -1,6 +1,6 @@
 /**
  * Storage Service Adapter
- * 
+ *
  * Interface and implementations for file storage
  */
 
@@ -63,9 +63,7 @@ export class LocalStorageService implements IStorageService {
     const readStream = file.createReadStream()
 
     await new Promise((resolve, reject) => {
-      readStream.pipe(writeStream)
-        .on('finish', resolve)
-        .on('error', reject)
+      readStream.pipe(writeStream).on('finish', resolve).on('error', reject)
     })
 
     const stats = await fs.stat(filePath)
@@ -221,7 +219,7 @@ export class StorageUtils {
    * Validate file type
    */
   static isValidFileType(mimetype: string, allowedTypes: string[]): boolean {
-    return allowedTypes.some(type => {
+    return allowedTypes.some((type) => {
       if (type.endsWith('/*')) {
         // Wildcard match (e.g., image/*)
         const prefix = type.slice(0, -2)

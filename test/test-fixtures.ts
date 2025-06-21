@@ -257,7 +257,7 @@ export async function createModerationScenario(): Promise<{
     createTestPost({
       authorId: goodUser.id,
       title: 'Helpful Tutorial',
-      content: 'Here\'s how to solve this common problem...',
+      content: "Here's how to solve this common problem...",
       published: true,
     }),
     createTestPost({
@@ -322,8 +322,8 @@ export async function createPaginationScenario(): Promise<{
         content: `Content for post ${i + 1}`,
         published: i % 2 === 0, // Every other post is published
         viewCount: Math.floor(Math.random() * 100),
-      })
-    )
+      }),
+    ),
   )
 
   return { user, posts }

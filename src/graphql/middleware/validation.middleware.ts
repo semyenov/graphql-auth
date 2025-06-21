@@ -1,6 +1,6 @@
 /**
  * Validation Middleware
- * 
+ *
  * GraphQL middleware for input validation and sanitization
  * as specified in IMPROVED-FILE-STRUCTURE.md
  */
@@ -23,10 +23,10 @@ export const emailValidationRule = rule({ cache: 'strict' })(
         }
       }
       return true
-    } catch (error) {
+    } catch (_error) {
       return new ValidationError([], 'Email validation failed')
     }
-  }
+  },
 )
 
 /**
@@ -38,23 +38,31 @@ export const passwordValidationRule = rule({ cache: 'strict' })(
       const password = args.password || args.input?.password
       if (password) {
         if (password.length < 8) {
-          return new ValidationError(['Password must be at least 8 characters long'])
+          return new ValidationError([
+            'Password must be at least 8 characters long',
+          ])
         }
         if (!/(?=.*[a-z])/.test(password)) {
-          return new ValidationError(['Password must contain at least one lowercase letter'])
+          return new ValidationError([
+            'Password must contain at least one lowercase letter',
+          ])
         }
         if (!/(?=.*[A-Z])/.test(password)) {
-          return new ValidationError(['Password must contain at least one uppercase letter'])
+          return new ValidationError([
+            'Password must contain at least one uppercase letter',
+          ])
         }
         if (!/(?=.*\d)/.test(password)) {
-          return new ValidationError(['Password must contain at least one number'])
+          return new ValidationError([
+            'Password must contain at least one number',
+          ])
         }
       }
       return true
-    } catch (error) {
+    } catch (_error) {
       return new ValidationError(['Password validation failed'])
     }
-  }
+  },
 )
 
 /**
@@ -69,14 +77,16 @@ export const postTitleValidationRule = rule({ cache: 'strict' })(
           return new ValidationError(['Post title cannot be empty'])
         }
         if (title.length > 200) {
-          return new ValidationError(['Post title cannot exceed 200 characters'])
+          return new ValidationError([
+            'Post title cannot exceed 200 characters',
+          ])
         }
       }
       return true
-    } catch (error) {
+    } catch (_error) {
       return new ValidationError(['Post title validation failed'])
     }
-  }
+  },
 )
 
 /**
@@ -88,14 +98,16 @@ export const postContentValidationRule = rule({ cache: 'strict' })(
       const content = args.content || args.input?.content
       if (content) {
         if (content.length > 50000) {
-          return new ValidationError(['Post content cannot exceed 50,000 characters'])
+          return new ValidationError([
+            'Post content cannot exceed 50,000 characters',
+          ])
         }
       }
       return true
-    } catch (error) {
+    } catch (_error) {
       return new ValidationError(['Post content validation failed'])
     }
-  }
+  },
 )
 
 /**
@@ -118,10 +130,10 @@ export const userNameValidationRule = rule({ cache: 'strict' })(
         }
       }
       return true
-    } catch (error) {
+    } catch (_error) {
       return new ValidationError(['Name validation failed'])
     }
-  }
+  },
 )
 
 /**
@@ -168,29 +180,36 @@ export const paginationValidationRule = rule({ cache: 'strict' })(
       }
 
       return true
-    } catch (error) {
+    } catch (_error) {
       return new ValidationError(['Pagination validation failed'])
     }
-  }
+  },
 )
 
 /**
  * Combined validation middleware using GraphQL Shield
  */
-export const validationMiddleware = shield({
-  Mutation: {
-    signup: and(emailValidationRule, passwordValidationRule, userNameValidationRule),
-    login: emailValidationRule,
-    createPost: and(postTitleValidationRule, postContentValidationRule),
-    updatePost: and(postTitleValidationRule, postContentValidationRule),
-    updateUserProfile: userNameValidationRule,
+export const validationMiddleware = shield(
+  {
+    Mutation: {
+      signup: and(
+        emailValidationRule,
+        passwordValidationRule,
+        userNameValidationRule,
+      ),
+      login: emailValidationRule,
+      createPost: and(postTitleValidationRule, postContentValidationRule),
+      updatePost: and(postTitleValidationRule, postContentValidationRule),
+      updateUserProfile: userNameValidationRule,
+    },
+    Query: {
+      feed: paginationValidationRule,
+      searchUsers: paginationValidationRule,
+      drafts: paginationValidationRule,
+    },
   },
-  Query: {
-    feed: paginationValidationRule,
-    searchUsers: paginationValidationRule,
-    drafts: paginationValidationRule,
+  {
+    allowExternalErrors: true,
+    fallbackRule: rule()(async () => true), // Allow by default
   },
-}, {
-  allowExternalErrors: true,
-  fallbackRule: rule()(async () => true), // Allow by default
-})
+)

@@ -1,34 +1,43 @@
 /**
  * Rate Limiting Directive
- * 
+ *
  * GraphQL directive for applying rate limiting to specific fields
  * as specified in IMPROVED-FILE-STRUCTURE.md
  */
 
-import { mapSchema, getDirective, MapperKind } from '@graphql-tools/utils'
-import { defaultFieldResolver, GraphQLSchema } from 'graphql'
+import { getDirective, MapperKind, mapSchema } from '@graphql-tools/utils'
+import { defaultFieldResolver, type GraphQLSchema } from 'graphql'
 import { RateLimitError } from '../../core/errors/types'
 import type { Context } from '../context/context.types'
 
 /**
  * Rate limit directive transformer function
  */
-export function rateLimitDirectiveTransformer(schema: GraphQLSchema, directiveName: string) {
+export function rateLimitDirectiveTransformer(
+  schema: GraphQLSchema,
+  directiveName: string,
+) {
   return mapSchema(schema, {
     [MapperKind.OBJECT_FIELD]: (fieldConfig) => {
-      const rateLimitDirective = getDirective(schema, fieldConfig, directiveName)?.[0]
-      
+      const rateLimitDirective = getDirective(
+        schema,
+        fieldConfig,
+        directiveName,
+      )?.[0]
+
       if (rateLimitDirective) {
         const { resolve = defaultFieldResolver } = fieldConfig
         const maxRequests = rateLimitDirective.max || 10
         const windowMs = rateLimitDirective.window || 60000 // 1 minute default
-        
-        fieldConfig.resolve = async function (source, args, context: Context, info) {
+
+        fieldConfig.resolve = async (source, args, context: Context, info) => {
           try {
             // Get rate limiter from context (placeholder - would need to implement)
             // For now, just log the rate limiting attempt
-            console.log(`Rate limiting check for ${info.fieldName}, max: ${maxRequests}, window: ${windowMs}ms`)
-            
+            console.log(
+              `Rate limiting check for ${info.fieldName}, max: ${maxRequests}, window: ${windowMs}ms`,
+            )
+
             return resolve(source, args, context, info)
           } catch (error) {
             if (error instanceof RateLimitError) {
@@ -39,9 +48,9 @@ export function rateLimitDirectiveTransformer(schema: GraphQLSchema, directiveNa
           }
         }
       }
-      
+
       return fieldConfig
-    }
+    },
   })
 }
 

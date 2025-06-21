@@ -1,12 +1,12 @@
 /**
  * BCrypt Password Service Implementation
- * 
+ *
  * Implements password hashing and verification using bcryptjs.
  */
 
 import * as bcrypt from 'bcryptjs'
 import { injectable } from 'tsyringe'
-import { IPasswordService } from '../../../core/services/password.service.interface'
+import type { IPasswordService } from '../../../core/services/password.service.interface'
 
 @injectable()
 export class BcryptPasswordService implements IPasswordService {

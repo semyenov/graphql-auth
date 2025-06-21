@@ -1,17 +1,18 @@
 /**
  * Application Configuration
- * 
+ *
  * Centralized configuration management with environment variable validation.
  */
 
-import ms, { StringValue } from 'ms'
+import ms, { type StringValue } from 'ms'
 import { z } from 'zod'
 
-const envJwtExpiresIn = z.union([
-  z.string().default('7d'),
-  z.number().default(7 * 24 * 60 * 60 * 1000)
-])
-  .transform(value => {
+const envJwtExpiresIn = z
+  .union([
+    z.string().default('7d'),
+    z.number().default(7 * 24 * 60 * 60 * 1000),
+  ])
+  .transform((value) => {
     if (typeof value === 'string') {
       const parsed = ms(value as StringValue)
       if (Number.isNaN(parsed)) {
@@ -25,7 +26,9 @@ const envJwtExpiresIn = z.union([
 
 // Environment schema validation
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
   PORT: z.string().transform(Number).default('4000'),
   DATABASE_URL: z.string().url(),
   JWT_SECRET: z.string().min(32),
@@ -74,9 +77,10 @@ function validateEnv() {
 export function getConfig(): AppConfig {
   const env = validateEnv()
 
-  const databaseLogLevel = env.NODE_ENV === 'production'
-    ? ['error', 'warn']
-    : ['query', 'info', 'warn', 'error']
+  const databaseLogLevel =
+    env.NODE_ENV === 'production'
+      ? ['error', 'warn']
+      : ['query', 'info', 'warn', 'error']
 
   return {
     server: {

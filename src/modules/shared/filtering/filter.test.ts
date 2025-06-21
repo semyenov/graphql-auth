@@ -153,8 +153,12 @@ describe('Filter Utilities', () => {
 
   describe('transformOrderBy', () => {
     it('should transform order by input', () => {
-      expect(transformOrderBy({ field: 'name', direction: 'asc' })).toEqual({ name: 'asc' })
-      expect(transformOrderBy({ field: 'createdAt', direction: 'desc' })).toEqual({ createdAt: 'desc' })
+      expect(transformOrderBy({ field: 'name', direction: 'asc' })).toEqual({
+        name: 'asc',
+      })
+      expect(
+        transformOrderBy({ field: 'createdAt', direction: 'desc' }),
+      ).toEqual({ createdAt: 'desc' })
     })
 
     it('should handle null/undefined', () => {
@@ -171,10 +175,7 @@ describe('Filter Utilities', () => {
       ]
 
       const result = transformOrderByArray(orderBy)
-      expect(result).toEqual([
-        { name: 'asc' },
-        { createdAt: 'desc' },
-      ])
+      expect(result).toEqual([{ name: 'asc' }, { createdAt: 'desc' }])
     })
 
     it('should handle empty array', () => {
@@ -250,10 +251,7 @@ describe('Filter Utilities', () => {
 
       const result = combineFilters(filters)
       expect(result).toEqual({
-        AND: [
-          { name: { contains: 'test' } },
-          { published: true },
-        ],
+        AND: [{ name: { contains: 'test' } }, { published: true }],
       })
     })
 
@@ -267,14 +265,8 @@ describe('Filter Utilities', () => {
     it('should apply logical operators recursively', () => {
       const filter = {
         name: { contains: 'test' },
-        AND: [
-          { published: true },
-          { viewCount: { gte: 10 } },
-        ],
-        OR: [
-          { featured: true },
-          { trending: true },
-        ],
+        AND: [{ published: true }, { viewCount: { gte: 10 } }],
+        OR: [{ featured: true }, { trending: true }],
         NOT: {
           deleted: true,
         },
@@ -284,14 +276,8 @@ describe('Filter Utilities', () => {
 
       expect(result).toMatchObject({
         name: { contains: 'test' },
-        AND: [
-          { published: true },
-          { viewCount: { gte: 10 } },
-        ],
-        OR: [
-          { featured: true },
-          { trending: true },
-        ],
+        AND: [{ published: true }, { viewCount: { gte: 10 } }],
+        OR: [{ featured: true }, { trending: true }],
         NOT: {
           deleted: true,
         },
@@ -313,20 +299,28 @@ describe('Filter Utilities', () => {
 
     it('should reject deeply nested filters', () => {
       const filter = {
-        AND: [{
-          OR: [{
-            AND: [{
-              NOT: {
-                name: { contains: 'test' }
-              }
-            }]
-          }]
-        }]
+        AND: [
+          {
+            OR: [
+              {
+                AND: [
+                  {
+                    NOT: {
+                      name: { contains: 'test' },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       }
 
       const result = validateFilterDepth(filter as any, 3)
       expect(result.valid).toBe(false)
-      expect(result.errors).toContain('Filter depth exceeds maximum allowed depth of 3')
+      expect(result.errors).toContain(
+        'Filter depth exceeds maximum allowed depth of 3',
+      )
     })
 
     it('should handle complex valid filters', () => {
@@ -335,10 +329,7 @@ describe('Filter Utilities', () => {
         AND: [
           { published: true },
           {
-            OR: [
-              { featured: true },
-              { viewCount: { gte: 100 } },
-            ],
+            OR: [{ featured: true }, { viewCount: { gte: 100 } }],
           },
         ],
       }
@@ -389,10 +380,7 @@ describe('Filter Utilities', () => {
           { name: { contains: 'test' } },
           { password: { equals: 'secret' } },
         ],
-        OR: [
-          { email: { contains: '@' } },
-          { role: 'admin' },
-        ],
+        OR: [{ email: { contains: '@' } }, { role: 'admin' }],
       }
 
       const result = sanitizeFilter(filter, {
@@ -400,14 +388,8 @@ describe('Filter Utilities', () => {
       })
 
       expect(result).toMatchObject({
-        AND: [
-          { name: { contains: 'test' } },
-          {},
-        ],
-        OR: [
-          { email: { contains: '@' } },
-          {},
-        ],
+        AND: [{ name: { contains: 'test' } }, {}],
+        OR: [{ email: { contains: '@' } }, {}],
       })
     })
   })
@@ -452,10 +434,7 @@ describe('Filter Utilities', () => {
         name: { contains: 'test' },
         published: true,
         viewCount: { gte: 10 },
-        AND: [
-          { featured: true },
-          { author: { email: { contains: '@' } } },
-        ],
+        AND: [{ featured: true }, { author: { email: { contains: '@' } } }],
       }
 
       const summary = getFilterSummary(filter)

@@ -1,14 +1,21 @@
-import { AuthenticationError, AuthorizationError, ValidationError } from '../../core/errors/types'
+import {
+  AuthenticationError,
+  AuthorizationError,
+  ValidationError,
+} from '../../core/errors/types'
 import type { Context } from '../context/context.types'
 
 /**
  * Validates that a resource ID is valid
- * 
+ *
  * @param id - The ID to validate
  * @param resourceType - The type of resource for error messages
  * @throws ValidationError if ID is invalid
  */
-export function validateResourceId(id: unknown, resourceType: string): asserts id is string {
+export function validateResourceId(
+  id: unknown,
+  resourceType: string,
+): asserts id is string {
   if (!id || typeof id !== 'string') {
     throw new ValidationError({ id: [`Valid ${resourceType} ID is required`] })
   }
@@ -16,7 +23,7 @@ export function validateResourceId(id: unknown, resourceType: string): asserts i
 
 /**
  * Parses and validates a global ID for a specific resource type
- * 
+ *
  * @param globalId - The global ID to parse
  * @param expectedType - The expected resource type
  * @returns The numeric ID
@@ -24,7 +31,7 @@ export function validateResourceId(id: unknown, resourceType: string): asserts i
  */
 export async function parseAndValidateGlobalId(
   globalId: string,
-  expectedType: string
+  expectedType: string,
 ): Promise<number> {
   const { parseGlobalId } = await import('../../core/utils/relay')
   return parseGlobalId(globalId, expectedType)
@@ -32,11 +39,13 @@ export async function parseAndValidateGlobalId(
 
 /**
  * Creates a standardized authentication check
- * 
+ *
  * @param context - The GraphQL context
  * @returns True if authenticated, AuthenticationError otherwise
  */
-export function createAuthenticationCheck(context: Context): true | AuthenticationError {
+export function createAuthenticationCheck(
+  context: Context,
+): true | AuthenticationError {
   if (!context.userId) {
     return new AuthenticationError()
   }
@@ -45,7 +54,7 @@ export function createAuthenticationCheck(context: Context): true | Authenticati
 
 /**
  * Creates a standardized role check
- * 
+ *
  * @param context - The GraphQL context
  * @param requiredRole - The role required
  * @param errorMessage - Custom error message
@@ -54,7 +63,7 @@ export function createAuthenticationCheck(context: Context): true | Authenticati
 export function createRoleCheck(
   context: Context,
   requiredRole: string,
-  errorMessage?: string
+  errorMessage?: string,
 ): true | AuthenticationError | AuthorizationError {
   // First check authentication
   const authResult = createAuthenticationCheck(context)
@@ -63,9 +72,12 @@ export function createRoleCheck(
   }
 
   // Check role
-  const hasRequiredRole = context.security.roles?.includes(requiredRole) ?? false
+  const hasRequiredRole =
+    context.security.roles?.includes(requiredRole) ?? false
   if (!hasRequiredRole) {
-    return new AuthorizationError(errorMessage ?? `${requiredRole} privileges required`)
+    return new AuthorizationError(
+      errorMessage ?? `${requiredRole} privileges required`,
+    )
   }
 
   return true
@@ -73,7 +85,7 @@ export function createRoleCheck(
 
 /**
  * Creates a standardized permission check
- * 
+ *
  * @param context - The GraphQL context
  * @param requiredPermission - The permission required
  * @param errorMessage - Custom error message
@@ -82,7 +94,7 @@ export function createRoleCheck(
 export function createPermissionCheck(
   context: Context,
   requiredPermission: string,
-  errorMessage?: string
+  errorMessage?: string,
 ): true | AuthenticationError | AuthorizationError {
   // First check authentication
   const authResult = createAuthenticationCheck(context)
@@ -91,10 +103,11 @@ export function createPermissionCheck(
   }
 
   // Check permission
-  const hasRequiredPermission = context.security.permissions?.includes(requiredPermission) ?? false
+  const hasRequiredPermission =
+    context.security.permissions?.includes(requiredPermission) ?? false
   if (!hasRequiredPermission) {
     return new AuthorizationError(
-      errorMessage ?? `Permission denied: ${requiredPermission} required`
+      errorMessage ?? `Permission denied: ${requiredPermission} required`,
     )
   }
 
@@ -103,14 +116,16 @@ export function createPermissionCheck(
 
 /**
  * Standard error handler for rules
- * 
+ *
  * @param error - The error to handle
  * @param fallbackMessage - Fallback message if error is not an Error instance
  * @returns The error or a new AuthorizationError
  */
 export function handleRuleError(
   error: unknown,
-  fallbackMessage = 'Authorization failed'
+  fallbackMessage = 'Authorization failed',
 ): Error {
-  return error instanceof Error ? error : new AuthorizationError(fallbackMessage)
+  return error instanceof Error
+    ? error
+    : new AuthorizationError(fallbackMessage)
 }

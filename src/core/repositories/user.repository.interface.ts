@@ -1,21 +1,23 @@
 /**
  * User Repository Interface
- * 
+ *
  * Defines the contract for user data access.
  * This is a port in hexagonal architecture.
  */
 
-import { Prisma } from '@prisma/client'
-import { User } from '../entities/user.entity'
-import { Email } from '../value-objects/email.vo'
-import { UserId } from '../value-objects/user-id.vo'
+import type { Prisma } from '@prisma/client'
+import type { User } from '../entities/user.entity'
+import type { Email } from '../value-objects/email.vo'
+import type { UserId } from '../value-objects/user-id.vo'
 
 export type UserFilter = Prisma.UserWhereInput & {
   emailContains?: string
   nameContains?: string
 }
 
-export type UserOrderBy = Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[]
+export type UserOrderBy =
+  | Prisma.UserOrderByWithRelationInput
+  | Prisma.UserOrderByWithRelationInput[]
 
 export interface IUserRepository {
   // Basic CRUD operations
@@ -37,9 +39,12 @@ export interface IUserRepository {
 
   // Business-specific queries
   existsByEmail(email: Email): Promise<boolean>
-  search(filter?: UserFilter, options?: {
-    skip?: number
-    take?: number
-    orderBy?: UserOrderBy
-  }): Promise<User[]>
+  search(
+    filter?: UserFilter,
+    options?: {
+      skip?: number
+      take?: number
+      orderBy?: UserOrderBy
+    },
+  ): Promise<User[]>
 }

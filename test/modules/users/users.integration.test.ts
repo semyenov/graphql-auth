@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs'
-import { ResultOf, VariablesOf } from 'gql.tada'
+import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TogglePublishPostMutation } from '../../../src/gql/mutations'
@@ -30,7 +30,6 @@ interface Post {
   author?: User | null
 }
 
-
 describe('User queries', () => {
   const server = createTestServer()
   let testUserId: number
@@ -52,12 +51,10 @@ describe('User queries', () => {
   describe('me query', () => {
     it('should return current user when authenticated', async () => {
       try {
-        const data = await gqlHelpers.expectSuccessfulQuery<ResultOf<typeof MeQuery>, VariablesOf<typeof MeQuery>>(
-          server,
-          print(MeQuery),
-          {},
-          createAuthContext(testUserId)
-        )
+        const data = await gqlHelpers.expectSuccessfulQuery<
+          ResultOf<typeof MeQuery>,
+          VariablesOf<typeof MeQuery>
+        >(server, print(MeQuery), {}, createAuthContext(testUserId))
 
         expect(data.me).toBeDefined()
         if (data.me) {
@@ -75,12 +72,15 @@ describe('User queries', () => {
     })
 
     it('should return null when not authenticated', async () => {
-      await gqlHelpers.expectGraphQLError<ResultOf<typeof MeQuery>, VariablesOf<typeof MeQuery>>(
+      await gqlHelpers.expectGraphQLError<
+        ResultOf<typeof MeQuery>,
+        VariablesOf<typeof MeQuery>
+      >(
         server,
         print(MeQuery),
         {},
         createMockContext(), // No auth
-        'Authentication required'
+        'Authentication required',
       )
     })
   })
@@ -100,21 +100,27 @@ describe('User queries', () => {
       const variables = { id: toPostId(post.id) }
 
       // First toggle - should publish
-      const data1 = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof TogglePublishPostMutation>, VariablesOf<typeof TogglePublishPostMutation>>(
+      const data1 = await gqlHelpers.expectSuccessfulMutation<
+        ResultOf<typeof TogglePublishPostMutation>,
+        VariablesOf<typeof TogglePublishPostMutation>
+      >(
         server,
         print(TogglePublishPostMutation),
         variables,
-        createAuthContext(testUserId)
+        createAuthContext(testUserId),
       )
 
       expect(data1.togglePublishPost?.published).toBe(true)
 
       // Second toggle - should unpublish
-      const data2 = await gqlHelpers.expectSuccessfulMutation<ResultOf<typeof TogglePublishPostMutation>, VariablesOf<typeof TogglePublishPostMutation>>(
+      const data2 = await gqlHelpers.expectSuccessfulMutation<
+        ResultOf<typeof TogglePublishPostMutation>,
+        VariablesOf<typeof TogglePublishPostMutation>
+      >(
         server,
         print(TogglePublishPostMutation),
         variables,
-        createAuthContext(testUserId)
+        createAuthContext(testUserId),
       )
 
       expect(data2.togglePublishPost?.published).toBe(false)
@@ -153,7 +159,7 @@ describe('User queries', () => {
         print(TogglePublishPostMutation),
         variables,
         createAuthContext(testUserId), // Different user
-        'You can only modify posts that you have created'
+        'You can only modify posts that you have created',
       )
 
       // Verify post wasn't changed
@@ -171,7 +177,7 @@ describe('User queries', () => {
         print(TogglePublishPostMutation),
         variables,
         createAuthContext(testUserId),
-        'Post with identifier'
+        'Post with identifier',
       )
     })
   })

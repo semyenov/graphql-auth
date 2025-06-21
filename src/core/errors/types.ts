@@ -1,13 +1,13 @@
 /**
  * Core Error Type Definitions
- * 
- * Error classes for comprehensive error handling following the 
+ *
+ * Error classes for comprehensive error handling following the
  * IMPROVED-FILE-STRUCTURE.md specification.
  */
 
 /**
  * Base error class for all application errors
- * 
+ *
  * @example
  * ```typescript
  * throw new BaseError('Something went wrong', 'INTERNAL_ERROR', 500)
@@ -16,7 +16,7 @@
 export class BaseError extends Error {
   /**
    * Creates a new BaseError instance
-   * 
+   *
    * @param message - Human-readable error message
    * @param code - Machine-readable error code (e.g., 'UNAUTHENTICATED')
    * @param statusCode - HTTP status code (defaults to 400)
@@ -33,7 +33,7 @@ export class BaseError extends Error {
 
   /**
    * Serializes the error to a JSON-friendly format
-   * 
+   *
    * @returns Object with error details
    */
   toJSON() {
@@ -77,8 +77,8 @@ export class ValidationError extends BaseError {
       (Array.isArray(errors)
         ? errors.join(', ')
         : Object.entries(errors)
-          .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
-          .join('; '))
+            .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
+            .join('; '))
 
     super(errorMessage, 'VALIDATION_ERROR', 400)
   }
@@ -124,7 +124,11 @@ export class RateLimitError extends BaseError {
  */
 export class BusinessRuleError extends BaseError {
   constructor(rule: string, message?: string) {
-    super(message || `Business rule violation: ${rule}`, 'BUSINESS_RULE_VIOLATION', 422)
+    super(
+      message || `Business rule violation: ${rule}`,
+      'BUSINESS_RULE_VIOLATION',
+      422,
+    )
   }
 }
 
@@ -133,7 +137,11 @@ export class BusinessRuleError extends BaseError {
  */
 export class ServiceUnavailableError extends BaseError {
   constructor(service: string, message?: string) {
-    super(message || `Service unavailable: ${service}`, 'SERVICE_UNAVAILABLE', 503)
+    super(
+      message || `Service unavailable: ${service}`,
+      'SERVICE_UNAVAILABLE',
+      503,
+    )
   }
 }
 
@@ -142,7 +150,11 @@ export class ServiceUnavailableError extends BaseError {
  */
 export class TimeoutError extends BaseError {
   constructor(operation: string, timeout: number) {
-    super(`Operation '${operation}' timed out after ${timeout}ms`, 'TIMEOUT', 408)
+    super(
+      `Operation '${operation}' timed out after ${timeout}ms`,
+      'TIMEOUT',
+      408,
+    )
   }
 }
 

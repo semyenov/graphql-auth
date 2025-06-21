@@ -1,23 +1,26 @@
 /**
  * GraphQL Context Type Definitions
- * 
+ *
  * Comprehensive, type-safe interfaces for GraphQL contexts following the
  * IMPROVED-FILE-STRUCTURE.md specification.
  */
 
-import { BaseContext } from '@apollo/server'
+import type { BaseContext } from '@apollo/server'
 import type { Endpoint, HTTPMethod } from 'fetchdts'
-import { IncomingMessage } from 'http'
-import { UserId } from '../../core/value-objects/user-id.vo'
+import type { IncomingMessage, ServerResponse } from 'http'
+import type { UserId } from '../../core/value-objects/user-id.vo'
+import type { Loaders } from '../../data/loaders/loaders'
+
 // Note: These types would normally be imported from a types module
 // For now, we'll define them inline to avoid import issues
 type GraphQLRequestBody = {
-    query: string
-    operationName?: string
-    variables?: Record<string, unknown>
+  query: string
+  operationName?: string
+  variables?: Record<string, unknown>
 }
 
 type MimeType = string
+
 import type { RequestMetadata, SecurityContext, User } from '../../types.d'
 
 // ============================================================================
@@ -28,29 +31,29 @@ import type { RequestMetadata, SecurityContext, User } from '../../types.d'
  * Enhanced GraphQL response type with better error handling
  */
 export interface GraphQLResponse<T = unknown> {
-    data?: T
-    errors?: GraphQLError[]
-    extensions?: Record<string, unknown>
+  data?: T
+  errors?: GraphQLError[]
+  extensions?: Record<string, unknown>
 }
 
 /**
  * GraphQL error type with location and path information
  */
 export interface GraphQLError extends Error {
-    name: string
-    message: string
-    locations?: Array<{ line: number; column: number }>
-    path?: Array<string | number>
-    extensions?: Record<string, unknown>
+  name: string
+  message: string
+  locations?: Array<{ line: number; column: number }>
+  path?: Array<string | number>
+  extensions?: Record<string, unknown>
 }
 
 /**
  * GraphQL operation metadata
  */
 export interface GraphQLOperationMeta {
-    operationName?: string
-    operationType: 'query' | 'mutation' | 'subscription'
-    variables?: Record<string, unknown>
+  operationName?: string
+  operationType: 'query' | 'mutation' | 'subscription'
+  variables?: Record<string, unknown>
 }
 
 // ============================================================================
@@ -61,21 +64,21 @@ export interface GraphQLOperationMeta {
  * API schema definition for fetchdts type safety
  */
 export interface GraphQLAPISchema {
-    '/graphql': {
-        [Endpoint]: {
-            POST: {
-                body: GraphQLRequestBody
-                headers: {
-                    'content-type': 'application/json'
-                    authorization?: string
-                }
-                response: GraphQLResponse
-                responseHeaders: {
-                    'content-type': 'application/json'
-                }
-            }
+  '/graphql': {
+    [Endpoint]: {
+      POST: {
+        body: GraphQLRequestBody
+        headers: {
+          'content-type': 'application/json'
+          authorization?: string
         }
+        response: GraphQLResponse
+        responseHeaders: {
+          'content-type': 'application/json'
+        }
+      }
     }
+  }
 }
 
 // ============================================================================
@@ -86,46 +89,46 @@ export interface GraphQLAPISchema {
  * Enhanced HTTP request interface with properly typed GraphQL body
  */
 export interface GraphQLIncomingMessage extends IncomingMessage {
-    readonly body?: GraphQLRequestBody
+  readonly body?: GraphQLRequestBody
 }
 
 /**
  * Base GraphQL context interface with comprehensive typing
- * 
+ *
  * @template TVariables - The type of GraphQL variables for the operation
  * @template TOperationName - The specific operation name as a string literal
  */
 export interface Context extends BaseContext {
-    // Operation-specific information
-    operationName?: string
-    variables?: Record<string, unknown>
+  // Operation-specific information
+  operationName?: string
+  variables?: Record<string, unknown>
 
-    // Request information
-    req: {
-        readonly url: string
-        readonly method: HTTPMethod
-        readonly headers: Record<string, string>
-        readonly body?: GraphQLRequestBody
+  // Request information
+  req: {
+    readonly url: string
+    readonly method: HTTPMethod
+    readonly headers: Record<string, string>
+    readonly body?: GraphQLRequestBody
+  }
+
+  // Additional request information for rate limiting
+  request?: {
+    ip?: string
+    headers?: Record<string, string | string[] | undefined>
+    connection?: {
+      remoteAddress?: string
     }
+  }
 
-    // Additional request information for rate limiting
-    request?: {
-        ip?: string
-        headers?: Record<string, string | string[] | undefined>
-        connection?: {
-            remoteAddress?: string
-        }
-    }
+  headers: Record<string, string>
+  method: HTTPMethod
+  contentType: MimeType | string
+  metadata: RequestMetadata
 
-    headers: Record<string, string>
-    method: HTTPMethod
-    contentType: MimeType | string
-    metadata: RequestMetadata
-
-    // Security and authentication
-    security: SecurityContext
-    userId?: UserId
-    user?: User
+  // Security and authentication
+  security: SecurityContext
+  userId?: UserId
+  user?: User
 }
 
 // ============================================================================
@@ -136,29 +139,30 @@ export interface Context extends BaseContext {
  * Interface for request components during context creation
  */
 export interface RequestComponents {
-    headers: Record<string, string>
-    method: HTTPMethod
-    contentType: MimeType | string
-    operationName?: string
-    variables?: Record<string, unknown>
-    metadata: RequestMetadata
-    requestObject: Context['req']
+  headers: Record<string, string>
+  method: HTTPMethod
+  contentType: MimeType | string
+  operationName?: string
+  variables?: Record<string, unknown>
+  metadata: RequestMetadata
+  requestObject: Context['req']
 }
 
 /**
  * Interface for authentication context components
  */
 export interface AuthenticationContext {
-    userId?: UserId
-    security: SecurityContext
+  userId?: UserId
+  security: SecurityContext
 }
 
 /**
  * Type utility for context creation functions
  */
-export type ContextCreationFunction<T extends Context = Context> = (
-    params: { req: IncomingMessage; res: any }
-) => Promise<T>
+export type ContextCreationFunction<T extends Context = Context> = (params: {
+  req: IncomingMessage
+  res: ServerResponse
+}) => Promise<T>
 
 // ============================================================================
 // ENHANCED CONTEXT TYPES
@@ -169,21 +173,17 @@ export type ContextCreationFunction<T extends Context = Context> = (
  * This is what gets returned after context enhancement
  */
 export interface EnhancedContext extends Context {
-    // DataLoader instances would be added here
-    loaders?: {
-        user?: any
-        post?: any
-        [key: string]: any
-    }
+  // DataLoader instances would be added here
+  loaders: Loaders
 
-    // Performance tracking
-    performance?: {
-        startTime: number
-        requestId: string
-    }
+  // Performance tracking
+  performance?: {
+    startTime: number
+    requestId: string
+  }
 
-    // Scope creation functions for enhanced authorization
-    createScopes?: () => any
+  // Scope creation functions for enhanced authorization
+  createScopes?: () => Record<string, unknown>
 }
 
 // ============================================================================
@@ -194,19 +194,25 @@ export interface EnhancedContext extends Context {
  * Context for authentication operations
  */
 export interface AuthContext extends Context {
-    operationName: 'signup' | 'login' | 'me' | 'logout' | 'refreshToken'
+  operationName: 'signup' | 'login' | 'me' | 'logout' | 'refreshToken'
 }
 
 /**
  * Context for post operations
  */
 export interface PostContext extends Context {
-    operationName: 'createPost' | 'updatePost' | 'deletePost' | 'feed' | 'post' | 'drafts'
+  operationName:
+  | 'createPost'
+  | 'updatePost'
+  | 'deletePost'
+  | 'feed'
+  | 'post'
+  | 'drafts'
 }
 
 /**
  * Context for user operations
  */
 export interface UserContext extends Context {
-    operationName: 'searchUsers' | 'updateUserProfile' | 'deleteUser'
+  operationName: 'searchUsers' | 'updateUserProfile' | 'deleteUser'
 }

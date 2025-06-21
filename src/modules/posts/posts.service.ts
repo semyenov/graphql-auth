@@ -1,6 +1,6 @@
 /**
  * Posts Module Service
- * 
+ *
  * Business logic for post operations following the IMPROVED-FILE-STRUCTURE.md specification.
  * This service contains reusable business logic that can be used by resolvers and other services.
  */
@@ -9,7 +9,7 @@ import { container } from 'tsyringe'
 import { AuthorizationError, NotFoundError } from '../../core/errors/types'
 import type { ILogger } from '../../core/services/logger.interface'
 import { parseGlobalId } from '../../core/utils/relay'
-import { UserId } from '../../core/value-objects/user-id.vo'
+import type { UserId } from '../../core/value-objects/user-id.vo'
 import { prisma } from '../../prisma'
 
 // Get services from container
@@ -60,7 +60,7 @@ export class PostsService {
     this.logger.info('Creating post', {
       authorId: authorId.value,
       title: data.title,
-      published: data.published
+      published: data.published,
     })
 
     const post = await prisma.post.create({
@@ -79,10 +79,17 @@ export class PostsService {
   /**
    * Update an existing post
    */
-  async updatePost(postId: string, data: UpdatePostData, userId: UserId): Promise<any> {
+  async updatePost(
+    postId: string,
+    data: UpdatePostData,
+    userId: UserId,
+  ): Promise<any> {
     const numericPostId = parseGlobalId(postId, 'Post')
 
-    this.logger.info('Updating post', { postId: numericPostId, userId: userId.value })
+    this.logger.info('Updating post', {
+      postId: numericPostId,
+      userId: userId.value,
+    })
 
     // Check ownership
     await this.checkPostOwnership(numericPostId, userId)
@@ -108,7 +115,10 @@ export class PostsService {
   async deletePost(postId: string, userId: UserId): Promise<boolean> {
     const numericPostId = parseGlobalId(postId, 'Post')
 
-    this.logger.info('Deleting post', { postId: numericPostId, userId: userId.value })
+    this.logger.info('Deleting post', {
+      postId: numericPostId,
+      userId: userId.value,
+    })
 
     // Check ownership
     await this.checkPostOwnership(numericPostId, userId)
@@ -139,7 +149,7 @@ export class PostsService {
 
     this.logger.info('Post publish status toggled', {
       postId: numericPostId,
-      newStatus: post.published
+      newStatus: post.published,
     })
 
     return post
@@ -170,7 +180,7 @@ export class PostsService {
 
     this.logger.info('View count incremented', {
       postId: numericPostId,
-      newCount: post.viewCount
+      newCount: post.viewCount,
     })
 
     return post
@@ -182,7 +192,7 @@ export class PostsService {
   async getPosts(
     filter: PostFilter = {},
     sort: PostSort = { field: 'createdAt', direction: 'desc' },
-    pagination: { skip?: number; take?: number } = {}
+    pagination: { skip?: number; take?: number } = {},
   ): Promise<any[]> {
     this.logger.debug('Getting posts', { filter, sort, pagination })
 
@@ -196,9 +206,9 @@ export class PostsService {
       take: pagination.take,
       include: {
         author: {
-          select: { id: true, name: true, email: true }
-        }
-      }
+          select: { id: true, name: true, email: true },
+        },
+      },
     })
   }
 
@@ -225,8 +235,8 @@ export class PostsService {
       prisma.post.aggregate({
         where: baseWhere,
         _sum: { viewCount: true },
-        _avg: { viewCount: true }
-      })
+        _avg: { viewCount: true },
+      }),
     ])
 
     return {
@@ -234,7 +244,7 @@ export class PostsService {
       publishedPosts: published,
       draftPosts: drafts,
       totalViews: viewStats._sum.viewCount || 0,
-      averageViews: viewStats._avg.viewCount || 0
+      averageViews: viewStats._avg.viewCount || 0,
     }
   }
 
@@ -243,7 +253,7 @@ export class PostsService {
    */
   async getUserDrafts(
     userId: UserId,
-    pagination: { skip?: number; take?: number } = {}
+    pagination: { skip?: number; take?: number } = {},
   ): Promise<any[]> {
     this.logger.debug('Getting user drafts', { userId: userId.value })
 
@@ -264,7 +274,7 @@ export class PostsService {
   async searchPosts(
     searchString: string,
     publishedOnly: boolean = true,
-    pagination: { skip?: number; take?: number } = {}
+    pagination: { skip?: number; take?: number } = {},
   ): Promise<any[]> {
     this.logger.debug('Searching posts', { searchString, publishedOnly })
 
@@ -272,7 +282,7 @@ export class PostsService {
       OR: [
         { title: { contains: searchString, mode: 'insensitive' } },
         { content: { contains: searchString, mode: 'insensitive' } },
-      ]
+      ],
     }
 
     if (publishedOnly) {
@@ -286,9 +296,9 @@ export class PostsService {
       take: pagination.take,
       include: {
         author: {
-          select: { id: true, name: true, email: true }
-        }
-      }
+          select: { id: true, name: true, email: true },
+        },
+      },
     })
   }
 
@@ -298,15 +308,18 @@ export class PostsService {
   async getPostById(postId: string, userId?: UserId): Promise<any | null> {
     const numericPostId = parseGlobalId(postId, 'Post')
 
-    this.logger.debug('Getting post by ID', { postId: numericPostId, userId: userId?.value })
+    this.logger.debug('Getting post by ID', {
+      postId: numericPostId,
+      userId: userId?.value,
+    })
 
     const post = await prisma.post.findUnique({
       where: { id: numericPostId },
       include: {
         author: {
-          select: { id: true, name: true, email: true }
-        }
-      }
+          select: { id: true, name: true, email: true },
+        },
+      },
     })
 
     if (!post) {
@@ -328,12 +341,12 @@ export class PostsService {
     postIds: string[],
     operation: 'publish' | 'unpublish' | 'delete' | 'flag',
     userId: UserId,
-    reason?: string
+    reason?: string,
   ): Promise<{ success: number; failed: number; errors: string[] }> {
     this.logger.info('Performing batch operation', {
       operation,
       postCount: postIds.length,
-      userId: userId.value
+      userId: userId.value,
     })
 
     let success = 0
@@ -351,18 +364,18 @@ export class PostsService {
           case 'publish':
             await prisma.post.update({
               where: { id: numericPostId },
-              data: { published: true }
+              data: { published: true },
             })
             break
           case 'unpublish':
             await prisma.post.update({
               where: { id: numericPostId },
-              data: { published: false }
+              data: { published: false },
             })
             break
           case 'delete':
             await prisma.post.delete({
-              where: { id: numericPostId }
+              where: { id: numericPostId },
             })
             break
           case 'flag':
@@ -374,7 +387,9 @@ export class PostsService {
         success++
       } catch (error) {
         failed++
-        errors.push(`Post ${postId}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        errors.push(
+          `Post ${postId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        )
       }
     }
 
@@ -385,7 +400,10 @@ export class PostsService {
   /**
    * Private helper: Check post ownership
    */
-  private async checkPostOwnership(postId: number, userId: UserId): Promise<any> {
+  private async checkPostOwnership(
+    postId: number,
+    userId: UserId,
+  ): Promise<any> {
     const post = await prisma.post.findUnique({
       where: { id: postId },
       select: { authorId: true, published: true },
@@ -396,7 +414,9 @@ export class PostsService {
     }
 
     if (post.authorId !== userId.value) {
-      throw new AuthorizationError('You can only modify posts that you have created')
+      throw new AuthorizationError(
+        'You can only modify posts that you have created',
+      )
     }
 
     return post

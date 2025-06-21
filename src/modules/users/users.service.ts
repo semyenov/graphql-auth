@@ -1,21 +1,26 @@
 /**
  * Users Module Service
- * 
+ *
  * Business logic for user operations following the IMPROVED-FILE-STRUCTURE.md specification.
  * This service contains reusable business logic that can be used by resolvers and other services.
  */
 
 import { container } from 'tsyringe'
-import { AuthorizationError, ConflictError, NotFoundError } from '../../core/errors/types'
+import {
+  AuthorizationError,
+  ConflictError,
+  NotFoundError,
+} from '../../core/errors/types'
 import type { ILogger } from '../../core/services/logger.interface'
 import type { IPasswordService } from '../../core/services/password.service.interface'
 import { parseGlobalId } from '../../core/utils/relay'
-import { UserId } from '../../core/value-objects/user-id.vo'
+import type { UserId } from '../../core/value-objects/user-id.vo'
 import { prisma } from '../../prisma'
 
 // Get services from container
 const getLogger = () => container.resolve<ILogger>('ILogger')
-const getPasswordService = () => container.resolve<IPasswordService>('IPasswordService')
+const getPasswordService = () =>
+  container.resolve<IPasswordService>('IPasswordService')
 
 export interface UpdateUserProfileData {
   name?: string
@@ -78,7 +83,7 @@ export class UsersService {
   async searchUsers(
     filter: UserFilter = {},
     sort: UserSort = { field: 'createdAt', direction: 'desc' },
-    pagination: { skip?: number; take?: number } = {}
+    pagination: { skip?: number; take?: number } = {},
   ): Promise<any[]> {
     this.logger.debug('Searching users', { filter, sort, pagination })
 
@@ -97,7 +102,7 @@ export class UsersService {
         createdAt: true,
         updatedAt: true,
         // Don't include password in results
-      }
+      },
     })
   }
 
@@ -126,21 +131,24 @@ export class UsersService {
         createdAt: true,
         updatedAt: true,
         // Don't include password
-      }
+      },
     })
   }
 
   /**
    * Update user profile
    */
-  async updateUserProfile(userId: UserId, data: UpdateUserProfileData): Promise<any> {
+  async updateUserProfile(
+    userId: UserId,
+    data: UpdateUserProfileData,
+  ): Promise<any> {
     this.logger.info('Updating user profile', { userId: userId.value })
 
     // Check if email is being changed and if it's already taken
     if (data.email) {
       const existingUser = await prisma.user.findUnique({
         where: { email: data.email },
-        select: { id: true }
+        select: { id: true },
       })
 
       if (existingUser && existingUser.id !== userId.value) {
@@ -163,7 +171,7 @@ export class UsersService {
         email: true,
         createdAt: true,
         updatedAt: true,
-      }
+      },
     })
 
     this.logger.info('User profile updated', { userId: userId.value })
@@ -176,13 +184,13 @@ export class UsersService {
   async adminUpdateUser(
     targetUserId: string,
     _data: AdminUpdateUserData,
-    adminUserId: UserId
+    adminUserId: UserId,
   ): Promise<any> {
     const numericTargetUserId = parseGlobalId(targetUserId, 'User')
 
     this.logger.info('Admin updating user', {
       targetUserId: numericTargetUserId,
-      adminUserId: adminUserId.value
+      adminUserId: adminUserId.value,
     })
 
     // Note: In a real implementation, you would check admin privileges here
@@ -197,7 +205,9 @@ export class UsersService {
     }
 
     // For now, just return the user since we don't have admin fields in the model
-    this.logger.warn('Admin update not fully implemented - missing admin fields in User model')
+    this.logger.warn(
+      'Admin update not fully implemented - missing admin fields in User model',
+    )
     return user
   }
 
@@ -215,13 +225,13 @@ export class UsersService {
       prisma.user.count({
         where: {
           createdAt: {
-            gte: firstDayOfMonth
-          }
-        }
+            gte: firstDayOfMonth,
+          },
+        },
       }),
       prisma.post.aggregate({
-        _count: { id: true }
-      })
+        _count: { id: true },
+      }),
     ])
 
     const totalPosts = postStats._count.id || 0
@@ -233,7 +243,7 @@ export class UsersService {
       activeUsers: total, // Placeholder - would filter by active: true
       verifiedUsers: total, // Placeholder - would filter by verified: true
       newUsersThisMonth: newThisMonth,
-      averagePostsPerUser
+      averagePostsPerUser,
     }
   }
 
@@ -246,13 +256,13 @@ export class UsersService {
     const [user, postStats] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId.value },
-        select: { createdAt: true }
+        select: { createdAt: true },
       }),
       prisma.post.aggregate({
         where: { authorId: userId.value },
         _count: { id: true },
-        _sum: { viewCount: true }
-      })
+        _sum: { viewCount: true },
+      }),
     ])
 
     if (!user) {
@@ -262,8 +272,8 @@ export class UsersService {
     const publishedPostsCount = await prisma.post.count({
       where: {
         authorId: userId.value,
-        published: true
-      }
+        published: true,
+      },
     })
 
     return {
@@ -273,7 +283,7 @@ export class UsersService {
       followers: 0, // Placeholder - would need followers table
       following: 0, // Placeholder - would need following table
       joinedAt: user.createdAt.toISOString(),
-      lastActiveAt: undefined // Placeholder - would need lastActiveAt field
+      lastActiveAt: undefined, // Placeholder - would need lastActiveAt field
     }
   }
 
@@ -283,13 +293,13 @@ export class UsersService {
   async changePassword(
     userId: UserId,
     currentPassword: string,
-    newPassword: string
+    newPassword: string,
   ): Promise<boolean> {
     this.logger.info('Changing user password', { userId: userId.value })
 
     const user = await prisma.user.findUnique({
       where: { id: userId.value },
-      select: { password: true }
+      select: { password: true },
     })
 
     if (!user) {
@@ -298,7 +308,10 @@ export class UsersService {
 
     // Verify current password
     const passwordService = getPasswordService()
-    const isValidPassword = await passwordService.verify(currentPassword, user.password)
+    const isValidPassword = await passwordService.verify(
+      currentPassword,
+      user.password,
+    )
 
     if (!isValidPassword) {
       throw new AuthorizationError('Current password is incorrect')
@@ -309,7 +322,7 @@ export class UsersService {
 
     await prisma.user.update({
       where: { id: userId.value },
-      data: { password: hashedNewPassword }
+      data: { password: hashedNewPassword },
     })
 
     this.logger.info('Password changed successfully', { userId: userId.value })
@@ -324,12 +337,12 @@ export class UsersService {
     operation: 'activate' | 'deactivate' | 'verify' | 'ban' | 'unban',
     adminUserId: UserId,
     reason?: string,
-    _duration?: string
+    _duration?: string,
   ): Promise<{ success: number; failed: number; errors: string[] }> {
     this.logger.info('Performing batch user operation', {
       operation,
       userCount: userIds.length,
-      adminUserId: adminUserId.value
+      adminUserId: adminUserId.value,
     })
 
     // Note: In a real implementation, you would check admin privileges here
@@ -345,7 +358,7 @@ export class UsersService {
         // Check if user exists
         const user = await prisma.user.findUnique({
           where: { id: numericUserId },
-          select: { id: true }
+          select: { id: true },
         })
 
         if (!user) {
@@ -379,7 +392,9 @@ export class UsersService {
         success++
       } catch (error) {
         failed++
-        errors.push(`User ${userId}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        errors.push(
+          `User ${userId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        )
       }
     }
 
@@ -393,7 +408,7 @@ export class UsersService {
   async deleteUser(userId: UserId, requestingUserId: UserId): Promise<boolean> {
     this.logger.info('Deleting user account', {
       userId: userId.value,
-      requestingUserId: requestingUserId.value
+      requestingUserId: requestingUserId.value,
     })
 
     // Users can only delete their own account (unless admin)
@@ -405,7 +420,7 @@ export class UsersService {
     // and handle related data (posts, comments, etc.)
 
     const user = await prisma.user.findUnique({
-      where: { id: userId.value }
+      where: { id: userId.value },
     })
 
     if (!user) {
@@ -414,12 +429,12 @@ export class UsersService {
 
     // Delete user's posts first (cascade delete)
     await prisma.post.deleteMany({
-      where: { authorId: userId.value }
+      where: { authorId: userId.value },
     })
 
     // Delete the user
     await prisma.user.delete({
-      where: { id: userId.value }
+      where: { id: userId.value },
     })
 
     this.logger.info('User account deleted', { userId: userId.value })
@@ -442,17 +457,23 @@ export class UsersService {
     // Note: These filters would need additional fields in the User model
     if (filter.role) {
       // where.role = filter.role
-      this.logger.warn('Role filtering not implemented - missing role field in User model')
+      this.logger.warn(
+        'Role filtering not implemented - missing role field in User model',
+      )
     }
 
     if (filter.verified !== undefined) {
       // where.verified = filter.verified
-      this.logger.warn('Verified filtering not implemented - missing verified field in User model')
+      this.logger.warn(
+        'Verified filtering not implemented - missing verified field in User model',
+      )
     }
 
     if (filter.active !== undefined) {
       // where.active = filter.active
-      this.logger.warn('Active filtering not implemented - missing active field in User model')
+      this.logger.warn(
+        'Active filtering not implemented - missing active field in User model',
+      )
     }
 
     if (filter.createdAfter) {

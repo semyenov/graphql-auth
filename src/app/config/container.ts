@@ -1,30 +1,29 @@
 /**
  * Dependency Injection Container Configuration (Clean)
- * 
+ *
  * Sets up TSyringe container with only necessary dependencies for direct resolvers.
  */
 
-import { PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
 import 'reflect-metadata'
 import { container } from 'tsyringe'
-import { prisma } from '../../data/database/client'
-
-// Core interfaces
-import { ILogger } from '../../core/services/logger.interface'
-import { IPasswordService } from '../../core/services/password.service.interface'
-import { ITokenService } from '../../core/services/token.service.interface'
-
 // Infrastructure implementations
 import { LoggerFactory } from '../../core/logging/logger-factory'
-import { BcryptPasswordService } from '../../modules/auth/services/password.service'
-
+// Repositories (for refresh tokens)
+import type { IUserRepository } from '../../core/repositories/user.repository.interface'
+// Core interfaces
+import type { ILogger } from '../../core/services/logger.interface'
+import type { IPasswordService } from '../../core/services/password.service.interface'
+import type { ITokenService } from '../../core/services/token.service.interface'
+import { prisma } from '../../data/database/client'
+import { PrismaUserRepository } from '../../data/repositories/prisma-user.repository'
 // Feature-based implementations (for refresh tokens)
 import { RefreshTokenRepository } from '../../data/repositories/refresh-token.repository'
-import { TokenConfig, TokenService } from '../../modules/auth/services/token.service'
-
-// Repositories (for refresh tokens)
-import { IUserRepository } from '../../core/repositories/user.repository.interface'
-import { PrismaUserRepository } from '../../data/repositories/prisma-user.repository'
+import { HybridPasswordService } from '../../modules/auth/services/hybrid-password.service'
+import {
+  type TokenConfig,
+  TokenService,
+} from '../../modules/auth/services/token.service'
 
 // Configuration
 import { getConfig } from './configuration-legacy'
@@ -35,14 +34,17 @@ export function configureContainer(): void {
   // Register token configuration
   container.registerInstance<TokenConfig>('TokenConfig', {
     accessTokenSecret: config.auth.jwtSecret,
-    refreshTokenSecret: config.auth.jwtSecret + '-refresh', // In production, use a different secret
+    refreshTokenSecret: `${config.auth.jwtSecret}-refresh`, // In production, use a different secret
     accessTokenExpiresIn: '15m',
-    refreshTokenExpiresIn: '7d'
+    refreshTokenExpiresIn: '7d',
   })
 
   // Register Prisma client - use the shared instance from prisma.ts
   // This ensures tests can override the client with setTestPrismaClient
-  container.registerInstance<PrismaClient>('PrismaClient', prisma as PrismaClient)
+  container.registerInstance<PrismaClient>(
+    'PrismaClient',
+    prisma as PrismaClient,
+  )
 
   // Register logger using factory
   const logger = LoggerFactory.createFromEnv()
@@ -50,7 +52,7 @@ export function configureContainer(): void {
 
   // Register services
   container.register<IPasswordService>('IPasswordService', {
-    useClass: BcryptPasswordService,
+    useClass: HybridPasswordService,
   })
 
   // Register feature-based services (for refresh tokens)

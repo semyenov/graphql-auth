@@ -1,29 +1,35 @@
 /**
  * Type Utilities
- * 
+ *
  * TypeScript type helpers and utilities
  */
 
 /**
  * Make all properties of T optional recursively
  */
-export type DeepPartial<T> = T extends object ? {
-  [P in keyof T]?: DeepPartial<T[P]>
-} : T
+export type DeepPartial<T> = T extends object
+  ? {
+    [P in keyof T]?: DeepPartial<T[P]>
+  }
+  : T
 
 /**
  * Make all properties of T required recursively
  */
-export type DeepRequired<T> = T extends object ? {
-  [P in keyof T]-?: DeepRequired<T[P]>
-} : T
+export type DeepRequired<T> = T extends object
+  ? {
+    [P in keyof T]-?: DeepRequired<T[P]>
+  }
+  : T
 
 /**
  * Make all properties of T readonly recursively
  */
-export type DeepReadonly<T> = T extends object ? {
-  readonly [P in keyof T]: DeepReadonly<T[P]>
-} : T
+export type DeepReadonly<T> = T extends object
+  ? {
+    readonly [P in keyof T]: DeepReadonly<T[P]>
+  }
+  : T
 
 /**
  * Extract the type of a Promise
@@ -124,7 +130,7 @@ export function isString(value: unknown): value is string {
  * Type guard to check if a value is a number
  */
 export function isNumber(value: unknown): value is number {
-  return typeof value === 'number' && !isNaN(value)
+  return typeof value === 'number' && !Number.isNaN(value)
 }
 
 /**
@@ -151,7 +157,9 @@ export function isArray<T = unknown>(value: unknown): value is T[] {
 /**
  * Type guard to check if a value is a function
  */
-export function isFunction(value: unknown): value is Function {
+export function isFunction(
+  value: unknown,
+): value is (...args: unknown[]) => unknown {
   return typeof value === 'function'
 }
 
@@ -159,7 +167,7 @@ export function isFunction(value: unknown): value is Function {
  * Type guard to check if a value is a Date
  */
 export function isDate(value: unknown): value is Date {
-  return value instanceof Date && !isNaN(value.getTime())
+  return value instanceof Date && !Number.isNaN(value.getTime())
 }
 
 /**
@@ -173,17 +181,21 @@ export function isRegExp(value: unknown): value is RegExp {
  * Type guard to check if a value is a Promise
  */
 export function isPromise<T = unknown>(value: unknown): value is Promise<T> {
-  return value instanceof Promise || (
-    isObject(value) &&
-    isFunction((value as any).then) &&
-    isFunction((value as any).catch)
+  return (
+    value instanceof Promise ||
+    (isObject(value) &&
+      isFunction((value as Record<string, unknown>).then) &&
+      isFunction((value as Record<string, unknown>).catch))
   )
 }
 
 /**
  * Assert that a condition is true, narrowing the type
  */
-export function assert(condition: unknown, message?: string): asserts condition {
+export function assert(
+  condition: unknown,
+  message?: string,
+): asserts condition {
   if (!condition) {
     throw new Error(message || 'Assertion failed')
   }
@@ -200,16 +212,16 @@ export function assertNever(value: never): never {
  * Create a type-safe object entries function
  */
 export function objectEntries<T extends Record<string, unknown>>(
-  obj: T
-): Array<[keyof T, T[keyof T]]> {
-  return Object.entries(obj) as Array<[keyof T, T[keyof T]]>
+  obj: T,
+): [keyof T, T[keyof T]][] {
+  return Object.entries(obj) as [keyof T, T[keyof T]][]
 }
 
 /**
  * Create a type-safe object keys function
  */
 export function objectKeys<T extends Record<string, unknown>>(
-  obj: T
+  obj: T,
 ): Array<keyof T> {
   return Object.keys(obj) as Array<keyof T>
 }
@@ -218,9 +230,9 @@ export function objectKeys<T extends Record<string, unknown>>(
  * Create a type-safe object values function
  */
 export function objectValues<T extends Record<string, unknown>>(
-  obj: T
-): Array<T[keyof T]> {
-  return Object.values(obj) as Array<T[keyof T]>
+  obj: T,
+): T[keyof T][] {
+  return Object.values(obj) as T[keyof T][]
 }
 
 /**
@@ -228,7 +240,7 @@ export function objectValues<T extends Record<string, unknown>>(
  */
 export function pick<T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
-  keys: K[]
+  keys: K[],
 ): Pick<T, K> {
   const result = {} as Pick<T, K>
   for (const key of keys) {
@@ -244,7 +256,7 @@ export function pick<T extends Record<string, unknown>, K extends keyof T>(
  */
 export function omit<T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
-  keys: K[]
+  keys: K[],
 ): Omit<T, K> {
   const result = { ...obj }
   for (const key of keys) {

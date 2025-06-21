@@ -27,10 +27,7 @@ export function fromGlobalId(globalId: string): { type: string; id: string } {
  * Parses a global ID and returns the numeric ID
  * @throws Error if the ID is invalid
  */
-export function parseGlobalId(
-  globalId: string,
-  expectedType: string
-): number {
+export function parseGlobalId(globalId: string, expectedType: string): number {
   const decoded = fromGlobalId(globalId)
 
   if (decoded.type !== expectedType) {

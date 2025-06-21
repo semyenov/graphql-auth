@@ -2,10 +2,9 @@
  * GraphQL subscription testing utilities
  */
 
-import type { GraphQLResponse } from '@apollo/server'
-import { ApolloServer } from '@apollo/server'
+import type { ApolloServer, GraphQLResponse } from '@apollo/server'
 import { parse } from 'graphql'
-import { Context } from '../../../src/graphql/context/context.types'
+import type { Context } from '../../../src/graphql/context/context.types'
 
 export interface SubscriptionTestHelper {
   subscribe: () => Promise<AsyncIterator<GraphQLResponse>>
@@ -21,7 +20,7 @@ export interface SubscriptionTestHelper {
 export async function createSubscriptionHelper(
   server: ApolloServer<Context>,
   subscription: string,
-  variables: Record<string, any>,
+  variables: Record<string, unknown>,
   context: Context,
 ): Promise<SubscriptionTestHelper> {
   const document = parse(subscription)
@@ -38,7 +37,8 @@ export async function createSubscriptionHelper(
     throw new Error('Expected subscription to return incremental result')
   }
 
-  const asyncIterator = result.body.subsequentResults as unknown as AsyncIterator<GraphQLResponse>
+  const asyncIterator = result.body
+    .subsequentResults as unknown as AsyncIterator<GraphQLResponse>
   let closed = false
 
   return {
@@ -86,15 +86,20 @@ export async function createSubscriptionHelper(
 export async function testSubscriptionWithTimeout(
   server: ApolloServer<Context>,
   subscription: string,
-  variables: Record<string, any>,
+  variables: Record<string, unknown>,
   context: Context,
   options: {
     expectedEvents: number
     timeout?: number
-    validator?: (event: any) => void
+    validator?: (event: unknown) => void
   },
 ): Promise<GraphQLResponse[]> {
-  const helper = await createSubscriptionHelper(server, subscription, variables, context)
+  const helper = await createSubscriptionHelper(
+    server,
+    subscription,
+    variables,
+    context,
+  )
   const timeout = options.timeout ?? 5000
   const results: GraphQLResponse[] = []
 
@@ -108,7 +113,11 @@ export async function testSubscriptionWithTimeout(
         const event = await helper.getNext()
         results.push(event)
 
-        if (options.validator && event.body.kind === 'single' && event.body.singleResult.data) {
+        if (
+          options.validator &&
+          event.body.kind === 'single' &&
+          event.body.singleResult.data
+        ) {
           options.validator(event.body.singleResult.data)
         }
       }
@@ -124,7 +133,7 @@ export async function testSubscriptionWithTimeout(
 /**
  * Mock subscription event emitter for testing
  */
-export class MockSubscriptionEmitter<T = any> {
+export class MockSubscriptionEmitter<T = unknown> {
   private subscribers: Set<(value: T) => void> = new Set()
 
   subscribe(callback: (value: T) => void): () => void {
@@ -133,7 +142,7 @@ export class MockSubscriptionEmitter<T = any> {
   }
 
   emit(value: T): void {
-    this.subscribers.forEach(callback => callback(value))
+    this.subscribers.forEach((callback) => callback(value))
   }
 
   getSubscriberCount(): number {
@@ -149,14 +158,14 @@ export class MockSubscriptionEmitter<T = any> {
  * Create a mock pubsub for testing subscriptions
  */
 export function createMockPubSub(): {
-  publish: (event: string, payload: any) => void
-  subscribe: (event: string) => AsyncIterator<any>
+  publish: (event: string, payload: unknown) => void
+  subscribe: (event: string) => AsyncIterator<unknown>
   getSubscriberCount: (event?: string) => number
 } {
   const emitters = new Map<string, MockSubscriptionEmitter>()
 
   return {
-    publish: (event: string, payload: any) => {
+    publish: (event: string, payload: unknown) => {
       const emitter = emitters.get(event)
       if (emitter) {
         emitter.emit(payload)
@@ -167,10 +176,13 @@ export function createMockPubSub(): {
       if (!emitters.has(event)) {
         emitters.set(event, new MockSubscriptionEmitter())
       }
-      const emitter = emitters.get(event)!
+      const emitter = emitters.get(event)
+      if (!emitter) {
+        throw new Error(`No emitter for event: ${event}`)
+      }
 
-      const queue: any[] = []
-      const resolvers: ((value: IteratorResult<any>) => void)[] = []
+      const queue: unknown[] = []
+      const resolvers: ((value: IteratorResult<unknown>) => void)[] = []
 
       const unsubscribe = emitter.subscribe((value) => {
         const resolver = resolvers.shift()
@@ -188,7 +200,7 @@ export function createMockPubSub(): {
             return { value, done: false }
           }
 
-          return new Promise<IteratorResult<any>>((resolve) => {
+          return new Promise<IteratorResult<unknown>>((resolve) => {
             resolvers.push(resolve)
           })
         },
@@ -198,7 +210,7 @@ export function createMockPubSub(): {
           return { value: undefined, done: true }
         },
 
-        async throw(error: any) {
+        async throw(error: unknown) {
           unsubscribe()
           throw error
         },
@@ -236,7 +248,7 @@ export async function waitForSubscription(
     if (Date.now() - startTime > timeout) {
       throw new Error('Timeout waiting for subscription')
     }
-    await new Promise(resolve => setTimeout(resolve, interval))
+    await new Promise((resolve) => setTimeout(resolve, interval))
   }
 }
 
@@ -245,14 +257,19 @@ export async function waitForSubscription(
  */
 export function createSubscriptionTester(server: ApolloServer<Context>) {
   return {
-    async expectSubscriptionEvent<T = any>(
+    async expectSubscriptionEvent<T = unknown>(
       subscription: string,
-      variables: Record<string, any>,
+      variables: Record<string, unknown>,
       context: Context,
       triggerFn: () => Promise<void>,
       validator?: (data: T) => void,
     ): Promise<T> {
-      const helper = await createSubscriptionHelper(server, subscription, variables, context)
+      const helper = await createSubscriptionHelper(
+        server,
+        subscription,
+        variables,
+        context,
+      )
 
       try {
         // Trigger the event
@@ -277,19 +294,26 @@ export function createSubscriptionTester(server: ApolloServer<Context>) {
 
     async expectNoSubscriptionEvent(
       subscription: string,
-      variables: Record<string, any>,
+      variables: Record<string, unknown>,
       context: Context,
       triggerFn: () => Promise<void>,
       waitTime: number = 1000,
     ): Promise<void> {
-      const helper = await createSubscriptionHelper(server, subscription, variables, context)
+      const helper = await createSubscriptionHelper(
+        server,
+        subscription,
+        variables,
+        context,
+      )
 
       try {
         // Trigger the event
         await triggerFn()
 
         // Wait and ensure no event is received
-        const timeoutPromise = new Promise<void>(resolve => setTimeout(resolve, waitTime))
+        const timeoutPromise = new Promise<void>((resolve) =>
+          setTimeout(resolve, waitTime),
+        )
         const eventPromise = helper.getNext().then(() => {
           throw new Error('Unexpected subscription event received')
         })
@@ -302,15 +326,17 @@ export function createSubscriptionTester(server: ApolloServer<Context>) {
 
     async expectSubscriptionError(
       subscription: string,
-      variables: Record<string, any>,
+      variables: Record<string, unknown>,
       context: Context,
       expectedError: string,
     ): Promise<void> {
       try {
         await createSubscriptionHelper(server, subscription, variables, context)
         throw new Error('Expected subscription to fail')
-      } catch (error: any) {
-        if (!error.message.includes(expectedError)) {
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error)
+        if (!errorMessage.includes(expectedError)) {
           throw error
         }
       }
