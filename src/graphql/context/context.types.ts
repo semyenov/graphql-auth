@@ -12,9 +12,9 @@ import type {
 } from '@apollo/server'
 import type { Endpoint, HTTPMethod, MimeType } from 'fetchdts'
 import type { IncomingMessage, ServerResponse } from 'http'
-import type { Loaders } from '../../data/loaders/loaders'
+import type { Loaders } from '../../data/loaders'
+import type { UserId } from '../../types/value-objects'
 import type { RequestMetadata, SecurityContext, User } from '../../types.d'
-import type { UserId } from '../../value-objects/user-id.vo'
 
 // Note: These types would normally be imported from a types module
 // For now, we'll define them inline to avoid import issues
@@ -182,7 +182,7 @@ export type IContextCreationFunction<
  */
 export interface Context<TVariables extends Record<string, unknown>>
   extends IContext<TVariables> {
-  // DataLoader instances would be added here
+  // DataLoader instances for N+1 prevention
   loaders: Loaders
 
   // Performance tracking
@@ -194,6 +194,11 @@ export interface Context<TVariables extends Record<string, unknown>>
   // Scope creation functions for enhanced authorization
   createScopes?: () => Record<string, unknown>
 }
+
+/**
+ * Default context type with unknown variables for convenience
+ */
+export type DefaultContext = IContext<Record<string, unknown>>
 
 // ============================================================================
 // OPERATION-SPECIFIC CONTEXT TYPES

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { TogglePublishPostMutation } from '../../../src/gql/mutations'
 import { MeQuery } from '../../../src/gql/queries'
 import { prisma } from '../../../src/prisma'
-import { UserId } from '../../../src/value-objects/user-id.vo'
+import { UserId } from '../../../src/types/value-objects'
 import {
   cleanDatabase,
   createAuthContext,

@@ -8,7 +8,7 @@ import {
 } from '../../../src/gql/mutations'
 import { DraftsQuery, FeedQuery } from '../../../src/gql/queries'
 import { prisma } from '../../../src/prisma'
-import { UserId } from '../../../src/value-objects/user-id.vo'
+import { UserId } from '../../../src/types/value-objects'
 import {
   cleanDatabase,
   createAuthContext,

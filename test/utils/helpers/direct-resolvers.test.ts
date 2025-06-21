@@ -11,7 +11,7 @@ import { print } from 'graphql'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import type { IContext } from '../../../src/graphql/context/context.types'
 import { prisma } from '../../../src/prisma'
-import { UserId } from '../../../src/value-objects/user-id.vo'
+import { UserId } from '../../../src/types/value-objects'
 import {
   cleanDatabase,
   createAuthContext,

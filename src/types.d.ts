@@ -2,7 +2,7 @@ import type { Post as PrismaPost, User as PrismaUser } from '@prisma/client'
 import type { GraphQLError } from 'graphql'
 import type { Environment } from './app/constants/config'
 import type { ContextErrorCode, ContextErrorMessage } from './context/constants'
-import type { UserId } from './core/value-objects/user-id.vo'
+import type { UserId } from './types/value-objects'
 
 // Domain Types
 export interface User extends Omit<PrismaUser, 'password'> {

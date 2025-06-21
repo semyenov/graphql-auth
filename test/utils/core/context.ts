@@ -3,7 +3,7 @@
  */
 
 import type { IContext } from '../../../src/graphql/context/context.types'
-import { UserId } from '../../../src/value-objects/user-id.vo'
+import { UserId } from '../../../src/types/value-objects'
 import { generateTestToken } from './auth'
 
 /**

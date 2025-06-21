@@ -6,8 +6,7 @@
  */
 
 import type { Prisma, User } from '@prisma/client'
-import type { Email } from '../../value-objects/email.vo'
-import type { UserId } from '../../value-objects/user-id.vo'
+import type { Email, UserId } from '../../types/value-objects'
 
 export type UserFilter = Prisma.UserWhereInput & {
   emailContains?: string

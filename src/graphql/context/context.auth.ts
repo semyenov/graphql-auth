@@ -9,7 +9,7 @@ import { container } from 'tsyringe'
 import { ERROR_MESSAGES } from '../../app/constants'
 import { AuthenticationError } from '../../app/errors/types'
 import { TokenService } from '../../modules/auth/services/token.service'
-import type { UserId } from '../../value-objects/user-id.vo'
+import type { UserId } from '../../types/value-objects'
 
 /**
  * Extract Bearer token from Authorization header

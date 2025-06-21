@@ -14,7 +14,7 @@ import {
 } from '../../../src/gql/mutations-auth-tokens'
 import { prisma } from '../../../src/prisma'
 // Import direct mutations
-import { UserId } from '../../../src/value-objects/user-id.vo'
+import { UserId } from '../../../src/types/value-objects'
 import {
   cleanDatabase,
   createAuthContext,

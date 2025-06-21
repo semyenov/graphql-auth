@@ -14,7 +14,7 @@ import {
 } from '../../../src/gql/queries'
 import { PermissionUtils } from '../../../src/graphql/middleware/utils-clean'
 import { prisma } from '../../../src/prisma'
-import { UserId } from '../../../src/value-objects/user-id.vo'
+import { UserId } from '../../../src/types/value-objects'
 import {
   cleanDatabase,
   createAuthContext,

@@ -7,9 +7,6 @@
 
 // Re-export types from other modules for convenience
 export type { Context, IContext } from '../graphql/context/context.types'
-export type { Email } from '../value-objects/email.vo'
-export type { UserId as UserIdVO } from '../value-objects/user-id.vo'
-
 export type {
   ApiError,
   ApiResponse,
@@ -61,6 +58,7 @@ export type {
   ValidationRule,
   WhereInput,
 } from './graphql'
+export type { Email, UserId as UserIdVO } from './value-objects'
 
 /**
  * Commonly used type combinations
