@@ -231,14 +231,44 @@ export const postsPermissions = {
   Mutation: {
     // Post CRUD
     createPost: isAuthenticated,
-    updatePost: rule()(async (parent, args, context) => {
-      const ownerCheck = await isPostOwner.resolve(parent, args, context, {} as any, {} as any)
-      if (ownerCheck !== true) return ownerCheck
+    updatePost: rule()(async (_parent, args, context) => {
+      // Check ownership inline
+      if (!context.userId) {
+        return new AuthenticationError('You must be logged in')
+      }
 
-      const editableCheck = await isPostEditable.resolve(parent, args, context, {} as any, {} as any)
-      if (editableCheck !== true) return editableCheck
+      try {
+        const postId = await parseAndValidateGlobalId(args.id, 'Post')
+        const post = await prisma.post.findUnique({
+          where: { id: postId },
+          select: {
+            authorId: true,
+            createdAt: true,
+            published: true,
+          },
+        })
 
-      return true
+        if (!post) {
+          return new NotFoundError('Post', args.id)
+        }
+
+        if (post.authorId !== context.userId.value) {
+          return new AuthorizationError('You can only update your own posts')
+        }
+
+        // Check if editable (draft posts always editable, published only within 24 hours)
+        if (post.published) {
+          const hoursSinceCreation = (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60)
+          if (hoursSinceCreation > 24) {
+            return new AuthorizationError('Published posts can only be edited within 24 hours of creation')
+          }
+        }
+
+        return true
+      } catch (error) {
+        if (error instanceof Error) return error
+        return new Error('Failed to check post permissions')
+      }
     }),
     deletePost: isPostOwner,
     togglePublishPost: isPostOwner,
