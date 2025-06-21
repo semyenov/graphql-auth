@@ -8,20 +8,20 @@ import { startStandaloneServer } from '@apollo/server/standalone'
 import { consola } from 'consola'
 import type { HTTPMethod, MimeType } from 'fetchdts'
 import { GraphQLError, type GraphQLFormattedError } from 'graphql'
-import { createSecurityHeadersPlugin } from './middleware/security-headers'
 import 'reflect-metadata'
 import { SERVER } from '../constants'
 import { isBaseError } from '../core/errors/handlers'
 import { createContext } from '../graphql/context/context.factory'
 import type { Context } from '../graphql/context/context.types'
-import { getSchema } from '../graphql/schema'
+import { buildSchema } from '../graphql/schema'
 import { disconnectPrisma } from '../prisma'
 import { configureContainer } from './config/container'
 import { env, isDevelopment } from './config/environment'
+import { createSecurityHeadersPlugin } from './middleware/security-headers'
 
 // Enhanced Apollo Server with better typing
 const server = new ApolloServer<Context>({
-  schema: getSchema(),
+  schema: buildSchema(),
   plugins: [
     ApolloServerPluginInlineTrace(),
     createSecurityHeadersPlugin(),

@@ -7,16 +7,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 # Development
 bun run dev                             # Start dev server (port 4000)
-bun run test --run                      # Run all tests once (no watch)
-bun test                                # Run tests in watch mode  
+bun test                                # Run tests with Bun test runner
+bun test --run                          # Run all tests once (no watch)
+bun test --watch                        # Run tests in watch mode
 bun test test/modules/auth/auth.test.ts # Run specific test file
 bun test -t "authentication"            # Run tests matching pattern
 bun test --coverage                     # Run tests with coverage
+bun test --ui                           # Run tests with UI
+
+# Alternative Test Runners
+bun run vitest                          # Run tests with Vitest
+bun run vitest:run                      # Run Vitest once (no watch)
+bun run vitest:ui                       # Run Vitest with UI
+bun run vitest:coverage                 # Run Vitest with coverage
 
 # Database
 bunx prisma migrate dev --name feature  # Create migration
 bun run generate                        # Generate all types (Prisma + GraphQL)
+bun run generate:prisma                 # Generate Prisma client only
+bun run generate:gql                    # Generate GraphQL types only
 bun run db:reset                        # Reset database with seed data
+bun run seed                            # Manually seed database
 bunx prisma studio                      # Open database GUI
 
 # Build & Production
@@ -34,15 +45,14 @@ bun run check                          # Run all Biome checks
 bun run check:fix                      # Auto-fix all issues
 
 # GraphQL Schema
-bunx gql.tada generate-output          # Generate GraphQL type definitions
-bun run generate:gql                   # Alternative command for above
+bun run gen:schema                      # Generate GraphQL schema file
+bunx gql.tada generate-output           # Generate GraphQL type definitions
 
-# Database Seeding
-bun run prisma/seed.ts                 # Manually seed database
-
-# Alternative Test Runner (may have GraphQL conflicts)
-bunx vitest run                        # Run tests with vitest
-bunx vitest --ui                       # Vitest UI mode
+# Environment & Utilities
+bun run env:verify                      # Verify environment setup
+bun run postinstall                     # Apply patches after install
+bun run prepare                         # Setup husky git hooks
+bun run lint-staged                     # Run lint-staged (used by git hooks)
 ```
 
 ## Architecture Overview
@@ -50,7 +60,7 @@ bunx vitest --ui                       # Vitest UI mode
 ### Tech Stack
 
 - **Runtime**: Bun (fast JavaScript/TypeScript runtime)
-- **GraphQL Server**: Apollo Server 4 with H3 HTTP framework
+- **GraphQL Server**: Apollo Server 4 with standalone server
 - **Schema Builder**: Pothos with 7 advanced plugins:
   - **Prisma Plugin**: Direct access pattern (NOT in context)
   - **Relay Plugin**: Global IDs, connections, cursor pagination
@@ -59,12 +69,15 @@ bunx vitest --ui                       # Vitest UI mode
   - **Shield Plugin**: Inline GraphQL Shield rules (custom implementation)
   - **DataLoader Plugin**: Automatic N+1 query prevention
   - **Validation Plugin**: Zod integration with async refinements
-- **Database**: Prisma ORM with SQLite (PostgreSQL ready)
+- **Database**: Prisma ORM with SQLite (PostgreSQL ready with Accelerate)
 - **Authentication**: JWT with argon2 (bcrypt fallback) + refresh tokens
 - **Authorization**: Dual system - Pothos Scope Auth + GraphQL Shield
 - **Type Safety**: GraphQL Tada for compile-time GraphQL typing
-- **Testing**: Bun test (primary), Vitest (configured with caveats)
-- **Code Quality**: Biome (replaces ESLint/Prettier)
+- **Testing**: Bun test (primary), Vitest (alternative with dedicated config)
+- **Code Quality**: Biome for linting/formatting + Husky for git hooks
+- **Rate Limiting**: rate-limiter-flexible with configurable presets
+- **Dependency Injection**: TSyringe for service management
+- **Logging**: Consola for development, Pino ready for production
 
 ### Project Structure
 
@@ -235,12 +248,29 @@ BCRYPT_ROUNDS=10
 - **Always**: Use typed GraphQL operations from `src/gql/`
 - **Never**: Use raw GraphQL strings in tests
 
+### Test Runner Configuration
+
+#### Bun Test (Recommended)
+- Native Bun test runner with excellent performance
+- Configuration in `bunfig.toml`
+- Preloads: `test/test-env.ts` and `test/bun-setup.ts`
+- Best compatibility with Bun runtime features
+
+#### Vitest (Alternative)
+- Configuration in `vitest.config.ts`
+- Environment: `happy-dom`
+- Pool: `forks` with sequential execution
+- GraphQL module resolution fixes included
+- Coverage: V8 provider
+
 ## Key Dependencies
 
 - **graphql**: Locked at 16.11.0 (avoid version conflicts)
 - **@pothos/***: Keep all plugins on compatible versions
 - **argon2**: Primary password hashing (bcrypt as fallback)
 - **biome**: Code quality tool (no ESLint/Prettier needed)
+- **fetchdts**: Type-safe fetch API for improved HTTP handling
+- **husky + lint-staged**: Git hooks for code quality enforcement
 
 ## Recent Changes
 
@@ -249,3 +279,8 @@ BCRYPT_ROUNDS=10
 - Added argon2 password hashing with hybrid service
 - Migrated to inline ShieldPlugin approach
 - Enhanced with security headers middleware
+- Added fetchdts for type-safe HTTP operations
+- Configured dual test runner support (Bun + Vitest)
+- Implemented git hooks with Husky for code quality
+- Improved TypeScript strict mode compliance
+- Removed legacy bcrypt-only implementations

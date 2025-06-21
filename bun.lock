@@ -21,6 +21,7 @@
         "consola": "^3.4.2",
         "dataloader": "^2.2.3",
         "fetch-cookie": "^3.1.0",
+        "fetchdts": "^0.1.4",
         "gql.tada": "^1.8.10",
         "graphql": "16.11.0",
         "graphql-scalars": "^1.24.2",
@@ -663,6 +664,8 @@
     "fdir": ["fdir@6.4.6", "", { "peerDependencies": { "picomatch": "^3 || ^4" }, "optionalPeers": ["picomatch"] }, "sha512-hiFoqpyZcfNm1yc4u8oWCf9A2c4D3QjCrks3zmoVKVxpQRzmPNar1hUJcBG2RQHvEVGDN+Jm81ZheVLAQMK6+w=="],
 
     "fetch-cookie": ["fetch-cookie@3.1.0", "", { "dependencies": { "set-cookie-parser": "^2.4.8", "tough-cookie": "^5.0.0" } }, "sha512-s/XhhreJpqH0ftkGVcQt8JE9bqk+zRn4jF5mPJXWZeQMCI5odV9K+wEWYbnzFPHgQZlvPSMjS4n4yawWE8RINw=="],
+
+    "fetchdts": ["fetchdts@0.1.4", "", {}, "sha512-ickQgaQs/RbVxaJauBqmpiNSk9wLoxWRsSjDFP6JpiO3MCguqaSRltwL6HF9V9hJr2Prnqq0ic9b2bTBK8LqRA=="],
 
     "fflate": ["fflate@0.8.2", "", {}, "sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A=="],
 
