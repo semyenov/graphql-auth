@@ -219,6 +219,28 @@ export type introspection_types = {
     ]
   }
   JSON: unknown
+  LoginResult: {
+    kind: 'OBJECT'
+    name: 'LoginResult'
+    fields: {
+      message: {
+        name: 'message'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      requiresEmailVerification: {
+        name: 'requiresEmailVerification'
+        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
+      }
+      token: {
+        name: 'token'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      user: {
+        name: 'user'
+        type: { kind: 'OBJECT'; name: 'User'; ofType: null }
+      }
+    }
+  }
   Mutation: {
     kind: 'OBJECT'
     name: 'Mutation'
@@ -243,6 +265,10 @@ export type introspection_types = {
         name: 'login'
         type: { kind: 'SCALAR'; name: 'String'; ofType: null }
       }
+      loginSecure: {
+        name: 'loginSecure'
+        type: { kind: 'OBJECT'; name: 'LoginResult'; ofType: null }
+      }
       loginWithTokens: {
         name: 'loginWithTokens'
         type: { kind: 'OBJECT'; name: 'AuthTokens'; ofType: null }
@@ -259,9 +285,25 @@ export type introspection_types = {
         name: 'refreshToken'
         type: { kind: 'OBJECT'; name: 'AuthTokens'; ofType: null }
       }
+      requestPasswordReset: {
+        name: 'requestPasswordReset'
+        type: { kind: 'OBJECT'; name: 'PasswordResetResult'; ofType: null }
+      }
+      resendVerificationEmail: {
+        name: 'resendVerificationEmail'
+        type: { kind: 'OBJECT'; name: 'ResendVerificationResult'; ofType: null }
+      }
+      resetPassword: {
+        name: 'resetPassword'
+        type: { kind: 'OBJECT'; name: 'ResetPasswordResult'; ofType: null }
+      }
       signup: {
         name: 'signup'
         type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      signupWithVerification: {
+        name: 'signupWithVerification'
+        type: { kind: 'OBJECT'; name: 'SignupResult'; ofType: null }
       }
       togglePublishPost: {
         name: 'togglePublishPost'
@@ -274,6 +316,10 @@ export type introspection_types = {
       updateUserProfile: {
         name: 'updateUserProfile'
         type: { kind: 'OBJECT'; name: 'User'; ofType: null }
+      }
+      verifyEmail: {
+        name: 'verifyEmail'
+        type: { kind: 'OBJECT'; name: 'VerifyEmailResult'; ofType: null }
       }
     }
   }
@@ -338,6 +384,20 @@ export type introspection_types = {
       startCursor: {
         name: 'startCursor'
         type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+    }
+  }
+  PasswordResetResult: {
+    kind: 'OBJECT'
+    name: 'PasswordResetResult'
+    fields: {
+      message: {
+        name: 'message'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      success: {
+        name: 'success'
+        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
       }
     }
   }
@@ -550,6 +610,22 @@ export type introspection_types = {
         type: { kind: 'OBJECT'; name: 'QueryFeedConnection'; ofType: null }
       }
       me: { name: 'me'; type: { kind: 'OBJECT'; name: 'User'; ofType: null } }
+      node: {
+        name: 'node'
+        type: { kind: 'INTERFACE'; name: 'Node'; ofType: null }
+      }
+      nodes: {
+        name: 'nodes'
+        type: {
+          kind: 'NON_NULL'
+          name: never
+          ofType: {
+            kind: 'LIST'
+            name: never
+            ofType: { kind: 'INTERFACE'; name: 'Node'; ofType: null }
+          }
+        }
+      }
       post: {
         name: 'post'
         type: { kind: 'OBJECT'; name: 'Post'; ofType: null }
@@ -799,6 +875,53 @@ export type introspection_types = {
       statusCode: {
         name: 'statusCode'
         type: { kind: 'SCALAR'; name: 'Int'; ofType: null }
+      }
+    }
+  }
+  ResendVerificationResult: {
+    kind: 'OBJECT'
+    name: 'ResendVerificationResult'
+    fields: {
+      message: {
+        name: 'message'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      success: {
+        name: 'success'
+        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
+      }
+    }
+  }
+  ResetPasswordResult: {
+    kind: 'OBJECT'
+    name: 'ResetPasswordResult'
+    fields: {
+      message: {
+        name: 'message'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      success: {
+        name: 'success'
+        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
+      }
+    }
+  }
+  Role: { name: 'Role'; enumValues: 'ADMIN' | 'USER' }
+  SignupResult: {
+    kind: 'OBJECT'
+    name: 'SignupResult'
+    fields: {
+      message: {
+        name: 'message'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      requiresEmailVerification: {
+        name: 'requiresEmailVerification'
+        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
+      }
+      success: {
+        name: 'success'
+        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
       }
     }
   }
@@ -1064,6 +1187,20 @@ export type introspection_types = {
       }
     }
   }
+  VerifyEmailResult: {
+    kind: 'OBJECT'
+    name: 'VerifyEmailResult'
+    fields: {
+      message: {
+        name: 'message'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      success: {
+        name: 'success'
+        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
+      }
+    }
+  }
 }
 
 /** An IntrospectionQuery representation of your schema.
@@ -1081,8 +1218,6 @@ export type introspection = {
   subscription: never
   types: introspection_types
 }
-
-// import * as gqlTada from 'gql.tada';
 
 declare module 'gql.tada' {
   interface setupSchema {

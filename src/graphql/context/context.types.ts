@@ -129,6 +129,9 @@ export interface Context extends BaseContext {
   security: SecurityContext
   userId?: UserId
   user?: User
+
+  // Client information
+  ipAddress?: string
 }
 
 // ============================================================================

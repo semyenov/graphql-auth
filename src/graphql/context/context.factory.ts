@@ -17,6 +17,7 @@ import {
   createSecurityContext,
   determineHttpMethod,
   enhanceContext,
+  extractClientIp,
   extractContentType,
   extractHeaders,
   isValidRequest,
@@ -63,8 +64,11 @@ export const createContext: ContextFunction<
     // Create authentication context
     const authContext = await createAuthenticationContext(requestComponents)
 
+    // Extract IP address for the context
+    const ipAddress = extractClientIp(requestComponents.headers)
+
     // Assemble final context
-    const context = assembleContext(requestComponents, authContext)
+    const context = assembleContext(requestComponents, authContext, ipAddress)
 
     // Enhance context with Prisma client and DataLoaders
     return enhanceContext(context)
@@ -145,6 +149,7 @@ async function createAuthenticationContext(
  *
  * @param requestComponents - The processed request components
  * @param authContext - The authentication context
+ * @param ipAddress - The client IP address
  * @returns The complete Context object
  */
 function assembleContext(
@@ -154,6 +159,7 @@ function assembleContext(
   >
     ? T
     : never,
+  ipAddress: string,
 ): Context {
   return {
     // Request information
@@ -171,5 +177,8 @@ function assembleContext(
     security: authContext.security,
     userId: authContext.userId,
     user: undefined, // Will be populated by resolvers if needed
+
+    // IP address for rate limiting and security
+    ipAddress,
   }
 }

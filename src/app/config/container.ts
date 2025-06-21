@@ -9,6 +9,10 @@ import 'reflect-metadata'
 import { container } from 'tsyringe'
 // Infrastructure implementations
 import { createLoggerFromEnv } from '../../core/logging/logger-factory'
+import {
+  EmailService,
+  type IEmailService,
+} from '../../core/services/email.service'
 // Core interfaces
 import type { ILogger } from '../../core/services/logger.interface'
 import type { IPasswordService } from '../../core/services/password.service.interface'
@@ -16,10 +20,12 @@ import type { ITokenService } from '../../core/services/token.service.interface'
 // Feature-based implementations (for refresh tokens)
 import { RefreshTokenRepository } from '../../data/repositories/refresh-token.repository'
 import { Argon2PasswordService } from '../../modules/auth/services/argon2-password.service'
+import { LoginAttemptService } from '../../modules/auth/services/login-attempt.service'
 import {
   type TokenConfig,
   TokenService,
 } from '../../modules/auth/services/token.service'
+import { VerificationTokenService } from '../../modules/auth/services/verification-token.service'
 import { prisma } from '../../prisma'
 
 // Configuration
@@ -61,6 +67,19 @@ export function configureContainer(): void {
   })
   container.register<RefreshTokenRepository>(RefreshTokenRepository, {
     useClass: RefreshTokenRepository,
+  })
+
+  // Register email service
+  container.register<IEmailService>('IEmailService', {
+    useClass: EmailService,
+  })
+
+  // Register verification services
+  container.register<VerificationTokenService>(VerificationTokenService, {
+    useClass: VerificationTokenService,
+  })
+  container.register<LoginAttemptService>(LoginAttemptService, {
+    useClass: LoginAttemptService,
   })
 }
 

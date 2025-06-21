@@ -129,6 +129,13 @@ input IntFilter {
 
 scalar JSON
 
+type LoginResult {
+  message: String
+  requiresEmailVerification: Boolean
+  token: String
+  user: User
+}
+
 """
 The root mutation type
 """
@@ -159,6 +166,11 @@ type Mutation {
   login(email: String!, password: String!): String
 
   """
+  Authenticate with email and password
+  """
+  loginSecure(email: String!, password: String!): LoginResult
+
+  """
   Authenticate and receive access and refresh tokens
   """
   loginWithTokens(email: String!, password: String!): AuthTokens
@@ -179,9 +191,33 @@ type Mutation {
   refreshToken(refreshToken: String!): AuthTokens
 
   """
+  Request a password reset email
+  """
+  requestPasswordReset(email: String!): PasswordResetResult
+
+  """
+  Resend email verification link
+  """
+  resendVerificationEmail(email: String!): ResendVerificationResult
+
+  """
+  Reset password with token
+  """
+  resetPassword(newPassword: String!, token: String!): ResetPasswordResult
+
+  """
   Create a new user account
   """
   signup(email: String!, name: String, password: String!): String
+
+  """
+  Create a new user account with email verification
+  """
+  signupWithVerification(
+    email: String!
+    name: String
+    password: String!
+  ): SignupResult
 
   """
   Toggle the publish status of a post
@@ -197,6 +233,11 @@ type Mutation {
   Update the current user profile
   """
   updateUserProfile(input: UpdateUserInput!): User
+
+  """
+  Verify email address with token
+  """
+  verifyEmail(token: String!): VerifyEmailResult
 }
 
 interface Node {
@@ -216,6 +257,11 @@ type PageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
   startCursor: String
+}
+
+type PasswordResetResult {
+  message: String
+  success: Boolean
 }
 
 type Post implements Node {
@@ -407,6 +453,8 @@ type Query {
   Get the currently authenticated user
   """
   me: User
+  node(id: ID!): Node
+  nodes(ids: [ID!]!): [Node]!
 
   """
   Get a post by ID
@@ -493,6 +541,27 @@ type RateLimitError {
   statusCode: Int
 }
 
+type ResendVerificationResult {
+  message: String
+  success: Boolean
+}
+
+type ResetPasswordResult {
+  message: String
+  success: Boolean
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+type SignupResult {
+  message: String
+  requiresEmailVerification: Boolean
+  success: Boolean
+}
+
 enum SortOrder {
   asc
   desc
@@ -546,6 +615,12 @@ type User implements Node {
   """
   draftsCount: Int
   email: String
+  emailVerified: Boolean
+
+  """
+  When the email was verified
+  """
+  emailVerifiedAt: DateTime
   id: ID!
   name: String
 
@@ -640,4 +715,9 @@ type ValidationError {
   code: String
   message: String
   statusCode: Int
+}
+
+type VerifyEmailResult {
+  message: String
+  success: Boolean
 }

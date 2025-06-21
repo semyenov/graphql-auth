@@ -18,6 +18,7 @@ import './error-types'
 
 import '../../modules/auth/resolvers/auth-tokens.resolver'
 import '../../modules/auth/resolvers/auth.resolver'
+import '../../modules/auth/resolvers/auth-enhanced.resolver'
 import '../../modules/posts/resolvers/posts.resolver'
 import '../../modules/users/resolvers/users.resolver'
 

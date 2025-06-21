@@ -206,6 +206,16 @@ export const RateLimitPresets = {
     duration: 60 * 60, // per hour
     blockDuration: 60 * 60, // block for 1 hour
   },
+  resendEmail: {
+    points: 3, // 3 resend attempts
+    duration: 60 * 60, // per hour
+    blockDuration: 60 * 60, // block for 1 hour
+  },
+  verifyEmail: {
+    points: 10, // 10 attempts
+    duration: 60 * 60, // per hour
+    blockDuration: 60 * 60, // block for 1 hour
+  },
 
   // General API endpoints
   generalApi: {

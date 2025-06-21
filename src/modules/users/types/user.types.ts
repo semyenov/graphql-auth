@@ -8,6 +8,12 @@ builder.prismaNode('User', {
   fields: (t) => ({
     name: t.exposeString('name', { nullable: true }),
     email: t.exposeString('email'),
+    emailVerified: t.exposeBoolean('emailVerified'),
+    emailVerifiedAt: t.expose('emailVerifiedAt', {
+      type: 'DateTime',
+      nullable: true,
+      description: 'When the email was verified',
+    }),
     createdAt: t.expose('createdAt', { type: 'DateTime' }),
     updatedAt: t.expose('updatedAt', { type: 'DateTime' }),
     // Enhanced posts connection with cursor-based pagination
