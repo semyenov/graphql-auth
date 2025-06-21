@@ -48,7 +48,9 @@ export function createAuthenticationCheck(
   context: Context,
 ): true | AuthenticationError {
   if (!context.userId) {
-    return new AuthenticationError(ERROR_MESSAGES.AUTHENTICATION_REQUIRED + '. Please authenticate and try again.')
+    return new AuthenticationError(
+      `${ERROR_MESSAGES.AUTHENTICATION_REQUIRED}. Please authenticate and try again.`,
+    )
   }
   return true
 }

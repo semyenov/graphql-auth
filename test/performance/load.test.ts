@@ -9,9 +9,8 @@ import { print } from 'graphql'
 import { performance } from 'perf_hooks'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { FeedQuery } from '../../src/gql/queries'
-import { prisma } from '../../src/prisma'
-import { createMockContext, executeOperation } from '../utils/helpers/database.helpers'
 import { createTestServer } from '../test-utils'
+import { createMockContext, executeOperation } from '../utils/helpers/database.helpers'
 
 describe('Load Testing', () => {
   let server: ReturnType<typeof createTestServer>
@@ -36,12 +35,12 @@ describe('Load Testing', () => {
     const endTime = performance.now()
 
     // All requests should succeed
-    results.forEach((result) => {
+    for (const result of results) {
       expect(result.body.kind).toBe('single')
       if (result.body.kind === 'single') {
         expect(result.body.singleResult.errors).toBeUndefined()
       }
-    })
+    }
 
     // Should complete within reasonable time
     const totalTime = endTime - startTime

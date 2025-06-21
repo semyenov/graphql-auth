@@ -27,7 +27,6 @@ import '../../test-env'
 import { ApolloServer, type GraphQLResponse } from '@apollo/server'
 import { useDeferStream } from '@graphql-yoga/plugin-defer-stream'
 import { useDisableIntrospection } from '@graphql-yoga/plugin-disable-introspection'
-import type { PrismaClient } from '@prisma/client'
 import { createYoga } from 'graphql-yoga'
 import jwt from 'jsonwebtoken'
 import { env } from '../../../src/app/config/environment'
@@ -120,17 +119,15 @@ export interface TestServer {
  * Creates a Yoga test server instance for integration testing.
  *
  * @param authContext - Optional partial authentication context to be merged into the request context.
- * @param dbClient - Optional PrismaClient instance to be passed to buildSchema
  * @returns An object containing the test server and a function to execute operations.
  */
 export async function createYogaTestServer(
   authContext?: Partial<AuthContext>,
-  dbClient?: PrismaClient,
 ): Promise<TestServer> {
-  const schema = await buildSchema(dbClient)
+  const schema = await buildSchema()
   const yoga = createYoga({
     schema,
-    context: authContext || {},
+    context: authContext,
     plugins: [useDeferStream(), useDisableIntrospection()],
   })
 
@@ -324,22 +321,3 @@ export const gqlHelpers = {
  * The convenience functions are perfect for frontend applications and integration tests
  * with a running server, but not for unit tests of the GraphQL schema itself.
  */
-
-export async function createTestApp(options?: {
-  context?: Partial<ContextType>
-  useAuth?: boolean
-}) {
-  const schema = await buildSchema()
-  const yoga = createYoga({
-    schema,
-    context: options?.context || {},
-    plugins: [
-      useDisableIntrospection(),
-      useDeferStream(),
-    ],
-  })
-
-  const server = createTestServer() // Using Apollo for consistency
-
-  return { yoga, server }
-}

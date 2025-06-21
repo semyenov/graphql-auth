@@ -18,7 +18,7 @@ describe('Rate Limiter Service', () => {
 
   afterAll(async () => {
     // Disable rate limiting after tests
-    delete process.env.TEST_RATE_LIMITING
+    process.env.TEST_RATE_LIMITING = undefined
     await rateLimiter.cleanup()
   })
 

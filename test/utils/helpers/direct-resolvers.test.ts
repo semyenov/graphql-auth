@@ -6,14 +6,14 @@
 
 import { type ApolloServer } from '@apollo/server'
 import * as argon2 from 'argon2'
-import { graphql } from 'gql.tada'
+import { graphql, type ResultOf, type VariablesOf } from 'gql.tada'
+import { print } from 'graphql'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { UserId } from '../../../src/core/value-objects/user-id.vo'
 import { type Context } from '../../../src/graphql/context/context.types'
 import { prisma } from '../../../src/prisma'
-import { createMockContext } from './database.helpers'
 import { createTestServer } from '../../test-utils'
-import { gqlHelpers } from './database.helpers'
+import { createMockContext, gqlHelpers } from './database.helpers'
 
 describe('Direct Resolvers', () => {
     let server: ApolloServer<Context>
@@ -45,9 +45,12 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-            const data = await gqlHelpers.expectSuccessfulMutation(
+            const data = await gqlHelpers.expectSuccessfulMutation<
+                ResultOf<typeof mutation>,
+                VariablesOf<typeof mutation>
+            >(
                 server,
-                mutation,
+                print(mutation),
                 {
                     email: 'newuser@example.com',
                     password: 'password123',
@@ -74,9 +77,12 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-            const data = await gqlHelpers.expectSuccessfulMutation(
+            const data = await gqlHelpers.expectSuccessfulMutation<
+                ResultOf<typeof mutation>,
+                VariablesOf<typeof mutation>
+            >(
                 server,
-                mutation,
+                print(mutation),
                 {
                     email: 'test@example.com',
                     password: 'password123',
@@ -110,12 +116,10 @@ describe('Direct Resolvers', () => {
                 },
             }
 
-            const data = await gqlHelpers.expectSuccessfulQuery(
-                server,
-                query,
-                {},
-                authContext,
-            )
+            const data = await gqlHelpers.expectSuccessfulQuery<
+                ResultOf<typeof query>,
+                VariablesOf<typeof query>
+            >(server, print(query), {}, authContext)
 
             expect(data.me).toBeDefined()
             expect(data.me?.email).toBe('test@example.com')
@@ -151,9 +155,12 @@ describe('Direct Resolvers', () => {
                 },
             }
 
-            const data = await gqlHelpers.expectSuccessfulMutation(
+            const data = await gqlHelpers.expectSuccessfulMutation<
+                ResultOf<typeof mutation>,
+                VariablesOf<typeof mutation>
+            >(
                 server,
-                mutation,
+                print(mutation),
                 {
                     input: {
                         title: 'Test Post',
@@ -210,12 +217,10 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-            const data = await gqlHelpers.expectSuccessfulQuery(
-                server,
-                query,
-                {},
-                createMockContext(),
-            )
+            const data = await gqlHelpers.expectSuccessfulQuery<
+                ResultOf<typeof query>,
+                VariablesOf<typeof query>
+            >(server, print(query), {}, createMockContext())
 
             expect(data.feed?.edges?.length).toBe(2)
             expect(data.feed?.totalCount).toBe(2)
@@ -274,12 +279,10 @@ describe('Direct Resolvers', () => {
                 },
             }
 
-            const data = await gqlHelpers.expectSuccessfulQuery(
-                server,
-                query,
-                {},
-                authContext,
-            )
+            const data = await gqlHelpers.expectSuccessfulQuery<
+                ResultOf<typeof query>,
+                VariablesOf<typeof query>
+            >(server, print(query), {}, authContext)
 
             expect(data.drafts?.edges?.length).toBe(2)
             expect(data.drafts?.totalCount).toBe(2)
@@ -312,12 +315,10 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-            const data = await gqlHelpers.expectSuccessfulQuery(
-                server,
-                query,
-                { search: 'john@example.com' },
-                createMockContext(),
-            )
+            const data = await gqlHelpers.expectSuccessfulQuery<
+                ResultOf<typeof query>,
+                VariablesOf<typeof query>
+            >(server, print(query), { search: 'john@example.com' }, createMockContext())
 
             expect(data.searchUsers?.edges?.length).toBe(1)
             expect(data.searchUsers?.edges?.[0]?.node?.email).toBe('john@example.com')
