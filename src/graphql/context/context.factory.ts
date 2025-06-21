@@ -5,12 +5,15 @@
  * authorization, and performance tracking capabilities.
  */
 
+import type { HeaderMap } from '@apollo/server'
+import type { HTTPMethod } from 'fetchdts'
 import type { IncomingMessage, ServerResponse } from 'http'
 import { container } from 'tsyringe'
 import type { ILogger } from '../../app/services/logger.interface'
-import { createLoaders } from '../../data/loaders'
+import { createDataLoaders } from '../../data/loaders'
 import { prisma } from '../../prisma'
 import type { UserId } from '../../types/value-objects'
+import type { RequestMetadata, SecurityContext, User } from '../../types.d'
 import { verifyToken } from '../../utils/jwt'
 import type { Context, DefaultContext } from './context.types'
 
@@ -37,24 +40,24 @@ async function createBaseContext(
     // Request information
     req: {
       url: req.url || '/',
-      method: req.method || 'POST',
+      method: (req.method || 'POST') as HTTPMethod,
       headers,
       body: undefined, // Will be populated by Apollo Server
     },
-    headers: new Map(Object.entries(headers)),
-    method: req.method || 'POST',
+    headers: new Map(Object.entries(headers)) as HeaderMap,
+    method: (req.method || 'POST') as HTTPMethod,
     contentType: headers['content-type'] || 'application/json',
     metadata: {
-      requestId: crypto.randomUUID(),
-      timestamp: new Date(),
-      userAgent: headers['user-agent'],
-    },
+      timestamp: Date.now(),
+      userAgent: headers['user-agent'] || 'unknown',
+    } as RequestMetadata,
 
     // Security context (to be enhanced)
     security: {
+      isAuthenticated: false,
       roles: [],
       permissions: [],
-    },
+    } as SecurityContext,
 
     // Additional request info for rate limiting
     request: {
@@ -109,13 +112,18 @@ async function enhanceWithAuth(
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
-      },
+        role: user.role || 'user',
+        status: 'active',
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        emailVerified: user.emailVerified,
+        emailVerifiedAt: user.emailVerifiedAt,
+      } as User,
       security: {
-        ...context.security,
-        roles: [user.role],
+        isAuthenticated: true,
+        roles: [user.role || 'user'],
         permissions: [], // Would be populated based on role
-      },
+      } as SecurityContext,
     }
   } catch (error) {
     logger.warn('Token verification failed', { error })
@@ -142,7 +150,7 @@ export async function createContext({
   const authContext = await enhanceWithAuth(baseContext, logger)
 
   // Add DataLoaders
-  const loaders = createLoaders()
+  const loaders = createDataLoaders(prisma)
 
   // Create final enhanced context
   const context: Context<Record<string, unknown>> = {
@@ -150,7 +158,7 @@ export async function createContext({
     loaders,
     performance: {
       startTime: Date.now(),
-      requestId: authContext.metadata.requestId,
+      requestId: crypto.randomUUID(),
     },
   }
 
@@ -166,23 +174,23 @@ export function createMockContext(
   const defaultContext: Context<Record<string, unknown>> = {
     req: {
       url: '/graphql',
-      method: 'POST',
+      method: 'POST' as HTTPMethod,
       headers: {},
       body: undefined,
     },
-    headers: new Map(),
-    method: 'POST',
+    headers: new Map() as HeaderMap,
+    method: 'POST' as HTTPMethod,
     contentType: 'application/json',
     metadata: {
-      requestId: 'test-request-id',
-      timestamp: new Date(),
+      timestamp: Date.now(),
       userAgent: 'test-agent',
-    },
+    } as RequestMetadata,
     security: {
+      isAuthenticated: false,
       roles: [],
       permissions: [],
-    },
-    loaders: createLoaders(),
+    } as SecurityContext,
+    loaders: createDataLoaders(prisma),
     performance: {
       startTime: Date.now(),
       requestId: 'test-request-id',

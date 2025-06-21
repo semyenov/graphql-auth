@@ -2,6 +2,7 @@
  * Test context creation utilities
  */
 
+import { HeaderMap } from '@apollo/server'
 import type { DefaultContext } from '../../../src/graphql/context/context.types'
 import { UserId } from '../../../src/types/value-objects'
 import { generateTestToken } from './auth'
@@ -21,7 +22,7 @@ export function createMockContext(
       ip: '127.0.0.1',
     } as unknown as DefaultContext['req'],
     user: undefined,
-    headers: {},
+    headers: new HeaderMap(),
     method: 'POST',
     contentType: 'application/json',
     metadata: {

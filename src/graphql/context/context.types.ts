@@ -14,7 +14,12 @@ import type { Endpoint, HTTPMethod, MimeType } from 'fetchdts'
 import type { IncomingMessage, ServerResponse } from 'http'
 import type { Loaders } from '../../data/loaders'
 import type { UserId } from '../../types/value-objects'
-import type { RequestMetadata, SecurityContext, User } from '../../types.d'
+import type {
+  JWTPayload,
+  RequestMetadata,
+  SecurityContext,
+  User,
+} from '../../types.d'
 
 // Note: These types would normally be imported from a types module
 // For now, we'll define them inline to avoid import issues
@@ -105,6 +110,8 @@ export interface IContext<TVariables extends Record<string, unknown>>
   // Operation-specific information
   operationName?: string
   variables?: TVariables
+
+  decodedToken?: JWTPayload
 
   // Request information
   req: {

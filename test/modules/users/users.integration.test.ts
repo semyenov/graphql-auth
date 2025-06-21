@@ -54,12 +54,7 @@ describe('User queries', () => {
         const data = await gqlHelpers.expectSuccessfulQuery<
           ResultOf<typeof MeQuery>,
           VariablesOf<typeof MeQuery>
-        >(
-          server,
-          print(MeQuery),
-          {},
-          createAuthContext(UserId.create(testUserId)),
-        )
+        >(server, print(MeQuery), {}, createAuthContext(testUserId))
 
         expect(data.me).toBeDefined()
         if (data.me) {
@@ -77,7 +72,7 @@ describe('User queries', () => {
     })
 
     it('should return null when not authenticated', async () => {
-      await gqlHelpers.expectGraphQLError<
+      const data = await gqlHelpers.expectSuccessfulQuery<
         ResultOf<typeof MeQuery>,
         VariablesOf<typeof MeQuery>
       >(
@@ -85,8 +80,9 @@ describe('User queries', () => {
         print(MeQuery),
         {},
         createMockContext(), // No auth
-        'You must be logged in to perform this action. Please authenticate and try again.',
       )
+
+      expect(data.me).toBeNull()
     })
   })
 

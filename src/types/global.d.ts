@@ -111,7 +111,7 @@ export type AuthTokens = {
 }
 
 export type TokenPayload = {
-  userId: string
+  userId: number
   email: string
   iat?: number
   exp?: number

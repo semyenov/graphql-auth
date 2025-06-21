@@ -88,6 +88,9 @@ export class LoginAttemptService {
 
     // Check if the oldest relevant attempt is within the lockout window
     const oldestRelevantAttempt = recentAttempts[maxAttempts - 1]
+    if (!oldestRelevantAttempt) {
+      return { locked: false }
+    }
     const lockoutEndTime = new Date(
       oldestRelevantAttempt.createdAt.getTime() +
         lockoutDurationMinutes * 60 * 1000,

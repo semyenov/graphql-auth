@@ -33,6 +33,7 @@ bun run format                        # Check formatting
 bun run format:fix                    # Auto-fix formatting
 bun run check                         # Run all Biome checks
 bun run check:fix                     # Auto-fix all issues
+bun run check:fix --unsafe             # Apply unsafe fixes (for any types, etc.)
 
 # GraphQL Schema
 bun run gen:schema                      # Generate GraphQL schema file
@@ -62,6 +63,7 @@ This project follows a **Modular Monolith** architecture with **Direct Pothos Re
 - **Type Safety**: GraphQL Tada for compile-time GraphQL typing
 - **Testing**: Vitest with comprehensive test utilities
 - **DI Container**: TSyringe for service management
+- **Code Quality**: Biome for linting and formatting
 
 ## Critical Architectural Patterns
 
@@ -149,19 +151,28 @@ const result = await executeOperation(
 const result = await executeOperation(server, `mutation { login(...) }`)
 ```
 
+### 6. Relay Global IDs
+
+The project uses Base64-encoded global IDs for all entities:
+
+```typescript
+// Encoding: "Post:1" → "UG9zdDox"
+// Decoding in Shield rules:
+const postId = parseGlobalId(args.id, 'Post') // Returns numeric ID
+```
+
 ## Module Structure
 
 ```
 modules/[feature]/
-├── [feature].schema.ts       # GraphQL type definitions (if separate)
-├── [feature].permissions.ts  # Shield rules and guards (if separate)
-├── [feature].validation.ts   # Zod validation schemas (if separate)
-├── resolvers/
-│   └── [feature].resolver.ts # Pothos resolvers with inline logic
+├── [feature].resolver.ts     # Pothos resolvers with inline logic
+├── [feature].rules.ts        # Shield rules for authorization
+├── [feature].types.ts        # GraphQL type definitions
 ├── services/                 # Complex business logic
 │   └── [feature].service.ts  # Service implementation + interface
+├── entities/                 # Domain entities (if needed)
+├── interfaces/               # Repository interfaces (refresh tokens only)
 └── types/                    # TypeScript types
-    └── [feature].types.ts
 ```
 
 ## Key Implementation Rules
@@ -174,6 +185,8 @@ modules/[feature]/
 6. **Testing**: Use GraphQL Tada typed operations from `src/gql/`
 7. **Shield Rules**: Cache with `{ cache: 'strict' }` when appropriate
 8. **DataLoaders**: Available as `context.loaders` for N+1 prevention
+9. **Global IDs**: Decode relay IDs in Shield rules using `parseGlobalId()`
+10. **Unused Parameters**: Prefix with underscore (e.g., `_parent`, `_args`)
 
 ## Environment Variables
 
@@ -192,11 +205,12 @@ HOST="localhost"                  # Server host
 ## Common Debugging Issues
 
 - **Type errors**: Run `bun run generate` to regenerate Prisma & GraphQL types
-- **Permission denied**: Check JWT token and `shield-config.ts` rule mappings
+- **Permission denied**: Check JWT token and Shield rule implementations
 - **Global ID errors**: Verify Base64 encoding (e.g., "UG9zdDox" = "Post:1")
 - **Test failures**: Ensure test database is clean (`bun run db:reset`)
 - **DI errors**: Check `container.ts` for interface registration
-- **Lint errors**: Run `bun run check:fix` to auto-fix
+- **Lint errors**: Run `bun run check:fix` to auto-fix (add `--unsafe` for any types)
+- **Shield errors**: Shield returns "Not authorized" as fallback - check rule logic
 
 ## Performance Optimizations
 
@@ -207,7 +221,29 @@ HOST="localhost"                  # Server host
 
 ## RefreshToken Implementation
 
-- Uses UUID string IDs in database
-- Returns JWT refresh token, not raw value
+- Stores UUID string IDs in database
+- Returns JWT refresh token containing the UUID
 - Single-use with rotation on refresh
-- Repository pattern exception (only for RefreshToken)
+- Repository pattern exception (only for RefreshToken entity)
+
+## Test Utilities
+
+The project includes comprehensive test utilities in `test/utils/`:
+
+- `createTestServer()`: Creates Apollo Server instance for testing
+- `createAuthContext()`: Creates authenticated context with user
+- `createMockContext()`: Creates unauthenticated context
+- `gqlHelpers`: GraphQL operation helpers with type safety
+- `createTestUser()`: Creates test users with hashed passwords
+- `cleanDatabase()`: Cleans test database between tests
+
+## GraphQL Context
+
+Context is created by `context.factory.ts` and includes:
+- `user`: Authenticated user (null if not authenticated)
+- `userId`: User ID value object
+- `loaders`: DataLoader instances for batching
+- `security`: Security metadata (roles, permissions)
+- `requestId`: Unique request identifier
+
+Never add Prisma to context - always import directly.

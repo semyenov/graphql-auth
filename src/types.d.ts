@@ -32,7 +32,7 @@ export interface AuthPayload {
 }
 
 export interface JWTPayload {
-  userId: string
+  userId: number
   email: string
   iat?: number
   exp?: number

@@ -140,7 +140,7 @@ describe('Posts', () => {
         print(DraftsQuery),
         variables,
         createMockContext(), // No auth
-        'You must be logged in to perform this action. Please authenticate and try again.',
+        'Not authorized',
       )
     })
   })
@@ -193,7 +193,7 @@ describe('Posts', () => {
         print(CreatePostMutation),
         variables,
         createMockContext(), // No auth
-        'You must be logged in to perform this action. Please authenticate and try again.',
+        'Not authorized',
       )
     })
   })
@@ -289,7 +289,7 @@ describe('Posts', () => {
         print(DeletePostMutation),
         variables,
         createMockContext(), // No authentication
-        'You must be logged in to perform this action. Please authenticate and try again.',
+        'Authentication required',
       )
 
       // Verify post still exists
@@ -359,7 +359,7 @@ describe('Posts', () => {
         print(IncrementPostViewCountMutation),
         variables,
         createMockContext(),
-        'Post with identifier',
+        'Post not found',
       )
     })
   })

@@ -45,7 +45,7 @@ export async function parseAndValidateGlobalId(
  * @param context - The GraphQL context
  * @returns True if authenticated, AuthenticationError otherwise
  */
-export function createAuthenticationCheck<TVariables extends VariableValues>(
+export function createAuthenticationCheck<_TVariables extends VariableValues>(
   context: DefaultContext,
 ): true | AuthenticationError {
   if (!context.userId) {
@@ -64,7 +64,7 @@ export function createAuthenticationCheck<TVariables extends VariableValues>(
  * @param errorMessage - Custom error message
  * @returns True if has role, AuthorizationError otherwise
  */
-export function createRoleCheck<TVariables extends VariableValues>(
+export function createRoleCheck<_TVariables extends VariableValues>(
   context: DefaultContext,
   requiredRole: string,
   errorMessage?: string,
@@ -95,7 +95,7 @@ export function createRoleCheck<TVariables extends VariableValues>(
  * @param errorMessage - Custom error message
  * @returns True if has permission, error otherwise
  */
-export function createPermissionCheck<TVariables extends VariableValues>(
+export function createPermissionCheck<_TVariables extends VariableValues>(
   context: DefaultContext,
   requiredPermission: string,
   errorMessage?: string,
