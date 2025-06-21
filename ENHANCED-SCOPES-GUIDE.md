@@ -1,10 +1,10 @@
 # Enhanced Auth Scopes Usage Guide
 
-This guide explains how to use the EnhancedAuthScopes system in your GraphQL resolvers.
+This guide explains how to use the Pothos Scope Auth system with GraphQL Shield middleware in your GraphQL resolvers.
 
 ## Overview
 
-The EnhancedAuthScopes provide a powerful authorization system with dynamic scopes, but due to Pothos' type constraints, they need to be used within resolver functions rather than in the `grantScopes` property.
+The project uses Pothos Scope Auth plugin combined with GraphQL Shield for comprehensive authorization. Scopes are used in both `grantScopes` for basic auth and in permission rules for complex authorization logic.
 
 ## Available Scopes
 

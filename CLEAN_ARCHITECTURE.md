@@ -1,53 +1,84 @@
-# Clean Architecture Implementation Guide
+# Architecture Evolution: From Clean Architecture to Direct Resolvers
 
-This document describes the new clean architecture implementation for the GraphQL Auth project.
+This document describes the architectural evolution of the GraphQL Auth project from Clean Architecture to the current modular direct resolver pattern.
 
-## Architecture Overview
+## Current Architecture (Direct Resolvers)
 
-The project now follows Clean Architecture principles with clear separation of concerns:
+The project has migrated from Clean Architecture to a simpler, more performant direct resolver pattern:
 
 ```
 src/
-├── core/                      # Domain Layer (Business Logic)
-│   ├── entities/             # Domain entities (User, Post)
-│   ├── value-objects/        # Value objects (Email, UserId, PostId)
-│   ├── repositories/         # Repository interfaces (ports)
-│   ├── services/             # Domain services
-│   └── errors/               # Domain-specific errors
+├── app/                              # Application entry and configuration
+│   ├── server.ts                     # Main server setup (entry point)
+│   ├── config/                       # Configuration
+│   │   ├── container.ts              # TSyringe DI container setup
+│   │   ├── environment.ts            # Environment variable handling
+│   │   └── database.ts               # Database configuration
+│   └── middleware/                   # Application-level middleware
 │
-├── application/              # Application Layer (Use Cases)
-│   ├── use-cases/           # Business use cases
-│   │   ├── auth/           # Authentication use cases
-│   │   └── posts/          # Post-related use cases
-│   ├── dtos/               # Data Transfer Objects
-│   └── mappers/            # Entity-DTO mappers
+├── modules/                          # Feature modules (domain-driven)
+│   ├── auth/                         # Authentication module
+│   │   ├── auth.schema.ts            # GraphQL schema definitions
+│   │   ├── auth.permissions.ts       # Authorization rules
+│   │   ├── auth.validation.ts        # Input validation schemas
+│   │   ├── resolvers/                # GraphQL resolvers
+│   │   ├── services/                 # Business logic services
+│   │   └── types/                    # Module-specific types
+│   ├── posts/                        # Posts module
+│   ├── users/                        # Users module
+│   └── shared/                       # Shared module utilities
 │
-├── infrastructure/          # Infrastructure Layer (External Concerns)
-│   ├── database/           # Database implementation
-│   │   └── repositories/   # Prisma repository implementations
-│   ├── auth/              # Authentication implementation (JWT)
-│   ├── graphql/           # GraphQL infrastructure
-│   │   ├── context/       # GraphQL context
-│   │   ├── resolvers/     # GraphQL resolvers
-│   │   ├── schema/        # Schema builder
-│   │   ├── types/         # GraphQL types
-│   │   └── errors/        # Error handling
-│   └── config/            # Configuration & DI container
+├── graphql/                          # GraphQL infrastructure
+│   ├── schema/                       # Schema building and assembly
+│   ├── context/                      # GraphQL context
+│   ├── directives/                   # Custom GraphQL directives
+│   └── middleware/                   # GraphQL-specific middleware
 │
-└── main.ts                # Application entry point
+├── core/                             # Core business logic and utilities
+│   ├── auth/                         # Authentication core
+│   ├── errors/                       # Error handling system
+│   ├── logging/                      # Logging system
+│   ├── utils/                        # Core utilities
+│   └── validation/                   # Validation system
+│
+├── data/                             # Data access layer
+│   ├── database/                     # Database configuration
+│   ├── loaders/                      # DataLoader implementations
+│   ├── repositories/                 # Repository pattern
+│   └── cache/                        # Caching layer
+│
+├── gql/                              # GraphQL client operations (for testing)
+├── types/                            # Global type definitions
+├── constants/                        # Application constants
+├── main.ts                           # Build entry point
+└── prisma.ts                         # Prisma client export
 ```
 
-## Key Concepts
+## Migration Benefits
 
-### 1. Domain Layer (Core)
+### Why We Moved Away from Clean Architecture
 
-The domain layer contains the business logic and is completely independent of external frameworks:
+1. **Performance**: Direct Prisma access eliminates repository abstraction overhead
+2. **Simplicity**: Fewer layers mean easier understanding and maintenance
+3. **Type Safety**: End-to-end type safety without complex mappers
+4. **Developer Experience**: Faster development with direct patterns
+5. **Modern Standards**: Following current GraphQL and Pothos best practices
 
-- **Entities**: Core business objects with behavior (User, Post)
-- **Value Objects**: Immutable objects representing values (Email, UserId)
-- **Repository Interfaces**: Contracts for data access
-- **Domain Services**: Business logic that doesn't fit in entities
-- **Domain Errors**: Business-specific error types
+### What Was Removed
+
+- ❌ Use case layer (complex orchestration)
+- ❌ Repository abstractions (unnecessary with Prisma)
+- ❌ DTOs and mappers (Prisma types work directly)
+- ❌ Complex dependency injection patterns
+- ❌ Over-engineered domain services
+
+### What Was Kept
+
+- ✅ Clear separation of concerns through modules
+- ✅ Domain entities and value objects where needed
+- ✅ Error handling and validation
+- ✅ Business logic (now in resolvers)
+- ✅ Clean interfaces and contracts
 
 ### 2. Application Layer
 

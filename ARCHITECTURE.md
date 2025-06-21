@@ -65,7 +65,7 @@ src/
 │   ├── repositories/refresh-token.repository.ts
 │   └── services/token.service.ts     # JWT token generation/validation
 │
-├── core/                             # Domain Models & Interfaces  
+├── core/                             # Domain Models & Interfaces
 │   ├── entities/                     # Domain entities
 │   ├── value-objects/               # Value objects (UserId, Email)
 │   ├── repositories/                # Repository interfaces
@@ -89,26 +89,36 @@ The project has **completed migration** from Domain-Driven Design to direct Poth
 ## Tech Stack
 
 ### Core Technologies
+
 - **Runtime**: Bun (fast JavaScript/TypeScript runtime)
 - **GraphQL Server**: Apollo Server 4 with H3 HTTP framework
-- **Schema Builder**: Pothos with 10+ plugin integration
-- **Database**: Prisma ORM with SQLite (dev.db)
-- **Authentication**: JWT tokens with bcryptjs + refresh token rotation
+- **Schema Builder**: Pothos with advanced plugin integration:
+  - **Prisma Plugin**: Direct access pattern (NOT in context) for better TypeScript performance
+  - **Relay Plugin**: Global IDs, connections with metadata, cursor pagination
+  - **Errors Plugin**: Union result types for comprehensive error handling
+  - **Scope Auth Plugin**: Dynamic authorization with 14+ scope types
+  - **DataLoader Plugin**: Automatic batch loading for N+1 prevention
+  - **Validation Plugin**: Zod integration with async refinements
+- **Database**: Prisma ORM with SQLite (dev.db) - accessed directly, not through context
+- **Authentication**: JWT tokens with argon2 (hybrid bcrypt support) + refresh token rotation
+- **Authorization**: GraphQL Shield middleware with Pothos Scope Auth
 - **Type Safety**: GraphQL Tada for compile-time GraphQL typing
 - **Testing**: Vitest with comprehensive test utilities
+- **Validation**: Zod schema validation with custom async refinements
+- **Rate Limiting**: rate-limiter-flexible with configurable presets
+- **Dependency Injection**: TSyringe for service management
 
 ### Advanced Pothos Plugin Integration
 
 ```typescript
-// src/schema/builder.ts
+// src/graphql/schema/builder.ts
 plugins: [
-  ScopeAuthPlugin,      // Dynamic authorization with EnhancedAuthScopes
-  PrismaPlugin,         // Direct access pattern for better TypeScript performance
-  RelayPlugin,          // Global IDs, connections with metadata, cursor pagination
-  ErrorsPlugin,         // Union result types for comprehensive error handling
-  DataloaderPlugin,     // Automatic batch loading for N+1 prevention
-  ValidationPlugin,     // Zod integration with async refinements
-  // ShieldPlugin,      // Currently disabled due to module conflicts
+  ScopeAuthPlugin, // Dynamic authorization with 14+ scope types
+  PrismaPlugin, // Direct access pattern (NOT in context) for better TypeScript performance
+  RelayPlugin, // Global IDs, connections with metadata, cursor pagination
+  ErrorsPlugin, // Union result types for comprehensive error handling
+  DataloaderPlugin, // Automatic batch loading for N+1 prevention
+  ValidationPlugin, // Zod integration with async refinements
 ]
 ```
 
@@ -183,7 +193,7 @@ builder.mutationField('createPost', (t) =>
         data: { title: args.title, authorId: context.userId!.value },
       })
     },
-  })
+  }),
 )
 ```
 
@@ -195,13 +205,13 @@ builder.mutationField('updatePost', (t) =>
     type: 'Post',
     resolve: async (query, _parent, args, context: Context) => {
       const scopes = createEnhancedAuthScopes(context)
-      
+
       // Use enhanced scope for ownership check
       const isOwner = await scopes.postOwner(args.id)
       if (!isOwner) {
         throw new AuthorizationError('You can only modify your own posts')
       }
-      
+
       // Business logic
       const postId = parseGlobalId(args.id, 'Post')
       return prisma.post.update({
@@ -210,7 +220,7 @@ builder.mutationField('updatePost', (t) =>
         data: args.data,
       })
     },
-  })
+  }),
 )
 ```
 
@@ -231,7 +241,7 @@ builder.queryField('feed', (t) =>
         orderBy: { createdAt: 'desc' },
       })
     },
-  })
+  }),
 )
 ```
 
@@ -260,16 +270,17 @@ Comprehensive testing utilities in `test/`:
 
 ```typescript
 // test/test-utils.ts
-createAuthContext(userId)     // Authenticated context
-createMockContext()           // Unauthenticated context
-expectSuccessfulQuery()       // Assert successful operations
-expectGraphQLError()          // Assert error cases
-toPostId(1)                  // Global ID conversion
+createAuthContext(userId) // Authenticated context
+createMockContext() // Unauthenticated context
+expectSuccessfulQuery() // Assert successful operations
+expectGraphQLError() // Assert error cases
+toPostId(1) // Global ID conversion
 ```
 
 ## Performance Optimizations
 
 ### 1. DataLoader Integration
+
 ```typescript
 // Automatic N+1 prevention
 context.enhancedLoaders?.post.load(postId)
@@ -277,6 +288,7 @@ context.loaders?.userById.load(userId)
 ```
 
 ### 2. Field-Level Optimization
+
 ```typescript
 // Always spread Prisma query parameter
 return prisma.post.findMany({
@@ -286,6 +298,7 @@ return prisma.post.findMany({
 ```
 
 ### 3. Batch Authorization
+
 ```typescript
 // ScopeLoader for batch authorization checks
 const scopeLoader = new ScopeLoader(context)
@@ -297,17 +310,21 @@ const ownershipResults = await scopeLoader.batchCheckPostOwnership(postIds)
 The following operations are available and fully tested:
 
 ### Authentication
+
 - `signup`, `login`, `me`
 - `loginWithTokens`, `refreshToken`, `logout`
 
 ### Posts
+
 - `createPost`, `updatePost`, `deletePost`, `togglePublishPost`
 - `feed`, `drafts`, `post`, `incrementPostViewCount`
 
 ### Users
+
 - `searchUsers`, `updateUserProfile`
 
 All operations support:
+
 - Global IDs for consistent entity references
 - Enhanced authentication and authorization with dynamic scopes
 - Advanced input validation with Zod schemas and async refinements
@@ -323,11 +340,12 @@ All operations support:
 ✅ **Simplified Architecture**: Reduced boilerplate with direct patterns  
 ✅ **Enhanced Performance**: Direct Prisma access and field-level optimization  
 ✅ **Type Safety**: Full TypeScript integration with Pothos  
-✅ **Modern Patterns**: Following current Pothos best practices  
+✅ **Modern Patterns**: Following current Pothos best practices
 
 ### Removed Components
+
 - ❌ Application layer (use cases, DTOs, mappers)
-- ❌ Complex repository abstractions  
+- ❌ Complex repository abstractions
 - ❌ Service orchestration layers
 - ❌ GraphQL operation adapters
 
@@ -345,6 +363,7 @@ All operations support:
 The current file structure has some organizational challenges. See [IMPROVED-FILE-STRUCTURE.md](./IMPROVED-FILE-STRUCTURE.md) for a detailed proposal for a better modular organization that includes:
 
 ### Key Improvements
+
 - **Module-Based Organization**: Each feature is a self-contained module
 - **Consistent File Naming**: `{module}.{type}.ts` pattern throughout
 - **Clear Separation of Concerns**: Distinct layers for app, modules, graphql, core, data, lib
@@ -352,6 +371,7 @@ The current file structure has some organizational challenges. See [IMPROVED-FIL
 - **Improved Scalability**: Easy to add new modules without affecting existing code
 
 ### Proposed Structure Overview
+
 ```
 src/
 ├── app/                    # Application entry points and config

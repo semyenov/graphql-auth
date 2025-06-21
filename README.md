@@ -15,7 +15,8 @@ A production-ready **GraphQL server with TypeScript** demonstrating enterprise-g
 ## ✨ Key Features
 
 ### Advanced Pothos Integration
-- **10 Pothos Plugins**: Prisma, Relay, Errors, ScopeAuth, Validation, DataLoader, and more
+- **6 Pothos Plugins**: Prisma, Relay, Errors, ScopeAuth, Validation, DataLoader
+- **Direct Prisma Access**: Prisma accessed directly (NOT through context) for better performance
 - **N+1 Query Prevention**: Automatic query batching with DataLoader
 - **Type Safety**: End-to-end type safety without code generation
 - **Performance Optimized**: Field-level query optimization with Prisma

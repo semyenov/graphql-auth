@@ -4,7 +4,7 @@ This document outlines the advanced Pothos integration patterns and best practic
 
 ## Overview
 
-Pothos is a plugin-based GraphQL schema builder for TypeScript that enables building GraphQL schemas with zero runtime overhead, complete type safety, and minimal manual type definitions. This guide demonstrates enterprise-grade patterns used by companies like Airbnb and Netflix.
+Pothos is a plugin-based GraphQL schema builder for TypeScript that enables building GraphQL schemas with zero runtime overhead, complete type safety, and minimal manual type definitions. This guide demonstrates enterprise-grade patterns with modern architectural approaches.
 
 ### Why Pothos?
 
