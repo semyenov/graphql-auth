@@ -62,7 +62,7 @@ export function parseAndValidateGlobalId(
     throw new Error(`Expected ${expectedType} ID, got ${type} ID`)
   }
 
-  const numericId = parseInt(id.toString(), 10)
+  const numericId = Number.parseInt(id.toString(), 10)
   if (Number.isNaN(numericId)) {
     throw new Error('Invalid numeric ID')
   }
@@ -176,7 +176,7 @@ export function applyConnectionArgs<T extends Record<string, unknown>>(
 
     if (args.after) {
       const { id } = decodeCursor(args.after)
-      cursor = { id: parseInt(id.toString(), 10) }
+      cursor = { id: Number.parseInt(id.toString(), 10) }
       skip = 1 // Skip the cursor
     }
   }
@@ -188,7 +188,7 @@ export function applyConnectionArgs<T extends Record<string, unknown>>(
 
     if (args.before) {
       const { id } = decodeCursor(args.before)
-      cursor = { id: parseInt(id.toString(), 10) }
+      cursor = { id: Number.parseInt(id.toString(), 10) }
       skip = 1 // Skip the cursor
     }
   }

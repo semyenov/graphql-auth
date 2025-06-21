@@ -5,8 +5,8 @@
  * Provides comprehensive security headers to protect against common web vulnerabilities.
  */
 
-import type { ApolloServerPlugin } from '@apollo/server'
 import type { IncomingMessage, ServerResponse } from 'http'
+import type { ApolloServerPlugin } from '@apollo/server'
 import type { Context } from '../../graphql/context/context.types'
 import { isDevelopment } from '../config/environment'
 

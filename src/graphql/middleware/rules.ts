@@ -1,4 +1,4 @@
-import { rule, and, or, not } from 'graphql-shield'
+import { and, not, or, rule } from 'graphql-shield'
 import { ERROR_MESSAGES } from '../../constants'
 import { AuthorizationError, NotFoundError } from '../../core/errors/types'
 import { prisma } from '../../prisma'
@@ -90,7 +90,7 @@ export const isUserOwner = rule({ cache: 'strict' })(
       // Handle other queries with userUniqueInput
       if (
         args.userUniqueInput?.id &&
-        args.userUniqueInput.id !== parseInt(currentUserId.toString())
+        args.userUniqueInput.id !== Number.parseInt(currentUserId.toString())
       ) {
         throw new AuthorizationError(
           "Access denied: cannot access other user's data",

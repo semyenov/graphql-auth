@@ -3,4 +3,4 @@
 
 // Use a fixed identifier for the test run
 // The vitest config ensures tests run sequentially with singleThread: true
-export const TEST_DATABASE_URL = `file:./test-db.db`
+export const TEST_DATABASE_URL = 'file:./test-db.db'

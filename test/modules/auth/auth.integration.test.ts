@@ -3,11 +3,7 @@ import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { LoginMutation, SignupMutation } from '../../../src/gql/mutations'
 import { prisma } from '../../../src/prisma'
-import {
-  createMockContext,
-  createTestServer,
-  gqlHelpers,
-} from '../../utils'
+import { createMockContext, createTestServer, gqlHelpers } from '../../utils'
 
 interface AuthMutationResponse {
   signup?: string

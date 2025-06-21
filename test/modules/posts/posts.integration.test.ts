@@ -1,5 +1,5 @@
 import * as argon2 from 'argon2'
-import { ResultOf, VariablesOf } from 'gql.tada'
+import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { UserId } from '../../../src/core/value-objects/user-id.vo'
@@ -106,12 +106,10 @@ describe('Posts', () => {
         ],
       })
 
-      const data = await gqlHelpers.expectSuccessfulQuery<ResultOf<typeof FeedQuery>, VariablesOf<typeof FeedQuery>>(
-        server,
-        print(FeedQuery),
-        { first: 10 },
-        createMockContext(),
-      )
+      const data = await gqlHelpers.expectSuccessfulQuery<
+        ResultOf<typeof FeedQuery>,
+        VariablesOf<typeof FeedQuery>
+      >(server, print(FeedQuery), { first: 10 }, createMockContext())
 
       // At least 2 posts should be returned (may include posts from other tests)
       expect(data.feed.edges.length).toBeGreaterThanOrEqual(2)
@@ -119,7 +117,7 @@ describe('Posts', () => {
 
       // Verify our test posts are included
       const testPostTitles = ['Published Post 1', 'Published Post 2']
-      const returnedTitles = data.feed.edges.map(edge => edge.node.title)
+      const returnedTitles = data.feed.edges.map((edge) => edge.node.title)
       expect(returnedTitles).toEqual(expect.arrayContaining(testPostTitles))
     })
 

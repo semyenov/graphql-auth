@@ -188,9 +188,8 @@ export class RedisCache implements ICache {
 
       if (amount === 1) {
         return await this.client.incr(fullKey)
-      } else {
-        return await this.client.incrby(fullKey, amount)
       }
+      return await this.client.incrby(fullKey, amount)
     } catch (error) {
       console.error('Redis increment error:', error)
       throw error

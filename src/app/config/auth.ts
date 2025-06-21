@@ -40,12 +40,21 @@ function parseAuthConfig() {
     jwtSecret: process.env.JWT_SECRET || process.env.APP_SECRET || '',
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
     refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '30d',
-    bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS || '10', 10),
-    passwordMinLength: parseInt(process.env.PASSWORD_MIN_LENGTH || '8', 10),
-    passwordMaxLength: parseInt(process.env.PASSWORD_MAX_LENGTH || '100', 10),
-    sessionTimeout: parseInt(process.env.SESSION_TIMEOUT || '3600', 10),
-    maxLoginAttempts: parseInt(process.env.MAX_LOGIN_ATTEMPTS || '5', 10),
-    lockoutDuration: parseInt(process.env.LOCKOUT_DURATION || '900', 10),
+    bcryptRounds: Number.parseInt(process.env.BCRYPT_ROUNDS || '10', 10),
+    passwordMinLength: Number.parseInt(
+      process.env.PASSWORD_MIN_LENGTH || '8',
+      10,
+    ),
+    passwordMaxLength: Number.parseInt(
+      process.env.PASSWORD_MAX_LENGTH || '100',
+      10,
+    ),
+    sessionTimeout: Number.parseInt(process.env.SESSION_TIMEOUT || '3600', 10),
+    maxLoginAttempts: Number.parseInt(
+      process.env.MAX_LOGIN_ATTEMPTS || '5',
+      10,
+    ),
+    lockoutDuration: Number.parseInt(process.env.LOCKOUT_DURATION || '900', 10),
   }
 
   return AuthConfigSchema.parse(config)

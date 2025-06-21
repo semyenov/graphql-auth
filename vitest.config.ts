@@ -1,6 +1,6 @@
+import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
-import path from 'node:path'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
@@ -36,12 +36,20 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': `${__dirname}/src`,
-      '@test': `${__dirname}/test`,
       // Force all graphql imports to resolve to the same module
-      'graphql': path.resolve(__dirname, 'node_modules/graphql/index.js'),
-      'graphql/type': path.resolve(__dirname, 'node_modules/graphql/type/index.js'),
-      'graphql/type/definition': path.resolve(__dirname, 'node_modules/graphql/type/definition.js'),
-      'graphql/jsutils/instanceOf': path.resolve(__dirname, 'node_modules/graphql/jsutils/instanceOf.js'),
+      graphql: path.resolve(__dirname, 'node_modules/graphql/index.js'),
+      'graphql/type': path.resolve(
+        __dirname,
+        'node_modules/graphql/type/index.js',
+      ),
+      'graphql/type/definition': path.resolve(
+        __dirname,
+        'node_modules/graphql/type/definition.js',
+      ),
+      'graphql/jsutils/instanceOf': path.resolve(
+        __dirname,
+        'node_modules/graphql/jsutils/instanceOf.js',
+      ),
     },
     // List all packages that should be deduped
     dedupe: [

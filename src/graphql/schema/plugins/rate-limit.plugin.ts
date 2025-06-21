@@ -148,10 +148,7 @@ export const createRateLimitConfig = {
   }),
 
   // For user-specific operations
-  forUser: (
-    operation: string,
-    pointsPerRequest: number = 1,
-  ): RateLimitConfig => ({
+  forUser: (operation: string, pointsPerRequest = 1): RateLimitConfig => ({
     key: `user:${operation}`,
     identifier: (_args, context) =>
       context.userId ? `user:${context.userId.value}` : 'anonymous',
@@ -159,10 +156,7 @@ export const createRateLimitConfig = {
   }),
 
   // For IP-based operations
-  forIp: (
-    operation: string,
-    pointsPerRequest: number = 1,
-  ): RateLimitConfig => ({
+  forIp: (operation: string, pointsPerRequest = 1): RateLimitConfig => ({
     key: `ip:${operation}`,
     identifier: (_args, context) => {
       const ip =

@@ -97,13 +97,12 @@ export class ConsoleLogger implements ILogger {
     if (process.env.NODE_ENV === 'production') {
       // In production, use JSON format for better parsing
       return JSON.stringify(logObject)
-    } else {
-      // In development, use a more readable format
-      const contextStr =
-        Object.keys(mergedContext).length > 0
-          ? ` | ${JSON.stringify(mergedContext)}`
-          : ''
-      return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}`
     }
+    // In development, use a more readable format
+    const contextStr =
+      Object.keys(mergedContext).length > 0
+        ? ` | ${JSON.stringify(mergedContext)}`
+        : ''
+    return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}`
   }
 }

@@ -16,11 +16,7 @@ import {
   RefreshTokenMutation,
 } from '../../../src/gql/mutations-auth-tokens'
 import { prisma } from '../../../src/prisma'
-import {
-  createMockContext,
-  gqlHelpers,
-  createTestServer,
-} from '../../utils'
+import { createMockContext, createTestServer, gqlHelpers } from '../../utils'
 
 describe('Refresh Token', () => {
   const server = createTestServer()

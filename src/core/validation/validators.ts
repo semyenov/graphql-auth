@@ -63,7 +63,7 @@ export function isValidGlobalId(
     if (!(type && id)) return false
     if (expectedType && type !== expectedType) return false
 
-    const numericId = parseInt(id, 10)
+    const numericId = Number.parseInt(id, 10)
     return !Number.isNaN(numericId) && numericId > 0
   } catch {
     return false
@@ -226,7 +226,7 @@ export function isValidCreditCard(cardNumber: string): boolean {
   for (let i = digits.length - 1; i >= 0; i--) {
     const digitChar = digits[i]
     if (digitChar) {
-      let digit = parseInt(digitChar, 10)
+      let digit = Number.parseInt(digitChar, 10)
 
       if (isEven) {
         digit *= 2

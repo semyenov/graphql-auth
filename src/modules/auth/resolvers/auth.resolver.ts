@@ -11,9 +11,12 @@ import { AuthenticationError, ConflictError } from '../../../core/errors/types'
 // import type { ILogger } from '../../../core/services/logger.interface'
 import type { IPasswordService } from '../../../core/services/password.service.interface'
 import { signToken } from '../../../core/utils/jwt'
+import {
+  isAuthenticatedUser,
+  rateLimitSensitiveOperations,
+} from '../../../graphql/middleware/rules'
 import { builder } from '../../../graphql/schema/builder'
 import { commonValidations } from '../../../graphql/schema/helpers'
-import { isAuthenticatedUser, rateLimitSensitiveOperations } from '../../../graphql/middleware/rules'
 import {
   applyRateLimit,
   createRateLimitConfig,

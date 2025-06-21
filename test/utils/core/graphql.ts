@@ -11,13 +11,17 @@ import type { Context } from '../../../src/graphql/context/context.types'
 /**
  * Execute a GraphQL operation against a test server
  */
-export async function executeOperation<TResult = any, TVariables extends VariableValues = VariableValues>(
+export async function executeOperation<
+  TResult = any,
+  TVariables extends VariableValues = VariableValues,
+>(
   server: ApolloServer<Context>,
   query: string | TadaDocumentNode<TResult, TVariables>,
   variables?: TVariables,
   contextValue?: Context,
 ) {
-  const queryString = typeof query === 'string' ? query : (query as any).toString()
+  const queryString =
+    typeof query === 'string' ? query : (query as any).toString()
 
   return server.executeOperation<TResult, TVariables>(
     {
@@ -56,7 +60,10 @@ export function hasGraphQLErrors(
   if (response.body.kind !== 'single') {
     return false
   }
-  return !!(response.body.singleResult.errors && response.body.singleResult.errors.length > 0)
+  return !!(
+    response.body.singleResult.errors &&
+    response.body.singleResult.errors.length > 0
+  )
 }
 
 /**
@@ -96,7 +103,12 @@ export const gqlHelpers = {
     variables: TVariables,
     context?: Context,
   ): Promise<TResult> {
-    const response = await executeOperation(server, operation, variables, context)
+    const response = await executeOperation(
+      server,
+      operation,
+      variables,
+      context,
+    )
     return extractGraphQLData(response)
   },
 
@@ -109,7 +121,12 @@ export const gqlHelpers = {
     variables: TVariables,
     context?: Context,
   ): Promise<GraphQLFormattedError[]> {
-    const response = await executeOperation(server, operation, variables, context)
+    const response = await executeOperation(
+      server,
+      operation,
+      variables,
+      context,
+    )
     const errors = getGraphQLErrors(response)
     if (errors.length === 0) {
       throw new Error('Expected errors but none were returned')
@@ -127,24 +144,40 @@ export const gqlHelpers = {
     expectedError: string | RegExp | Partial<BaseError>,
     context?: Context,
   ): Promise<GraphQLFormattedError> {
-    const errors = await this.executeAndExpectErrors(server, operation, variables, context)
+    const errors = await this.executeAndExpectErrors(
+      server,
+      operation,
+      variables,
+      context,
+    )
     const error = errors[0]
 
     if (typeof expectedError === 'string') {
       if (!error.message.includes(expectedError)) {
-        throw new Error(`Expected error containing "${expectedError}" but got "${error.message}"`)
+        throw new Error(
+          `Expected error containing "${expectedError}" but got "${error.message}"`,
+        )
       }
     } else if (expectedError instanceof RegExp) {
       if (!expectedError.test(error.message)) {
-        throw new Error(`Expected error matching ${expectedError} but got "${error.message}"`)
+        throw new Error(
+          `Expected error matching ${expectedError} but got "${error.message}"`,
+        )
       }
     } else {
       // Check partial error object
-      if (expectedError.message && !error.message.includes(expectedError.message)) {
-        throw new Error(`Expected error message containing "${expectedError.message}" but got "${error.message}"`)
+      if (
+        expectedError.message &&
+        !error.message.includes(expectedError.message)
+      ) {
+        throw new Error(
+          `Expected error message containing "${expectedError.message}" but got "${error.message}"`,
+        )
       }
       if (expectedError.code && error.extensions?.code !== expectedError.code) {
-        throw new Error(`Expected error code "${expectedError.code}" but got "${error.extensions?.code}"`)
+        throw new Error(
+          `Expected error code "${expectedError.code}" but got "${error.extensions?.code}"`,
+        )
       }
     }
 
@@ -160,13 +193,20 @@ export const gqlHelpers = {
     variables: TVariables,
     context?: Context,
   ): Promise<TResult> {
-    const response = await executeOperation(server, operation, variables, context)
+    const response = await executeOperation(
+      server,
+      operation,
+      variables,
+      context,
+    )
     if (response.body.kind !== 'single') {
       throw new Error('Expected single result but got incremental delivery')
     }
     const result = response.body.singleResult
     if (result.errors && result.errors.length > 0) {
-      throw new Error(`Expected successful mutation but got errors: ${JSON.stringify(result.errors)}`)
+      throw new Error(
+        `Expected successful mutation but got errors: ${JSON.stringify(result.errors)}`,
+      )
     }
     if (!result.data) {
       throw new Error('Expected data but got none')
@@ -183,13 +223,20 @@ export const gqlHelpers = {
     variables: TVariables,
     context?: Context,
   ): Promise<TResult> {
-    const response = await executeOperation(server, operation, variables, context)
+    const response = await executeOperation(
+      server,
+      operation,
+      variables,
+      context,
+    )
     if (response.body.kind !== 'single') {
       throw new Error('Expected single result but got incremental delivery')
     }
     const result = response.body.singleResult
     if (result.errors && result.errors.length > 0) {
-      throw new Error(`Expected successful query but got errors: ${JSON.stringify(result.errors)}`)
+      throw new Error(
+        `Expected successful query but got errors: ${JSON.stringify(result.errors)}`,
+      )
     }
     if (!result.data) {
       throw new Error('Expected data but got none')
@@ -207,17 +254,26 @@ export const gqlHelpers = {
     context: Context | undefined,
     expectedMessage: string,
   ): Promise<void> {
-    const response = await executeOperation(server, operation, variables, context)
+    const response = await executeOperation(
+      server,
+      operation,
+      variables,
+      context,
+    )
     if (response.body.kind !== 'single') {
       throw new Error('Expected single result but got incremental delivery')
     }
     const result = response.body.singleResult
     if (!result.errors || result.errors.length === 0) {
-      throw new Error(`Expected GraphQL error containing "${expectedMessage}" but got no errors`)
+      throw new Error(
+        `Expected GraphQL error containing "${expectedMessage}" but got no errors`,
+      )
     }
     const error = result.errors[0]
     if (!error.message.includes(expectedMessage)) {
-      throw new Error(`Expected error containing "${expectedMessage}" but got "${error.message}"`)
+      throw new Error(
+        `Expected error containing "${expectedMessage}" but got "${error.message}"`,
+      )
     }
   },
 }

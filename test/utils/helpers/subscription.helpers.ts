@@ -142,7 +142,9 @@ export class MockSubscriptionEmitter<T = unknown> {
   }
 
   emit(value: T): void {
-    this.subscribers.forEach((callback) => callback(value))
+    for (const callback of this.subscribers) {
+      callback(value)
+    }
   }
 
   getSubscriberCount(): number {
@@ -297,7 +299,7 @@ export function createSubscriptionTester(server: ApolloServer<Context>) {
       variables: Record<string, unknown>,
       context: Context,
       triggerFn: () => Promise<void>,
-      waitTime: number = 1000,
+      waitTime = 1000,
     ): Promise<void> {
       const helper = await createSubscriptionHelper(
         server,

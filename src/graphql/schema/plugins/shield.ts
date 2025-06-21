@@ -45,14 +45,14 @@ declare global {
       Args extends InputFieldMap,
       ResolveReturnShape,
     > extends FieldOptions<
-      Types,
-      Types['Root'],
-      Type,
-      Nullable,
-      Args,
-      Types['Root'],
-      ResolveReturnShape
-    > {
+        Types,
+        Types['Root'],
+        Type,
+        Nullable,
+        Args,
+        Types['Root'],
+        ResolveReturnShape
+      > {
       shield?: ShieldRule
     }
 
@@ -63,14 +63,14 @@ declare global {
       Args extends InputFieldMap,
       ResolveReturnShape,
     > extends FieldOptions<
-      Types,
-      Types['Root'],
-      Type,
-      Nullable,
-      Args,
-      Types['Root'],
-      ResolveReturnShape
-    > {
+        Types,
+        Types['Root'],
+        Type,
+        Nullable,
+        Args,
+        Types['Root'],
+        ResolveReturnShape
+      > {
       shield?: ShieldRule
     }
   }

@@ -233,7 +233,7 @@ export class GraphQLBatcher {
       queries: string[],
       variables: Record<string, unknown>[],
     ) => Promise<GraphQLResponse[]>,
-    delay: number = 10,
+    delay = 10,
   ) {
     this.batchDelay = delay
   }

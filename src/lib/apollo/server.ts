@@ -4,11 +4,11 @@
  * Setup and configuration for Apollo GraphQL Server
  */
 
+import type { Server } from 'http'
 import { ApolloServer } from '@apollo/server'
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 import type { GraphQLSchema } from 'graphql'
-import type { Server } from 'http'
 import type { Context } from '../../graphql/context/context.types'
 
 /**
@@ -66,7 +66,7 @@ export function createApolloServer(
 
       // Remove stack trace in production
       if (!isDevelopment && formattedError.extensions?.stacktrace) {
-        delete formattedError.extensions.stacktrace
+        formattedError.extensions.stacktrace = undefined
       }
 
       return formattedError

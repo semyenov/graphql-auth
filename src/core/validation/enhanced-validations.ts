@@ -71,7 +71,7 @@ export const uniquePostTitleValidation = (userId: string) =>
         const existingPost = await prisma.post.findFirst({
           where: {
             title,
-            authorId: parseInt(userId, 10),
+            authorId: Number.parseInt(userId, 10),
           },
           select: { id: true },
         })

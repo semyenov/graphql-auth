@@ -4,9 +4,9 @@
  * Bootstraps the application with clean architecture.
  */
 
+import { type IncomingMessage, type ServerResponse, createServer } from 'http'
 import { ApolloServer, type HeaderMap } from '@apollo/server'
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
-import { createServer, type IncomingMessage, type ServerResponse } from 'http'
 import 'reflect-metadata'
 
 // Import configuration and DI
@@ -156,7 +156,7 @@ async function readBody(req: IncomingMessage): Promise<unknown> {
 }
 
 function getQuery(req: IncomingMessage): string {
-  const url = new URL(req.url || '', `http://localhost`)
+  const url = new URL(req.url || '', 'http://localhost')
   return url.search
 }
 

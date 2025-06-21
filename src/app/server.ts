@@ -133,7 +133,7 @@ async function startServer() {
         `🔍 GraphQL Introspection: ${url}?query={__schema{types{name}}}`,
       )
       consola.info(
-        `⭐️ Sample queries: http://pris.ly/e/ts/graphql-auth#using-the-graphql-api`,
+        '⭐️ Sample queries: http://pris.ly/e/ts/graphql-auth#using-the-graphql-api',
       )
     }
   } catch (error) {

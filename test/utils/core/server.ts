@@ -4,8 +4,8 @@
 
 import { ApolloServer } from '@apollo/server'
 import { createYoga } from 'graphql-yoga'
-import { buildSchema } from '../../../src/graphql/schema'
 import type { Context } from '../../../src/graphql/context/context.types'
+import { buildSchema } from '../../../src/graphql/schema'
 
 /**
  * Create a test Apollo Server instance

@@ -123,11 +123,11 @@ export function formatUserError(error: BaseError) {
 function getLogLevel(error: BaseError): string {
   if (error.statusCode >= 500) {
     return 'error'
-  } else if (error.statusCode >= 400) {
-    return 'warn'
-  } else {
-    return 'info'
   }
+  if (error.statusCode >= 400) {
+    return 'warn'
+  }
+  return 'info'
 }
 
 /**
@@ -136,11 +136,11 @@ function getLogLevel(error: BaseError): string {
 function getAlertLevel(error: BaseError): string {
   if (error.statusCode >= 500) {
     return 'critical'
-  } else if (error.statusCode >= 400) {
-    return 'warning'
-  } else {
-    return 'info'
   }
+  if (error.statusCode >= 400) {
+    return 'warning'
+  }
+  return 'info'
 }
 
 /**

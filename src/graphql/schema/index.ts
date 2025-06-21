@@ -22,8 +22,7 @@ import '../../modules/posts/resolvers/posts.resolver'
 import '../../modules/users/resolvers/users.resolver'
 
 // Lazy load schema to ensure all types are registered first
-let _schema: ReturnType<typeof builder.toSchema> | null =
-  null
+let _schema: ReturnType<typeof builder.toSchema> | null = null
 
 export function buildSchema() {
   if (!_schema) {

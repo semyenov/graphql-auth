@@ -54,7 +54,7 @@ function parseServerConfig() {
     : !!isDevelopment // Disallow all origins in production by default
 
   const config = {
-    port: parseInt(process.env.PORT || '4000', 10),
+    port: Number.parseInt(process.env.PORT || '4000', 10),
     host: process.env.HOST || 'localhost',
     graphqlPath: process.env.GRAPHQL_PATH || '/graphql',
     playground: !isProduction && process.env.ENABLE_PLAYGROUND !== 'false',
@@ -63,7 +63,7 @@ function parseServerConfig() {
     cors: {
       origin: corsOrigin,
       credentials: process.env.CORS_CREDENTIALS !== 'false',
-      maxAge: parseInt(process.env.CORS_MAX_AGE || '86400', 10),
+      maxAge: Number.parseInt(process.env.CORS_MAX_AGE || '86400', 10),
       methods: process.env.CORS_METHODS?.split(',').map((m) => m.trim()) || [
         'GET',
         'POST',
@@ -76,8 +76,8 @@ function parseServerConfig() {
         h.trim(),
       ),
     },
-    bodyLimit: parseInt(process.env.BODY_LIMIT || '102400', 10), // 100KB default
-    requestTimeout: parseInt(process.env.REQUEST_TIMEOUT || '30000', 10), // 30s default
+    bodyLimit: Number.parseInt(process.env.BODY_LIMIT || '102400', 10), // 100KB default
+    requestTimeout: Number.parseInt(process.env.REQUEST_TIMEOUT || '30000', 10), // 30s default
   }
 
   return ServerConfigSchema.parse(config)
@@ -116,8 +116,12 @@ export const graphqlServerOptions = {
           stacktrace?: unknown
         }
       }
-      delete typedError.extensions?.exception?.stacktrace
-      delete typedError.extensions?.stacktrace
+      if (typedError.extensions?.exception?.stacktrace) {
+        typedError.extensions.exception.stacktrace = undefined
+      }
+      if (typedError.extensions?.stacktrace) {
+        typedError.extensions.stacktrace = undefined
+      }
     }
     return error
   },

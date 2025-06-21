@@ -16,7 +16,6 @@ import type { ILogger } from '../../core/services/logger.interface'
 import type { IPasswordService } from '../../core/services/password.service.interface'
 import type { ITokenService } from '../../core/services/token.service.interface'
 import { PrismaUserRepository } from '../../data/repositories/prisma-user.repository'
-import { prisma } from '../../prisma'
 // Feature-based implementations (for refresh tokens)
 import { RefreshTokenRepository } from '../../data/repositories/refresh-token.repository'
 import { Argon2PasswordService } from '../../modules/auth/services/argon2-password.service'
@@ -24,6 +23,7 @@ import {
   type TokenConfig,
   TokenService,
 } from '../../modules/auth/services/token.service'
+import { prisma } from '../../prisma'
 
 // Configuration
 import { getConfig } from './configuration-legacy'

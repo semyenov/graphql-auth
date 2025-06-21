@@ -10,8 +10,8 @@ import { prisma } from '../../../src/prisma'
 import {
   createAuthContext,
   createMockContext,
-  executeOperation,
   createTestServer,
+  executeOperation,
 } from '../../utils'
 import { toPostId, toUserId } from '../../utils/helpers/relay.helpers'
 

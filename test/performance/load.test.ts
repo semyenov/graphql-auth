@@ -9,7 +9,7 @@ import { print } from 'graphql'
 import { performance } from 'perf_hooks'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { FeedQuery } from '../../src/gql/queries'
-import { createTestServer, createMockContext, executeOperation } from '../utils'
+import { createMockContext, createTestServer, executeOperation } from '../utils'
 
 describe('Load Testing', () => {
   let server: ReturnType<typeof createTestServer>

@@ -71,7 +71,7 @@ export const isAccountOwner = rule({ cache: 'strict' })(
       return new AuthenticationError('You must be logged in')
     }
 
-    const targetUserId = parseInt(args.userId, 10)
+    const targetUserId = Number.parseInt(args.userId, 10)
     if (context.userId.value !== targetUserId) {
       return new AuthorizationError('You can only modify your own account')
     }

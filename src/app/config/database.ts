@@ -26,11 +26,14 @@ function parseDatabaseConfig() {
     logLevel: isProduction
       ? ['error', 'warn']
       : ['query', 'info', 'warn', 'error'],
-    connectionLimit: parseInt(
+    connectionLimit: Number.parseInt(
       process.env.DATABASE_CONNECTION_LIMIT || '10',
       10,
     ),
-    poolTimeout: parseInt(process.env.DATABASE_POOL_TIMEOUT || '2000', 10),
+    poolTimeout: Number.parseInt(
+      process.env.DATABASE_POOL_TIMEOUT || '2000',
+      10,
+    ),
   }
 
   return DatabaseConfigSchema.parse(config)

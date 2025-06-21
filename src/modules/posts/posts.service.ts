@@ -278,7 +278,7 @@ export class PostsService {
    */
   async searchPosts(
     searchString: string,
-    publishedOnly: boolean = true,
+    publishedOnly = true,
     pagination: { skip?: number; take?: number } = {},
   ): Promise<
     (Post & {

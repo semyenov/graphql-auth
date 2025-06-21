@@ -13,52 +13,52 @@ import { prisma } from './utils/database/prisma'
 const dbFilePath = TEST_DATABASE_URL.replace('file:', '')
 
 beforeAll(async () => {
-    try {
-        console.log(`Setting up test database: ${TEST_DATABASE_URL}`)
-        configureContainer()
+  try {
+    console.log(`Setting up test database: ${TEST_DATABASE_URL}`)
+    configureContainer()
 
-        await prisma.$connect()
+    await prisma.$connect()
 
-        execSync('bunx prisma db push --force-reset --skip-generate', {
-            env: {
-                ...process.env,
-                DATABASE_URL: TEST_DATABASE_URL,
-            },
-            stdio: 'pipe',
-            timeout: 30000,
-        })
+    execSync('bunx prisma db push --force-reset --skip-generate', {
+      env: {
+        ...process.env,
+        DATABASE_URL: TEST_DATABASE_URL,
+      },
+      stdio: 'pipe',
+      timeout: 30000,
+    })
 
-        console.log('Test database setup complete')
-    } catch (error) {
-        console.error('Failed to set up test database:', error)
-        throw error
-    }
+    console.log('Test database setup complete')
+  } catch (error) {
+    console.error('Failed to set up test database:', error)
+    throw error
+  }
 }, 60000)
 
 afterAll(async () => {
-    try {
-        await prisma.$disconnect()
-        await rateLimiter.cleanup()
-        await rm(dbFilePath, { force: true, recursive: true })
-        console.log('Test database cleaned up.')
-    } catch (error) {
-        console.error('Error during cleanup:', error)
-    }
+  try {
+    await prisma.$disconnect()
+    await rateLimiter.cleanup()
+    await rm(dbFilePath, { force: true, recursive: true })
+    console.log('Test database cleaned up.')
+  } catch (error) {
+    console.error('Error during cleanup:', error)
+  }
 })
 
 beforeEach(async () => {
-    resetSchemaCache()
+  resetSchemaCache()
 
-    // Use transactions to ensure atomic cleanup
-    await prisma.$transaction([
-        prisma.post.deleteMany({}),
-        prisma.user.deleteMany({}),
-    ])
+  // Use transactions to ensure atomic cleanup
+  await prisma.$transaction([
+    prisma.post.deleteMany({}),
+    prisma.user.deleteMany({}),
+  ])
 
-    // Reset rate limiter between tests
-    try {
-        await rateLimiter.resetAll()
-    } catch (rateLimitError) {
-        console.error('Error resetting rate limiter:', rateLimitError)
-    }
+  // Reset rate limiter between tests
+  try {
+    await rateLimiter.resetAll()
+  } catch (rateLimitError) {
+    console.error('Error resetting rate limiter:', rateLimitError)
+  }
 })

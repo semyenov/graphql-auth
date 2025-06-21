@@ -8,7 +8,9 @@ import { prisma } from './prisma'
 /**
  * Clean all tables in the database
  */
-export async function cleanDatabase(client: PrismaClient = prisma): Promise<void> {
+export async function cleanDatabase(
+  client: PrismaClient = prisma,
+): Promise<void> {
   // Use transactions to ensure atomic cleanup
   await client.$transaction([
     client.post.deleteMany({}),

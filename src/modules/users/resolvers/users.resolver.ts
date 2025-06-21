@@ -5,12 +5,15 @@
  */
 
 import type { Prisma } from '@prisma/client'
-import { container } from 'tsyringe'
 import { z } from 'zod'
 import { ConflictError } from '../../../core/errors/types'
 // import type { ILogger } from '../../../core/services/logger.interface'
 import { parseGlobalId } from '../../../core/utils/relay'
-import { isAuthenticatedUser, isPublic, or } from '../../../graphql/middleware/rules'
+import {
+  isAuthenticatedUser,
+  isPublic,
+  or,
+} from '../../../graphql/middleware/rules'
 import { builder } from '../../../graphql/schema/builder'
 import {
   UserOrderByInput,

@@ -100,7 +100,7 @@ export class RateLimiterService {
     key: string,
     identifier: string,
     options: RateLimiterOptions,
-    points: number = 1,
+    points = 1,
   ): Promise<void> {
     // Skip rate limiting in test environment for non-rate-limit tests
     if (process.env.NODE_ENV === 'test' && !process.env.TEST_RATE_LIMITING) {

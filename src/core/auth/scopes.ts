@@ -323,7 +323,7 @@ export class ScopeLoader {
   }
 
   // Cache management
-  setCacheKey(key: string, value: unknown, ttl: number = 60000) {
+  setCacheKey(key: string, value: unknown, ttl = 60000) {
     this.cache.set(key, { value, expires: Date.now() + ttl })
   }
 

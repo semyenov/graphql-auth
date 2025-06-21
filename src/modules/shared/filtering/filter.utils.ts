@@ -186,9 +186,9 @@ export function applyBaseFilter<T>(
   const result: Record<string, unknown> = { ...filter }
 
   // Remove base filter properties from main object
-  delete result.AND
-  delete result.OR
-  delete result.NOT
+  result.AND = undefined
+  result.OR = undefined
+  result.NOT = undefined
 
   // Apply logical operators
   if (filter.AND && filter.AND.length > 0) {
@@ -211,8 +211,8 @@ export function applyBaseFilter<T>(
  */
 export function validateFilterDepth<T>(
   filter: T & BaseFilter<T>,
-  maxDepth: number = 3,
-  currentDepth: number = 0,
+  maxDepth = 3,
+  currentDepth = 0,
 ): FilterValidationResult {
   if (currentDepth > maxDepth) {
     return {
@@ -335,7 +335,7 @@ export function applyCaseInsensitive<T extends Record<string, unknown>>(
 export function getFilterSummary(filter: Record<string, unknown>): string[] {
   const summary: string[] = []
 
-  const addToSummary = (obj: Record<string, unknown>, prefix: string = '') => {
+  const addToSummary = (obj: Record<string, unknown>, prefix = '') => {
     for (const [key, value] of Object.entries(obj)) {
       if (value === null || value === undefined) continue
 

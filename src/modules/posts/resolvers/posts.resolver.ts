@@ -5,7 +5,6 @@
  */
 
 import type { Prisma } from '@prisma/client'
-import { container } from 'tsyringe'
 import { z } from 'zod'
 import {
   AuthorizationError,
@@ -14,9 +13,16 @@ import {
 } from '../../../core/errors/types'
 // import type { ILogger } from '../../../core/services/logger.interface'
 import { parseGlobalId } from '../../../core/utils/relay'
+import {
+  and,
+  isAuthenticatedUser,
+  isModerator,
+  isPostOwner,
+  isPublic,
+  or,
+} from '../../../graphql/middleware/rules'
 import { builder } from '../../../graphql/schema/builder'
 import { prisma } from '../../../prisma'
-import { isAuthenticatedUser, isPostOwner, isPublic, isModerator, and, or } from '../../../graphql/middleware/rules'
 import { requireAuthentication } from '../../auth/guards/auth.guards'
 
 // Get logger from container

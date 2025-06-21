@@ -297,7 +297,7 @@ export function createSubscriptionTester(server: ApolloServer<Context>) {
       variables: Record<string, unknown>,
       context: Context,
       triggerFn: () => Promise<void>,
-      waitTime: number = 1000,
+      waitTime = 1000,
     ): Promise<void> {
       const helper = await createSubscriptionHelper(
         server,

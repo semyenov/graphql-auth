@@ -40,7 +40,7 @@ export const isSelf = rule({ cache: 'strict' })(
       return userId === context.userId.value
     } catch {
       // If not a global ID, try parsing as number
-      const userId = parseInt(targetId, 10)
+      const userId = Number.parseInt(targetId, 10)
       return userId === context.userId.value
     }
   },

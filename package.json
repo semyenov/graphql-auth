@@ -10,30 +10,37 @@
     "postinstall": "patch-package",
     "dev": "bun run src/app/server.ts",
     "test": "bun test",
-    "test:run": "bun test",
+    "test:run": "bun test --run",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
-    "vitest": "NODE_OPTIONS='--loader ./test/vitest-loader.mjs' vitest",
-    "vitest:ui": "NODE_OPTIONS='--loader ./test/vitest-loader.mjs' vitest --ui",
-    "vitest:coverage": "NODE_OPTIONS='--loader ./test/vitest-loader.mjs' vitest --coverage",
+    "test:ui": "bun test --ui",
+    "vitest": "vitest",
+    "vitest:run": "vitest --run",
+    "vitest:ui": "vitest --ui",
+    "vitest:coverage": "vitest --coverage",
     "generate": "bun run generate:prisma && bun run generate:gql",
     "generate:prisma": "prisma generate",
     "generate:gql": "bunx gql.tada generate-output",
     "db:reset": "prisma migrate reset --force",
-    "build": "bun run clean && bun run generate && NODE_ENV=production bun build src/main.ts --outdir ./dist/app --target=node --sourcemap=inline",
-    "start": "NODE_ENV=production bun run dist/app/main.js",
+    "build": "bun run clean && bun run generate && NODE_ENV=production bun build src/main.ts --outdir ./dist/app --target=bun --sourcemap=inline",
+    "start": "NODE_ENV=production bun run dist/app/server.js",
     "clean": "rimraf dist",
     "lint": "bunx @biomejs/biome check .",
-    "format": "bunx @biomejs/biome format --write .",
+    "lint:fix": "bunx @biomejs/biome check --write .",
+    "format": "bunx @biomejs/biome format .",
+    "format:fix": "bunx @biomejs/biome format --write .",
+    "check": "bunx @biomejs/biome check .",
+    "check:fix": "bunx @biomejs/biome check --write .",
     "lint-staged": "lint-staged",
     "prepare": "husky",
-    "env:verify": "bunx @dotenv-run/cli verify",
-    "graphql:examples": "bunx @dotenv-run/cli ts-node src/graphql/operations/run-examples.ts"
+    "env:verify": "bun run src/app/config/verify-env.ts",
+    "gen:schema": "bun run src/graphql/schema/generate-schema.ts",
+    "seed": "bun run prisma/seed.ts"
   },
   "dependencies": {
     "@apollo/server": "^4.10.10",
-    "@graphql-yoga/plugin-defer-stream": "*",
-    "@graphql-yoga/plugin-disable-introspection": "*",
+    "@graphql-yoga/plugin-defer-stream": "^3.13.5",
+    "@graphql-yoga/plugin-disable-introspection": "^2.14.5",
     "@pothos/core": "^4.7.0",
     "@pothos/plugin-dataloader": "^4.4.2",
     "@pothos/plugin-errors": "^4.4.1",
@@ -43,16 +50,16 @@
     "@pothos/plugin-validation": "^3.10.2",
     "@prisma/client": "^5.21.2",
     "@prisma/extension-accelerate": "^2.0.1",
-    "argon2": "*",
+    "argon2": "^0.43.0",
     "bcryptjs": "^2.4.3",
     "consola": "^3.4.2",
     "dataloader": "^2.2.3",
-    "fetch-cookie": "*",
-    "gql.tada": "*",
+    "fetch-cookie": "^3.1.0",
+    "gql.tada": "^1.8.10",
     "graphql": "16.11.0",
-    "graphql-scalars": "*",
+    "graphql-scalars": "^1.24.2",
     "graphql-shield": "^7.6.5",
-    "graphql-sse": "*",
+    "graphql-sse": "^2.5.4",
     "graphql-tag": "^2.12.6",
     "graphql-yoga": "^5.13.5",
     "h3": "^1.13.1",
@@ -67,16 +74,19 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
-    "@faker-js/faker": "9.8.0",
+    "@faker-js/faker": "^9.8.0",
     "@graphql-tools/mock": "^9.0.23",
     "@graphql-tools/schema": "^10.0.23",
+    "@types/bcryptjs": "^3.0.0",
     "@types/bun": "^1.2.16",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.12.0",
     "@types/ws": "^8.18.1",
+    "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^2.1.9",
     "dotenv": "^16.4.5",
     "happy-dom": "^18.0.1",
+    "husky": "^9.1.7",
     "lint-staged": "^15.2.10",
     "msw": "^2.4.2",
     "patch-package": "^8.0.0",
@@ -84,18 +94,18 @@
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2",
-    "vitest": "^2.0.5"
+    "vitest": "^3.2.4"
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "bunx @biomejs/biome check --write",
-      "bunx @biomejs/biome lint --write"
-    ],
-    "*.json": [
-      "bunx @biomejs/biome format --write"
-    ]
+    "*.{ts,tsx}": ["bunx @biomejs/biome check --write"],
+    "*.{json,md}": ["bunx @biomejs/biome format --write"]
   },
   "resolutions": {
     "graphql": "16.11.0"
-  }
+  },
+  "engines": {
+    "bun": ">=1.1.0",
+    "node": ">=20.0.0"
+  },
+  "packageManager": "bun@1.1.0"
 }

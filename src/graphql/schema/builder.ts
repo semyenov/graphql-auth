@@ -8,12 +8,12 @@ import ValidationPlugin from '@pothos/plugin-validation'
 import type { ZodError } from 'zod'
 import { isProduction } from '../../app/config/environment'
 import {
-    AuthenticationError,
-    AuthorizationError,
-    ConflictError,
-    NotFoundError,
-    RateLimitError,
-    ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+  ConflictError,
+  NotFoundError,
+  RateLimitError,
+  ValidationError,
 } from '../../core/errors/types'
 import { decodeGlobalId, encodeGlobalId } from '../../core/utils/relay'
 import { prisma } from '../../prisma'
@@ -21,59 +21,61 @@ import type { Context } from '../context/context.types'
 import ShieldPlugin from './plugins/shield'
 
 export const builder = new SchemaBuilder<{
-    Context: Context
-    PrismaTypes: PrismaTypes
-    Scalars: {
-        DateTime: {
-            Input: Date
-            Output: Date
-        }
+  Context: Context
+  PrismaTypes: PrismaTypes
+  Scalars: {
+    DateTime: {
+      Input: Date
+      Output: Date
     }
-    Errors: {
-        ValidationError: typeof ValidationError
-        AuthenticationError: typeof AuthenticationError
-        AuthorizationError: typeof AuthorizationError
-        NotFoundError: typeof NotFoundError
-        ConflictError: typeof ConflictError
-        RateLimitError: typeof RateLimitError
-    }
+  }
+  Errors: {
+    ValidationError: typeof ValidationError
+    AuthenticationError: typeof AuthenticationError
+    AuthorizationError: typeof AuthorizationError
+    NotFoundError: typeof NotFoundError
+    ConflictError: typeof ConflictError
+    RateLimitError: typeof RateLimitError
+  }
 }>({
-    plugins: [
-        PrismaPlugin,
-        RelayPlugin,
-        ErrorsPlugin,
-        DataloaderPlugin,
-        ValidationPlugin,
-        ShieldPlugin,
+  plugins: [
+    PrismaPlugin,
+    RelayPlugin,
+    ErrorsPlugin,
+    DataloaderPlugin,
+    ValidationPlugin,
+    ShieldPlugin,
+  ],
+  prisma: {
+    client: prisma,
+    exposeDescriptions: true,
+    filterConnectionTotalCount: true,
+    onUnusedQuery: isProduction ? 'error' : 'warn',
+  },
+  relay: {
+    clientMutationId: 'omit',
+    cursorType: 'String',
+    encodeGlobalID: (typename, id) => encodeGlobalId(typename, id as string),
+    decodeGlobalID: (globalId) => decodeGlobalId(globalId),
+  },
+  errors: {
+    defaultTypes: [
+      ValidationError,
+      AuthenticationError,
+      AuthorizationError,
+      NotFoundError,
+      ConflictError,
+      RateLimitError,
     ],
-    prisma: {
-        client: prisma,
-        exposeDescriptions: true,
-        filterConnectionTotalCount: true,
-        onUnusedQuery: isProduction ? 'error' : 'warn',
+  },
+  validationOptions: {
+    validationError: (error: ZodError) => {
+      return new ValidationError(
+        Object.values(error.flatten().fieldErrors)
+          .flat()
+          .filter(Boolean) as string[],
+        'Validation failed',
+      )
     },
-    relay: {
-        clientMutationId: 'omit',
-        cursorType: 'String',
-        encodeGlobalID: (typename, id) => encodeGlobalId(typename, id as string),
-        decodeGlobalID: (globalId) => decodeGlobalId(globalId),
-    },
-    errors: {
-        defaultTypes: [
-            ValidationError,
-            AuthenticationError,
-            AuthorizationError,
-            NotFoundError,
-            ConflictError,
-            RateLimitError,
-        ],
-    },
-    validationOptions: {
-        validationError: (error: ZodError) => {
-            return new ValidationError(
-                Object.values(error.flatten().fieldErrors).flat().filter(Boolean) as string[],
-                'Validation failed',
-            )
-        },
-    },
-}) 
+  },
+})

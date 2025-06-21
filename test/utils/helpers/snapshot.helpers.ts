@@ -2,11 +2,11 @@
  * GraphQL snapshot testing utilities
  */
 
-import type { GraphQLResponse } from '@apollo/server'
 import { createHash } from 'crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
-import { diff } from 'jest-diff'
 import { join } from 'path'
+import type { GraphQLResponse } from '@apollo/server'
+import { diff } from 'jest-diff'
 
 export interface SnapshotOptions {
   name: string
@@ -157,11 +157,10 @@ export class GraphQLSnapshotTester {
       }
       if (obj && typeof obj === 'object') {
         const sorted: Record<string, unknown> = {}
-        Object.keys(obj as Record<string, unknown>)
-          .sort()
-          .forEach((key) => {
-            sorted[key] = sortArrays((obj as Record<string, unknown>)[key])
-          })
+        const keys = Object.keys(obj as Record<string, unknown>).sort()
+        for (const key of keys) {
+          sorted[key] = sortArrays((obj as Record<string, unknown>)[key])
+        }
         return sorted
       }
       return obj
@@ -174,7 +173,7 @@ export class GraphQLSnapshotTester {
    * Redact sensitive fields
    */
   private redactFields(data: unknown, fields: string[]): unknown {
-    const redact = (obj: unknown, path: string = ''): unknown => {
+    const redact = (obj: unknown, path = ''): unknown => {
       if (Array.isArray(obj)) {
         return obj.map((item, index) => redact(item, `${path}[${index}]`))
       }

@@ -3,8 +3,8 @@
  * Provides request/response logging for HTTP and GraphQL operations
  */
 
-import type { ApolloServerPlugin } from '@apollo/server'
 import type { IncomingMessage, ServerResponse } from 'http'
+import type { ApolloServerPlugin } from '@apollo/server'
 import { createLogger } from '../../core/logging'
 import type { Context } from '../../graphql/context/context.types'
 

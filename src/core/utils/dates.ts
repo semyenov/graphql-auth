@@ -124,7 +124,7 @@ export function parseDurationToSeconds(duration: string): number {
   }
 
   const [, value, unit] = match
-  const num = parseInt(value ?? '0', 10)
+  const num = Number.parseInt(value ?? '0', 10)
 
   switch (unit) {
     case 'd':

@@ -89,7 +89,7 @@ export function cursorToOffset(args: CursorPaginationArgs): {
     const id = decodeCursor(args.after)
     // In a real implementation, you'd need to find the position of this ID
     // For now, we'll use a simple numeric approach
-    offset = parseInt(id, 10) || 0
+    offset = Number.parseInt(id, 10) || 0
   }
 
   return { offset, limit }
@@ -151,7 +151,7 @@ export function applyPagination(
     take = limit
 
     if (args.after) {
-      cursor = { id: parseInt(decodeCursor(args.after), 10) }
+      cursor = { id: Number.parseInt(decodeCursor(args.after), 10) }
       skip = 1 // Skip the cursor itself
     }
   } else if ('limit' in args || 'offset' in args) {
@@ -303,7 +303,7 @@ export function offsetToCursor(offset: number): string {
 }
 
 export function parsePageNumber(value: unknown): number {
-  const num = parseInt(String(value), 10)
+  const num = Number.parseInt(String(value), 10)
   return Number.isNaN(num) || num < 1 ? 1 : num
 }
 
@@ -415,12 +415,12 @@ export function transformToOffsetPagination(
   if (args.first) {
     limit = args.first
     if (args.after) {
-      offset = parseInt(decodeCursor(args.after), 10) + 1
+      offset = Number.parseInt(decodeCursor(args.after), 10) + 1
     }
   } else if (args.last) {
     limit = args.last
     if (args.before) {
-      const beforeOffset = parseInt(decodeCursor(args.before), 10)
+      const beforeOffset = Number.parseInt(decodeCursor(args.before), 10)
       offset = Math.max(0, beforeOffset - args.last - 1)
     }
   }
