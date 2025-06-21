@@ -140,23 +140,8 @@ export const sessionSchema = z.object({
   userAgent: z.string().optional(),
 })
 
-/**
- * Validate and transform authentication input
- */
-export function validateAuthInput<T>(schema: z.ZodSchema<T>, data: unknown): T {
-  return schema.parse(data)
-}
-
-/**
- * Safe validation that returns errors instead of throwing
- */
-export function safeValidateAuthInput<T>(
-  schema: z.ZodSchema<T>,
-  data: unknown,
-): { success: true; data: T } | { success: false; errors: z.ZodError } {
-  const result = schema.safeParse(data)
-  if (result.success) {
-    return { success: true, data: result.data }
-  }
-  return { success: false, errors: result.error }
-}
+// Re-export shared validation helpers for backwards compatibility
+export {
+  safeValidateInput as safeValidateAuthInput,
+  validateInput as validateAuthInput,
+} from '../../core/validation/helpers'

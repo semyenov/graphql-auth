@@ -197,23 +197,8 @@ export async function validatePostExists(postId: number): Promise<boolean> {
   return !!post
 }
 
-/**
- * Validate post input
- */
-export function validatePostInput<T>(schema: z.ZodSchema<T>, data: unknown): T {
-  return schema.parse(data)
-}
-
-/**
- * Safe validation that returns errors instead of throwing
- */
-export function safeValidatePostInput<T>(
-  schema: z.ZodSchema<T>,
-  data: unknown,
-): { success: true; data: T } | { success: false; errors: z.ZodError } {
-  const result = schema.safeParse(data)
-  if (result.success) {
-    return { success: true, data: result.data }
-  }
-  return { success: false, errors: result.error }
-}
+// Re-export shared validation helpers for backwards compatibility
+export {
+  safeValidateInput as safeValidatePostInput,
+  validateInput as validatePostInput,
+} from '../../core/validation/helpers'

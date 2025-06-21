@@ -2,11 +2,11 @@
  * GraphQL snapshot testing utilities
  */
 
+import type { GraphQLResponse } from '@apollo/server'
 import { createHash } from 'crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
-import { join } from 'path'
-import type { GraphQLResponse } from '@apollo/server'
 import { diff } from 'jest-diff'
+import { join } from 'path'
 
 export interface SnapshotOptions {
   name: string

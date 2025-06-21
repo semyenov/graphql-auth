@@ -14,7 +14,7 @@ export { NoopLogger } from './noop-logger'
 import type { ILogger as IL } from '../../core/services/logger.interface'
 import { LogLevel as LL } from '../../core/services/logger.interface'
 // Import necessary types and classes for createLogger
-import { LoggerType as LT, createLoggerFromEnv } from './logger-factory'
+import { createLoggerFromEnv, LoggerType as LT } from './logger-factory'
 
 // Create logger convenience function
 export function createLogger(context?: string | Record<string, unknown>): IL {

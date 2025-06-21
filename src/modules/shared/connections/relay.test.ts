@@ -60,14 +60,14 @@ describe('Relay Utilities', () => {
 
     it('should throw error for type mismatch', () => {
       expect(() => parseAndValidateGlobalId('VXNlcjox', 'Post')).toThrow(
-        'Expected Post ID, got User ID',
+        'Expected Post ID but got User',
       )
     })
 
     it('should throw error for non-numeric IDs', () => {
       const invalidId = encodeGlobalId('User', 'abc')
       expect(() => parseAndValidateGlobalId(invalidId, 'User')).toThrow(
-        'Invalid numeric ID',
+        'Invalid User ID',
       )
     })
   })

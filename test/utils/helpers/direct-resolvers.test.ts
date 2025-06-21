@@ -6,7 +6,7 @@
 
 import type { ApolloServer } from '@apollo/server'
 import type { User } from '@prisma/client'
-import { type ResultOf, type VariablesOf, graphql } from 'gql.tada'
+import { graphql, type ResultOf, type VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { UserId } from '../../../src/core/value-objects/user-id.vo'

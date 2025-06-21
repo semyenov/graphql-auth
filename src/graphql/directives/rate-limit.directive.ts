@@ -5,8 +5,8 @@
  * as specified in IMPROVED-FILE-STRUCTURE.md
  */
 
-import { MapperKind, getDirective, mapSchema } from '@graphql-tools/utils'
-import { type GraphQLSchema, defaultFieldResolver } from 'graphql'
+import { getDirective, MapperKind, mapSchema } from '@graphql-tools/utils'
+import { defaultFieldResolver, type GraphQLSchema } from 'graphql'
 import { RateLimitError } from '../../core/errors/types'
 import type { Context } from '../context/context.types'
 

@@ -5,9 +5,9 @@
  * IMPROVED-FILE-STRUCTURE.md specification.
  */
 
-import type { IncomingMessage, ServerResponse } from 'http'
 import type { BaseContext } from '@apollo/server'
 import type { Endpoint, HTTPMethod } from 'fetchdts'
+import type { IncomingMessage, ServerResponse } from 'http'
 import type { UserId } from '../../core/value-objects/user-id.vo'
 import type { Loaders } from '../../data/loaders/loaders'
 

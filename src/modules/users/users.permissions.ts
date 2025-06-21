@@ -12,16 +12,12 @@ import {
 } from '../../core/errors/types'
 import { parseAndValidateGlobalId } from '../../core/utils/relay'
 import type { Context } from '../../graphql/context/context.types'
+import {
+  isAdmin,
+  isAuthenticated,
+  isModerator,
+} from '../../graphql/middleware/shared-rules'
 import { prisma } from '../../prisma'
-
-/**
- * Check if user is authenticated
- */
-export const isAuthenticated = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
-    return !!context.userId
-  },
-)
 
 /**
  * Check if user is viewing their own profile
@@ -43,38 +39,6 @@ export const isSelf = rule({ cache: 'strict' })(
       const userId = Number.parseInt(targetId, 10)
       return userId === context.userId.value
     }
-  },
-)
-
-/**
- * Check if user is admin
- */
-export const isAdmin = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
-    if (!context.userId) return false
-
-    const user = await prisma.user.findUnique({
-      where: { id: context.userId.value },
-      select: { role: true },
-    })
-
-    return user?.role === 'admin'
-  },
-)
-
-/**
- * Check if user is moderator or admin
- */
-export const isModerator = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
-    if (!context.userId) return false
-
-    const user = await prisma.user.findUnique({
-      where: { id: context.userId.value },
-      select: { role: true },
-    })
-
-    return user?.role === 'admin' || user?.role === 'moderator'
   },
 )
 

@@ -2,8 +2,8 @@
 import 'reflect-metadata'
 
 import { mkdirSync, writeFileSync } from 'fs'
-import path from 'path'
 import { printSchema } from 'graphql'
+import path from 'path'
 import { getSchema } from '../src/graphql/schema'
 
 // Ensure _docs directory exists

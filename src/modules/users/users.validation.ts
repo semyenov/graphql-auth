@@ -221,23 +221,8 @@ export async function validateUserUpdatePermission(
   return false
 }
 
-/**
- * Validate user input
- */
-export function validateUserInput<T>(schema: z.ZodSchema<T>, data: unknown): T {
-  return schema.parse(data)
-}
-
-/**
- * Safe validation that returns errors instead of throwing
- */
-export function safeValidateUserInput<T>(
-  schema: z.ZodSchema<T>,
-  data: unknown,
-): { success: true; data: T } | { success: false; errors: z.ZodError } {
-  const result = schema.safeParse(data)
-  if (result.success) {
-    return { success: true, data: result.data }
-  }
-  return { success: false, errors: result.error }
-}
+// Re-export shared validation helpers for backwards compatibility
+export {
+  safeValidateInput as safeValidateUserInput,
+  validateInput as validateUserInput,
+} from '../../core/validation/helpers'

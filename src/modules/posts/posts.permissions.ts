@@ -12,16 +12,11 @@ import {
 } from '../../core/errors/types'
 import { parseAndValidateGlobalId } from '../../core/utils/relay'
 import type { Context } from '../../graphql/context/context.types'
+import {
+  isAuthenticated,
+  isModerator,
+} from '../../graphql/middleware/shared-rules'
 import { prisma } from '../../prisma'
-
-/**
- * Check if user is authenticated
- */
-export const isAuthenticated = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
-    return !!context.userId
-  },
-)
 
 /**
  * Check if user owns the post
@@ -101,22 +96,6 @@ export const canViewPost = rule({ cache: 'strict' })(
       }
       return new Error('Invalid post ID')
     }
-  },
-)
-
-/**
- * Check if user is admin or moderator
- */
-export const isModerator = rule({ cache: 'contextual' })(
-  async (_parent, _args, context: Context) => {
-    if (!context.userId) return false
-
-    const user = await prisma.user.findUnique({
-      where: { id: context.userId.value },
-      select: { role: true },
-    })
-
-    return user?.role === 'admin' || user?.role === 'moderator'
   },
 )
 

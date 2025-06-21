@@ -6,8 +6,8 @@
  * error handling, type safety, and comprehensive request processing.
  */
 
-import type { IncomingMessage, ServerResponse } from 'http'
 import type { ContextFunction } from '@apollo/server'
+import type { IncomingMessage, ServerResponse } from 'http'
 import { ValidationError } from '../../core/errors/types'
 import { getUserIdFromAuthHeaderAsync } from './context.auth'
 import type { Context, GraphQLIncomingMessage } from './context.types'

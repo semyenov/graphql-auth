@@ -4,6 +4,13 @@
  * Helper functions for implementing Relay-style connections
  */
 
+// Re-export global ID utilities from core
+export {
+  encodeGlobalId,
+  parseAndValidateGlobalId,
+} from '../../../core/utils/relay'
+
+import { fromGlobalId } from '../../../core/utils/relay'
 import {
   CONNECTION_DEFAULTS,
   type Connection,
@@ -19,55 +26,16 @@ import {
 } from './relay.types'
 
 /**
- * Encode a global ID
- */
-export function encodeGlobalId(type: string, id: string | number): string {
-  return Buffer.from(`${type}:${id}`).toString('base64')
-}
-
-/**
- * Decode a global ID
+ * Decode a global ID (using core implementation)
  */
 export function decodeGlobalId(globalId: string): GlobalIdComponents {
-  try {
-    const decoded = Buffer.from(globalId, 'base64').toString('utf-8')
-    const [type, id] = decoded.split(':')
+  const { type, id } = fromGlobalId(globalId)
 
-    if (!(type && id)) {
-      throw new Error('Invalid global ID format')
-    }
-
-    return { type, id }
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message === 'Invalid global ID format'
-    ) {
-      throw error
-    }
-    throw new Error('Invalid global ID')
-  }
-}
-
-/**
- * Parse and validate a global ID
- */
-export function parseAndValidateGlobalId(
-  globalId: string,
-  expectedType: string,
-): number {
-  const { type, id } = decodeGlobalId(globalId)
-
-  if (type !== expectedType) {
-    throw new Error(`Expected ${expectedType} ID, got ${type} ID`)
+  if (!(type && id)) {
+    throw new Error('Invalid global ID format')
   }
 
-  const numericId = Number.parseInt(id.toString(), 10)
-  if (Number.isNaN(numericId)) {
-    throw new Error('Invalid numeric ID')
-  }
-
-  return numericId
+  return { type, id }
 }
 
 /**

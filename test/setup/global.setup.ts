@@ -1,5 +1,5 @@
-import { execSync } from 'child_process'
 import { PrismaClient } from '@prisma/client'
+import { execSync } from 'child_process'
 import { rm } from 'fs/promises'
 import { afterAll, beforeAll, beforeEach } from 'vitest'
 import { configureContainer } from '../../src/app/config/container'
