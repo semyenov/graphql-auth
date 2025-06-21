@@ -1,5 +1,5 @@
-import { prisma } from '../../../prisma';
 import { builder } from '../../../graphql/schema/builder';
+import { prisma } from '../../../prisma';
 
 // Define User object type using Relay Node pattern with DataLoader optimizations
 builder.prismaNode('User', {
@@ -34,11 +34,7 @@ builder.prismaNode('User', {
         // Use DataLoader for drafts count (fallback to direct query)
         draftsCount: t.int({
             description: 'Number of unpublished posts by this user',
-            resolve: async (user, _args, context) => {
-                if (context.loaders) {
-                    return context.loaders.draftPostsCountByAuthor.load(user.id);
-                }
-                // Fallback to direct count
+            resolve: async (user, _args, _context) => {
                 return prisma.post.count({
                     where: { authorId: user.id, published: false }
                 });
@@ -47,11 +43,7 @@ builder.prismaNode('User', {
         // Use DataLoader for published posts count (fallback to direct query)
         publishedPostsCount: t.int({
             description: 'Number of published posts by this user',
-            resolve: async (user, _args, context) => {
-                if (context.loaders) {
-                    return context.loaders.publishedPostsCountByAuthor.load(user.id);
-                }
-                // Fallback to direct count
+            resolve: async (user, _args, _context) => {
                 return prisma.post.count({
                     where: { authorId: user.id, published: true }
                 });

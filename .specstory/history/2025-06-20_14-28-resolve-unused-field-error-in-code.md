@@ -620,6 +620,213 @@ I will clean up `test/utils/helpers/graphql.helpers.ts` by removing the old `E2E
 
 ---
 
+I apologize again. It seems my last fix for the type error was incorrect and actually made things worse. The core issue remains that the `variables` type can be `undefined`, which conflicts with the generic constraint.
+
+Let me try a different, cleaner approach. I will adjust the `OperationType` to provide a default empty object for variables if they are not defined. This should satisfy the `Record<string, unknown>` constraint without requiring complex intersections in the helper functions. I will also clean up the file to remove the extraneous code.
+
+---
+
+```diff
+  
+  type GqlOperation = string | DocumentNode
++ type GqlVariables<T extends GqlOperation> =
++   OperationType<T>['variables'] extends Record<string, unknown>
++     ? OperationType<T>['variables']
++     : Record<string, unknown>
+  
+  // Type-safe GraphQL operation helpers
+```
+
+```diff
+      server: ApolloServer<Context>,
+      operation: TOperation,
+-     variables?: OperationType<TOperation>['variables'],
++     variables?: GqlVariables<TOperation>,
+      context?: Context,
+    ): Promise<OperationType<TOperation>['data']> {
+      const query = typeof operation === 'string' ? operation : print(operation)
+      const response = await executeOperation<
+        OperationType<TOperation>['data'],
+-       OperationType<TOperation>['variables'] & Record<string, unknown>
++       GqlVariables<TOperation>
+      >(server, query, variables, context)
+      return extractGraphQLData(response)
+```
+
+```diff
+      server: ApolloServer<Context>,
+      operation: TOperation,
+-     variables?: OperationType<TOperation>['variables'],
++     variables?: GqlVariables<TOperation>,
+      context?: Context,
+    ): Promise<OperationType<TOperation>['data']> {
+      const mutation = typeof operation === 'string' ? operation : print(operation)
+      const response = await executeOperation<
+        OperationType<TOperation>['data'],
+-       OperationType<TOperation>['variables'] & Record<string, unknown>
++       GqlVariables<TOperation>
+      >(server, mutation, variables, context)
+      return extractGraphQLData(response)
+```
+
+```diff
+      server: ApolloServer<Context>,
+      operation: TOperation,
+-     variables?: OperationType<TOperation>['variables'],
++     variables?: GqlVariables<TOperation>,
+      context?: Context,
+      expectedErrorSubstring?: string,
+```
+
+```diff
+      const response = await executeOperation<
+        OperationType<TOperation>['data'],
+-       OperationType<TOperation>['variables'] & Record<string, unknown>
++       GqlVariables<TOperation>
+      >(server, opString, variables, context)
+  
+```
+
+---
+
+I have now corrected the helper functions in `test/utils/helpers/graphql.helpers.ts`. This file now contains a robust set of `gqlHelpers` that can properly infer types from `graphql-tada` documents, which should resolve the `Property '...' does not exist on type 'never'` errors in your tests.
+
+Now, you will need to update `test/utils/helpers/direct-resolvers.test.ts` to import `gqlHelpers` from this new file instead of `database.helpers`.
+
+I will make that change for you.
+
+---
+
+```diff
+  import { beforeEach, describe, expect, it } from 'vitest'
+  import { prisma } from '../../setup'
+- import { createMockContext, createTestServer, gqlHelpers } from './database.helpers'
++ import { createMockContext, createTestServer } from './context.helpers'
++ import { gqlHelpers } from './graphql.helpers'
+  
+  describe('Direct Resolvers', () => {
+```
+
+---
+
+It seems I've hit another snag. The file `test/utils/helpers/context.helpers.ts` doesn't exist yet, which is causing the import error. I should have created this file before trying to import from it. My apologies.
+
+I will now create `test/utils/helpers/context.helpers.ts` and move the relevant context-creation and server-creation logic into it from the old `test-utils.ts` file. This will resolve the final error.
+
+---
+
+```diff
+- 
++ import { ApolloServer } from '@apollo/server'
++ import jwt from 'jsonwebtoken'
++ import { env } from '../../../src/app/config/environment'
++ import { enhanceContext } from '../../../src/context/context-direct'
++ import type { Context } from '../../../src/context/types.d'
++ import { UserId } from '../../../src/core/value-objects/user-id.vo'
++ import { getSchema } from '../../../src/graphql/schema'
++ 
++ // Create test context
++ export function createMockContext(overrides?: Partial<Context>): Context {
++   const defaultContext: Context = {
++     req: {
++       url: '/graphql',
++       method: 'POST',
++       headers: {},
++       body: undefined,
++     },
++     headers: {
++       'content-type': 'application/json',
++     },
++     method: 'POST',
++     contentType: 'application/json',
++     metadata: {
++       ip: '127.0.0.1',
++       userAgent: 'test-user-agent',
++       startTime: Date.now(),
++     },
++     security: {
++       isAuthenticated: false,
++       permissions: ['read:public'],
++       roles: ['user'],
++     },
++   }
++ 
++   const baseContext: Context = {
++     ...defaultContext,
++     ...overrides,
++   }
++ 
++   return enhanceContext(baseContext)
++ }
++ 
++ // Create authenticated context
++ export function createAuthContext(userId: number | UserId): Context {
++   const userIdObject =
++     typeof userId === 'number' ? UserId.create(userId) : userId
++   const token = generateTestToken(userIdObject)
++ 
++   return createMockContext({
++     headers: {
++       'content-type': 'application/json',
++       authorization: `Bearer ${token}`,
++     },
++     req: {
++       url: '/graphql',
++       method: 'POST',
++       headers: {
++         'content-type': 'application/json',
++         authorization: `Bearer ${token}`,
++       },
++       body: undefined,
++     },
++     userId: userIdObject, // Add the top-level userId property
++     security: {
++       isAuthenticated: true,
++       userId: userIdObject,
++       userEmail: undefined, // Would typically be filled by auth middleware
++       roles: ['user'], // Default role for authenticated users
++       permissions: [],
++     },
++   })
++ }
++ 
++ // Create test server
++ export function createTestServer() {
++   return new ApolloServer<Context>({
++     schema: getSchema(),
++     introspection: true,
++   })
++ }
++ 
++ // Generate test JWT token
++ export function generateTestToken(userId: UserId): string {
++   return jwt.sign({ userId: userId.value }, env.APP_SECRET)
++ }
++ 
++ export { Context } 
+```
+
+---
+
+Excellent. Now that `test/utils/helpers/context.helpers.ts` exists and contains the required functions, the import in `test/utils/helpers/direct-resolvers.test.ts` should work correctly.
+
+To recap, I have:
+1.  Created a new `test/utils/helpers/graphql.helpers.ts` file with improved `gqlHelpers` that correctly handle `graphql-tada` types.
+2.  Created a new `test/utils/helpers/context.helpers.ts` file for server and context creation.
+3.  Updated `test/utils/helpers/direct-resolvers.test.ts` to use these new helper files.
+
+This should resolve all the linter errors and allow your tests to run correctly. Let me know if you have any other questions.
+
+---
+
+_**User**_
+
+
+
+---
+
+_**Assistant**_
+
 
 
 ---
