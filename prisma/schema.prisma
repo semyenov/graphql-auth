@@ -1,12 +1,10 @@
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["metrics", "nativeDistinct"]
   dmmf = "prisma/dmmf.json"
 }
 
 generator pothos {
   provider        = "prisma-pothos-types"
-  previewFeatures = ["metrics", "nativeDistinct"]
 }
 
 datasource db {

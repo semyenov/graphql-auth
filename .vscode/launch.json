@@ -47,6 +47,27 @@
       // The URL of the WebSocket inspector to attach to.
       // This value can be retrieved by using `bun --inspect`.
       "url": "ws://localhost:6499/"
+    },
+    {
+      "type": "bun",
+      "request": "launch",
+      "name": "Debug Bun",
+      "program": "${workspaceFolder}/src/main.ts",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "env": {},
+      "strictEnv": false
+    },
+    // Run tests
+    {
+      "type": "bun",
+      "request": "launch",
+      "name": "Run Tests",
+      "program": "${workspaceFolder}/node_modules/.bin/vitest",
+      "args": ["run"],
+      "cwd": "${workspaceFolder}",
+      "env": {},
+      "strictEnv": false
     }
   ]
 }

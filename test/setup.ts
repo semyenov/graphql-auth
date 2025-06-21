@@ -1,5 +1,4 @@
 import { execSync } from 'child_process'
-import path from 'path'
 import { rm } from 'fs/promises'
 import { afterAll, beforeAll, beforeEach } from 'vitest'
 import { configureContainer } from '../src/app/config/container'
@@ -8,8 +7,7 @@ import { resetSchemaCache } from '../src/graphql/schema'
 import { prisma } from '../src/prisma'
 import { TEST_DATABASE_URL } from './test-database-url'
 
-const __filename = '' // This will be replaced by vitest
-const __dirname = path.dirname(__filename)
+// Note: __dirname not needed in this setup, using explicit path
 
 const dbFilePath = TEST_DATABASE_URL.replace('file:', '')
 

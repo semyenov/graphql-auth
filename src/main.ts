@@ -4,13 +4,13 @@
  * Bootstraps the application with clean architecture.
  */
 
-import { type IncomingMessage, type ServerResponse, createServer } from 'http'
 import { ApolloServer, type HeaderMap } from '@apollo/server'
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
+import { createServer, type IncomingMessage, type ServerResponse } from 'http'
 import 'reflect-metadata'
 
 // Import configuration and DI
-import { getConfigInstance } from './app/config/configuration-legacy'
+import { getConfigInstance } from './app/config/config'
 import { configureContainer } from './app/config/container'
 import { createContext } from './graphql/context/context.factory'
 
