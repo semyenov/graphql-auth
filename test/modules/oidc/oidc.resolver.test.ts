@@ -9,17 +9,17 @@
  */
 
 import type { OidcClient, User } from '@prisma/client'
-import * as argon2 from 'argon2'
-import { graphql } from 'gql.tada'
-import { print } from 'graphql'
-import { beforeEach, describe, expect, it } from 'vitest'
-import { prisma } from '../../../src/prisma'
 import {
   createAuthenticatedContext,
   createMockContext,
   createTestServer,
   executeOperation,
-} from '../../utils'
+} from '@test/utils'
+import * as argon2 from 'argon2'
+import { graphql } from 'gql.tada'
+import { print } from 'graphql'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { prisma } from '../../../src/prisma'
 
 // GraphQL queries and mutations
 const ListOidcClientsQuery = graphql(`

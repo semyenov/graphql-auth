@@ -49,7 +49,7 @@ export function createMockContext(
 export function createAuthContext(
   userIdOrValue: number | UserId = 1,
   overrides: Partial<DefaultContext> = {},
-): DefaultContext {
+) {
   const userId =
     typeof userIdOrValue === 'number' ? userIdOrValue : userIdOrValue.value
   const userIdVO =
@@ -70,7 +70,6 @@ export function createAuthContext(
       email: payload.email,
     } as unknown as DefaultContext['user'],
     userId: userIdVO,
-    decodedToken: payload,
     security: {
       isAuthenticated: true,
       userId: userIdVO,

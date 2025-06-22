@@ -1,5 +1,13 @@
-import type { ResultOf, VariablesOf } from 'gql.tada'
-import { print } from 'graphql'
+import {
+  cleanDatabase,
+  createAuthContext,
+  createGraphQLTestHelper,
+  createMockContext,
+  createTestServer,
+  createTestUser,
+  createUserWithPosts,
+} from '@test/utils'
+import { toPostId } from '@test/utils/helpers/relay'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   CreatePostMutation,
@@ -9,16 +17,6 @@ import {
 import { DraftsQuery, FeedQuery } from '../../../src/gql/queries'
 import { prisma } from '../../../src/prisma'
 import { UserId } from '../../../src/types/value-objects'
-import {
-  cleanDatabase,
-  createAuthContext,
-  createMockContext,
-  createTestServer,
-  createTestUser,
-  createUserWithPosts,
-  gqlHelpers,
-} from '../../utils'
-import { toPostId } from '../../utils/helpers/relay'
 
 // Type definitions for GraphQL responses
 interface Post {
@@ -50,6 +48,7 @@ interface PostConnection {
 
 describe('Posts', () => {
   const server = createTestServer()
+  const gql = createGraphQLTestHelper(server)
   let testUserId: UserId
   let testCounter = 0
 
@@ -72,25 +71,28 @@ describe('Posts', () => {
         publishedPosts: 2,
       })
 
-      const data = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof FeedQuery>,
-        VariablesOf<typeof FeedQuery>
-      >(server, print(FeedQuery), { first: 10 }, createMockContext())
+      const data = await gql.query(
+        FeedQuery,
+        { first: 10 },
+        createMockContext(),
+      )
 
       // At least 2 posts should be returned (may include posts from other tests)
-      expect(data.feed.edges.length).toBeGreaterThanOrEqual(2)
-      expect(data.feed.edges.every((edge) => edge.node.published)).toBe(true)
+      expect(data.feed?.edges?.length).toBeGreaterThanOrEqual(2)
+      expect(data.feed?.edges?.every((edge) => edge?.node?.published)).toBe(
+        true,
+      )
 
       // Verify we got posts from our test user
       const publishedPosts = posts.filter((p) => p.published)
       const publishedTitles = publishedPosts.map((p) => p.title)
-      const returnedTitles = data.feed.edges.map((edge) => edge.node.title)
+      const returnedTitles = data.feed?.edges?.map((edge) => edge?.node?.title)
 
       // Check that at least some of our posts are in the feed
-      const ourPostsInFeed = returnedTitles.filter((title) =>
-        publishedTitles.includes(title),
+      const ourPostsInFeed = returnedTitles?.filter((title) =>
+        publishedTitles.includes(title ?? ''),
       )
-      expect(ourPostsInFeed.length).toBeGreaterThanOrEqual(2)
+      expect(ourPostsInFeed?.length).toBeGreaterThanOrEqual(2)
     })
 
     it('should fetch user drafts when authenticated', async () => {
@@ -116,13 +118,14 @@ describe('Posts', () => {
         first: 10,
       }
 
-      const data = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof DraftsQuery>,
-        VariablesOf<typeof DraftsQuery>
-      >(server, print(DraftsQuery), variables, createAuthContext(testUserId))
+      const data = await gql.query(
+        DraftsQuery,
+        variables,
+        createAuthContext(testUserId),
+      )
 
       expect(data.drafts?.edges).toHaveLength(2)
-      expect(data.drafts?.edges.every((edge) => !edge.node.published)).toBe(
+      expect(data.drafts?.edges?.every((edge) => !edge?.node?.published)).toBe(
         true,
       )
     })
@@ -132,15 +135,11 @@ describe('Posts', () => {
         first: 10,
       }
 
-      await gqlHelpers.expectGraphQLError<
-        ResultOf<typeof DraftsQuery>,
-        VariablesOf<typeof DraftsQuery>
-      >(
-        server,
-        print(DraftsQuery),
+      await gql.expectError(
+        DraftsQuery,
         variables,
-        createMockContext(), // No auth
         'Not authorized',
+        createMockContext(), // No auth
       )
     })
   })
@@ -154,19 +153,15 @@ describe('Posts', () => {
         },
       }
 
-      const data = await gqlHelpers.expectSuccessfulMutation<
-        ResultOf<typeof CreatePostMutation>,
-        VariablesOf<typeof CreatePostMutation>
-      >(
-        server,
-        print(CreatePostMutation),
+      const data = await gql.mutate(
+        CreatePostMutation,
         variables,
         createAuthContext(testUserId),
       )
 
       expect(data.createPost).toBeDefined()
-      expect(data.createPost.title).toBe(variables.input.title)
-      expect(data.createPost.published).toBe(false)
+      expect(data.createPost?.title).toBe(variables.input.title)
+      expect(data.createPost?.published).toBe(false)
       // Author might not be included in the response due to Prisma query optimization
 
       // Verify in database
@@ -185,15 +180,11 @@ describe('Posts', () => {
         },
       }
 
-      await gqlHelpers.expectGraphQLError<
-        ResultOf<typeof CreatePostMutation>,
-        VariablesOf<typeof CreatePostMutation>
-      >(
-        server,
-        print(CreatePostMutation),
+      await gql.expectError(
+        CreatePostMutation,
         variables,
-        createMockContext(), // No auth
         'Not authorized',
+        createMockContext(), // No auth
       )
     })
   })
@@ -212,12 +203,8 @@ describe('Posts', () => {
 
       const variables = { id: toPostId(post.id) }
 
-      const data = await gqlHelpers.expectSuccessfulMutation<
-        ResultOf<typeof DeletePostMutation>,
-        VariablesOf<typeof DeletePostMutation>
-      >(
-        server,
-        print(DeletePostMutation),
+      const data = await gql.mutate(
+        DeletePostMutation,
         variables,
         createAuthContext(testUserId),
       )
@@ -250,15 +237,11 @@ describe('Posts', () => {
 
       const variables = { id: toPostId(post.id) }
 
-      await gqlHelpers.expectGraphQLError<
-        ResultOf<typeof DeletePostMutation>,
-        VariablesOf<typeof DeletePostMutation>
-      >(
-        server,
-        print(DeletePostMutation),
+      await gql.expectError(
+        DeletePostMutation,
         variables,
-        createAuthContext(testUserId), // Different user
         'You can only modify posts that you have created',
+        createAuthContext(testUserId), // Different user
       )
 
       // Verify post still exists
@@ -281,15 +264,11 @@ describe('Posts', () => {
 
       const variables = { id: toPostId(post.id) }
 
-      await gqlHelpers.expectGraphQLError<
-        ResultOf<typeof DeletePostMutation>,
-        VariablesOf<typeof DeletePostMutation>
-      >(
-        server,
-        print(DeletePostMutation),
+      await gql.expectError(
+        DeletePostMutation,
         variables,
-        createMockContext(), // No authentication
         'Authentication required',
+        createMockContext(), // No authentication
       )
 
       // Verify post still exists
@@ -316,30 +295,22 @@ describe('Posts', () => {
       const variables = { id: toPostId(post.id) }
 
       // First increment
-      const data1 = await gqlHelpers.expectSuccessfulMutation<
-        ResultOf<typeof IncrementPostViewCountMutation>,
-        VariablesOf<typeof IncrementPostViewCountMutation>
-      >(
-        server,
-        print(IncrementPostViewCountMutation),
+      const data1 = await gql.mutate(
+        IncrementPostViewCountMutation,
         variables,
         createMockContext(), // No auth required
       )
 
-      expect(data1.incrementPostViewCount.viewCount).toBe(1)
+      expect(data1.incrementPostViewCount?.viewCount).toBe(1)
 
       // Second increment
-      const data2 = await gqlHelpers.expectSuccessfulMutation<
-        ResultOf<typeof IncrementPostViewCountMutation>,
-        VariablesOf<typeof IncrementPostViewCountMutation>
-      >(
-        server,
-        print(IncrementPostViewCountMutation),
+      const data2 = await gql.mutate(
+        IncrementPostViewCountMutation,
         variables,
         createMockContext(),
       )
 
-      expect(data2.incrementPostViewCount.viewCount).toBe(2)
+      expect(data2.incrementPostViewCount?.viewCount).toBe(2)
 
       // Verify in database
       const updatedPost = await prisma.post.findUnique({
@@ -351,15 +322,11 @@ describe('Posts', () => {
     it('should fail for non-existent post', async () => {
       const variables = { id: toPostId(999999) } // Non-existent ID
 
-      await gqlHelpers.expectGraphQLError<
-        ResultOf<typeof IncrementPostViewCountMutation>,
-        VariablesOf<typeof IncrementPostViewCountMutation>
-      >(
-        server,
-        print(IncrementPostViewCountMutation),
+      await gql.expectError(
+        IncrementPostViewCountMutation,
         variables,
-        createMockContext(),
         'Post not found',
+        createMockContext(),
       )
     })
   })

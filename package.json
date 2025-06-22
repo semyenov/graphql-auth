@@ -9,7 +9,6 @@
   "scripts": {
     "postinstall": "patch-package",
     "dev": "bun run src/app/server.ts",
-    "dev:h3": "bun run src/app/server-h3.ts",
     "test": "bun test",
     "test:run": "bun test --run",
     "test:watch": "bun test --watch",

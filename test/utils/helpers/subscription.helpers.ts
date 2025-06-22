@@ -3,7 +3,8 @@
  */
 
 import type { ApolloServer, GraphQLResponse } from '@apollo/server'
-import { parse } from 'graphql'
+import type { ResultOf, TadaDocumentNode, VariablesOf } from 'gql.tada'
+import { parse, print } from 'graphql'
 import type { DefaultContext } from '../../../src/graphql/context/context.types'
 
 export interface SubscriptionTestHelper {
@@ -251,6 +252,53 @@ export async function waitForSubscription(
       throw new Error('Timeout waiting for subscription')
     }
     await new Promise((resolve) => setTimeout(resolve, interval))
+  }
+}
+
+/**
+ * Create a typed subscription helper
+ */
+export async function createTypedSubscriptionHelper<
+  TDocument extends TadaDocumentNode,
+>(
+  server: ApolloServer<DefaultContext>,
+  subscription: TDocument,
+  variables: VariablesOf<TDocument>,
+  context: DefaultContext,
+): Promise<
+  SubscriptionTestHelper & {
+    getNextTyped: () => Promise<ResultOf<TDocument>>
+    getAllTyped: (count: number) => Promise<ResultOf<TDocument>[]>
+  }
+> {
+  const helper = await createSubscriptionHelper(
+    server,
+    print(subscription),
+    variables as Record<string, unknown>,
+    context,
+  )
+
+  return {
+    ...helper,
+    getNextTyped: async () => {
+      const response = await helper.getNext()
+      if (response.body.kind !== 'single' || !response.body.singleResult.data) {
+        throw new Error('Expected subscription event to have data')
+      }
+      return response.body.singleResult.data as ResultOf<TDocument>
+    },
+    getAllTyped: async (count: number) => {
+      const responses = await helper.getAll(count)
+      return responses.map((response) => {
+        if (
+          response.body.kind !== 'single' ||
+          !response.body.singleResult.data
+        ) {
+          throw new Error('Expected subscription event to have data')
+        }
+        return response.body.singleResult.data as ResultOf<TDocument>
+      })
+    },
   }
 }
 

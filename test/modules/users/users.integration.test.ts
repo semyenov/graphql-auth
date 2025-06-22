@@ -1,19 +1,17 @@
-import type { ResultOf, VariablesOf } from 'gql.tada'
-import { print } from 'graphql'
+import {
+  cleanDatabase,
+  createAuthContext,
+  createGraphQLTestHelper,
+  createMockContext,
+  createTestServer,
+  createTestUser,
+} from '@test/utils'
+import { extractNumericId, toPostId } from '@test/utils/helpers/relay'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TogglePublishPostMutation } from '../../../src/gql/mutations'
 import { MeQuery } from '../../../src/gql/queries'
 import { prisma } from '../../../src/prisma'
 import { UserId } from '../../../src/types/value-objects'
-import {
-  cleanDatabase,
-  createAuthContext,
-  createMockContext,
-  createTestServer,
-  createTestUser,
-  gqlHelpers,
-} from '../../utils'
-import { extractNumericId, toPostId } from '../../utils/helpers/relay'
 
 // Type definitions for GraphQL responses
 interface User {
@@ -34,6 +32,7 @@ interface Post {
 
 describe('User queries', () => {
   const server = createTestServer()
+  const gql = createGraphQLTestHelper(server)
   let testUserId: number
   let testUserEmail: string
 
@@ -51,10 +50,7 @@ describe('User queries', () => {
   describe('me query', () => {
     it('should return current user when authenticated', async () => {
       try {
-        const data = await gqlHelpers.expectSuccessfulQuery<
-          ResultOf<typeof MeQuery>,
-          VariablesOf<typeof MeQuery>
-        >(server, print(MeQuery), {}, createAuthContext(testUserId))
+        const data = await gql.query(MeQuery, {}, createAuthContext(testUserId))
 
         expect(data.me).toBeDefined()
         if (data.me) {
@@ -72,12 +68,8 @@ describe('User queries', () => {
     })
 
     it('should return null when not authenticated', async () => {
-      const data = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof MeQuery>,
-        VariablesOf<typeof MeQuery>
-      >(
-        server,
-        print(MeQuery),
+      const data = await gql.query(
+        MeQuery,
         {},
         createMockContext(), // No auth
       )
@@ -101,12 +93,8 @@ describe('User queries', () => {
       const variables = { id: toPostId(post.id) }
 
       // First toggle - should publish
-      const data1 = await gqlHelpers.expectSuccessfulMutation<
-        ResultOf<typeof TogglePublishPostMutation>,
-        VariablesOf<typeof TogglePublishPostMutation>
-      >(
-        server,
-        print(TogglePublishPostMutation),
+      const data1 = await gql.mutate(
+        TogglePublishPostMutation,
         variables,
         createAuthContext(UserId.create(testUserId)),
       )
@@ -114,12 +102,8 @@ describe('User queries', () => {
       expect(data1.togglePublishPost?.published).toBe(true)
 
       // Second toggle - should unpublish
-      const data2 = await gqlHelpers.expectSuccessfulMutation<
-        ResultOf<typeof TogglePublishPostMutation>,
-        VariablesOf<typeof TogglePublishPostMutation>
-      >(
-        server,
-        print(TogglePublishPostMutation),
+      const data2 = await gql.mutate(
+        TogglePublishPostMutation,
         variables,
         createAuthContext(UserId.create(testUserId)),
       )
@@ -152,15 +136,11 @@ describe('User queries', () => {
 
       const variables = { id: toPostId(post.id) }
 
-      await gqlHelpers.expectGraphQLError<
-        ResultOf<typeof TogglePublishPostMutation>,
-        VariablesOf<typeof TogglePublishPostMutation>
-      >(
-        server,
-        print(TogglePublishPostMutation),
+      await gql.expectError(
+        TogglePublishPostMutation,
         variables,
-        createAuthContext(UserId.create(testUserId)), // Different user
         'You can only modify posts that you have created',
+        createAuthContext(UserId.create(testUserId)), // Different user
       )
 
       // Verify post wasn't changed
@@ -173,15 +153,11 @@ describe('User queries', () => {
     it('should fail for non-existent post', async () => {
       const variables = { id: toPostId(999999) } // Non-existent ID
 
-      await gqlHelpers.expectGraphQLError<
-        ResultOf<typeof TogglePublishPostMutation>,
-        VariablesOf<typeof TogglePublishPostMutation>
-      >(
-        server,
-        print(TogglePublishPostMutation),
+      await gql.expectError(
+        TogglePublishPostMutation,
         variables,
-        createAuthContext(UserId.create(testUserId)),
         'Post with identifier',
+        createAuthContext(UserId.create(testUserId)),
       )
     })
   })

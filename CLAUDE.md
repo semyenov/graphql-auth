@@ -8,12 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Development
 bun run dev                             # Start dev server (port 4000)
 bun run dev:h3                          # Start dev server with H3 (minimal HTTP framework)
-bun run test --run                      # Run all tests once (no watch)
-bun run test                            # Run tests in watch mode
+bun test                                # Run tests in watch mode
+bun test --run                          # Run all tests once (no watch)
 bun test test/auth.test.ts              # Run specific test file
-bun run test -t "test name"             # Run tests matching pattern
-bun run test:ui                         # Run tests with UI
-bun run test:coverage                   # Run tests with coverage
+bun test -t "test name"                 # Run tests matching pattern
+bun test --coverage                     # Run tests with coverage
+bun test --ui                           # Run tests with UI
 
 # Database
 bunx prisma migrate dev --name feature  # Create migration
@@ -23,18 +23,18 @@ bunx prisma studio                      # Open database GUI
 bunx prisma db push                     # Push schema changes without migration (dev only)
 
 # Build & Production
-bun run build                          # Build for production (builds src/main.ts)
-bun run start                          # Start production server (runs dist/app/server.js)
+bun run build                          # Build for production
+bun run start                          # Start production server
 bun run clean                          # Clean build directory
 
 # Code Quality
 bunx tsc --noEmit                      # Type check all files
-bun run lint                          # Run Biome linter
-bun run lint:fix                      # Auto-fix linting issues
-bun run format                        # Check formatting
-bun run format:fix                    # Auto-fix formatting
-bun run check                         # Run all Biome checks
-bun run check:fix                     # Auto-fix all issues
+bun run lint                           # Run Biome linter
+bun run lint:fix                       # Auto-fix linting issues
+bun run format                         # Check formatting
+bun run format:fix                     # Auto-fix formatting
+bun run check                          # Run all Biome checks
+bun run check:fix                      # Auto-fix all issues
 bun run check:fix --unsafe             # Apply unsafe fixes (for any types, etc.)
 
 # GraphQL Schema
@@ -137,19 +137,15 @@ container.register<IAuthService>('IAuthService', { useClass: AuthService })
 
 ### 5. GraphQL Tada Testing
 
-**NEVER** use raw GraphQL strings in tests:
+Use the new test helpers for type-safe GraphQL operations:
 
 ```typescript
-// ✅ CORRECT
-import { print } from 'graphql'
-import { LoginMutation } from '../src/gql/mutations'
+// ✅ CORRECT - Using new helpers
+import { createGraphQLTestHelper } from '@test/utils'
 
-const result = await executeOperation(
-  server,
-  print(LoginMutation),
-  { email: 'test@example.com', password: 'password' },
-  context,
-)
+const gql = createGraphQLTestHelper(server)
+const data = await gql.mutate(LoginMutation, variables, context)
+await gql.expectError(LoginMutation, variables, 'Error message', context)
 
 // ❌ WRONG - Don't use raw strings
 const result = await executeOperation(server, `mutation { login(...) }`)
@@ -227,22 +223,46 @@ OIDC_JWKS_PATH="./oidc-jwks.json"    # Path to JWKS keys for OIDC
 - **Shield Caching**: Authorization results cached per request
 - **Direct Access**: No context overhead for Prisma calls
 
-## RefreshToken Implementation
+## Test Configuration
 
-- Stores UUID string IDs in database
-- Returns JWT refresh token containing the UUID
-- Single-use with rotation on refresh
-- Repository pattern exception (only for RefreshToken entity)
+Tests use Vitest with the following configuration:
+- **Sequential execution**: Tests run in sequence to prevent database conflicts
+- **Process isolation**: Each test file runs in a separate process using 'forks' pool
+- **Path aliases**: Use `@test/*` for test utilities, `@` for src imports
+- **GraphQL deduplication**: Single GraphQL instance enforced to prevent schema errors
 
 ## Test Utilities
 
-The project includes comprehensive test utilities in `test/utils/`:
+The project includes comprehensive test utilities with the new GraphQL test helper:
 
+```typescript
+import { createGraphQLTestHelper } from '@test/utils'
+
+const server = createTestServer()
+const gql = createGraphQLTestHelper(server)
+
+// Type-safe queries and mutations
+const data = await gql.query(MeQuery, {}, context)
+const result = await gql.mutate(LoginMutation, { email, password }, context)
+
+// Error expectations
+await gql.expectError(
+  CreatePostMutation,
+  variables,
+  'Not authorized',
+  context
+)
+
+// Subscriptions
+const subscription = await gql.subscribe(PostUpdated, variables, context)
+const event = await subscription.getNextTyped()
+```
+
+Other utilities:
 - `createTestServer()`: Creates Apollo Server instance for testing
 - `createAuthenticatedContextFromScratch()`: Creates new test user with authenticated context
 - `createAuthenticatedContext(user)`: Creates authenticated context from existing user
 - `createMockContext()`: Creates unauthenticated context
-- `gqlHelpers`: GraphQL operation helpers with type safety
 - `createTestUser()`: Creates test users with hashed passwords
 - `cleanDatabase()`: Cleans test database between tests
 
@@ -256,6 +276,13 @@ Context is created by `context.factory.ts` and includes:
 - `requestId`: Unique request identifier
 
 Never add Prisma to context - always import directly.
+
+## RefreshToken Implementation
+
+- Stores UUID string IDs in database
+- Returns JWT refresh token containing the UUID
+- Single-use with rotation on refresh
+- Repository pattern exception (only for RefreshToken entity)
 
 ## OIDC (OpenID Connect) Implementation
 
@@ -273,7 +300,6 @@ modules/oidc/
 │   └── prisma-adapter.service.ts # Prisma adapter for oidc-provider
 └── types/
     └── oidc.types.ts             # TypeScript types for OIDC
-
 ```
 
 ### OIDC Endpoints
@@ -308,25 +334,9 @@ bun test test/modules/oidc --run
 bun run scripts/test-oidc.ts
 ```
 
-## Running Single Tests
-
-```bash
-# Run a specific test file
-bun test test/modules/auth/auth.test.ts
-
-# Run tests matching a pattern
-bun test -t "should create user"
-
-# Run tests in a specific directory
-bun test test/modules/users
-
-# Debug a specific test with console output
-bun test test/modules/auth/auth.test.ts --no-coverage
-```
-
 ## H3 Server Routes
 
-The project provides three main endpoints using H3:
+The project provides these main endpoints using H3:
 
 - `/graphql` - GraphQL API endpoint (GET/POST)
 - `/health` - Health check endpoint with database status

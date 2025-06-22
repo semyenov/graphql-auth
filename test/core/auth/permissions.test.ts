@@ -1,5 +1,12 @@
-import type { ResultOf, VariablesOf } from 'gql.tada'
-import { print } from 'graphql'
+import {
+  cleanDatabase,
+  createAuthContext,
+  createGraphQLTestHelper,
+  createMockContext,
+  createTestServer,
+  createTestUser,
+} from '@test/utils'
+import { toPostId, toUserId } from '@test/utils/helpers/relay.helpers'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   DeletePostMutation,
@@ -15,18 +22,10 @@ import {
 import { PermissionUtils } from '../../../src/graphql/middleware/utils-clean'
 import { prisma } from '../../../src/prisma'
 import { UserId } from '../../../src/types/value-objects'
-import {
-  cleanDatabase,
-  createAuthContext,
-  createMockContext,
-  createTestServer,
-  createTestUser,
-  gqlHelpers,
-} from '../../utils'
-import { toPostId, toUserId } from '../../utils/helpers/relay.helpers'
 
 describe('Enhanced Permissions System', () => {
   const server = createTestServer()
+  const gql = createGraphQLTestHelper(server)
   let testUserId: number
   let otherUserId: number
   let testCounter = 0
@@ -194,10 +193,11 @@ describe('Enhanced Permissions System', () => {
         ],
       })
 
-      const data = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof FeedQuery>,
-        VariablesOf<typeof FeedQuery>
-      >(server, print(FeedQuery), { first: 10 }, createMockContext())
+      const data = await gql.query(
+        FeedQuery,
+        { first: 10 },
+        createMockContext(),
+      )
 
       // At least 2 posts should be returned (may include posts from other tests)
       expect(data?.feed?.edges?.length).toBeGreaterThanOrEqual(2)
@@ -205,10 +205,7 @@ describe('Enhanced Permissions System', () => {
 
     it('should require authentication for me query', async () => {
       // Test without authentication - should return null, not error
-      const data = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof MeQuery>,
-        VariablesOf<typeof MeQuery>
-      >(server, print(MeQuery), {}, createMockContext())
+      const data = await gql.query(MeQuery, {}, createMockContext())
 
       expect(data?.me).toBeNull()
 
@@ -219,12 +216,8 @@ describe('Enhanced Permissions System', () => {
       expect(testUser).toBeTruthy()
 
       // Test with authentication - user should exist
-      const authData = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof MeQuery>,
-        VariablesOf<typeof MeQuery>
-      >(
-        server,
-        print(MeQuery),
+      const authData = await gql.query(
+        MeQuery,
         {},
         createAuthContext(UserId.create(testUserId)),
       )
@@ -256,12 +249,8 @@ describe('Enhanced Permissions System', () => {
       })
 
       // User should be able to access their own drafts
-      const ownDraftsData = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof DraftsQuery>,
-        VariablesOf<typeof DraftsQuery>
-      >(
-        server,
-        print(DraftsQuery),
+      const ownDraftsData = await gql.query(
+        DraftsQuery,
         { first: 10 },
         createAuthContext(UserId.create(testUserId)),
       )
@@ -277,12 +266,8 @@ describe('Enhanced Permissions System', () => {
       expect(data?.drafts?.edges?.[0]?.node?.title).toBe('User 1 Draft')
 
       // Other user should see their own drafts
-      const otherDraftsData = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof DraftsQuery>,
-        VariablesOf<typeof DraftsQuery>
-      >(
-        server,
-        print(DraftsQuery),
+      const otherDraftsData = await gql.query(
+        DraftsQuery,
         { first: 10 },
         createAuthContext(UserId.create(otherUserId)),
       )
@@ -315,15 +300,11 @@ describe('Enhanced Permissions System', () => {
       })
 
       // testUserId should not be able to delete otherUserId's post
-      await gqlHelpers.expectGraphQLError<
-        ResultOf<typeof DeletePostMutation>,
-        VariablesOf<typeof DeletePostMutation>
-      >(
-        server,
-        print(DeletePostMutation),
+      await gql.expectError(
+        DeletePostMutation,
         { id: toPostId(post.id) },
-        createAuthContext(UserId.create(testUserId)),
         'You can only modify posts that you have created',
+        createAuthContext(UserId.create(testUserId)),
       )
 
       // Verify post still exists
@@ -334,15 +315,11 @@ describe('Enhanced Permissions System', () => {
     })
 
     it('should handle invalid post IDs gracefully', async () => {
-      await gqlHelpers.expectGraphQLError<
-        ResultOf<typeof DeletePostMutation>,
-        VariablesOf<typeof DeletePostMutation>
-      >(
-        server,
-        print(DeletePostMutation),
+      await gql.expectError(
+        DeletePostMutation,
         { id: toPostId(999999) }, // Non-existent ID
-        createAuthContext(UserId.create(testUserId)),
         `Post with identifier '${toPostId(999999)}' not found`,
+        createAuthContext(UserId.create(testUserId)),
       )
     })
   })
@@ -356,10 +333,11 @@ describe('Enhanced Permissions System', () => {
       }
 
       // First signup should succeed (rate limiting is placeholder for now)
-      const data = await gqlHelpers.expectSuccessfulMutation<
-        ResultOf<typeof SignupMutation>,
-        VariablesOf<typeof SignupMutation>
-      >(server, print(SignupMutation), variables, createMockContext())
+      const data = await gql.mutate(
+        SignupMutation,
+        variables,
+        createMockContext(),
+      )
 
       // Should succeed since rate limiting is not actually implemented yet
       expect(data).toBeDefined()
@@ -371,15 +349,11 @@ describe('Enhanced Permissions System', () => {
         password: 'wrongPassword',
       }
 
-      await gqlHelpers.expectGraphQLError<
-        ResultOf<typeof LoginMutation>,
-        VariablesOf<typeof LoginMutation>
-      >(
-        server,
-        print(LoginMutation),
+      await gql.expectError(
+        LoginMutation,
         variables,
-        createMockContext(),
         'Invalid email or password',
+        createMockContext(),
       )
     })
   })
@@ -403,12 +377,8 @@ describe('Enhanced Permissions System', () => {
       })
 
       // Without authentication - should succeed for published posts
-      const unauthData = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof PostQuery>,
-        VariablesOf<typeof PostQuery>
-      >(
-        server,
-        print(PostQuery),
+      const unauthData = await gql.query(
+        PostQuery,
         { id: toPostId(post.id) },
         createMockContext(),
       )
@@ -417,12 +387,8 @@ describe('Enhanced Permissions System', () => {
       expect(unauthData?.post?.id).toBe(toPostId(post.id))
 
       // With authentication - should succeed
-      const authData = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof PostQuery>,
-        VariablesOf<typeof PostQuery>
-      >(
-        server,
-        print(PostQuery),
+      const authData = await gql.query(
+        PostQuery,
         { id: toPostId(post.id) },
         createAuthContext(UserId.create(testUserId)),
       )

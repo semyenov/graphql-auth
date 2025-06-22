@@ -15,7 +15,9 @@ export * from './database/cleanup'
 export * from './database/prisma'
 // Factory and fixtures
 export * from './factories'
+export * from './helpers/gql-tada.helpers'
 // Specialized helpers
+// export * from './helpers/relay-typed.helpers'
 export * from './helpers/relay.helpers'
 // export * from './helpers/snapshot.helpers' // Commented out due to missing jest-diff dependency
 export * from './helpers/subscription.helpers'

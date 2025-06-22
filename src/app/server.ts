@@ -73,7 +73,7 @@ async function bootstrap() {
 
     // Create a handler that converts Web Requests to Apollo Server format
     const handleGraphQLRequest = defineEventHandler(async (event) => {
-      const { pathname, search } = new URL(event.path, 'http://localhost')
+      const { search } = new URL(event.path, 'http://localhost')
       const method = event.method.toUpperCase() as HTTPMethod
       const headers = getHeaders(event)
       const body = method === 'POST' ? await readBody(event) : null

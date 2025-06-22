@@ -6,8 +6,13 @@
  * - Token management (refresh tokens, logout)
  */
 
-import type { ResultOf, VariablesOf } from 'gql.tada'
-import { print } from 'graphql'
+import {
+  createAuthenticatedContextFromScratch,
+  createGraphQLTestHelper,
+  createMockContext,
+  createTestServer,
+  createTestUser,
+} from '@test/utils'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   LoginMutation,
@@ -18,16 +23,10 @@ import {
 } from '../../../src/gql/mutations'
 import { MeQuery } from '../../../src/gql/queries'
 import { prisma } from '../../../src/prisma'
-import {
-  createAuthenticatedContextFromScratch,
-  createMockContext,
-  createTestServer,
-  createTestUser,
-  gqlHelpers,
-} from '../../utils'
 
 describe('Authentication Integration Tests', () => {
   const server = createTestServer()
+  const gql = createGraphQLTestHelper(server)
 
   beforeEach(async () => {
     // Clean database before each test
@@ -44,10 +43,11 @@ describe('Authentication Integration Tests', () => {
           name: 'New User',
         }
 
-        const data = await gqlHelpers.expectSuccessfulMutation<
-          ResultOf<typeof SignupMutation>,
-          VariablesOf<typeof SignupMutation>
-        >(server, print(SignupMutation), variables, createMockContext())
+        const data = await gql.mutate(
+          SignupMutation,
+          variables,
+          createMockContext(),
+        )
 
         expect(data.signup).toBeDefined()
         expect(typeof data.signup).toBe('string')
@@ -70,15 +70,11 @@ describe('Authentication Integration Tests', () => {
           name: 'Another User',
         }
 
-        await gqlHelpers.expectGraphQLError<
-          ResultOf<typeof SignupMutation>,
-          VariablesOf<typeof SignupMutation>
-        >(
-          server,
-          print(SignupMutation),
+        await gql.expectError(
+          SignupMutation,
           variables,
-          createMockContext(),
           'An account with this email already exists',
+          createMockContext(),
         )
       })
     })
@@ -95,10 +91,11 @@ describe('Authentication Integration Tests', () => {
           password: 'password123',
         }
 
-        const data = await gqlHelpers.expectSuccessfulMutation<
-          ResultOf<typeof LoginMutation>,
-          VariablesOf<typeof LoginMutation>
-        >(server, print(LoginMutation), variables, createMockContext())
+        const data = await gql.mutate(
+          LoginMutation,
+          variables,
+          createMockContext(),
+        )
 
         expect(data.login).toBeDefined()
         expect(typeof data.login).toBe('string')
@@ -115,15 +112,11 @@ describe('Authentication Integration Tests', () => {
           password: 'wrongpassword',
         }
 
-        await gqlHelpers.expectGraphQLError<
-          ResultOf<typeof LoginMutation>,
-          VariablesOf<typeof LoginMutation>
-        >(
-          server,
-          print(LoginMutation),
+        await gql.expectError(
+          LoginMutation,
           variables,
-          createMockContext(),
           'Invalid email or password',
+          createMockContext(),
         )
       })
 
@@ -133,15 +126,11 @@ describe('Authentication Integration Tests', () => {
           password: 'password123',
         }
 
-        await gqlHelpers.expectGraphQLError<
-          ResultOf<typeof LoginMutation>,
-          VariablesOf<typeof LoginMutation>
-        >(
-          server,
-          print(LoginMutation),
+        await gql.expectError(
+          LoginMutation,
           variables,
-          createMockContext(),
           'Invalid email or password',
+          createMockContext(),
         )
       })
     })
@@ -155,12 +144,8 @@ describe('Authentication Integration Tests', () => {
           password: 'password123',
         })
 
-        const data = await gqlHelpers.expectSuccessfulMutation<
-          ResultOf<typeof LoginWithTokensMutation>,
-          VariablesOf<typeof LoginWithTokensMutation>
-        >(
-          server,
-          print(LoginWithTokensMutation),
+        const data = await gql.mutate(
+          LoginWithTokensMutation,
           { email: 'test@example.com', password: 'password123' },
           createMockContext(),
         )
@@ -173,15 +158,11 @@ describe('Authentication Integration Tests', () => {
       })
 
       it('should fail with invalid credentials', async () => {
-        await gqlHelpers.expectGraphQLError<
-          ResultOf<typeof LoginWithTokensMutation>,
-          VariablesOf<typeof LoginWithTokensMutation>
-        >(
-          server,
-          print(LoginWithTokensMutation),
+        await gql.expectError(
+          LoginWithTokensMutation,
           { email: 'test@example.com', password: 'wrongpassword' },
-          createMockContext(),
           'Invalid email or password',
+          createMockContext(),
         )
       })
     })
@@ -194,12 +175,8 @@ describe('Authentication Integration Tests', () => {
         })
 
         // Login to get initial tokens
-        const loginData = await gqlHelpers.expectSuccessfulMutation<
-          ResultOf<typeof LoginWithTokensMutation>,
-          VariablesOf<typeof LoginWithTokensMutation>
-        >(
-          server,
-          print(LoginWithTokensMutation),
+        const loginData = await gql.mutate(
+          LoginWithTokensMutation,
           { email: 'test@example.com', password: 'password123' },
           createMockContext(),
         )
@@ -212,12 +189,8 @@ describe('Authentication Integration Tests', () => {
         }
 
         // Refresh tokens
-        const data = await gqlHelpers.expectSuccessfulMutation<
-          ResultOf<typeof RefreshTokenMutation>,
-          VariablesOf<typeof RefreshTokenMutation>
-        >(
-          server,
-          print(RefreshTokenMutation),
+        const data = await gql.mutate(
+          RefreshTokenMutation,
           { refreshToken },
           createMockContext(),
         )
@@ -229,15 +202,11 @@ describe('Authentication Integration Tests', () => {
       })
 
       it('should fail with invalid refresh token', async () => {
-        await gqlHelpers.expectGraphQLError<
-          ResultOf<typeof RefreshTokenMutation>,
-          VariablesOf<typeof RefreshTokenMutation>
-        >(
-          server,
-          print(RefreshTokenMutation),
+        await gql.expectError(
+          RefreshTokenMutation,
           { refreshToken: 'invalid-token' },
-          createMockContext(),
           'Invalid refresh token',
+          createMockContext(),
         )
       })
 
@@ -248,12 +217,8 @@ describe('Authentication Integration Tests', () => {
         })
 
         // Login to get tokens
-        const loginData = await gqlHelpers.expectSuccessfulMutation<
-          ResultOf<typeof LoginWithTokensMutation>,
-          VariablesOf<typeof LoginWithTokensMutation>
-        >(
-          server,
-          print(LoginWithTokensMutation),
+        const loginData = await gql.mutate(
+          LoginWithTokensMutation,
           { email: 'test@example.com', password: 'password123' },
           createMockContext(),
         )
@@ -264,26 +229,18 @@ describe('Authentication Integration Tests', () => {
         }
 
         // First refresh should succeed
-        await gqlHelpers.expectSuccessfulMutation<
-          ResultOf<typeof RefreshTokenMutation>,
-          VariablesOf<typeof RefreshTokenMutation>
-        >(
-          server,
-          print(RefreshTokenMutation),
+        await gql.mutate(
+          RefreshTokenMutation,
           { refreshToken },
           createMockContext(),
         )
 
         // Second refresh with same token should fail
-        await gqlHelpers.expectGraphQLError<
-          ResultOf<typeof RefreshTokenMutation>,
-          VariablesOf<typeof RefreshTokenMutation>
-        >(
-          server,
-          print(RefreshTokenMutation),
+        await gql.expectError(
+          RefreshTokenMutation,
           { refreshToken },
-          createMockContext(),
           'Invalid refresh token',
+          createMockContext(),
         )
       })
     })
@@ -309,10 +266,7 @@ describe('Authentication Integration Tests', () => {
           ],
         })
 
-        const data = await gqlHelpers.expectSuccessfulMutation<
-          ResultOf<typeof LogoutMutation>,
-          VariablesOf<typeof LogoutMutation>
-        >(server, print(LogoutMutation), {}, context)
+        const data = await gql.mutate(LogoutMutation, {}, context)
 
         expect(data.logout).toBe(true)
 
@@ -327,15 +281,11 @@ describe('Authentication Integration Tests', () => {
       })
 
       it('should require authentication', async () => {
-        await gqlHelpers.expectGraphQLError<
-          ResultOf<typeof LogoutMutation>,
-          VariablesOf<typeof LogoutMutation>
-        >(
-          server,
-          print(LogoutMutation),
+        await gql.expectError(
+          LogoutMutation,
           {},
-          createMockContext(),
           'Not authorized',
+          createMockContext(),
         )
       })
     })
@@ -345,9 +295,7 @@ describe('Authentication Integration Tests', () => {
     it('should return current user when authenticated', async () => {
       const { user, context } = await createAuthenticatedContextFromScratch()
 
-      const data = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof MeQuery>
-      >(server, print(MeQuery), {}, context)
+      const data = await gql.query(MeQuery, {}, context)
 
       expect(data.me).toBeDefined()
       expect(data.me?.id).toBeDefined()
@@ -356,9 +304,7 @@ describe('Authentication Integration Tests', () => {
     })
 
     it('should return null when not authenticated', async () => {
-      const data = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof MeQuery>
-      >(server, print(MeQuery), {}, createMockContext())
+      const data = await gql.query(MeQuery, {}, createMockContext())
 
       expect(data.me).toBeNull()
     })

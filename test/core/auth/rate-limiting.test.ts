@@ -4,22 +4,23 @@
  * Tests for rate limiting functionality on authentication endpoints
  */
 
+import {
+  createGraphQLTestHelper,
+  createMockContext,
+  createTestServer,
+  createTestUser,
+  executeOperation,
+} from '@test/utils'
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { rateLimiter } from '../../../src/app/services/rate-limiter.service'
 import { LoginMutation, SignupMutation } from '../../../src/gql/mutations'
 import { prisma } from '../../../src/prisma'
-import {
-  createMockContext,
-  createTestServer,
-  createTestUser,
-  executeOperation,
-  gqlHelpers,
-} from '../../utils'
 
 describe('Rate Limiting', () => {
   const server = createTestServer()
+  const gql = createGraphQLTestHelper(server)
 
   beforeAll(() => {
     // Enable rate limiting for these tests
@@ -92,15 +93,11 @@ describe('Rate Limiting', () => {
       }
 
       // 6th attempt should be rate limited
-      await gqlHelpers.expectGraphQLError<
-        ResultOf<typeof LoginMutation>,
-        VariablesOf<typeof LoginMutation>
-      >(
-        server,
-        print(LoginMutation),
+      await gql.expectError(
+        LoginMutation,
         variables,
-        createMockContext(),
         'Too many requests',
+        createMockContext(),
       )
     })
 
@@ -159,10 +156,11 @@ describe('Rate Limiting', () => {
           name: `User ${i}`,
         }
 
-        const data = await gqlHelpers.expectSuccessfulMutation<
-          ResultOf<typeof SignupMutation>,
-          VariablesOf<typeof SignupMutation>
-        >(server, print(SignupMutation), variables, createMockContext())
+        const data = await gql.mutate(
+          SignupMutation,
+          variables,
+          createMockContext(),
+        )
 
         expect(data.signup).toBeDefined()
         if (data.signup) {
@@ -193,19 +191,15 @@ describe('Rate Limiting', () => {
       }
 
       // 4th attempt should be rate limited
-      await gqlHelpers.expectGraphQLError<
-        ResultOf<typeof SignupMutation>,
-        VariablesOf<typeof SignupMutation>
-      >(
-        server,
-        print(SignupMutation),
+      await gql.expectError(
+        SignupMutation,
         {
           email: baseEmail,
           password: 'password123',
           name: 'User 4',
         },
-        createMockContext(),
         'Too many requests',
+        createMockContext(),
       )
     })
 
@@ -234,19 +228,15 @@ describe('Rate Limiting', () => {
       }
 
       // Next attempt with any variation should be rate limited
-      await gqlHelpers.expectGraphQLError<
-        ResultOf<typeof SignupMutation>,
-        VariablesOf<typeof SignupMutation>
-      >(
-        server,
-        print(SignupMutation),
+      await gql.expectError(
+        SignupMutation,
         {
           email: 'testuser@example.com',
           password: 'password123',
           name: 'User 4',
         },
-        createMockContext(),
         'Too many requests',
+        createMockContext(),
       )
     })
   })
