@@ -3,7 +3,7 @@
  */
 
 import type { Post, User } from '@prisma/client'
-import { prisma } from '../database/prisma'
+import { prisma } from '@test/utils/database/prisma'
 import { createTestUser } from './user.factory'
 
 /**

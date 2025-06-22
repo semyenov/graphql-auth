@@ -3,8 +3,8 @@
  */
 
 import type { User } from '@prisma/client'
+import { prisma } from '@test/utils/database/prisma'
 import * as argon2 from 'argon2'
-import { prisma } from '../database/prisma'
 
 /**
  * Create a test user with hashed password

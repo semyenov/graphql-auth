@@ -1,6 +1,7 @@
 // Import GraphQL fix first to ensure single instance
 import './vitest-graphql-fix'
 
+import { prisma } from '@test/utils/database/prisma'
 import { execSync } from 'child_process'
 import { rm } from 'fs/promises'
 import { afterAll, beforeAll, beforeEach } from 'vitest'
@@ -8,7 +9,6 @@ import { configureContainer } from '../src/app/config/container'
 import { rateLimiter } from '../src/app/services/rate-limiter.service'
 import { resetSchemaCache } from '../src/graphql/schema'
 import { TEST_DATABASE_URL } from './test-database-url'
-import { prisma } from './utils/database/prisma'
 
 const dbFilePath = TEST_DATABASE_URL.replace('file:', '')
 

@@ -1,6 +1,6 @@
 /**
- * Test data factory utilities
+ * Factory functions index - exports all factory functions
  */
 
-export * from './post.factory'
-export * from './user.factory'
+export { createTestPost, createUserWithPosts } from './post.factory'
+export { createTestUser, seedTestUsers } from './user.factory'

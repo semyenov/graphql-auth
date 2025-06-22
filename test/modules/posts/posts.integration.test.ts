@@ -4,9 +4,9 @@ import {
   createGraphQLTestHelper,
   createMockContext,
   createTestServer,
-  createTestUser,
-  createUserWithPosts,
 } from '@test/utils'
+import { createUserWithPosts } from '@test/utils/factories/post.factory'
+import { createTestUser } from '@test/utils/factories/user.factory'
 import { toPostId } from '@test/utils/helpers/relay.helpers'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {

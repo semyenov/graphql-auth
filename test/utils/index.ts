@@ -13,8 +13,9 @@ export type { IntegrationTestContext } from './core/types'
 // Database utilities
 export * from './database/cleanup'
 export * from './database/prisma'
+export * from './factories/post.factory'
+export * from './factories/user.factory'
 // Factory and fixtures
-export * from './factories'
 export * from './helpers/gql-tada.helpers'
 // Specialized helpers
 // export * from './helpers/relay-typed.helpers'

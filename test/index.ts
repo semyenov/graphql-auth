@@ -5,5 +5,5 @@
  * It re-exports all the individual utility modules.
  */
 
+export * from '@test/utils/factories'
 export { prisma } from '../src/prisma'
-export * from './test-data'

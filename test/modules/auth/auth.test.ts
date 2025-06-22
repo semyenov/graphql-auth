@@ -11,8 +11,8 @@ import {
   createGraphQLTestHelper,
   createMockContext,
   createTestServer,
-  createTestUser,
 } from '@test/utils'
+import { createTestUser } from '@test/utils/factories/user.factory'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   LoginMutation,
@@ -169,6 +169,12 @@ describe('Authentication Integration Tests', () => {
 
     describe('Refresh Token', () => {
       it('should refresh tokens with valid refresh token', async () => {
+        // Create user for this test
+        await createTestUser({
+          email: 'test@example.com',
+          password: 'password123',
+        })
+
         // Login to get initial tokens
         const loginData = await gql.mutate(
           LoginWithTokensMutation,

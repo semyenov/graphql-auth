@@ -4,8 +4,8 @@ import {
   createGraphQLTestHelper,
   createMockContext,
   createTestServer,
-  createTestUser,
 } from '@test/utils'
+import { createTestUser } from '@test/utils/factories/user.factory'
 import { extractNumericId, toPostId } from '@test/utils/helpers/relay.helpers'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TogglePublishPostMutation } from '../../../src/gql/mutations'

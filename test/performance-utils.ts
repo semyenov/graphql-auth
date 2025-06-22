@@ -3,8 +3,8 @@
  */
 
 import type { ApolloServer, GraphQLResponse } from '@apollo/server'
+import { executeOperation } from '@test/utils/core/graphql'
 import type { DefaultContext } from '../src/graphql/context/context.types'
-import { executeOperation } from './utils/helpers/database.helpers'
 
 export interface PerformanceMetrics {
   operationName: string
@@ -107,7 +107,7 @@ export async function benchmarkConcurrent(
   operations: Array<{
     operation: string
     variables: Record<string, unknown>
-    context: IContext
+    context: DefaultContext
   }>,
   options: {
     concurrency?: number
@@ -131,14 +131,16 @@ export async function benchmarkConcurrent(
 
     for (let j = 0; j < concurrency && i + j < iterations; j++) {
       const op = operations[(i + j) % operations.length]
-      batch.push(
-        measureOperation(server, op.operation, op.variables, op.context).then(
-          ({ metrics }) => {
-            const name = extractOperationName(op.operation)
-            results.get(name)?.push(metrics)
-          },
-        ),
-      )
+      if (op) {
+        batch.push(
+          measureOperation(server, op.operation, op.variables, op.context).then(
+            ({ metrics }) => {
+              const name = extractOperationName(op.operation)
+              results.get(name)?.push(metrics)
+            },
+          ),
+        )
+      }
     }
 
     await Promise.all(batch)
