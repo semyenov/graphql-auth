@@ -5,18 +5,18 @@
  * IMPROVED-FILE-STRUCTURE.md specification.
  */
 
-import { print } from 'graphql'
 import { performance } from 'perf_hooks'
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { FeedQuery } from '../../src/gql/queries'
-import { createMockContext, createTestServer, executeOperation } from '../utils'
+import {
+  createGraphQLTestHelper,
+  createMockContext,
+  createTestServer,
+} from '../utils'
 
 describe('Load Testing', () => {
-  let server: ReturnType<typeof createTestServer>
-
-  beforeAll(async () => {
-    server = createTestServer()
-  })
+  const server = createTestServer()
+  const gql = createGraphQLTestHelper(server)
 
   beforeEach(async () => {
     // Setup test data for performance testing
@@ -27,7 +27,7 @@ describe('Load Testing', () => {
 
     // Simulate concurrent requests
     const promises = Array.from({ length: 10 }, () =>
-      executeOperation(server, print(FeedQuery), {}, createMockContext()),
+      gql.query(FeedQuery, {}, createMockContext()),
     )
 
     const results = await Promise.all(promises)
@@ -35,10 +35,8 @@ describe('Load Testing', () => {
 
     // All requests should succeed
     for (const result of results) {
-      expect(result.body.kind).toBe('single')
-      if (result.body.kind === 'single') {
-        expect(result.body.singleResult.errors).toBeUndefined()
-      }
+      expect(result).toBeDefined()
+      expect(result.feed).toBeDefined()
     }
 
     // Should complete within reasonable time

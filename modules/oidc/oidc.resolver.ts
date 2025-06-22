@@ -56,7 +56,12 @@ builder.mutationFields((t) => ({
       input: t.arg({ type: OidcClientInput, required: true }),
     },
     resolve: async (_query, _parent, args, _context) => {
-      return oidcService.createClient(args.input)
+      return oidcService.createClient({
+        clientName: args.input.clientName,
+        clientId: args.input.clientId,
+        clientSecret: args.input.clientSecret ?? undefined,
+        redirectUris: args.input.redirectUris,
+      })
     },
   }),
 
@@ -69,7 +74,13 @@ builder.mutationFields((t) => ({
       input: t.arg({ type: OidcClientUpdateInput, required: true }),
     },
     resolve: async (_query, _parent, args, _context) => {
-      return oidcService.updateClient(args.clientId, args.input)
+      return oidcService.updateClient(args.clientId, {
+        clientName: args.input.clientName ?? undefined,
+        redirectUris: args.input.redirectUris ?? undefined,
+        postLogoutRedirectUris: args.input.postLogoutRedirectUris ?? undefined,
+        scope: args.input.scope ?? undefined,
+        grantTypes: args.input.grantTypes ?? undefined,
+      })
     },
   }),
 

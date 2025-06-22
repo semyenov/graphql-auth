@@ -11,13 +11,12 @@
 import type { OidcClient, User } from '@prisma/client'
 import {
   createAuthenticatedContext,
+  createGraphQLTestHelper,
   createMockContext,
   createTestServer,
-  executeOperation,
 } from '@test/utils'
 import * as argon2 from 'argon2'
 import { graphql } from 'gql.tada'
-import { print } from 'graphql'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { prisma } from '../../../src/prisma'
 
@@ -117,6 +116,7 @@ const RevokeAllOidcSessionsMutation = graphql(`
 
 describe('OIDC Resolver Tests', () => {
   const server = createTestServer()
+  const gql = createGraphQLTestHelper(server)
   let adminUser: User
   let regularUser: User
   let testClient: OidcClient
@@ -168,17 +168,10 @@ describe('OIDC Resolver Tests', () => {
     describe('oidcClients', () => {
       it('should list clients for admin users', async () => {
         const context = createAuthenticatedContext(adminUser)
-        const result = await executeOperation(
-          server,
-          print(ListOidcClientsQuery),
-          {},
-          context,
-        )
+        const data = await gql.query(ListOidcClientsQuery, {}, context)
 
-        expect(result.body.kind).toBe('single')
-        expect(result.body.singleResult.errors).toBeUndefined()
-        expect(result.body.singleResult.data?.oidcClients).toHaveLength(1)
-        expect(result.body.singleResult.data?.oidcClients[0]).toMatchObject({
+        expect(data.oidcClients).toHaveLength(1)
+        expect(data.oidcClients[0]).toMatchObject({
           clientId: 'test-client',
           clientName: 'Test Client',
           redirectUris: ['http://localhost:3000/callback'],
@@ -187,47 +180,35 @@ describe('OIDC Resolver Tests', () => {
 
       it('should deny access for non-admin users', async () => {
         const context = createAuthenticatedContext(regularUser)
-        const result = await executeOperation(
-          server,
-          print(ListOidcClientsQuery),
+        await gql.expectError(
+          ListOidcClientsQuery,
           {},
-          context,
-        )
-
-        expect(result.body.kind).toBe('single')
-        expect(result.body.singleResult.errors).toBeDefined()
-        expect(result.body.singleResult.errors?.[0].message).toContain(
           'Not authorized',
+          context,
         )
       })
 
       it('should require authentication', async () => {
         const context = createMockContext()
-        const result = await executeOperation(
-          server,
-          print(ListOidcClientsQuery),
+        await gql.expectError(
+          ListOidcClientsQuery,
           {},
+          'Not authorized',
           context,
         )
-
-        expect(result.body.kind).toBe('single')
-        expect(result.body.singleResult.errors).toBeDefined()
       })
     })
 
     describe('oidcClient', () => {
       it('should get specific client for admin users', async () => {
         const context = createAuthenticatedContext(adminUser)
-        const result = await executeOperation(
-          server,
-          print(GetOidcClientQuery),
+        const data = await gql.query(
+          GetOidcClientQuery,
           { clientId: testClient.clientId },
           context,
         )
 
-        expect(result.body.kind).toBe('single')
-        expect(result.body.singleResult.errors).toBeUndefined()
-        expect(result.body.singleResult.data?.oidcClient).toMatchObject({
+        expect(data.oidcClient).toMatchObject({
           clientId: 'test-client',
           clientName: 'Test Client',
           redirectUris: ['http://localhost:3000/callback'],
@@ -237,15 +218,12 @@ describe('OIDC Resolver Tests', () => {
 
       it('should return error for non-existent client', async () => {
         const context = createAuthenticatedContext(adminUser)
-        const result = await executeOperation(
-          server,
-          print(GetOidcClientQuery),
+        await gql.expectError(
+          GetOidcClientQuery,
           { clientId: 'non-existent' },
+          'Client with identifier',
           context,
         )
-
-        expect(result.body.kind).toBe('single')
-        expect(result.body.singleResult.errors).toBeDefined()
       })
     })
 
@@ -266,17 +244,10 @@ describe('OIDC Resolver Tests', () => {
 
       it('should return user sessions', async () => {
         const context = createAuthenticatedContext(regularUser)
-        const result = await executeOperation(
-          server,
-          print(MyOidcSessionsQuery),
-          {},
-          context,
-        )
+        const data = await gql.query(MyOidcSessionsQuery, {}, context)
 
-        expect(result.body.kind).toBe('single')
-        expect(result.body.singleResult.errors).toBeUndefined()
-        expect(result.body.singleResult.data?.myOidcSessions).toHaveLength(1)
-        expect(result.body.singleResult.data?.myOidcSessions[0]).toMatchObject({
+        expect(data.myOidcSessions).toHaveLength(1)
+        expect(data.myOidcSessions[0]).toMatchObject({
           sessionId: 'user-session-1',
           client: {
             clientId: testClient.clientId,
@@ -288,15 +259,12 @@ describe('OIDC Resolver Tests', () => {
 
       it('should require authentication', async () => {
         const context = createMockContext()
-        const result = await executeOperation(
-          server,
-          print(MyOidcSessionsQuery),
+        await gql.expectError(
+          MyOidcSessionsQuery,
           {},
+          'Authentication required',
           context,
         )
-
-        expect(result.body.kind).toBe('single')
-        expect(result.body.singleResult.errors).toBeDefined()
       })
     })
   })
@@ -312,16 +280,13 @@ describe('OIDC Resolver Tests', () => {
           scope: 'openid profile',
         }
 
-        const result = await executeOperation(
-          server,
-          print(CreateOidcClientMutation),
+        const data = await gql.mutate(
+          CreateOidcClientMutation,
           { input },
           context,
         )
 
-        expect(result.body.kind).toBe('single')
-        expect(result.body.singleResult.errors).toBeUndefined()
-        expect(result.body.singleResult.data?.createOidcClient).toMatchObject({
+        expect(data.createOidcClient).toMatchObject({
           clientId: 'new-client',
           clientName: 'New Client',
           redirectUris: ['http://localhost:3001/callback'],
@@ -342,15 +307,12 @@ describe('OIDC Resolver Tests', () => {
           redirectUris: ['http://localhost:3001/callback'],
         }
 
-        const result = await executeOperation(
-          server,
-          print(CreateOidcClientMutation),
+        await gql.expectError(
+          CreateOidcClientMutation,
           { input },
+          'Not authorized',
           context,
         )
-
-        expect(result.body.kind).toBe('single')
-        expect(result.body.singleResult.errors).toBeDefined()
       })
     })
 
@@ -362,16 +324,13 @@ describe('OIDC Resolver Tests', () => {
           redirectUris: ['http://localhost:3000/new-callback'],
         }
 
-        const result = await executeOperation(
-          server,
-          print(UpdateOidcClientMutation),
+        const data = await gql.mutate(
+          UpdateOidcClientMutation,
           { clientId: testClient.clientId, input },
           context,
         )
 
-        expect(result.body.kind).toBe('single')
-        expect(result.body.singleResult.errors).toBeUndefined()
-        expect(result.body.singleResult.data?.updateOidcClient).toMatchObject({
+        expect(data.updateOidcClient).toMatchObject({
           clientName: 'Updated Client Name',
           redirectUris: ['http://localhost:3000/new-callback'],
         })
@@ -381,16 +340,13 @@ describe('OIDC Resolver Tests', () => {
     describe('deleteOidcClient', () => {
       it('should delete client for admin users', async () => {
         const context = createAuthenticatedContext(adminUser)
-        const result = await executeOperation(
-          server,
-          print(DeleteOidcClientMutation),
+        const data = await gql.mutate(
+          DeleteOidcClientMutation,
           { clientId: testClient.clientId },
           context,
         )
 
-        expect(result.body.kind).toBe('single')
-        expect(result.body.singleResult.errors).toBeUndefined()
-        expect(result.body.singleResult.data?.deleteOidcClient).toBe(true)
+        expect(data.deleteOidcClient).toBe(true)
 
         // Verify deletion
         const deleted = await prisma.oidcClient.findUnique({
@@ -416,16 +372,13 @@ describe('OIDC Resolver Tests', () => {
 
       it('should revoke user session', async () => {
         const context = createAuthenticatedContext(regularUser)
-        const result = await executeOperation(
-          server,
-          print(RevokeOidcSessionMutation),
+        const data = await gql.mutate(
+          RevokeOidcSessionMutation,
           { sessionId: 'user-session-1' },
           context,
         )
 
-        expect(result.body.kind).toBe('single')
-        expect(result.body.singleResult.errors).toBeUndefined()
-        expect(result.body.singleResult.data?.revokeOidcSession).toBe(true)
+        expect(data.revokeOidcSession).toBe(true)
 
         // Verify deletion
         const sessions = await prisma.oidcSession.findMany({
@@ -436,16 +389,14 @@ describe('OIDC Resolver Tests', () => {
 
       it('should only revoke own sessions', async () => {
         const context = createAuthenticatedContext(adminUser)
-        const result = await executeOperation(
-          server,
-          print(RevokeOidcSessionMutation),
+        const data = await gql.mutate(
+          RevokeOidcSessionMutation,
           { sessionId: 'user-session-1' },
           context,
         )
 
         // Should succeed but not actually delete (session belongs to different user)
-        expect(result.body.kind).toBe('single')
-        expect(result.body.singleResult.errors).toBeUndefined()
+        expect(data.revokeOidcSession).toBe(true)
 
         // Session should still exist
         const sessions = await prisma.oidcSession.findMany({
@@ -482,16 +433,13 @@ describe('OIDC Resolver Tests', () => {
 
       it('should revoke all user sessions', async () => {
         const context = createAuthenticatedContext(regularUser)
-        const result = await executeOperation(
-          server,
-          print(RevokeAllOidcSessionsMutation),
+        const data = await gql.mutate(
+          RevokeAllOidcSessionsMutation,
           {},
           context,
         )
 
-        expect(result.body.kind).toBe('single')
-        expect(result.body.singleResult.errors).toBeUndefined()
-        expect(result.body.singleResult.data?.revokeAllOidcSessions).toBe(true)
+        expect(data.revokeAllOidcSessions).toBe(true)
 
         // Verify all sessions deleted
         const sessions = await prisma.oidcSession.findMany({

@@ -11,7 +11,6 @@ import {
   createTestUser,
   executeOperation,
 } from '@test/utils'
-import type { ResultOf, VariablesOf } from 'gql.tada'
 import { print } from 'graphql'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { rateLimiter } from '../../../src/app/services/rate-limiter.service'
@@ -60,21 +59,12 @@ describe('Rate Limiting', () => {
 
       // Should allow 5 attempts (as per RateLimitPresets.login)
       for (let i = 0; i < 5; i++) {
-        const response = await executeOperation<
-          ResultOf<typeof LoginMutation>,
-          VariablesOf<typeof LoginMutation>
-        >(server, print(LoginMutation), variables, createMockContext())
-
-        if (
-          response.body.kind === 'single' &&
-          response.body.singleResult.errors
-        ) {
-          // Login failure is expected, but not rate limit error
-          expect(
-            response.body.kind === 'single' &&
-              response.body.singleResult.errors?.[0]?.message,
-          ).toContain('Invalid email or password')
-        }
+        await gql.expectError(
+          LoginMutation,
+          variables,
+          'Invalid email or password',
+          createMockContext(),
+        )
       }
     })
 
@@ -86,10 +76,12 @@ describe('Rate Limiting', () => {
 
       // Exhaust rate limit (5 attempts)
       for (let i = 0; i < 5; i++) {
-        await executeOperation<
-          ResultOf<typeof LoginMutation>,
-          VariablesOf<typeof LoginMutation>
-        >(server, print(LoginMutation), variables, createMockContext())
+        await gql.expectError(
+          LoginMutation,
+          variables,
+          'Invalid email or password',
+          createMockContext(),
+        )
       }
 
       // 6th attempt should be rate limited
@@ -109,40 +101,21 @@ describe('Rate Limiting', () => {
 
       // Exhaust rate limit for first email
       for (let i = 0; i < 5; i++) {
-        await executeOperation<
-          ResultOf<typeof LoginMutation>,
-          VariablesOf<typeof LoginMutation>
-        >(
-          server,
-          print(LoginMutation),
+        await gql.expectError(
+          LoginMutation,
           { email: 'ratelimit@example.com', password: 'wrongpassword' },
+          'Invalid email or password',
           createMockContext(),
         )
       }
 
       // Should still allow attempts for different email
-      const response = await executeOperation<
-        ResultOf<typeof LoginMutation>,
-        VariablesOf<typeof LoginMutation>
-      >(
-        server,
-        print(LoginMutation),
+      await gql.expectError(
+        LoginMutation,
         { email: 'another@example.com', password: 'wrongpassword' },
+        'Invalid email or password',
         createMockContext(),
       )
-
-      // Should be login error, not rate limit
-      expect(
-        response.body.kind === 'single' && response.body.singleResult.errors,
-      ).toBeDefined()
-      expect(
-        response.body.kind === 'single' &&
-          response.body.singleResult.errors?.[0]?.message,
-      ).toContain('Invalid email or password')
-      expect(
-        response.body.kind === 'single' &&
-          response.body.singleResult.errors?.[0]?.message,
-      ).not.toContain('Too many requests')
     })
   })
 
@@ -175,19 +148,30 @@ describe('Rate Limiting', () => {
 
       // First 3 attempts should succeed (with different variations)
       for (let i = 0; i < 3; i++) {
-        await executeOperation<
-          ResultOf<typeof SignupMutation>,
-          VariablesOf<typeof SignupMutation>
-        >(
-          server,
-          print(SignupMutation),
-          {
-            email: baseEmail,
-            password: 'password123',
-            name: `User ${i}`,
-          },
-          createMockContext(),
-        )
+        // After first signup, subsequent ones will fail with duplicate email
+        if (i === 0) {
+          const data = await gql.mutate(
+            SignupMutation,
+            {
+              email: baseEmail,
+              password: 'password123',
+              name: `User ${i}`,
+            },
+            createMockContext(),
+          )
+          expect(data.signup).toBeDefined()
+        } else {
+          await gql.expectError(
+            SignupMutation,
+            {
+              email: baseEmail,
+              password: 'password123',
+              name: `User ${i}`,
+            },
+            'An account with this email already exists',
+            createMockContext(),
+          )
+        }
       }
 
       // 4th attempt should be rate limited
@@ -212,19 +196,30 @@ describe('Rate Limiting', () => {
       ]
 
       for (let i = 0; i < 3; i++) {
-        await executeOperation<
-          ResultOf<typeof SignupMutation>,
-          VariablesOf<typeof SignupMutation>
-        >(
-          server,
-          print(SignupMutation),
-          {
-            email: emails[i] || `user${i}@example.com`,
-            password: 'password123',
-            name: `User ${i}`,
-          },
-          createMockContext(),
-        )
+        // First signup should succeed, others will fail with duplicate email
+        if (i === 0) {
+          const data = await gql.mutate(
+            SignupMutation,
+            {
+              email: emails[i] || `user${i}@example.com`,
+              password: 'password123',
+              name: `User ${i}`,
+            },
+            createMockContext(),
+          )
+          expect(data.signup).toBeDefined()
+        } else {
+          await gql.expectError(
+            SignupMutation,
+            {
+              email: emails[i] || `user${i}@example.com`,
+              password: 'password123',
+              name: `User ${i}`,
+            },
+            'An account with this email already exists',
+            createMockContext(),
+          )
+        }
       }
 
       // Next attempt with any variation should be rate limited

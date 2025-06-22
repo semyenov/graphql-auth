@@ -4,30 +4,24 @@
  * Tests for Pothos resolvers without use cases
  */
 
-import type { ApolloServer } from '@apollo/server'
 import type { User } from '@prisma/client'
-import { graphql, type ResultOf, type VariablesOf } from 'gql.tada'
-import { print } from 'graphql'
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import type { DefaultContext } from '../../../src/graphql/context/context.types'
+import { graphql } from 'gql.tada'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { prisma } from '../../../src/prisma'
 import { UserId } from '../../../src/types/value-objects'
 import {
   cleanDatabase,
   createAuthContext,
+  createGraphQLTestHelper,
   createMockContext,
   createTestServer,
   createTestUser,
-  gqlHelpers,
 } from '../../utils'
 
 describe('Direct Resolvers', () => {
-  let server: ApolloServer<DefaultContext>
+  const server = createTestServer()
+  const gql = createGraphQLTestHelper(server)
   let testUser: User
-
-  beforeAll(async () => {
-    server = createTestServer()
-  })
 
   beforeEach(async () => {
     await cleanDatabase()
@@ -48,12 +42,8 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-      const data = await gqlHelpers.expectSuccessfulMutation<
-        ResultOf<typeof mutation>,
-        VariablesOf<typeof mutation>
-      >(
-        server,
-        print(mutation),
+      const data = await gql.mutate(
+        mutation,
         {
           email: 'newuser@example.com',
           password: 'password123',
@@ -80,12 +70,8 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-      const data = await gqlHelpers.expectSuccessfulMutation<
-        ResultOf<typeof mutation>,
-        VariablesOf<typeof mutation>
-      >(
-        server,
-        print(mutation),
+      const data = await gql.mutate(
+        mutation,
         {
           email: 'test@example.com',
           password: 'password123',
@@ -110,10 +96,7 @@ describe('Direct Resolvers', () => {
 
       const authContext = createAuthContext(UserId.create(testUser.id))
 
-      const data = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof query>,
-        VariablesOf<typeof query>
-      >(server, print(query), {}, authContext)
+      const data = await gql.query(query, {}, authContext)
 
       expect(data.me).toBeDefined()
       expect(data.me?.email).toBe('test@example.com')
@@ -140,12 +123,8 @@ describe('Direct Resolvers', () => {
 
       const authContext = createAuthContext(UserId.create(testUser.id))
 
-      const data = await gqlHelpers.expectSuccessfulMutation<
-        ResultOf<typeof mutation>,
-        VariablesOf<typeof mutation>
-      >(
-        server,
-        print(mutation),
+      const data = await gql.mutate(
+        mutation,
         {
           input: {
             title: 'Test Post',
@@ -202,10 +181,7 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-      const data = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof query>,
-        VariablesOf<typeof query>
-      >(server, print(query), { first: 10 }, createMockContext())
+      const data = await gql.query(query, { first: 10 }, createMockContext())
 
       expect(data.feed?.edges?.length).toBe(2)
       expect(data.feed?.totalCount).toBe(2)
@@ -255,10 +231,7 @@ describe('Direct Resolvers', () => {
 
       const authContext = createAuthContext(UserId.create(testUser.id))
 
-      const data = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof query>,
-        VariablesOf<typeof query>
-      >(server, print(query), { first: 10 }, authContext)
+      const data = await gql.query(query, { first: 10 }, authContext)
 
       expect(data.drafts?.edges?.length).toBe(2)
       expect(data.drafts?.totalCount).toBe(2)
@@ -291,12 +264,8 @@ describe('Direct Resolvers', () => {
                 }
             `)
 
-      const data = await gqlHelpers.expectSuccessfulQuery<
-        ResultOf<typeof query>,
-        VariablesOf<typeof query>
-      >(
-        server,
-        print(query),
+      const data = await gql.query(
+        query,
         { search: 'john@example.com' },
         createMockContext(),
       )
