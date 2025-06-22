@@ -26,6 +26,11 @@ model User {
   posts              Post[]
   refreshTokens      RefreshToken[]
   verificationTokens VerificationToken[]
+  oidcSessions       OidcSession[]
+  oidcCodes          OidcAuthorizationCode[]
+  oidcAccessTokens   OidcAccessToken[]
+  oidcRefreshTokens  OidcRefreshToken[]
+  oidcIdTokens       OidcIdToken[]
 }
 
 model Post {
@@ -78,4 +83,126 @@ model LoginAttempt {
   
   @@index([email])
   @@index([createdAt])
+}
+
+// OIDC Models
+model OidcClient {
+  id                      String   @id @default(uuid())
+  clientId                String   @unique
+  clientSecret            String?
+  clientName              String
+  redirectUris            String   // JSON array
+  postLogoutRedirectUris  String?  // JSON array
+  scope                   String   @default("openid profile email")
+  grantTypes              String   // JSON array
+  responseTypes           String   // JSON array
+  tokenEndpointAuthMethod String   @default("client_secret_basic")
+  applicationType         String   @default("web") // web, native
+  clientUri               String?
+  logoUri                 String?
+  tosUri                  String?
+  policyUri               String?
+  jwksUri                 String?
+  jwks                    String?  // JSON
+  subjectType             String   @default("public") // public, pairwise
+  idTokenSignedResponseAlg String   @default("RS256")
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  sessions OidcSession[]
+  codes    OidcAuthorizationCode[]
+  tokens   OidcAccessToken[]
+  
+  @@index([clientId])
+}
+
+model OidcSession {
+  id          String     @id @default(uuid())
+  sessionId   String     @unique
+  userId      Int
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId    String
+  client      OidcClient @relation(fields: [clientId], references: [clientId])
+  scope       String
+  nonce       String?
+  state       String?
+  codeChallenge String?
+  codeChallengeMethod String?
+  authTime    DateTime   @default(now())
+  expiresAt   DateTime
+  createdAt   DateTime   @default(now())
+  
+  @@index([sessionId])
+  @@index([userId])
+  @@index([clientId])
+}
+
+model OidcAuthorizationCode {
+  id          String     @id @default(uuid())
+  code        String     @unique
+  userId      Int
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId    String
+  client      OidcClient @relation(fields: [clientId], references: [clientId])
+  redirectUri String
+  scope       String
+  sessionId   String
+  nonce       String?
+  codeChallenge String?
+  codeChallengeMethod String?
+  usedAt      DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime   @default(now())
+  
+  @@index([code])
+  @@index([userId])
+  @@index([clientId])
+}
+
+model OidcAccessToken {
+  id          String     @id @default(uuid())
+  token       String     @unique
+  userId      Int
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId    String
+  client      OidcClient @relation(fields: [clientId], references: [clientId])
+  scope       String
+  sessionId   String
+  expiresAt   DateTime
+  createdAt   DateTime   @default(now())
+  
+  @@index([token])
+  @@index([userId])
+  @@index([clientId])
+}
+
+model OidcRefreshToken {
+  id          String     @id @default(uuid())
+  token       String     @unique
+  userId      Int
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId    String
+  scope       String
+  sessionId   String
+  expiresAt   DateTime
+  createdAt   DateTime   @default(now())
+  
+  @@index([token])
+  @@index([userId])
+}
+
+model OidcIdToken {
+  id          String     @id @default(uuid())
+  jti         String     @unique
+  userId      Int
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId    String
+  sessionId   String
+  nonce       String?
+  authTime    DateTime
+  expiresAt   DateTime
+  createdAt   DateTime   @default(now())
+  
+  @@index([jti])
+  @@index([userId])
 }

@@ -19,7 +19,7 @@ import {
 import { MeQuery } from '../../../src/gql/queries'
 import { prisma } from '../../../src/prisma'
 import {
-  createAuthenticatedContext,
+  createAuthenticatedContextFromScratch,
   createMockContext,
   createTestServer,
   createTestUser,
@@ -290,7 +290,8 @@ describe('Authentication Integration Tests', () => {
 
     describe('Logout', () => {
       it('should revoke all refresh tokens', async () => {
-        const { user, token, context } = await createAuthenticatedContext()
+        const { user, token, context } =
+          await createAuthenticatedContextFromScratch()
 
         // Create some refresh tokens
         await prisma.refreshToken.createMany({
@@ -342,7 +343,7 @@ describe('Authentication Integration Tests', () => {
 
   describe('Me Query', () => {
     it('should return current user when authenticated', async () => {
-      const { user, context } = await createAuthenticatedContext()
+      const { user, context } = await createAuthenticatedContextFromScratch()
 
       const data = await gqlHelpers.expectSuccessfulQuery<
         ResultOf<typeof MeQuery>

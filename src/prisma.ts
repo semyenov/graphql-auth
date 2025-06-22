@@ -61,7 +61,7 @@ export function setTestPrismaClient(prismaInstance: PrismaClientType): void {
  * which is essential for test isolation. The proxy intercepts all property
  * access and delegates to the current Prisma instance.
  */
-export const prisma = new Proxy({} as PrismaClientType, {
+export const prisma: PrismaClientType = new Proxy({} as PrismaClientType, {
   get<K extends keyof PrismaClientType>(
     _target: PrismaClientType,
     prop: K,

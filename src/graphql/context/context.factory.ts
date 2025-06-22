@@ -17,6 +17,8 @@ import type { RequestMetadata, SecurityContext, User } from '../../types.d'
 import { verifyToken } from '../../utils/jwt'
 import type { Context, DefaultContext } from './context.types'
 
+const getLogger = () => container.resolve<ILogger>('ILogger')
+
 /**
  * Extract JWT token from Authorization header
  */
@@ -50,6 +52,7 @@ async function createBaseContext(
     metadata: {
       timestamp: Date.now(),
       userAgent: headers['user-agent'] || 'unknown',
+      startTime: Date.now(),
     } as RequestMetadata,
 
     // Security context (to be enhanced)
@@ -78,8 +81,8 @@ async function createBaseContext(
  */
 async function enhanceWithAuth(
   context: DefaultContext,
-  logger: ILogger,
 ): Promise<DefaultContext> {
+  const logger = getLogger().child({ resolver: 'enhanceWithAuth' })
   const token = extractToken(context.headers.get('authorization') || undefined)
 
   if (!token) {
@@ -134,20 +137,18 @@ async function enhanceWithAuth(
 /**
  * Create GraphQL context factory
  */
-export async function createContext({
+export const createContext = async ({
   req,
   res,
 }: {
   req: IncomingMessage
   res: ServerResponse
-}): Promise<Context<Record<string, unknown>>> {
-  const logger = container.resolve<ILogger>('ILogger')
-
+}): Promise<DefaultContext> => {
   // Create base context
   const baseContext = await createBaseContext(req, res)
 
   // Enhance with authentication
-  const authContext = await enhanceWithAuth(baseContext, logger)
+  const authContext = await enhanceWithAuth(baseContext)
 
   // Add DataLoaders
   const loaders = createDataLoaders(prisma)
@@ -184,6 +185,7 @@ export function createMockContext(
     metadata: {
       timestamp: Date.now(),
       userAgent: 'test-agent',
+      startTime: Date.now(),
     } as RequestMetadata,
     security: {
       isAuthenticated: false,

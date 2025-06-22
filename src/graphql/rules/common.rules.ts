@@ -29,9 +29,7 @@ export const isAdmin = rule({ cache: 'contextual' })(
   async (_parent, _args, context: DefaultContext) => {
     if (!context.user) return false
 
-    // In a real app, you'd check the user's role from the database
-    // For now, this is a placeholder
-    return false
+    return context.user.role === 'admin'
   },
 )
 

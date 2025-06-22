@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 # Development
 bun run dev                             # Start dev server (port 4000)
+bun run dev:h3                          # Start dev server with H3 (minimal HTTP framework)
 bun run test --run                      # Run all tests once (no watch)
 bun run test                            # Run tests in watch mode
 bun test test/auth.test.ts              # Run specific test file
@@ -19,6 +20,7 @@ bunx prisma migrate dev --name feature  # Create migration
 bun run generate                        # Generate all types (Prisma + GraphQL)
 bun run db:reset                        # Reset database with seed data
 bunx prisma studio                      # Open database GUI
+bunx prisma db push                     # Push schema changes without migration (dev only)
 
 # Build & Production
 bun run build                          # Build for production (builds src/main.ts)
@@ -56,6 +58,7 @@ This project follows a **Modular Monolith** architecture with **Direct Pothos Re
 ### Tech Stack
 
 - **Runtime**: Bun (fast JavaScript/TypeScript runtime)
+- **HTTP Framework**: H3 (minimal HTTP framework)
 - **GraphQL**: Apollo Server 4 with Pothos schema builder (7 plugins)
 - **Database**: Prisma ORM with SQLite (PostgreSQL-ready)
 - **Authentication**: JWT with argon2 + refresh token rotation
@@ -64,6 +67,7 @@ This project follows a **Modular Monolith** architecture with **Direct Pothos Re
 - **Testing**: Vitest with comprehensive test utilities
 - **DI Container**: TSyringe for service management
 - **Code Quality**: Biome for linting and formatting
+- **OIDC Provider**: oidc-provider for OpenID Connect support
 
 ## Critical Architectural Patterns
 
@@ -200,6 +204,10 @@ BCRYPT_ROUNDS=10                  # Password hashing rounds
 NODE_ENV="development"            # Environment mode
 PORT=4000                         # Server port
 HOST="localhost"                  # Server host
+
+# OIDC Configuration (Optional)
+OIDC_ISSUER="http://localhost:4000"  # OIDC provider issuer URL
+OIDC_JWKS_PATH="./oidc-jwks.json"    # Path to JWKS keys for OIDC
 ```
 
 ## Common Debugging Issues
@@ -231,7 +239,8 @@ HOST="localhost"                  # Server host
 The project includes comprehensive test utilities in `test/utils/`:
 
 - `createTestServer()`: Creates Apollo Server instance for testing
-- `createAuthContext()`: Creates authenticated context with user
+- `createAuthenticatedContextFromScratch()`: Creates new test user with authenticated context
+- `createAuthenticatedContext(user)`: Creates authenticated context from existing user
 - `createMockContext()`: Creates unauthenticated context
 - `gqlHelpers`: GraphQL operation helpers with type safety
 - `createTestUser()`: Creates test users with hashed passwords
@@ -247,3 +256,89 @@ Context is created by `context.factory.ts` and includes:
 - `requestId`: Unique request identifier
 
 Never add Prisma to context - always import directly.
+
+## OIDC (OpenID Connect) Implementation
+
+The project includes a full OIDC provider implementation:
+
+### OIDC Module Structure
+```
+modules/oidc/
+├── oidc.resolver.ts              # GraphQL resolvers for OIDC management
+├── oidc.rules.ts                 # Authorization rules for OIDC operations
+├── oidc.types.ts                 # GraphQL type definitions
+├── oidc.middleware.ts            # Express middleware for OIDC routes
+├── services/
+│   ├── oidc-provider.service.ts  # Main OIDC provider service
+│   └── prisma-adapter.service.ts # Prisma adapter for oidc-provider
+└── types/
+    └── oidc.types.ts             # TypeScript types for OIDC
+
+```
+
+### OIDC Endpoints
+- `/.well-known/openid-configuration` - OIDC discovery endpoint
+- `/.well-known/jwks.json` - JSON Web Key Set endpoint
+- `/oidc/auth` - Authorization endpoint
+- `/oidc/token` - Token endpoint
+- `/oidc/userinfo` - UserInfo endpoint
+- `/oidc/interaction/:uid` - User interaction endpoints
+
+### OIDC GraphQL Operations
+```graphql
+# Queries
+oidcClients                 # List all OIDC clients (admin only)
+oidcClient(id: ID!)        # Get specific client (admin only)
+myOidcSessions             # Get current user's OIDC sessions
+
+# Mutations
+createOidcClient           # Create new OIDC client (admin only)
+updateOidcClient           # Update OIDC client (admin only)
+deleteOidcClient           # Delete OIDC client (admin only)
+revokeOidcSession          # Revoke specific session
+revokeAllOidcSessions      # Revoke all user sessions
+```
+
+### Testing OIDC
+```bash
+# Run OIDC-specific tests
+bun test test/modules/oidc --run
+
+# Test OIDC provider manually
+bun run scripts/test-oidc.ts
+```
+
+## Running Single Tests
+
+```bash
+# Run a specific test file
+bun test test/modules/auth/auth.test.ts
+
+# Run tests matching a pattern
+bun test -t "should create user"
+
+# Run tests in a specific directory
+bun test test/modules/users
+
+# Debug a specific test with console output
+bun test test/modules/auth/auth.test.ts --no-coverage
+```
+
+## H3 Server Routes
+
+The project provides three main endpoints using H3:
+
+- `/graphql` - GraphQL API endpoint (GET/POST)
+- `/health` - Health check endpoint with database status
+- `/oidc/*` - OIDC provider endpoints (auth, token, userinfo, etc.)
+- `/.well-known/*` - OIDC discovery endpoints
+
+### H3 Features Used
+- Minimal routing with `createRouter()`
+- CORS handling with `handleCors()`
+- Event handlers with `defineEventHandler()`
+- Node.js middleware integration with `fromNodeMiddleware()`
+
+### Available Middleware
+- `cors.middleware.ts` - CORS configuration
+- `error.middleware.ts` - Error formatting and handling

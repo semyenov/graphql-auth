@@ -7,6 +7,11 @@
 import type { PrismaClient } from '@prisma/client'
 import 'reflect-metadata'
 import { container } from 'tsyringe'
+// OIDC
+import {
+  type IOidcProviderService,
+  OidcProviderService,
+} from '../../../modules/oidc/services/oidc-provider.service'
 import { createLoggerFromEnv } from '../../app/logging/logger-factory'
 import type { ILogger } from '../../app/services/logger.interface'
 import type { IPasswordService } from '../../app/services/password.service.interface'
@@ -73,6 +78,11 @@ export function configureContainer(): void {
   })
   container.register<LoginAttemptService>(LoginAttemptService, {
     useClass: LoginAttemptService,
+  })
+
+  // Register OIDC services
+  container.register<IOidcProviderService>('IOidcProviderService', {
+    useClass: OidcProviderService,
   })
 }
 

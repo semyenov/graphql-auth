@@ -30,6 +30,7 @@ const envSchema = z.object({
     .enum(['development', 'production', 'test'])
     .default('development'),
   PORT: z.string().transform(Number).default('4000'),
+  HOST: z.string().default('localhost'),
   DATABASE_URL: z.string().url(),
   JWT_SECRET: z.string().min(32),
   JWT_EXPIRES_IN: envJwtExpiresIn,
@@ -51,6 +52,7 @@ export interface AuthConfig {
 
 export interface ServerConfig {
   port: number
+  host: string
   environment: string
 }
 
@@ -85,6 +87,7 @@ export function getConfig(): AppConfig {
   return {
     server: {
       port: env.PORT,
+      host: env.HOST,
       environment: env.NODE_ENV,
     },
     database: {

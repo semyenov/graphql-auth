@@ -25,7 +25,7 @@ export function generateTestToken(userId = 1): string {
 /**
  * Create an authenticated context with a test user
  */
-export async function createAuthenticatedContext(): Promise<{
+export async function createAuthenticatedContextFromScratch(): Promise<{
   user: User
   token: string
   context: ReturnType<typeof createAuthContext>
@@ -39,4 +39,32 @@ export async function createAuthenticatedContext(): Promise<{
   const context = createAuthContext(UserId.create(user.id))
 
   return { user, token, context }
+}
+
+/**
+ * Create an authenticated context from an existing user
+ */
+export function createAuthenticatedContext(user: User) {
+  const userId = UserId.create(user.id)
+  const token = generateTestToken(user.id)
+
+  return createAuthContext(userId, {
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+      emailVerified: user.emailVerified,
+      emailVerifiedAt: user.emailVerifiedAt,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    },
+    security: {
+      isAuthenticated: true,
+      userId,
+      roles: [user.role],
+      permissions: [],
+    },
+  })
 }
