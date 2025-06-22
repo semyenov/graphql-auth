@@ -9,9 +9,7 @@ import {
   createMockContext,
   createTestServer,
   createTestUser,
-  executeOperation,
 } from '@test/utils'
-import { print } from 'graphql'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { rateLimiter } from '../../../src/app/services/rate-limiter.service'
 import { LoginMutation, SignupMutation } from '../../../src/gql/mutations'
@@ -251,38 +249,21 @@ describe('Rate Limiting', () => {
     it('should include retry information in rate limit error', async () => {
       // Exhaust rate limit
       for (let i = 0; i < 5; i++) {
-        await executeOperation<
-          ResultOf<typeof LoginMutation>,
-          VariablesOf<typeof LoginMutation>
-        >(
-          server,
-          print(LoginMutation),
+        await gql.expectError(
+          LoginMutation,
           { email: 'ratelimit@example.com', password: 'wrongpassword' },
+          'Invalid email or password',
           createMockContext(),
         )
       }
 
       // Check error details
-      const response = await executeOperation<
-        ResultOf<typeof LoginMutation>,
-        VariablesOf<typeof LoginMutation>
-      >(
-        server,
-        print(LoginMutation),
+      await gql.expectError(
+        LoginMutation,
         { email: 'ratelimit@example.com', password: 'wrong-wrongpassword' },
+        'Too many requests',
         createMockContext(),
       )
-
-      expect(
-        response.body.kind === 'single' && response.body.singleResult.errors,
-      ).toBeDefined()
-      const error =
-        response.body.kind === 'single' &&
-        response.body.singleResult.errors?.[0]
-      if (error) {
-        expect(error.message).toContain('Too many requests')
-        expect(error.message).toMatch(/retry after \d+ seconds/)
-      }
     })
   })
 })

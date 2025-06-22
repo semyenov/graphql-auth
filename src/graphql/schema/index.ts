@@ -23,10 +23,21 @@ import '../../modules/users/user.resolver'
 // OIDC resolver is imported conditionally to avoid early container access
 let oidcResolverImported = false
 
-async function ensureOidcResolver() {
+function ensureOidcResolver() {
   if (!oidcResolverImported) {
-    await import('../../../modules/oidc/oidc.resolver')
-    oidcResolverImported = true
+    try {
+      // Only import if container is configured (will be configured in tests and server)
+      require('../../../modules/oidc/oidc.resolver')
+      oidcResolverImported = true
+    } catch (error) {
+      // Silently ignore if container is not ready (e.g., during schema generation script)
+      if (
+        error instanceof Error &&
+        !error.message.includes('IOidcProviderService')
+      ) {
+        throw error
+      }
+    }
   }
 }
 
@@ -35,6 +46,9 @@ let _schema: ReturnType<typeof builder.toSchema> | null = null
 
 export function buildSchema() {
   if (!_schema) {
+    // Ensure OIDC resolver is loaded when building schema
+    ensureOidcResolver()
+
     // Initialize the builder with the provided prisma client
     // Define root types first
     builder.queryType({ description: 'The root query type' })

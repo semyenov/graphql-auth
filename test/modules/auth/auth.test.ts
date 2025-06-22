@@ -169,11 +169,6 @@ describe('Authentication Integration Tests', () => {
 
     describe('Refresh Token', () => {
       it('should refresh tokens with valid refresh token', async () => {
-        const user = await createTestUser({
-          email: 'test@example.com',
-          password: 'password123',
-        })
-
         // Login to get initial tokens
         const loginData = await gql.mutate(
           LoginWithTokensMutation,
@@ -247,8 +242,7 @@ describe('Authentication Integration Tests', () => {
 
     describe('Logout', () => {
       it('should revoke all refresh tokens', async () => {
-        const { user, token, context } =
-          await createAuthenticatedContextFromScratch()
+        const { user, context } = await createAuthenticatedContextFromScratch()
 
         // Create some refresh tokens
         await prisma.refreshToken.createMany({

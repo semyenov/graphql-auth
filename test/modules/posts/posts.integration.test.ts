@@ -7,7 +7,7 @@ import {
   createTestUser,
   createUserWithPosts,
 } from '@test/utils'
-import { toPostId } from '@test/utils/helpers/relay'
+import { toPostId } from '@test/utils/helpers/relay.helpers'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   CreatePostMutation,
@@ -17,34 +17,6 @@ import {
 import { DraftsQuery, FeedQuery } from '../../../src/gql/queries'
 import { prisma } from '../../../src/prisma'
 import { UserId } from '../../../src/types/value-objects'
-
-// Type definitions for GraphQL responses
-interface Post {
-  id: string // Now a global ID
-  title: string
-  content?: string | null
-  published: boolean
-  viewCount: number
-  author?: {
-    id: string // Now a global ID
-    name?: string | null
-    email: string
-  } | null
-}
-
-interface PostEdge {
-  cursor: string
-  node: Post
-}
-
-interface PostConnection {
-  edges: PostEdge[]
-  pageInfo: {
-    hasNextPage: boolean
-    endCursor?: string | null
-  }
-  totalCount?: number
-}
 
 describe('Posts', () => {
   const server = createTestServer()

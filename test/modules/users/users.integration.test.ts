@@ -6,29 +6,12 @@ import {
   createTestServer,
   createTestUser,
 } from '@test/utils'
-import { extractNumericId, toPostId } from '@test/utils/helpers/relay'
+import { extractNumericId, toPostId } from '@test/utils/helpers/relay.helpers'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TogglePublishPostMutation } from '../../../src/gql/mutations'
 import { MeQuery } from '../../../src/gql/queries'
 import { prisma } from '../../../src/prisma'
 import { UserId } from '../../../src/types/value-objects'
-
-// Type definitions for GraphQL responses
-interface User {
-  id: string // Now a global ID
-  email: string
-  name?: string | null
-  posts?: Post[]
-}
-
-interface Post {
-  id: string // Now a global ID
-  title: string
-  content?: string | null
-  published: boolean
-  viewCount: number
-  author?: User | null
-}
 
 describe('User queries', () => {
   const server = createTestServer()
