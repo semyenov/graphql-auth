@@ -6,12 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Development
-bun run dev                             # Start dev server (port 4000)
-bun run dev:h3                          # Start dev server with H3 (minimal HTTP framework)
+bun run dev                             # Start dev server with H3 (port 4000)
 bun run test --run                      # Run all tests once (no watch)
 bun run test                            # Run tests in watch mode
-bun test test/auth.test.ts              # Run specific test file
-bun run test -t "test name"             # Run tests matching pattern
+bun test test/modules/auth/auth.test.ts # Run specific test file
+bun test -t "should create user"        # Run tests matching pattern
+bun test test/modules/oidc --run        # Run tests in specific directory
 bun run test:ui                         # Run tests with UI
 bun run test:coverage                   # Run tests with coverage
 
@@ -21,6 +21,7 @@ bun run generate                        # Generate all types (Prisma + GraphQL)
 bun run db:reset                        # Reset database with seed data
 bunx prisma studio                      # Open database GUI
 bunx prisma db push                     # Push schema changes without migration (dev only)
+bun run seed                            # Manually seed database
 
 # Build & Production
 bun run build                          # Build for production (builds src/main.ts)
@@ -38,13 +39,12 @@ bun run check:fix                      # Auto-fix all issues
 bun run check:fix --unsafe             # Apply unsafe fixes (for any types, etc.)
 
 # GraphQL Schema
-bun run gen:schema                      # Generate GraphQL schema file
+bun run gen:schema                      # Generate GraphQL schema file to _docs/
 bunx gql.tada generate-output           # Generate GraphQL type definitions
 bun run generate:gql                    # Alternative GraphQL type generation
 
 # Environment & Debugging
 bun run env:verify                      # Verify environment setup
-bun run seed                            # Manually seed database
 ```
 
 ## Architecture Overview
@@ -162,6 +162,16 @@ The project uses Base64-encoded global IDs for all entities:
 const postId = parseGlobalId(args.id, 'Post') // Returns numeric ID
 ```
 
+### 7. Schema Building
+
+The GraphQL schema is built lazily with conditional OIDC resolver loading:
+
+```typescript
+// OIDC resolver loads only when DI container is configured
+// This prevents errors during schema generation script
+ensureOidcResolver() // Safely loads OIDC if container is ready
+```
+
 ## Module Structure
 
 ```
@@ -216,6 +226,7 @@ OIDC_JWKS_PATH="./oidc-jwks.json"    # Path to JWKS keys for OIDC
 - **DI errors**: Check `container.ts` for interface registration
 - **Lint errors**: Run `bun run check:fix` to auto-fix (add `--unsafe` for any types)
 - **Shield errors**: Shield returns "Not authorized" as fallback - check rule logic
+- **OIDC resolver errors**: Ensure DI container is configured before schema building
 
 ## Performance Optimizations
 
@@ -231,17 +242,38 @@ Tests use Vitest with the following configuration:
 - **Process isolation**: Each test file runs in a separate process using 'forks' pool
 - **Path aliases**: Use `@test/*` for test utilities, `@` for src imports
 - **GraphQL deduplication**: Single GraphQL instance enforced to prevent schema errors
+- **Test database**: Separate SQLite database created for tests
+
+### Test Path Aliases
+
+```typescript
+// Test utilities
+import { createTestUser } from '@test/utils/factories'
+import { prisma } from '@test/utils/database/prisma'
+
+// Source code
+import { AuthService } from '@/modules/auth/services/auth.service'
+```
 
 ## Test Utilities
 
-The project includes comprehensive test utilities in `test/utils/`:
+The project includes comprehensive test utilities:
 
+### Factory Functions (`@test/utils/factories/`)
+- `createTestUser()`: Creates test users with hashed passwords
+- `createTestPost()`: Creates test posts
+- `createUserWithPosts()`: Creates user with multiple posts
+- `seedTestUsers()`: Seeds database with predefined test users
+
+### Core Test Utilities (`@test/utils/core/`)
 - `createTestServer()`: Creates Apollo Server instance for testing
 - `createAuthenticatedContextFromScratch()`: Creates new test user with authenticated context
 - `createAuthenticatedContext(user)`: Creates authenticated context from existing user
 - `createMockContext()`: Creates unauthenticated context
 - `createGraphQLTestHelper()`: Type-safe GraphQL test helper with query/mutate/expectError methods
-- `createTestUser()`: Creates test users with hashed passwords
+
+### Database Utilities (`@test/utils/database/`)
+- `prisma`: Test database Prisma client
 - `cleanDatabase()`: Cleans test database between tests
 
 ## GraphQL Context
@@ -310,7 +342,7 @@ modules/oidc/
 ├── oidc.resolver.ts              # GraphQL resolvers for OIDC management
 ├── oidc.rules.ts                 # Authorization rules for OIDC operations
 ├── oidc.types.ts                 # GraphQL type definitions
-├── oidc.middleware.ts            # Express middleware for OIDC routes
+├── oidc.h3.ts                    # H3 routes for OIDC endpoints
 ├── services/
 │   ├── oidc-provider.service.ts  # Main OIDC provider service
 │   └── prisma-adapter.service.ts # Prisma adapter for oidc-provider
@@ -368,7 +400,7 @@ bun test test/modules/auth/auth.test.ts --no-coverage
 
 ## H3 Server Routes
 
-The project provides three main endpoints using H3:
+The project uses H3 as the HTTP framework with the following endpoints:
 
 - `/graphql` - GraphQL API endpoint (GET/POST)
 - `/health` - Health check endpoint with database status
@@ -379,8 +411,15 @@ The project provides three main endpoints using H3:
 - Minimal routing with `createRouter()`
 - CORS handling with `handleCors()`
 - Event handlers with `defineEventHandler()`
-- Node.js middleware integration with `fromNodeMiddleware()`
+- Integration with Apollo Server via custom handler
 
-### Available Middleware
-- `cors.middleware.ts` - CORS configuration
-- `error.middleware.ts` - Error formatting and handling
+## Important Cursor Rules
+
+The project includes extensive Cursor rules in `.cursor/rules/` that provide:
+- Pothos-specific patterns and best practices
+- Testing patterns with GraphQL Tada
+- Error handling conventions
+- Authentication implementation guidelines
+- Common issue resolutions
+
+These rules ensure consistent code patterns across the codebase.

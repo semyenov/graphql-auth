@@ -1,3 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
 # Cursor Rules Directory
 
 This directory contains development rules and patterns for the GraphQL Auth project. These rules help maintain consistency and provide guidance when working with the codebase.
