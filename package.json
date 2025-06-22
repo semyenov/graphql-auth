@@ -34,7 +34,7 @@
     "lint-staged": "lint-staged",
     "prepare": "husky",
     "env:verify": "bun run src/app/config/verify-env.ts",
-    "gen:schema": "bun run src/graphql/schema/generate-schema.ts",
+    "gen:schema": "bun run scripts/generate-schema.ts",
     "seed": "bun run prisma/seed.ts"
   },
   "dependencies": {

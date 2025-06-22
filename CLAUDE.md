@@ -8,12 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Development
 bun run dev                             # Start dev server (port 4000)
 bun run dev:h3                          # Start dev server with H3 (minimal HTTP framework)
-bun test                                # Run tests in watch mode
-bun test --run                          # Run all tests once (no watch)
+bun run test --run                      # Run all tests once (no watch)
+bun run test                            # Run tests in watch mode
 bun test test/auth.test.ts              # Run specific test file
-bun test -t "test name"                 # Run tests matching pattern
-bun test --coverage                     # Run tests with coverage
-bun test --ui                           # Run tests with UI
+bun run test -t "test name"             # Run tests matching pattern
+bun run test:ui                         # Run tests with UI
+bun run test:coverage                   # Run tests with coverage
 
 # Database
 bunx prisma migrate dev --name feature  # Create migration
@@ -23,8 +23,8 @@ bunx prisma studio                      # Open database GUI
 bunx prisma db push                     # Push schema changes without migration (dev only)
 
 # Build & Production
-bun run build                          # Build for production
-bun run start                          # Start production server
+bun run build                          # Build for production (builds src/main.ts)
+bun run start                          # Start production server (runs dist/app/server.js)
 bun run clean                          # Clean build directory
 
 # Code Quality
@@ -142,12 +142,13 @@ Use the new test helpers for type-safe GraphQL operations:
 ```typescript
 // ✅ CORRECT - Using new helpers
 import { createGraphQLTestHelper } from '@test/utils'
+import { LoginMutation } from '../src/gql/mutations'
 
 const gql = createGraphQLTestHelper(server)
 const data = await gql.mutate(LoginMutation, variables, context)
 await gql.expectError(LoginMutation, variables, 'Error message', context)
 
-// ❌ WRONG - Don't use raw strings
+// ❌ WRONG - Don't use raw strings or old patterns
 const result = await executeOperation(server, `mutation { login(...) }`)
 ```
 
@@ -233,36 +234,13 @@ Tests use Vitest with the following configuration:
 
 ## Test Utilities
 
-The project includes comprehensive test utilities with the new GraphQL test helper:
+The project includes comprehensive test utilities in `test/utils/`:
 
-```typescript
-import { createGraphQLTestHelper } from '@test/utils'
-
-const server = createTestServer()
-const gql = createGraphQLTestHelper(server)
-
-// Type-safe queries and mutations
-const data = await gql.query(MeQuery, {}, context)
-const result = await gql.mutate(LoginMutation, { email, password }, context)
-
-// Error expectations
-await gql.expectError(
-  CreatePostMutation,
-  variables,
-  'Not authorized',
-  context
-)
-
-// Subscriptions
-const subscription = await gql.subscribe(PostUpdated, variables, context)
-const event = await subscription.getNextTyped()
-```
-
-Other utilities:
 - `createTestServer()`: Creates Apollo Server instance for testing
 - `createAuthenticatedContextFromScratch()`: Creates new test user with authenticated context
 - `createAuthenticatedContext(user)`: Creates authenticated context from existing user
 - `createMockContext()`: Creates unauthenticated context
+- `createGraphQLTestHelper()`: Type-safe GraphQL test helper with query/mutate/expectError methods
 - `createTestUser()`: Creates test users with hashed passwords
 - `cleanDatabase()`: Cleans test database between tests
 
@@ -277,7 +255,45 @@ Context is created by `context.factory.ts` and includes:
 
 Never add Prisma to context - always import directly.
 
-## RefreshToken Implementation
+## Code Style & Formatting
+
+Based on Biome configuration:
+
+### Formatting Rules
+- **Indentation**: 2 spaces (no tabs)
+- **Line width**: 80 characters max
+- **Line endings**: LF (Unix-style)
+- **Quotes**: Single quotes for JavaScript/TypeScript
+- **JSX Quotes**: Double quotes
+- **Trailing commas**: Always use
+- **Semicolons**: Use as needed (ASI-safe)
+- **Arrow parentheses**: Always use (e.g., `(x) => x`)
+- **Bracket spacing**: Use spaces inside brackets
+- **Array syntax**: Use shorthand (`[]` not `Array<>`)
+
+### Linting Rules
+- **No `any` types**: Use `unknown` or specific types
+- **No unused imports**: Will error on unused imports
+- **Use `const`**: For immutable variables
+- **No barrel files**: Performance optimization disabled
+- **Consistent array types**: Use `T[]` not `Array<T>`
+- **No non-null assertions**: Avoid `!` operator when possible
+
+### TypeScript Configuration
+- **Strict mode**: All strict checks enabled
+- **No unchecked indexed access**: Must handle undefined
+- **No implicit returns**: All code paths must return
+- **No unused locals/parameters**: Clean up unused code
+- **Experimental decorators**: Enabled for DI
+- **Path aliases**: `@` for src, `@test/*` for test utils
+
+### Editor Integration
+- **Format on save**: Enabled with Biome
+- **Default formatter**: Biome for all file types
+- **Fix on save**: Auto-fix linting issues
+- **Organize imports**: On save
+
+## Refresh Token Implementation
 
 - Stores UUID string IDs in database
 - Returns JWT refresh token containing the UUID
@@ -334,9 +350,25 @@ bun test test/modules/oidc --run
 bun run scripts/test-oidc.ts
 ```
 
+## Running Single Tests
+
+```bash
+# Run a specific test file
+bun test test/modules/auth/auth.test.ts
+
+# Run tests matching a pattern
+bun test -t "should create user"
+
+# Run tests in a specific directory
+bun test test/modules/users
+
+# Debug a specific test with console output
+bun test test/modules/auth/auth.test.ts --no-coverage
+```
+
 ## H3 Server Routes
 
-The project provides these main endpoints using H3:
+The project provides three main endpoints using H3:
 
 - `/graphql` - GraphQL API endpoint (GET/POST)
 - `/health` - Health check endpoint with database status
