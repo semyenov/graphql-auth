@@ -9,8 +9,8 @@
 
 import type { OidcClient, User } from '@prisma/client'
 import * as argon2 from 'argon2'
-import 'reflect-metadata'
 import type { KoaContextWithOIDC } from 'oidc-provider'
+import 'reflect-metadata'
 import { container } from 'tsyringe'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import type { IOidcProviderService } from '../../../modules/oidc/services/oidc-provider.service'

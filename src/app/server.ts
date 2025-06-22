@@ -1,28 +1,33 @@
 import { ApolloServer, HeaderMap } from '@apollo/server'
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 import {
   createApp,
-  createError,
   createRouter,
   defineEventHandler,
-  getQuery,
+  getHeaders,
+  type HTTPMethod,
   handleCors,
   readBody,
+  send,
+  setHeader,
+  setResponseStatus,
   toNodeListener,
 } from 'h3'
-import { createServer } from 'http'
+import { listen } from 'listhen'
 import 'reflect-metadata'
 
 // Import configuration and DI
-import type { BaseContext } from '@apollo/server'
+import type { BaseContext, HTTPGraphQLRequest } from '@apollo/server'
 import { mountOidcRoutesH3 } from '../../modules/oidc/oidc.h3'
 import { createContext } from '../graphql/context/context.factory'
 import { buildSchema } from '../graphql/schema'
+import { prisma } from '../prisma'
 import { getConfig } from './config/config'
 import { configureContainer } from './config/container'
 
 async function bootstrap() {
   try {
-    console.log('🚀 Starting application...')
+    console.log('🚀 Starting H3 server...')
 
     // Configure dependency injection
     configureContainer()
@@ -36,13 +41,86 @@ async function bootstrap() {
     const app = createApp()
     const router = createRouter()
 
+    // Apply CORS globally
+    app.use(
+      '/**',
+      defineEventHandler((event) => {
+        handleCors(event, {
+          origin: (process.env.CORS_ORIGIN || '*') as '*',
+          credentials: true,
+          methods: ['GET', 'POST', 'OPTIONS'],
+          allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
+        })
+      }),
+    )
+
     // Create Apollo Server
+    const isDev = config.server.environment !== 'production'
     const apolloServer = new ApolloServer<BaseContext>({
       schema: buildSchema(),
-      introspection: config.server.environment !== 'production',
+      introspection: isDev,
+      plugins: isDev
+        ? [
+            ApolloServerPluginLandingPageLocalDefault({
+              embed: true,
+              includeCookies: true,
+            }),
+          ]
+        : [],
     })
 
     await apolloServer.start()
+
+    // Create a handler that converts Web Requests to Apollo Server format
+    const handleGraphQLRequest = defineEventHandler(async (event) => {
+      const { pathname, search } = new URL(event.path, 'http://localhost')
+      const method = event.method.toUpperCase() as HTTPMethod
+      const headers = getHeaders(event)
+      const body = method === 'POST' ? await readBody(event) : null
+
+      const httpGraphQLRequest: HTTPGraphQLRequest = {
+        method,
+        headers: new HeaderMap(
+          Object.entries(headers).map(([key, value]) => [
+            key.toLowerCase(),
+            value || '',
+          ]),
+        ),
+        body,
+        search,
+      }
+
+      // Execute the GraphQL request
+      const httpGraphQLResponse = await apolloServer.executeHTTPGraphQLRequest({
+        httpGraphQLRequest,
+        context: async () => {
+          // Create context with complete req/res objects
+          return createContext({
+            req: event.node.req,
+            res: event.node.res,
+          })
+        },
+      })
+
+      // Set response headers from Apollo
+      httpGraphQLResponse.headers.forEach((value, key) => {
+        setHeader(event, key, value)
+      })
+
+      // Set status code
+      setResponseStatus(event, httpGraphQLResponse.status || 200)
+
+      // Convert Apollo response body
+      if (httpGraphQLResponse.body.kind === 'complete') {
+        return send(event, httpGraphQLResponse.body.string)
+      } else {
+        const chunks: string[] = []
+        for await (const chunk of httpGraphQLResponse.body.asyncIterator) {
+          chunks.push(chunk)
+        }
+        return send(event, chunks.join(''))
+      }
+    })
 
     // Health check endpoint
     router.get(
@@ -55,11 +133,12 @@ async function bootstrap() {
           environment: config.server.environment || 'development',
           services: {
             database: 'checking...',
+            graphql: 'running',
+            oidc: 'running',
           },
         }
 
         try {
-          const { prisma } = await import('../prisma')
           await prisma.$queryRaw`SELECT 1`
           health.services.database = 'connected'
         } catch (error) {
@@ -71,124 +150,87 @@ async function bootstrap() {
       }),
     )
 
-    // GraphQL endpoint
-    router.post(
-      '/graphql',
-      defineEventHandler(async (event) => {
-        // Handle CORS
-        if (handleCors(event, { origin: '*', credentials: true })) {
-          return createError({
-            statusCode: 403,
-            statusMessage: 'Forbidden',
-          })
-        }
+    // Mount GraphQL for both GET and POST
+    router.get('/graphql', handleGraphQLRequest)
+    router.post('/graphql', handleGraphQLRequest)
 
-        // Get the body
-        const body = await readBody(event)
-
-        // Execute GraphQL request
-        const response = await apolloServer.executeHTTPGraphQLRequest({
-          httpGraphQLRequest: {
-            method: event.method || 'POST',
-            headers: new HeaderMap(event.headers.entries()),
-            body,
-            search: getQuery(event),
-          },
-          context: () =>
-            createContext({ req: event.node.req, res: event.node.res }),
-        })
-
-        // Set headers
-        for (const [key, value] of response.headers) {
-          event.node.res.setHeader(key, value)
-        }
-
-        // Set status and return body
-        event.node.res.statusCode = response.status || 200
-
-        if (response.body.kind === 'complete') {
-          return response.body.string
-        } else {
-          // Handle multipart responses
-          for await (const chunk of response.body.asyncIterator) {
-            event.node.res.write(chunk)
-          }
-          event.node.res.end()
-        }
-      }),
-    )
-
-    // Support GraphQL GET requests for introspection
-    router.get(
-      '/graphql',
-      defineEventHandler(async (event) => {
-        // Handle CORS
-        if (handleCors(event, { origin: '*', credentials: true })) {
-          return createError({
-            statusCode: 403,
-            statusMessage: 'Forbidden',
-          })
-        }
-
-        const response = await apolloServer.executeHTTPGraphQLRequest({
-          httpGraphQLRequest: {
-            method: 'GET',
-            headers: new HeaderMap(event.headers.entries()),
-            body: null,
-            search: getQuery(event),
-          },
-          context: () =>
-            createContext({ req: event.node.req, res: event.node.res }),
-        })
-
-        // Set headers
-        for (const [key, value] of response.headers) {
-          event.node.res.setHeader(key, value)
-        }
-
-        // Set status and return body
-        event.node.res.statusCode = response.status || 200
-
-        if (response.body.kind === 'complete') {
-          return response.body.string
-        }
-      }),
-    )
-
-    // Mount OIDC routes using H3 native handlers
+    // Mount OIDC routes
     mountOidcRoutesH3(router)
+
+    // Default route
+    router.get(
+      '/',
+      defineEventHandler(() => ({
+        name: 'GraphQL Auth Server',
+        version: '1.0.0',
+        endpoints: {
+          graphql: '/graphql',
+          health: '/health',
+          oidc: {
+            discovery: '/.well-known/openid-configuration',
+            jwks: '/.well-known/jwks.json',
+            provider: '/oidc/*',
+          },
+        },
+      })),
+    )
 
     // Use the router
     app.use(router)
 
-    // Create HTTP server
-    const httpServer = createServer(toNodeListener(app))
-
     const port = config.server.port || 4000
     const host = config.server.host || 'localhost'
 
-    httpServer.listen(port, () => {
-      console.log(`🚀 GraphQL Server ready at: http://${host}:${port}/graphql`)
-      console.log(`🔐 OIDC Provider ready at http://${host}:${port}/oidc`)
-      console.log(
-        `📋 OIDC Discovery at http://${host}:${port}/.well-known/openid-configuration`,
-      )
+    // Start server with listhen for better error handling
+    const listener = await listen(toNodeListener(app), {
+      port,
+      hostname: host,
+      showURL: false,
     })
+
+    console.log(`🚀 Server ready at: ${listener.url}`)
+    console.log(`📊 GraphQL endpoint: ${listener.url}graphql`)
+    if (isDev) {
+      console.log(`🎮 GraphiQL playground: ${listener.url}graphql`)
+    }
+    console.log(`💚 Health check: ${listener.url}health`)
+    console.log(`🔐 OIDC Provider: ${listener.url}oidc`)
+    console.log(
+      `📋 OIDC Discovery: ${listener.url}.well-known/openid-configuration`,
+    )
 
     // Graceful shutdown
     const shutdown = async () => {
-      console.log('Signal received: closing servers')
+      console.log('\n📪 Signal received: closing servers')
       await apolloServer.stop()
-      httpServer.close(() => {
-        console.log('Servers closed')
-        process.exit(0)
-      })
+      await listener.close()
+      console.log('✅ Servers closed')
+      process.exit(0)
     }
 
     process.on('SIGTERM', shutdown)
     process.on('SIGINT', shutdown)
   } catch (error) {
-    console.error('❌ Failed to start application:', error)
+    if (error instanceof Error) {
+      if (
+        error.message.includes('EADDRINUSE') ||
+        error.message.includes('address already in use')
+      ) {
+        const port = getConfig().server.port || 4000
+        console.error(`\n❌ Port ${port} is already in use!`)
+        console.error('\nTry one of these solutions:')
+        console.error(`  1. Kill the process using port ${port}:`)
+        console.error(`     lsof -ti:${port} | xargs kill -9`)
+        console.error('\n  2. Use a different port:')
+        console.error(`     PORT=3000 bun run dev:h3`)
+        console.error('\n  3. Check if another server is running:')
+        console.error(`     ps aux | grep "bun.*server"`)
+      } else {
+        console.error('❌ Failed to start application:', error.message)
+      }
+    } else {
+      console.error('❌ Failed to start application:', error)
+    }
     process.exit(1)
   }
 }
