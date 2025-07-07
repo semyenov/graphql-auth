@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import { container } from 'tsyringe'
 import 'reflect-metadata'
+import { container } from 'tsyringe'
 import type { IOidcProviderService } from '../modules/oidc/services/oidc-provider.service'
 import { configureContainer } from '../src/app/config/container'
 import { prisma } from '../src/prisma'
@@ -25,11 +25,6 @@ async function testOidcSetup() {
       clientSecret: 'test-secret',
       clientName: 'Test Client',
       redirectUris: ['http://localhost:3000/callback'],
-      postLogoutRedirectUris: ['http://localhost:3000'],
-      scope: 'openid profile email',
-      grantTypes: ['authorization_code', 'refresh_token'],
-      responseTypes: ['code'],
-      applicationType: 'web',
     })
 
     console.log('✅ Test client created:', testClient.clientId)

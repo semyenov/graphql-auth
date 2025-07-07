@@ -1,6 +1,11 @@
 #!/usr/bin/env bun
 
-import { env, isDevelopment, isProduction, isTest } from '../src/environment'
+import {
+  env,
+  isDevelopment,
+  isProduction,
+  isTest,
+} from '../src/app/config/environment'
 
 console.log('🔧 Environment Configuration Verification')
 console.log('='.repeat(50))

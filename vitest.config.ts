@@ -14,14 +14,15 @@ export default defineConfig({
     logHeapUsage: true, // Monitor memory usage
 
     // Execution and Isolation
-    // Run tests sequentially to prevent database race conditions.
-    // 'forks' pool provides process-level isolation, crucial for DB tests,
-    // though slower than 'threads'.
-    fileParallelism: false,
+    // Run tests in parallel with process-level isolation.
+    // Each worker gets its own database file to prevent conflicts.
+    fileParallelism: true,
     pool: 'forks',
     poolOptions: {
       forks: {
         isolate: true, // Isolate each test file in a separate process
+        maxForks: 4, // Limit parallel workers to prevent resource exhaustion
+        minForks: 1,
       },
     },
 
