@@ -21,9 +21,9 @@ import {
   createRateLimitConfig,
 } from '../../graphql/schema/plugins/rate-limit.plugin'
 import { prisma } from '../../prisma'
-import { signToken } from '../../utils/jwt'
 import { rateLimitAuth } from './auth.rules'
 import { requireAuthentication } from './guards/auth.guards'
+import { signToken } from './services/jwt.service'
 import { AuthTokensType } from './types/auth.types'
 
 // Service getters

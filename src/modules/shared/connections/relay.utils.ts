@@ -6,11 +6,14 @@
 
 // Re-export global ID utilities from core
 export {
+  decodeGlobalId as decodeGlobalIdAlias,
   encodeGlobalId,
+  fromGlobalId,
   parseAndValidateGlobalId,
-} from '../../../utils/relay'
+  parseGlobalId,
+  toGlobalId,
+} from './relay-core'
 
-import { fromGlobalId } from '../../../utils/relay'
 import {
   CONNECTION_DEFAULTS,
   type Connection,
@@ -24,6 +27,7 @@ import {
   type Node,
   type PageInfo,
 } from './relay.types'
+import { fromGlobalId } from './relay-core'
 
 /**
  * Decode a global ID (using core implementation)

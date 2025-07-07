@@ -11,10 +11,10 @@ import type { IncomingMessage, ServerResponse } from 'http'
 import { container } from 'tsyringe'
 import type { ILogger } from '../../app/services/logger.interface'
 import { createDataLoaders } from '../../data/loaders'
+import { verifyToken } from '../../modules/auth/services/jwt.service'
 import { prisma } from '../../prisma'
 import type { UserId } from '../../types/value-objects'
 import type { RequestMetadata, SecurityContext, User } from '../../types.d'
-import { verifyToken } from '../../utils/jwt'
 import type { Context, DefaultContext } from './context.types'
 
 const getLogger = () => container.resolve<ILogger>('ILogger')

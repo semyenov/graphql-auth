@@ -4,8 +4,8 @@
 
 import jwt from 'jsonwebtoken'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { AUTH, ERROR_MESSAGES } from '../app/constants'
-import { AuthenticationError } from '../app/errors/types'
+import { AUTH, ERROR_MESSAGES } from '../../../app/constants'
+import { AuthenticationError } from '../../../app/errors/types'
 import {
   decodeToken,
   extractBearerToken,
@@ -13,7 +13,7 @@ import {
   isTokenExpired,
   signToken,
   verifyToken,
-} from './jwt'
+} from './jwt.service'
 
 describe('JWT Utilities', () => {
   const originalEnv = process.env

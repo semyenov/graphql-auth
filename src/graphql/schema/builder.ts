@@ -16,8 +16,11 @@ import {
   RateLimitError,
   ValidationError,
 } from '../../app/errors/types'
+import {
+  decodeGlobalId,
+  encodeGlobalId,
+} from '../../modules/shared/connections'
 import { prisma } from '../../prisma'
-import { decodeGlobalId, encodeGlobalId } from '../../utils/relay'
 import type { DefaultContext } from '../context/context.types'
 import ShieldPlugin from './plugins/shield'
 

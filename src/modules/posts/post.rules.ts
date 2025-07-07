@@ -8,7 +8,7 @@ import { rule } from 'graphql-shield'
 import { AuthorizationError, NotFoundError } from '../../app/errors/types'
 import type { DefaultContext } from '../../graphql/context/context.types'
 import { prisma } from '../../prisma'
-import { parseGlobalId } from '../../utils/relay'
+import { parseGlobalId } from '../shared/connections'
 
 /**
  * Post ownership rule

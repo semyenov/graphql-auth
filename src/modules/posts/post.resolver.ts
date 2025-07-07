@@ -17,8 +17,8 @@ import type { ILogger } from '../../app/services/logger.interface'
 import { isAuthenticatedUser, isPublic } from '../../graphql/rules/common.rules'
 import { builder } from '../../graphql/schema/builder'
 import { prisma } from '../../prisma'
-import { parseGlobalId } from '../../utils/relay'
 import { requireAuthentication } from '../auth/guards/auth.guards'
+import { parseGlobalId } from '../shared/connections'
 import { canIncrementViewCount, canViewPost, isPostOwner } from './post.rules'
 
 // Service getters

@@ -10,7 +10,7 @@ import {
   parseAndValidateGlobalId,
   parseGlobalId,
   toGlobalId,
-} from './relay'
+} from './relay-core'
 
 describe('Relay Utilities', () => {
   describe('toGlobalId', () => {

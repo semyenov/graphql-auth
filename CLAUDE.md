@@ -4,6 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Recent Updates (2025-07-07)
 
+### Code Organization & Deduplication
+- **Module Consolidation**: Moved all utilities to appropriate modules, removed `src/utils/`
+- **Test Organization**: Test files now co-located with their modules
+- **Relay Utilities**: Consolidated in `src/modules/shared/connections/`
+- **JWT Services**: Moved to `src/modules/auth/services/jwt.service.ts`
+- **Logger**: Moved to `src/modules/app/services/simple-logger.ts`
+
 ### Test Performance Optimizations
 - **Parallel Test Execution**: Tests now run up to 4x faster with `fileParallelism: true`
 - **Worker-Specific Databases**: Each test worker gets unique SQLite file (`test-db-${workerId}.db`)
@@ -227,11 +234,11 @@ The project uses Base64-encoded global IDs for all entities:
 // Example: "Post:1" → "UG9zdDox"
 
 // Helper functions
-import { toPostId, toUserId, extractNumericId } from '@/utils/relay'
+import { toGlobalId, parseGlobalId, fromGlobalId } from '@/modules/shared/connections'
 
 // In resolvers
 const post = await prisma.post.findUnique({
-  where: { id: extractNumericId(args.id) }
+  where: { id: parseGlobalId(args.id, 'Post') }
 })
 
 // In Shield rules
@@ -258,11 +265,23 @@ modules/[feature]/
 ├── [feature].rules.ts        # Shield rules for authorization
 ├── [feature].types.ts        # GraphQL type definitions
 ├── services/                 # Complex business logic
-│   └── [feature].service.ts  # Service implementation + interface
-├── entities/                 # Domain entities (if needed)
-├── interfaces/               # Repository interfaces (refresh tokens only)
-└── types/                    # TypeScript types
+│   ├── *.service.ts         # Service implementations
+│   └── *.service.test.ts    # Unit tests for services
+├── tests/                    # Test organization
+│   ├── integration/         # Integration tests
+│   └── unit/               # Additional unit tests
+├── entities/                # Domain entities (if needed)
+├── interfaces/             # Service interfaces
+└── types/                  # TypeScript type definitions
 ```
+
+### Key Modules:
+- **app/**: Core services (rate limiting, logging, security middleware)
+- **auth/**: Authentication (JWT, tokens, password hashing, guards)
+- **posts/**: Post management and rules
+- **users/**: User queries and operations
+- **shared/**: Shared utilities (connections/relay, errors, filtering, loaders)
+- **oidc/**: OpenID Connect provider (in root modules/ directory)
 
 ## Key Implementation Rules
 

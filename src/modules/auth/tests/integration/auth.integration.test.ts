@@ -20,9 +20,9 @@ import {
   LogoutMutation,
   RefreshTokenMutation,
   SignupMutation,
-} from '../../gql/mutations'
-import { MeQuery } from '../../gql/queries'
-import { prisma } from '../../prisma'
+} from '../../../../gql/mutations'
+import { MeQuery } from '../../../../gql/queries'
+import { prisma } from '../../../../prisma'
 
 describe('Authentication Integration Tests', () => {
   const server = createTestServer()

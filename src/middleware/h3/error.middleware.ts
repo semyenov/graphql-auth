@@ -1,6 +1,6 @@
 import { createError, defineEventHandler, type H3Error, isError } from 'h3'
 import { ZodError } from 'zod'
-import { logger } from '../../utils/logger'
+import { logger } from '../../modules/app/services/simple-logger'
 
 /**
  * Global error handler for H3

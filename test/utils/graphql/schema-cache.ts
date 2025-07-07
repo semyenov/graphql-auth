@@ -6,7 +6,6 @@
 
 import type { GraphQLSchema } from 'graphql'
 import {
-  getIntrospectionQuery,
   introspectionFromSchema,
   lexicographicSortSchema,
   printSchema,
@@ -160,7 +159,6 @@ export function getSchemaIntrospection() {
  */
 export function getIntrospectionQueryResult() {
   const schema = getCachedSchema()
-  const introspectionQuery = getIntrospectionQuery()
   return introspectionFromSchema(schema, { descriptions: true })
 }
 
@@ -310,7 +308,7 @@ export function getSchemaDebugInfo(): {
   const mutationType = schema.getMutationType()
 
   const sdl = getCachedSchemaSDL()
-  const sdlPreview = sdl.length > 500 ? sdl.substring(0, 500) + '...' : sdl
+  const sdlPreview = sdl.length > 500 ? `${sdl.substring(0, 500)}...` : sdl
 
   return {
     stats,

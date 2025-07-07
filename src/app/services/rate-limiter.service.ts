@@ -10,7 +10,7 @@ import {
   RateLimiterRedis,
   RateLimiterRes,
 } from 'rate-limiter-flexible'
-import { logger } from '../../utils/logger'
+import { logger } from '../../modules/app/services/simple-logger'
 import { RateLimitError } from '../errors/types'
 
 export interface RateLimiterOptions {

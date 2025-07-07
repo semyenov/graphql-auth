@@ -157,33 +157,4 @@ export class TokenService implements ITokenService {
   private generateSecureToken(): string {
     return randomBytes(32).toString('hex')
   }
-
-  /**
-   * Parse expiration string to milliseconds
-   */
-  private parseExpiration(expiration: string): number {
-    const match = expiration.match(/^(\d+)([smhd])$/)
-    if (!match) {
-      throw new Error(`Invalid expiration format: ${expiration}`)
-    }
-
-    const [, value, unit] = match
-    if (!(value && unit)) {
-      throw new Error(`Invalid expiration format: ${expiration}`)
-    }
-    const numValue = Number.parseInt(value, 10)
-
-    switch (unit) {
-      case 's':
-        return numValue * 1000
-      case 'm':
-        return numValue * 60 * 1000
-      case 'h':
-        return numValue * 60 * 60 * 1000
-      case 'd':
-        return numValue * 24 * 60 * 60 * 1000
-      default:
-        throw new Error(`Invalid time unit: ${unit}`)
-    }
-  }
 }

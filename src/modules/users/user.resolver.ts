@@ -20,8 +20,8 @@ import {
   type UserWhereInputType,
 } from '../../graphql/schema/utils/filter-transform'
 import { prisma } from '../../prisma'
-import { parseGlobalId } from '../../utils/relay'
 import { requireAuthentication } from '../auth/guards/auth.guards'
+import { parseGlobalId } from '../shared/connections'
 
 // Get user by ID query
 builder.queryField('user', (t) =>

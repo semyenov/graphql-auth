@@ -35,7 +35,7 @@ export async function parseAndValidateGlobalId(
   globalId: string,
   expectedType: string,
 ): Promise<number> {
-  const { parseGlobalId } = await import('../../utils/relay')
+  const { parseGlobalId } = await import('../../modules/shared/connections')
   return parseGlobalId(globalId, expectedType)
 }
 
