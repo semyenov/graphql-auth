@@ -61,44 +61,34 @@ export function configureContainer(): void {
   // Password Service - Singleton (stateless)
   container.register<IPasswordService>(
     SERVICE_TOKENS.PASSWORD_SERVICE,
-    {
-      useClass: Argon2PasswordService,
-    },
+    { useClass: Argon2PasswordService },
     { lifecycle: Lifecycle.Singleton },
   )
 
   // Token Service - Singleton (uses config)
   container.register<ITokenService>(
     SERVICE_TOKENS.TOKEN_SERVICE,
-    {
-      useClass: TokenService,
-    },
+    { useClass: TokenService },
     { lifecycle: Lifecycle.Singleton },
   )
 
   // Refresh Token Repository - Scoped (per request)
   container.register<IRefreshTokenRepository>(
     SERVICE_TOKENS.REFRESH_TOKEN_REPOSITORY,
-    {
-      useClass: RefreshTokenRepository,
-    },
+    { useClass: RefreshTokenRepository },
   )
 
   // Login Attempt Service - Singleton (stateless)
   container.register<ILoginAttemptService>(
     SERVICE_TOKENS.LOGIN_ATTEMPT_SERVICE,
-    {
-      useClass: LoginAttemptService,
-    },
+    { useClass: LoginAttemptService },
     { lifecycle: Lifecycle.Singleton },
   )
 
   // Verification Token Service - Singleton (stateless)
   container.register<IVerificationTokenService>(
     SERVICE_TOKENS.VERIFICATION_TOKEN_SERVICE,
-    {
-      useClass: VerificationTokenService,
-    },
+    { useClass: VerificationTokenService },
     { lifecycle: Lifecycle.Singleton },
   )
 
@@ -109,9 +99,7 @@ export function configureContainer(): void {
   // Email Service - Singleton (stateless)
   container.register<IEmailService>(
     SERVICE_TOKENS.EMAIL_SERVICE,
-    {
-      useClass: EmailService,
-    },
+    { useClass: EmailService },
     { lifecycle: Lifecycle.Singleton },
   )
 
@@ -128,9 +116,7 @@ export function configureContainer(): void {
   // OIDC Provider Service - Singleton
   container.register<IOidcProviderService>(
     SERVICE_TOKENS.OIDC_PROVIDER_SERVICE,
-    {
-      useClass: OidcProviderService,
-    },
+    { useClass: OidcProviderService },
     { lifecycle: Lifecycle.Singleton },
   )
 

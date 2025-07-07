@@ -56,7 +56,9 @@ function parseEnvironment(): EnvironmentConfig {
       NODE_ENV: process.env.NODE_ENV,
       PORT: process.env.PORT || String(DEFAULT_PORT),
       HOST: process.env.HOST || DEFAULT_HOST,
-      APP_SECRET: process.env.APP_SECRET || 'appsecret321',
+      APP_SECRET:
+        process.env.APP_SECRET ||
+        'VERY_SECRET_KEY_LONG_ENOUGH_TO_BE_USED_AS_JWT_SECRET',
       DATABASE_URL: process.env.DATABASE_URL || 'file:./dev.db',
       CORS_ORIGIN: process.env.CORS_ORIGIN,
       LOG_LEVEL: process.env.LOG_LEVEL || 'info',
