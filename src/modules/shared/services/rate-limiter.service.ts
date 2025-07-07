@@ -11,7 +11,7 @@ import {
   RateLimiterRes,
 } from 'rate-limiter-flexible'
 import { RateLimitError } from '@/app/errors/types'
-import { logger } from '@/modules/app/services/simple-logger'
+import { logger } from '@/app/services/simple-logger'
 
 export interface RateLimiterOptions {
   points: number // Number of requests

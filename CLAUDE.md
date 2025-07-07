@@ -102,6 +102,42 @@ This project follows a **Modular Monolith** architecture with **Direct Pothos Re
 - **Code Quality**: Biome for linting and formatting
 - **OIDC Provider**: oidc-provider for OpenID Connect support
 
+## Critical Setup: reflect-metadata Import Order
+
+**CRITICAL**: TSyringe requires `reflect-metadata` to be imported before ANY code that uses decorators. This must be the FIRST import in ALL entry points:
+
+### Entry Points Requiring reflect-metadata:
+```typescript
+// src/main.ts - Application entry point
+import 'reflect-metadata'  // MUST BE FIRST
+import { ApolloServer } from '@apollo/server'
+// ... rest of imports
+
+// src/app/server.ts - H3 server entry point  
+import 'reflect-metadata'  // MUST BE FIRST
+import type { HTTPGraphQLRequest } from '@apollo/server'
+// ... rest of imports
+
+// test/test-env.ts - First Vitest setup file
+import 'reflect-metadata'  // MUST BE FIRST
+import { configureContainer } from '@/app/config/container'
+// ... rest of imports
+```
+
+### Why This Matters:
+- TSyringe uses TypeScript decorators (`@injectable()`, `@inject()`)
+- Decorators require the reflect-metadata polyfill to work
+- The polyfill MUST be loaded before any code using decorators is parsed
+- If not loaded first, you'll get: "Error: tsyringe requires a reflect polyfill"
+
+### Test Setup Order:
+Vitest loads setup files in the order specified in `vitest.config.ts`:
+```typescript
+setupFiles: ['./test/test-env.ts', './test/vitest-setup.ts']
+```
+- `test-env.ts` loads first and imports reflect-metadata
+- `vitest-setup.ts` can then safely use TSyringe features
+
 ## Critical Architectural Patterns
 
 ### 1. Direct Prisma Access (ADR-003)
@@ -327,6 +363,7 @@ OIDC_JWKS_PATH="./oidc-jwks.json"    # Path to JWKS keys for OIDC
 - **OIDC resolver errors**: Ensure DI container is configured before schema building
 - **GraphQL duplication**: Use npm/npx for Vitest, not bun vitest
 - **Parallel test conflicts**: Run `bun run test:cleanup` to remove orphaned databases
+- **TSyringe errors**: "requires a reflect polyfill" - ensure `import 'reflect-metadata'` is the FIRST import in ALL entry points
 
 ## Performance Optimizations
 
@@ -680,4 +717,15 @@ bun vitest
 // ✅ CORRECT
 npm run vitest:run
 npx vitest run
+```
+
+### Wrong: reflect-metadata import order
+```typescript
+// ❌ WRONG - reflect-metadata imported after other imports
+import { injectable } from 'tsyringe'
+import 'reflect-metadata'
+
+// ✅ CORRECT - reflect-metadata MUST be first
+import 'reflect-metadata'
+import { injectable } from 'tsyringe'
 ```
