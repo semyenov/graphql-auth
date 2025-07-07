@@ -5,7 +5,7 @@ import {
   hasRole,
   isAuthenticated,
   requireAuthentication,
-} from '@/modules/auth/guards/auth.guards'
+} from '@/modules/auth/auth.module'
 import { prisma } from '@/modules/shared/database'
 
 /**

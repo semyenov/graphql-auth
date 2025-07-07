@@ -15,9 +15,9 @@
       "@pothos/plugin-relay"
     ],
     "internal": {
-      "modules": [],
+      "modules": ["auth"],
       "services": [],
-      "note": "Shared module has no internal dependencies as it provides foundational services"
+      "note": "Shared module depends on auth for permission utilities"
     }
   },
   "provides": {

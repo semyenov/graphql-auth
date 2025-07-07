@@ -15,7 +15,7 @@ import {
   IncrementPostViewCountMutation,
 } from '@/gql/mutations'
 import { DraftsQuery, FeedQuery } from '@/gql/queries'
-import { prisma } from '@/modules/shared/database'
+import { prisma } from '@/modules/shared/shared.module'
 import { UserId } from '@/types/value-objects'
 
 describe('Posts', () => {

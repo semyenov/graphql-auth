@@ -5,11 +5,9 @@
  */
 
 import type { FieldRef, SchemaTypes } from '@pothos/core'
+import { Services } from '@/app/config/service-registry'
 import type { DefaultContext } from '@/graphql/context/context.types'
-import {
-  type RateLimiterOptions,
-  rateLimiter,
-} from '@/modules/shared/services/rate-limiter.service'
+import type { RateLimiterOptions } from '@/modules/shared/interfaces/rate-limiter.service.interface'
 
 /**
  * Rate limit configuration for a field
@@ -97,7 +95,7 @@ export function rateLimitedField<TReturn>(
         const options = config.options || {}
 
         // Apply rate limiting
-        await rateLimiter.consume(
+        await Services.rateLimiter.consume(
           rateLimitKey,
           identifier,
           options as RateLimiterOptions,

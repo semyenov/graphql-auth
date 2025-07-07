@@ -9,7 +9,6 @@ import type { HeaderMap } from '@apollo/server'
 import type { HTTPMethod } from 'fetchdts'
 import type { IncomingMessage, ServerResponse } from 'http'
 import { Services } from '@/app/config/service-registry'
-import { verifyToken } from '@/modules/auth/services/jwt.service'
 import { prisma } from '@/modules/shared/database'
 import { createDataLoaders } from '@/modules/shared/loaders/loaders'
 import type { UserId } from '@/types/value-objects'
@@ -94,7 +93,7 @@ async function enhanceWithAuth(
   }
 
   try {
-    const payload = verifyToken(token)
+    const payload = Services.token.verifyToken(token)
 
     if (!payload.userId) {
       logger.warn('Invalid token payload - missing userId')

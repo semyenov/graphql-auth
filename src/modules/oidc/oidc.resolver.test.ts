@@ -20,7 +20,7 @@ import { graphql } from 'gql.tada'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { configureContainer } from '@/app/config/container'
 import { resetSchemaCache } from '@/graphql/schema'
-import { prisma } from '@/modules/shared/database'
+import { prisma } from '@/modules/shared/shared.module'
 
 // GraphQL queries and mutations
 const ListOidcClientsQuery = graphql(`
