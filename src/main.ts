@@ -10,7 +10,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'http'
 import 'reflect-metadata'
 
 // Import configuration and DI
-import { getConfigInstance } from './app/config/config'
+import { getConfig } from './app/config/config'
 import { configureContainer } from './app/config/container'
 import { createContext } from './graphql/context/context.factory'
 
@@ -26,7 +26,7 @@ async function bootstrap() {
     console.log('✅ Dependency injection configured')
 
     // Get configuration
-    const config = getConfigInstance()
+    const config = getConfig()
     console.log(`📝 Environment: ${config.server.environment}`)
 
     // Create HTTP server

@@ -2,34 +2,20 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Recent Improvements (2025-07-06)
+## Recent Updates (2025-07-07)
 
-### Security Enhancements
-- **Security Headers Middleware**: Comprehensive security headers (CSP, HSTS, X-Frame-Options, etc.)
-- **Rate Limiting**: GraphQL-aware rate limiting with operation-specific limits
-- **Query Depth Limiting**: Prevents deeply nested queries (max depth: 10)
-- **Query Complexity Limiting**: Limits total query complexity (max: 1000)
+### Test Performance Optimizations
+- **Parallel Test Execution**: Tests now run up to 4x faster with `fileParallelism: true`
+- **Worker-Specific Databases**: Each test worker gets unique SQLite file (`test-db-${workerId}.db`)
+- **Schema Caching**: GraphQL schema cached per worker to reduce initialization overhead
+- **New Test Commands**: Added cleanup and performance-focused test scripts
 
-### Performance Optimizations
-- **Response Compression**: Gzip/Brotli compression for responses > 1KB
-- **Request Logging**: Structured logging with timing and status information
-- **GraphQL Operation Logging**: Specific logging for GraphQL operations
-
-### H3 Server Middleware Stack
-Applied in order:
-1. Request logging (all requests)
-2. GraphQL operation logging
-3. Response compression
-4. Security headers
-5. Rate limiting
-6. CORS handling
-
-### New Middleware Files
-- `src/middleware/h3/security-headers.middleware.ts`
-- `src/middleware/h3/rate-limiter.middleware.ts`
-- `src/middleware/h3/request-logger.middleware.ts`
-- `src/middleware/h3/compression.middleware.ts`
-- `src/graphql/plugins/depth-limit.plugin.ts`
+### Security & Performance Enhancements (2025-07-06)
+- **Security Headers Middleware**: CSP, HSTS, X-Frame-Options, etc.
+- **Rate Limiting**: GraphQL-aware with operation-specific limits
+- **Query Depth/Complexity Limiting**: Max depth 10, max complexity 1000
+- **Response Compression**: Gzip/Brotli for responses > 1KB
+- **Request Logging**: Structured logging with timing information
 
 ## Quick Command Reference
 
@@ -43,12 +29,17 @@ bun test -t "should create user"        # Run tests matching pattern
 bun test test/modules/oidc --run        # Run tests in specific directory
 bun run test:ui                         # Run tests with UI
 bun run test:coverage                   # Run tests with coverage
+bun run test:cleanup                    # Clean up orphaned test database files
 
-# Test Runner Notes:
-# - For Bun tests: Use `bun test` (works perfectly)
-# - For Vitest: Use `npm run vitest:run` or `npx vitest`
-#   DO NOT use `bun vitest` - it causes GraphQL module duplication issues
-# - Vitest is configured and working, but must be run with npm/npx, not bun
+# Vitest (for parallel execution)
+npm run vitest:run                      # Run all tests in parallel (recommended)
+npm run vitest:unit                     # Run unit tests only
+npm run vitest:integration              # Run integration tests only
+npm run vitest:performance              # Run performance tests only
+npm run vitest:fast                     # Run with ultra-fast cleanup
+npx vitest run                          # Alternative: run tests in parallel
+
+# IMPORTANT: For Vitest, use npm/npx, NOT bun vitest (causes GraphQL duplication)
 
 # Database
 bunx prisma migrate dev --name feature  # Create migration
@@ -203,7 +194,7 @@ container.register<IAuthService>('IAuthService', { useClass: AuthService })
 
 ### 5. GraphQL Tada Testing
 
-Use the new test helpers for type-safe GraphQL operations:
+Use the test helpers for type-safe GraphQL operations:
 
 ```typescript
 // ✅ CORRECT - Using new helpers
@@ -247,13 +238,15 @@ const post = await prisma.post.findUnique({
 const postId = parseGlobalId(args.id, 'Post') // Returns numeric ID
 ```
 
-### 7. Schema Building
+### 7. Schema Building & Caching
 
-The GraphQL schema is built lazily with conditional OIDC resolver loading:
+The GraphQL schema is built lazily and cached for performance:
 
 ```typescript
+// In tests, use cached schema for better performance
+import { getCachedSchema } from '@test/utils/graphql/schema-cache'
+
 // OIDC resolver loads only when DI container is configured
-// This prevents errors during schema generation script
 ensureOidcResolver() // Safely loads OIDC if container is ready
 ```
 
@@ -290,6 +283,7 @@ modules/[feature]/
 # Required
 DATABASE_URL="file:./dev.db"     # SQLite (or postgresql://...)
 JWT_SECRET="your-secret-key"      # JWT signing secret
+APP_SECRET="32-char-minimum"      # App secret for encryption (min 32 chars)
 
 # Optional
 BCRYPT_ROUNDS=10                  # Password hashing rounds
@@ -313,23 +307,31 @@ OIDC_JWKS_PATH="./oidc-jwks.json"    # Path to JWKS keys for OIDC
 - **Shield errors**: Shield returns "Not authorized" as fallback - check rule logic
 - **OIDC resolver errors**: Ensure DI container is configured before schema building
 - **GraphQL duplication**: Use npm/npx for Vitest, not bun vitest
+- **Parallel test conflicts**: Run `bun run test:cleanup` to remove orphaned databases
 
 ## Performance Optimizations
 
+### Runtime Optimizations
 - **Query Spreading**: Pothos optimizes Prisma queries based on requested fields
 - **DataLoaders**: Automatic batching prevents N+1 queries
 - **Shield Caching**: Authorization results cached per request
 - **Direct Access**: No context overhead for Prisma calls
 
+### Test Optimizations (New)
+- **Parallel Execution**: Tests run up to 4x faster with worker isolation
+- **Worker Databases**: Each test worker uses unique SQLite file
+- **Schema Caching**: GraphQL schema cached per worker
+- **Server Caching**: Apollo/Yoga servers cached to reduce initialization
+
 ## Test Configuration
 
-Tests use Vitest with the following configuration:
-- **Sequential execution**: Tests run in sequence to prevent database conflicts
-- **Process isolation**: Each test file runs in a separate process using 'forks' pool
+Tests use Vitest with parallel execution optimizations:
+- **Parallel execution**: `fileParallelism: true` with up to 4 workers
+- **Process isolation**: Each test file runs in separate process using 'forks' pool
+- **Worker databases**: Each worker gets unique database file (`test-db-${workerId}.db`)
 - **Path aliases**: Use `@test/*` for test utilities, `@` for src imports
-- **GraphQL deduplication**: Single GraphQL instance enforced to prevent schema errors
-- **Test database**: Separate SQLite database created for tests
-- **Automatic cleanup**: Database cleaned between test files automatically
+- **Schema caching**: GraphQL schema cached per worker for performance
+- **Automatic cleanup**: Database cleaned between tests, orphaned files removed
 
 ### Test Path Aliases
 
@@ -340,6 +342,19 @@ import { prisma } from '@test/utils/database/prisma'
 
 // Source code
 import { AuthService } from '@/modules/auth/services/auth.service'
+```
+
+### Running Tests Efficiently
+
+```bash
+# Parallel execution (recommended for speed)
+npm run vitest:run
+
+# Single worker execution (for debugging)
+bun test
+
+# Clean up test databases
+bun run test:cleanup
 ```
 
 ## Test Utilities
@@ -353,7 +368,7 @@ The project includes comprehensive test utilities:
 - `seedTestUsers()`: Seeds database with predefined test users
 
 ### Core Test Utilities (`@test/utils/core/`)
-- `createTestServer()`: Creates Apollo Server instance for testing
+- `createTestServer()`: Creates cached Apollo Server instance
 - `createAuthenticatedContextFromScratch()`: Creates new test user with authenticated context
 - `createAuthenticatedContext(user)`: Creates authenticated context from existing user
 - `createMockContext()`: Creates unauthenticated context
@@ -369,6 +384,12 @@ The project includes comprehensive test utilities:
 ### Database Utilities (`@test/utils/database/`)
 - `prisma`: Test database Prisma client
 - `cleanDatabase()`: Cleans test database between tests
+
+### Schema Cache Utilities (`@test/utils/graphql/schema-cache.ts`)
+- `getCachedSchema()`: Returns cached GraphQL schema
+- `refreshSchemaCache()`: Force refresh schema cache
+- `getSchemaStats()`: Get cache performance statistics
+- `measureSchemaBuildPerformance()`: Benchmark schema building
 
 ## GraphQL Context
 
@@ -426,6 +447,23 @@ Based on Biome configuration:
 - **Default formatter**: Biome for all file types
 - **Fix on save**: Auto-fix linting issues
 - **Organize imports**: On save
+
+## H3 Server Middleware Stack
+
+Applied in order:
+1. Request logging (all requests)
+2. GraphQL operation logging
+3. Response compression
+4. Security headers
+5. Rate limiting
+6. CORS handling
+
+### Middleware Files
+- `src/middleware/h3/security-headers.middleware.ts`
+- `src/middleware/h3/rate-limiter.middleware.ts`
+- `src/middleware/h3/request-logger.middleware.ts`
+- `src/middleware/h3/compression.middleware.ts`
+- `src/graphql/plugins/depth-limit.plugin.ts`
 
 ## Refresh Token Implementation
 
@@ -613,4 +651,14 @@ throw new Error('Not authorized')
 
 // ✅ CORRECT
 return new ForbiddenError('Not authorized')
+```
+
+### Wrong: Using Bun for Vitest
+```typescript
+// ❌ WRONG - Causes GraphQL module duplication
+bun vitest
+
+// ✅ CORRECT
+npm run vitest:run
+npx vitest run
 ```
