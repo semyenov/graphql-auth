@@ -8,6 +8,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { SERVICE_TOKENS } from '@/app/config/service-registry'
 import 'reflect-metadata'
 import { container } from 'tsyringe'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -63,9 +64,12 @@ describe('OIDC Middleware Tests', () => {
     mockProvider.callback.mockReturnValue(callbackHandler)
 
     // Register mock service (override existing registration)
-    container.register<IOidcProviderService>('IOidcProviderService', {
-      useValue: mockOidcService,
-    })
+    container.register<IOidcProviderService>(
+      SERVICE_TOKENS.OIDC_PROVIDER_SERVICE,
+      {
+        useValue: mockOidcService,
+      },
+    )
 
     // Create middleware
     middleware = createOidcMiddleware()

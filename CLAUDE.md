@@ -2,199 +2,99 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Recent Updates (2025-07-07)
+## Recent Improvements (2025-07-07)
 
-### Code Organization & Deduplication
-- **Module Consolidation**: Moved all utilities to appropriate modules, removed `src/utils/`
-- **Test Organization**: Test files now co-located with their modules
-- **Relay Utilities**: Consolidated in `src/modules/shared/connections/`
-- **JWT Services**: Moved to `src/modules/auth/services/jwt.service.ts`
-- **Logger**: Moved to `src/modules/app/services/simple-logger.ts`
-
-### Test Performance Optimizations
-- **Parallel Test Execution**: Tests now run up to 4x faster with `fileParallelism: true`
-- **Worker-Specific Databases**: Each test worker gets unique SQLite file (`test-db-${workerId}.db`)
-- **Schema Caching**: GraphQL schema cached per worker to reduce initialization overhead
-- **New Test Commands**: Added cleanup and performance-focused test scripts
-
-### Security & Performance Enhancements (2025-07-06)
-- **Security Headers Middleware**: CSP, HSTS, X-Frame-Options, etc.
-- **Rate Limiting**: GraphQL-aware with operation-specific limits
-- **Query Depth/Complexity Limiting**: Max depth 10, max complexity 1000
-- **Response Compression**: Gzip/Brotli for responses > 1KB
-- **Request Logging**: Structured logging with timing information
+### Dependency Injection Enhancements
+- **Service Registry Pattern**: Centralized `Services` class for type-safe service access
+- **Interface-based Registration**: All services use interfaces for better testability
+- **Enhanced Auth Features**: Email verification, password reset, account lockout
+- **Critical Fix**: SERVICE_TOKENS now properly imported from `@/app/config/service-registry`
 
 ## Quick Command Reference
 
 ```bash
 # Development
-bun run dev                             # Start dev server with H3 (port 4000)
-bun run test --run                      # Run all tests once (no watch)
-bun run test                            # Run tests in watch mode
+bun run dev                             # Start dev server (port 4000)
+bun test --run                          # Run all tests once
 bun test test/modules/auth/auth.test.ts # Run specific test file
 bun test -t "should create user"        # Run tests matching pattern
-bun test test/modules/oidc --run        # Run tests in specific directory
-bun run test:ui                         # Run tests with UI
-bun run test:coverage                   # Run tests with coverage
-bun run test:cleanup                    # Clean up orphaned test database files
-
-# Vitest (for parallel execution)
-npm run vitest:run                      # Run all tests in parallel (recommended)
-npm run vitest:unit                     # Run unit tests only
-npm run vitest:integration              # Run integration tests only
-npm run vitest:performance              # Run performance tests only
-npm run vitest:fast                     # Run with ultra-fast cleanup
-npx vitest run                          # Alternative: run tests in parallel
-
-# IMPORTANT: For Vitest, use npm/npx, NOT bun vitest (causes GraphQL duplication)
 
 # Database
 bunx prisma migrate dev --name feature  # Create migration
-bun run generate                        # Generate all types (Prisma + GraphQL)
+bun run generate                        # Generate Prisma + GraphQL types
 bun run db:reset                        # Reset database with seed data
 bunx prisma studio                      # Open database GUI
-bunx prisma db push                     # Push schema changes without migration (dev only)
-bun run seed                            # Manually seed database
-
-# Build & Production
-bun run build                          # Build for production (builds src/main.ts)
-bun run start                          # Start production server (runs dist/app/server.js)
-bun run clean                          # Clean build directory
 
 # Code Quality
-bunx tsc --noEmit                      # Type check all files
+bunx tsc --noEmit                      # Type check
 bun run lint                           # Run Biome linter
-bun run lint:fix                       # Auto-fix linting issues
-bun run format                         # Check formatting
 bun run format:fix                     # Auto-fix formatting
-bun run check                          # Run all Biome checks
-bun run check:fix                      # Auto-fix all issues
-bun run check:fix --unsafe             # Apply unsafe fixes (for any types, etc.)
+bun run check:fix --unsafe             # Fix all issues including any types
 
 # GraphQL Schema
-bun run gen:schema                      # Generate GraphQL schema file to _docs/
-bunx gql.tada generate-output           # Generate GraphQL type definitions
-bun run generate:gql                    # Alternative GraphQL type generation
-
-# Environment & Debugging
-bun run env:verify                      # Verify environment setup
+bun run gen:schema                     # Generate schema file to _docs/
+bunx gql.tada generate-output          # Generate GraphQL types
 ```
 
 ## Architecture Overview
 
-This project follows a **Modular Monolith** architecture with **Direct Pothos Resolvers** pattern. The architecture is documented through Architecture Decision Records (ADRs):
+### Tech Stack
+- **Runtime**: Bun
+- **HTTP**: H3 framework
+- **GraphQL**: Apollo Server 4 + Pothos (7 plugins)
+- **Database**: Prisma ORM with SQLite
+- **Auth**: JWT + argon2 + refresh tokens
+- **DI**: TSyringe with Service Registry pattern
+- **Testing**: Vitest + GraphQL Tada
 
-- **[ADR-001](docs/adr/001-modular-direct-resolvers.md)**: Direct resolvers with business logic, complex logic extracted to services
-- **[ADR-002](docs/adr/002-dual-authorization-system.md)**: Pothos Scope Auth + GraphQL Shield for flexible permissions  
+### Key Architectural Decisions
+- **[ADR-001](docs/adr/001-modular-direct-resolvers.md)**: Direct resolvers pattern
+- **[ADR-002](docs/adr/002-dual-authorization-system.md)**: Pothos Scope Auth + GraphQL Shield
 - **[ADR-003](docs/adr/003-direct-prisma-access.md)**: Import Prisma directly, never through context
 
-### Tech Stack
+## Critical Patterns
 
-- **Runtime**: Bun (fast JavaScript/TypeScript runtime)
-- **HTTP Framework**: H3 (minimal HTTP framework)
-- **GraphQL**: Apollo Server 4 with Pothos schema builder (7 plugins)
-- **Database**: Prisma ORM with SQLite (PostgreSQL-ready)
-- **Authentication**: JWT with argon2 + refresh token rotation
-- **Authorization**: Dual system - Pothos Scope Auth + GraphQL Shield
-- **Type Safety**: GraphQL Tada for compile-time GraphQL typing
-- **Testing**: Vitest with comprehensive test utilities
-- **DI Container**: TSyringe for service management
-- **Code Quality**: Biome for linting and formatting
-- **OIDC Provider**: oidc-provider for OpenID Connect support
-
-## Critical Setup: reflect-metadata Import Order
-
-**CRITICAL**: TSyringe requires `reflect-metadata` to be imported before ANY code that uses decorators. This must be the FIRST import in ALL entry points:
-
-### Entry Points Requiring reflect-metadata:
-```typescript
-// src/main.ts - Application entry point
-import 'reflect-metadata'  // MUST BE FIRST
-import { ApolloServer } from '@apollo/server'
-// ... rest of imports
-
-// src/app/server.ts - H3 server entry point  
-import 'reflect-metadata'  // MUST BE FIRST
-import type { HTTPGraphQLRequest } from '@apollo/server'
-// ... rest of imports
-
-// test/test-env.ts - First Vitest setup file
-import 'reflect-metadata'  // MUST BE FIRST
-import { configureContainer } from '@/app/config/container'
-// ... rest of imports
-```
-
-### Why This Matters:
-- TSyringe uses TypeScript decorators (`@injectable()`, `@inject()`)
-- Decorators require the reflect-metadata polyfill to work
-- The polyfill MUST be loaded before any code using decorators is parsed
-- If not loaded first, you'll get: "Error: tsyringe requires a reflect polyfill"
-
-### Test Setup Order:
-Vitest loads setup files in the order specified in `vitest.config.ts`:
-```typescript
-setupFiles: ['./test/test-env.ts', './test/vitest-setup.ts']
-```
-- `test-env.ts` loads first and imports reflect-metadata
-- `vitest-setup.ts` can then safely use TSyringe features
-
-## Critical Architectural Patterns
-
-### 1. Direct Prisma Access (ADR-003)
-
-**NEVER** include Prisma in GraphQL context. Always import directly:
+### 1. Service Registry Pattern
 
 ```typescript
-// ✅ CORRECT
-import { prisma } from '../../../prisma'
+import { Services, ServiceFactory } from '@/app/config/service-registry'
 
-// ❌ WRONG - Never do this
-const prisma = context.prisma
+// Access services directly
+await Services.password.hash(password)
+await Services.email.sendVerificationEmail({ to, name, token })
+
+// Create contextual loggers
+const logger = ServiceFactory.createResolverLogger('signup')
 ```
 
 ### 2. Pothos Resolver Pattern
 
-**CRITICAL**: Always spread the `query` parameter first for Prisma optimizations:
+**CRITICAL**: Always spread `query` parameter first:
 
 ```typescript
-builder.mutationField('createPost', (t) =>
-  t.prismaField({
-    type: 'Post',
-    grantScopes: ['authenticated'],     // Pothos auth
-    shield: isPostOwner,                // Shield rule
-    resolve: async (query, _parent, args, context) => {
-      const userId = requireAuthentication(context)
-      
-      return prisma.post.create({
-        ...query, // ⚠️ CRITICAL: Always spread query first
-        data: {
-          title: args.title,
-          authorId: userId.value,
-        },
-      })
-    },
-  }),
-)
+t.prismaField({
+  resolve: async (query, _parent, args, context) => {
+    return prisma.post.create({
+      ...query, // ⚠️ CRITICAL: Spread first for optimizations
+      data: { title: args.title }
+    })
+  }
+})
 ```
 
-**Important**: The `query` parameter must be spread in ALL Prisma operations, not just create:
-- `prisma.user.findUnique({ ...query, where })`
-- `prisma.post.update({ ...query, where, data })`
-- `prisma.comment.delete({ ...query, where })`
+### 3. Direct Prisma Import
 
-### 3. Dual Authorization (ADR-002)
-
-- **Pothos Scope Auth**: Basic authentication/role checks (`grantScopes`)
-- **GraphQL Shield**: Complex business rules (`shield`)
-
-```typescript
-grantScopes: ['authenticated']              // Simple auth check
-shield: and(isAuthenticatedUser, isPostOwner)  // Complex rules
-```
-
-**Shield Rule Pattern**: Rules should return errors, not throw:
 ```typescript
 // ✅ CORRECT
+import { prisma } from '@/modules/shared/database'
+
+// ❌ WRONG - Never access from context
+const prisma = context.prisma
+```
+
+### 4. Shield Rules Pattern
+
+```typescript
 export const isPostOwner = rule({ cache: 'strict' })(
   async (_parent, args, context) => {
     try {
@@ -209,569 +109,163 @@ export const isPostOwner = rule({ cache: 'strict' })(
     } catch (error) {
       return handleRuleError(error)
     }
-  },
+  }
 )
-
-// ❌ WRONG - Don't throw in Shield rules
-if (!post) throw new Error('Post not found')
 ```
-
-### 4. Service Layer with DI
-
-Complex business logic uses TSyringe dependency injection with improved patterns:
-
-```typescript
-// Interface-based registration
-container.register<IPasswordService>('IPasswordService', {
-  useClass: Argon2PasswordService,
-}, { lifecycle: Lifecycle.Singleton })
-
-// Service access via registry (recommended)
-import { Services } from '@/app/config/service-registry'
-
-const hashedPassword = await Services.password.hash(password)
-const logger = Services.createLogger({ resolver: 'signup' })
-
-// Or direct resolution
-const passwordService = container.resolve<IPasswordService>('IPasswordService')
-```
-
-**Service Lifecycles**:
-- **Singleton**: Stateless services (password hashing, token signing)
-- **Scoped**: Per-request services (repositories)
-- **Transient**: New instance each time (rarely used)
-
-**When to use services**: Only for complex business logic, not simple CRUD operations.
 
 ### 5. GraphQL Tada Testing
 
-Use the test helpers for type-safe GraphQL operations:
-
 ```typescript
-// ✅ CORRECT - Using new helpers
 import { createGraphQLTestHelper } from '@test/utils'
-import { LoginMutation } from '../src/gql/mutations'
+import { LoginMutation } from '@/gql/mutations'
 
 const gql = createGraphQLTestHelper(server)
 const data = await gql.mutate(LoginMutation, variables, context)
 await gql.expectError(LoginMutation, variables, 'Error message', context)
-
-// Advanced test helpers
-await gqlHelpers.expectSuccessfulQuery(GetUserQuery, { id }, context)
-await gqlHelpers.expectGraphQLError(
-  CreatePostMutation,
-  { title: '' },
-  'Title is required',
-  context
-)
-
-// ❌ WRONG - Don't use raw strings or old patterns
-const result = await executeOperation(server, `mutation { login(...) }`)
 ```
 
-### 6. Relay Global IDs
+## Service Registry Reference
 
-The project uses Base64-encoded global IDs for all entities:
+### Available Services
+- **Core**: `Services.config`, `Services.logger`
+- **Auth**: `Services.password`, `Services.token`, `Services.loginAttempt`, `Services.verificationToken`
+- **Shared**: `Services.email`, `Services.rateLimiter`
+- **OIDC**: `Services.oidcProvider`
 
+### Service Tokens
 ```typescript
-// Encoding format: "EntityType:numericId"
-// Example: "Post:1" → "UG9zdDox"
-
-// Helper functions
-import { toGlobalId, parseGlobalId, fromGlobalId } from '@/modules/shared/connections'
-
-// In resolvers
-const post = await prisma.post.findUnique({
-  where: { id: parseGlobalId(args.id, 'Post') }
-})
-
-// In Shield rules
-const postId = parseGlobalId(args.id, 'Post') // Returns numeric ID
-```
-
-### 7. Schema Building & Caching
-
-The GraphQL schema is built lazily and cached for performance:
-
-```typescript
-// In tests, use cached schema for better performance
-import { getCachedSchema } from '@test/utils/graphql/schema-cache'
-
-// OIDC resolver loads only when DI container is configured
-ensureOidcResolver() // Safely loads OIDC if container is ready
+import { SERVICE_TOKENS } from '@/app/config/service-registry'
+// Used for container registration only
 ```
 
 ## Module Structure
 
 ```
 modules/[feature]/
-├── [feature].resolver.ts     # Pothos resolvers with inline logic
-├── [feature].rules.ts        # Shield rules for authorization
+├── [feature].resolver.ts     # Pothos resolvers
+├── [feature].rules.ts        # Shield authorization rules
 ├── [feature].types.ts        # GraphQL type definitions
 ├── services/                 # Complex business logic
-│   ├── *.service.ts         # Service implementations
-│   └── *.service.test.ts    # Unit tests for services
-├── tests/                    # Test organization
-│   ├── integration/         # Integration tests
-│   └── unit/               # Additional unit tests
-├── entities/                # Domain entities (if needed)
-├── interfaces/             # Service interfaces
-└── types/                  # TypeScript type definitions
+│   ├── [service].interface.ts
+│   └── [service].service.ts
+└── tests/                    # Co-located tests
 ```
 
-### Key Modules:
-- **app/**: Core services (rate limiting, logging, security middleware)
-- **auth/**: Authentication (JWT, tokens, password hashing, guards)
-- **posts/**: Post management and rules
-- **users/**: User queries and operations
-- **shared/**: Shared utilities (connections/relay, errors, filtering, loaders)
-- **oidc/**: OpenID Connect provider (in root modules/ directory)
+## Common Issues & Solutions
 
-## Key Implementation Rules
+### TypeScript Errors
+```bash
+bun run generate  # Regenerate Prisma + GraphQL types
+```
 
-1. **Prisma Query Spreading**: Always spread `query` in `t.prismaField` calls
-2. **Direct Imports**: Import Prisma directly, never from context
-3. **Error Normalization**: Use `normalizeError()` for all caught errors
-4. **Authentication**: Use `requireAuthentication()` for protected resolvers
-5. **Type Safety**: No `any` types - use `unknown` or specific types
-6. **Testing**: Use GraphQL Tada typed operations from `src/gql/`
-7. **Shield Rules**: Cache with `{ cache: 'strict' }` when appropriate
-8. **DataLoaders**: Available as `context.loaders` for N+1 prevention
-9. **Global IDs**: Decode relay IDs in Shield rules using `parseGlobalId()`
-10. **Unused Parameters**: Prefix with underscore (e.g., `_parent`, `_args`)
-11. **Dependency Injection**: Use interface-based registration with proper lifecycles
-12. **Service Access**: Use `Services` registry or `container.resolve()` with interfaces
+### Import Errors
+```typescript
+// ❌ WRONG
+import { SERVICE_TOKENS } from '@/app/constants'
+
+// ✅ CORRECT
+import { SERVICE_TOKENS } from '@/app/config/service-registry'
+```
+
+### Test Runner Issues
+```bash
+# For Bun tests
+bun test
+
+# For Vitest (GraphQL duplication issues)
+npm run vitest:run  # NOT bun vitest
+```
+
+### Shield Authorization
+- Rules return errors, don't throw
+- Use `parseGlobalId()` for Relay IDs
+- Cache with `{ cache: 'strict' }`
 
 ## Environment Variables
 
 ```bash
 # Required
-DATABASE_URL="file:./dev.db"     # SQLite (or postgresql://...)
-JWT_SECRET="your-secret-key"      # JWT signing secret
-APP_SECRET="32-char-minimum"      # App secret for encryption (min 32 chars)
+DATABASE_URL="file:./dev.db"
+JWT_SECRET="your-secret-key"
 
 # Optional
-BCRYPT_ROUNDS=10                  # Password hashing rounds
-NODE_ENV="development"            # Environment mode
-PORT=4000                         # Server port
-HOST="localhost"                  # Server host
-
-# OIDC Configuration (Optional)
-OIDC_ISSUER="http://localhost:4000"  # OIDC provider issuer URL
-OIDC_JWKS_PATH="./oidc-jwks.json"    # Path to JWKS keys for OIDC
+NODE_ENV="development"
+PORT=4000
+OIDC_ISSUER="http://localhost:4000"
+TEST_DISABLE_LOCKOUT="true"  # For tests
 ```
 
-## Common Debugging Issues
-
-- **Type errors**: Run `bun run generate` to regenerate Prisma & GraphQL types
-- **Permission denied**: Check JWT token and Shield rule implementations
-- **Global ID errors**: Verify Base64 encoding (e.g., "UG9zdDox" = "Post:1")
-- **Test failures**: Ensure test database is clean (`bun run db:reset`)
-- **DI errors**: Check `container.ts` for interface registration
-- **Lint errors**: Run `bun run check:fix` to auto-fix (add `--unsafe` for any types)
-- **Shield errors**: Shield returns "Not authorized" as fallback - check rule logic
-- **OIDC resolver errors**: Ensure DI container is configured before schema building
-- **GraphQL duplication**: Use npm/npx for Vitest, not bun vitest
-- **Parallel test conflicts**: Run `bun run test:cleanup` to remove orphaned databases
-- **TSyringe errors**: "requires a reflect polyfill" - ensure `import 'reflect-metadata'` is the FIRST import in ALL entry points
-
-## Performance Optimizations
-
-### Runtime Optimizations
-- **Query Spreading**: Pothos optimizes Prisma queries based on requested fields
-- **DataLoaders**: Automatic batching prevents N+1 queries
-- **Shield Caching**: Authorization results cached per request
-- **Direct Access**: No context overhead for Prisma calls
-
-### Test Optimizations (New)
-- **Parallel Execution**: Tests run up to 4x faster with worker isolation
-- **Worker Databases**: Each test worker uses unique SQLite file
-- **Schema Caching**: GraphQL schema cached per worker
-- **Server Caching**: Apollo/Yoga servers cached to reduce initialization
-
-## Test Configuration
-
-Tests use Vitest with parallel execution optimizations:
-- **Parallel execution**: `fileParallelism: true` with up to 4 workers
-- **Process isolation**: Each test file runs in separate process using 'forks' pool
-- **Worker databases**: Each worker gets unique database file (`test-db-${workerId}.db`)
-- **Path aliases**: Use `@test/*` for test utilities, `@` for src imports
-- **Schema caching**: GraphQL schema cached per worker for performance
-- **Automatic cleanup**: Database cleaned between tests, orphaned files removed
-
-### Test Path Aliases
-
-```typescript
-// Test utilities
-import { createTestUser } from '@test/utils/factories'
-import { prisma } from '@test/utils/database/prisma'
-
-// Source code
-import { AuthService } from '@/modules/auth/services/auth.service'
-```
-
-### Running Tests Efficiently
-
-```bash
-# Parallel execution (recommended for speed)
-npm run vitest:run
-
-# Single worker execution (for debugging)
-bun test
-
-# Clean up test databases
-bun run test:cleanup
-```
-
-## Test Utilities
-
-The project includes comprehensive test utilities:
-
-### Factory Functions (`@test/utils/factories/`)
-- `createTestUser()`: Creates test users with hashed passwords
-- `createTestPost()`: Creates test posts
-- `createUserWithPosts()`: Creates user with multiple posts
-- `seedTestUsers()`: Seeds database with predefined test users
-
-### Core Test Utilities (`@test/utils/core/`)
-- `createTestServer()`: Creates cached Apollo Server instance
-- `createAuthenticatedContextFromScratch()`: Creates new test user with authenticated context
-- `createAuthenticatedContext(user)`: Creates authenticated context from existing user
-- `createMockContext()`: Creates unauthenticated context
-- `createGraphQLTestHelper()`: Type-safe GraphQL test helper with query/mutate/expectError methods
-
-### Advanced Test Helpers (`@test/utils/helpers/`)
-- `gqlHelpers.expectSuccessfulQuery()`: Assert successful query execution
-- `gqlHelpers.expectSuccessfulMutation()`: Assert successful mutation execution
-- `gqlHelpers.expectGraphQLError()`: Assert specific GraphQL errors
-- `benchmark()`: Performance testing utility
-- `GraphQLSnapshotTester`: Snapshot testing for GraphQL responses
-
-### Database Utilities (`@test/utils/database/`)
-- `prisma`: Test database Prisma client
-- `cleanDatabase()`: Cleans test database between tests
-
-### Schema Cache Utilities (`@test/utils/graphql/schema-cache.ts`)
-- `getCachedSchema()`: Returns cached GraphQL schema
-- `refreshSchemaCache()`: Force refresh schema cache
-- `getSchemaStats()`: Get cache performance statistics
-- `measureSchemaBuildPerformance()`: Benchmark schema building
-
-## GraphQL Context
-
-Context is created by `context.factory.ts` and includes:
-- `user`: Authenticated user (null if not authenticated)
-- `userId`: User ID value object
-- `loaders`: DataLoader instances for batching
-- `security`: Security metadata (roles, permissions)
-- `requestId`: Unique request identifier
-
-Never add Prisma to context - always import directly.
-
-### DataLoader Usage
-
-```typescript
-// Available loaders in context
-const users = await context.loaders.userById.loadMany([1, 2, 3])
-const posts = await context.loaders.postById.load(postId)
-```
-
-## Code Style & Formatting
-
-Based on Biome configuration:
-
-### Formatting Rules
-- **Indentation**: 2 spaces (no tabs)
-- **Line width**: 80 characters max
-- **Line endings**: LF (Unix-style)
-- **Quotes**: Single quotes for JavaScript/TypeScript
-- **JSX Quotes**: Double quotes
-- **Trailing commas**: Always use
-- **Semicolons**: Use as needed (ASI-safe)
-- **Arrow parentheses**: Always use (e.g., `(x) => x`)
-- **Bracket spacing**: Use spaces inside brackets
-- **Array syntax**: Use shorthand (`[]` not `Array<>`)
-
-### Linting Rules
-- **No `any` types**: Use `unknown` or specific types
-- **No unused imports**: Will error on unused imports
-- **Use `const`**: For immutable variables
-- **No barrel files**: Performance optimization disabled
-- **Consistent array types**: Use `T[]` not `Array<T>`
-- **No non-null assertions**: Avoid `!` operator when possible
-
-### TypeScript Configuration
-- **Strict mode**: All strict checks enabled
-- **No unchecked indexed access**: Must handle undefined
-- **No implicit returns**: All code paths must return
-- **No unused locals/parameters**: Clean up unused code
-- **Experimental decorators**: Enabled for DI
-- **Path aliases**: `@` for src, `@test/*` for test utils
-
-### Editor Integration
-- **Format on save**: Enabled with Biome
-- **Default formatter**: Biome for all file types
-- **Fix on save**: Auto-fix linting issues
-- **Organize imports**: On save
-
-## Dependency Injection
-
-The project uses TSyringe for dependency injection with the following patterns:
-
-### Service Registration
-```typescript
-// Core services registered in src/app/config/container.ts
-container.register<IPasswordService>('IPasswordService', {
-  useClass: Argon2PasswordService,
-}, { lifecycle: Lifecycle.Singleton })
-```
-
-### Service Access Patterns
-```typescript
-// 1. Using Service Registry (recommended)
-import { Services } from '@/app/config/service-registry'
-const hash = await Services.password.hash(password)
-
-// 2. Direct container resolution
-const service = container.resolve<IPasswordService>('IPasswordService')
-
-// 3. Constructor injection (for services)
-@injectable()
-class MyService {
-  constructor(@inject('ILogger') private logger: ILogger) {}
-}
-```
-
-### Registered Services
-- **Core**: AppConfig, ILogger, PrismaClient
-- **Auth**: IPasswordService, ITokenService, IRefreshTokenRepository, ILoginAttemptService, IVerificationTokenService
-- **Shared**: IEmailService, IRateLimiterService
-- **OIDC**: IOidcProviderService
-
-See [Dependency Injection Guide](docs/DEPENDENCY-INJECTION.md) for detailed patterns.
-
-## H3 Server Middleware Stack
+## H3 Middleware Stack
 
 Applied in order:
-1. Request logging (all requests)
+1. Request logging
 2. GraphQL operation logging
 3. Response compression
 4. Security headers
 5. Rate limiting
 6. CORS handling
 
-### Middleware Files
-- `src/middleware/h3/security-headers.middleware.ts`
-- `src/middleware/h3/rate-limiter.middleware.ts`
-- `src/middleware/h3/request-logger.middleware.ts`
-- `src/middleware/h3/compression.middleware.ts`
-- `src/graphql/plugins/depth-limit.plugin.ts`
+## Key Implementation Rules
 
-## Refresh Token Implementation
+1. **Always spread `query`** in Prisma operations
+2. **Import Prisma directly**, never from context
+3. **Use Services registry** instead of manual container.resolve()
+4. **Return errors in Shield rules**, don't throw
+5. **Use GraphQL Tada** for type-safe tests
+6. **Prefix unused params** with underscore (`_parent`)
+7. **No `any` types** - use `unknown` or specific types
+8. **Use normalizeError()** for error handling
 
-- Stores UUID string IDs in database
-- Returns JWT refresh token containing the UUID
-- Single-use with rotation on refresh
-- Repository pattern exception (only for RefreshToken entity)
+## Relay Global IDs
 
-## OIDC (OpenID Connect) Implementation
+```typescript
+// Format: Base64("EntityType:numericId")
+// "Post:1" → "UG9zdDox"
 
-The project includes a full OIDC provider implementation:
+import { toGlobalId, parseGlobalId } from '@/modules/shared/connections'
 
-### OIDC Module Structure
-```
-modules/oidc/
-├── oidc.resolver.ts              # GraphQL resolvers for OIDC management
-├── oidc.rules.ts                 # Authorization rules for OIDC operations
-├── oidc.types.ts                 # GraphQL type definitions
-├── oidc.h3.ts                    # H3 routes for OIDC endpoints
-├── services/
-│   ├── oidc-provider.service.ts  # Main OIDC provider service
-│   └── prisma-adapter.service.ts # Prisma adapter for oidc-provider
-└── types/
-    └── oidc.types.ts             # TypeScript types for OIDC
+// In resolvers
+const postId = parseGlobalId(args.id, 'Post')  // Returns numeric ID
 ```
 
-### OIDC Endpoints
-- `/.well-known/openid-configuration` - OIDC discovery endpoint
-- `/.well-known/jwks.json` - JSON Web Key Set endpoint
-- `/oidc/auth` - Authorization endpoint
+## OIDC Implementation
+
+### Endpoints
+- `/.well-known/openid-configuration` - Discovery
+- `/oidc/auth` - Authorization
 - `/oidc/token` - Token endpoint
-- `/oidc/userinfo` - UserInfo endpoint
-- `/oidc/interaction/:uid` - User interaction endpoints
+- `/oidc/userinfo` - User info
 
-### OIDC GraphQL Operations
+### GraphQL Operations
 ```graphql
-# Queries
-oidcClients                 # List all OIDC clients (admin only)
-oidcClient(id: ID!)        # Get specific client (admin only)
-myOidcSessions             # Get current user's OIDC sessions
+# Admin only
+oidcClients
+createOidcClient
+updateOidcClient
 
-# Mutations
-createOidcClient           # Create new OIDC client (admin only)
-updateOidcClient           # Update OIDC client (admin only)
-deleteOidcClient           # Delete OIDC client (admin only)
-revokeOidcSession          # Revoke specific session
-revokeAllOidcSessions      # Revoke all user sessions
+# User operations
+myOidcSessions
+revokeOidcSession
 ```
 
-### Testing OIDC
+## Testing Patterns
+
+### Test Utilities
+- `createTestUser()` - Test users with hashed passwords
+- `createAuthenticatedContext()` - Auth context from user
+- `createGraphQLTestHelper()` - Type-safe GraphQL testing
+
+### Running Tests
 ```bash
-# Run OIDC-specific tests
-bun test test/modules/oidc --run
-
-# Test OIDC provider manually
-bun run scripts/test-oidc.ts
+bun test                        # All tests
+bun test -t "pattern"          # Match pattern
+bun test path/to/test.ts       # Specific file
 ```
 
-## Running Single Tests
+## Code Style (Biome)
 
-```bash
-# Run a specific test file
-bun test test/modules/auth/auth.test.ts
-
-# Run tests matching a pattern
-bun test -t "should create user"
-
-# Run tests in a specific directory
-bun test test/modules/users
-
-# Debug a specific test with console output
-bun test test/modules/auth/auth.test.ts --no-coverage
-```
-
-## H3 Server Routes
-
-The project uses H3 as the HTTP framework with the following endpoints:
-
-- `/graphql` - GraphQL API endpoint (GET/POST)
-- `/health` - Health check endpoint with database status
-- `/oidc/*` - OIDC provider endpoints (auth, token, userinfo, etc.)
-- `/.well-known/*` - OIDC discovery endpoints
-
-### H3 Features Used
-- Minimal routing with `createRouter()`
-- CORS handling with `handleCors()`
-- Event handlers with `defineEventHandler()`
-- Integration with Apollo Server via custom handler
-
-## GraphQL Tada Patterns
-
-### Fragment Definitions
-```typescript
-// Define fragments in src/gql/fragments/
-export const UserFragment = graphql(`
-  fragment UserFields on User @_unmask {
-    id
-    email
-    name
-  }
-`)
-
-// Use in operations
-export const GetUserQuery = graphql(`
-  query GetUser($id: ID!) {
-    user(id: $id) {
-      ...UserFields
-    }
-  }
-`, [UserFragment])
-```
-
-### Type Extraction
-```typescript
-import type { ResultOf, VariablesOf } from '@graphql-typed-document-node/core'
-
-type UserData = ResultOf<typeof GetUserQuery>
-type UserVars = VariablesOf<typeof GetUserQuery>
-```
-
-## Error Handling Patterns
-
-### Error Hierarchy
-- `GraphQLError` (base)
-  - `AuthenticationError` (401)
-  - `ForbiddenError` (403)
-  - `UserInputError` (400)
-  - `NotFoundError` (404)
-  - `InternalServerError` (500)
-
-### Prisma Error Mapping
-```typescript
-// Automatic mapping in normalizeError()
-P2002 → UserInputError (unique constraint)
-P2025 → NotFoundError (record not found)
-P2003 → UserInputError (foreign key constraint)
-```
-
-### Error Constants
-```typescript
-import { ERROR_MESSAGES } from '@/shared/constants/errors'
-
-// Use predefined messages
-throw new AuthenticationError(ERROR_MESSAGES.INVALID_CREDENTIALS)
-```
-
-## Important Cursor Rules
-
-The project includes extensive Cursor rules in `.cursor/rules/` that provide:
-- Pothos-specific patterns and best practices
-- Testing patterns with GraphQL Tada
-- Error handling conventions
-- Authentication implementation guidelines
-- Common issue resolutions
-
-These rules ensure consistent code patterns across the codebase.
-
-## Common Pitfalls
-
-### Wrong: Manual relation resolvers
-```typescript
-// ❌ WRONG
-t.field('author', {
-  type: 'User',
-  resolve: (parent) => prisma.user.findUnique({ where: { id: parent.authorId } })
-})
-
-// ✅ CORRECT
-t.relation('author')
-```
-
-### Wrong: Not spreading query in Prisma operations
-```typescript
-// ❌ WRONG
-return prisma.post.findMany({ where: { authorId } })
-
-// ✅ CORRECT
-return prisma.post.findMany({ ...query, where: { authorId } })
-```
-
-### Wrong: Throwing in Shield rules
-```typescript
-// ❌ WRONG
-throw new Error('Not authorized')
-
-// ✅ CORRECT
-return new ForbiddenError('Not authorized')
-```
-
-### Wrong: Using Bun for Vitest
-```typescript
-// ❌ WRONG - Causes GraphQL module duplication
-bun vitest
-
-// ✅ CORRECT
-npm run vitest:run
-npx vitest run
-```
-
-### Wrong: reflect-metadata import order
-```typescript
-// ❌ WRONG - reflect-metadata imported after other imports
-import { injectable } from 'tsyringe'
-import 'reflect-metadata'
-
-// ✅ CORRECT - reflect-metadata MUST be first
-import 'reflect-metadata'
-import { injectable } from 'tsyringe'
-```
+- **Indentation**: 2 spaces
+- **Quotes**: Single quotes (JS/TS), double (JSX)
+- **Trailing commas**: Always
+- **No `any`**: Use `unknown`
+- **No barrel files**: Disabled for performance

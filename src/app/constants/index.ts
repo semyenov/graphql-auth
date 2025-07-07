@@ -6,7 +6,6 @@
 export * from './config'
 export * from './context'
 export * from './graphql'
-export * from './services'
 export * from './validation'
 
 // Legacy exports for backward compatibility

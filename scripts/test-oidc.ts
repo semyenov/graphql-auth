@@ -1,10 +1,9 @@
 #!/usr/bin/env bun
 
 import 'reflect-metadata'
-import { container } from 'tsyringe'
-import type { IOidcProviderService } from '../modules/oidc/services/oidc-provider.service'
 import { configureContainer } from '../src/app/config/container'
-import { prisma } from '../src/prisma'
+import { Services } from '../src/app/config/service-registry'
+import { prisma } from '../src/modules/shared/database'
 
 async function testOidcSetup() {
   try {
@@ -13,10 +12,8 @@ async function testOidcSetup() {
     // Configure DI container
     configureContainer()
 
-    // Get OIDC service
-    const oidcService = container.resolve<IOidcProviderService>(
-      'IOidcProviderService',
-    )
+    // Get OIDC service using Services registry
+    const oidcService = Services.oidcProvider
     console.log('✅ OIDC Service resolved')
 
     // Create a test client
