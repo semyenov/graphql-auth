@@ -219,6 +219,7 @@ export type introspection_types = {
     ]
   }
   JSON: unknown
+
   Mutation: {
     kind: 'OBJECT'
     name: 'Mutation'
