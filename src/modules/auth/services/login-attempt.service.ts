@@ -4,16 +4,16 @@
  * Tracks login attempts and implements account lockout functionality
  */
 
-import type { LoginAttempt } from '@prisma/client'
-import { inject, injectable } from 'tsyringe'
 import { AuthenticationError } from '@/app/errors/types'
 import type {
   AccountLockoutConfig,
   ILoginAttemptService,
   LoginAttemptOptions,
 } from '@/modules/auth/interfaces/login-attempt.service.interface'
-import { prisma } from '@/modules/shared/database'
 import type { ILogger } from '@/modules/shared/interfaces/logger.interface'
+import { prisma } from '@/modules/shared/shared.module'
+import type { LoginAttempt } from '@prisma/client'
+import { inject, injectable } from 'tsyringe'
 
 @injectable()
 export class LoginAttemptService implements ILoginAttemptService {

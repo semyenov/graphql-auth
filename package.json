@@ -40,7 +40,18 @@
     "prepare": "husky",
     "env:verify": "bun run src/app/config/verify-env.ts",
     "gen:schema": "bun run scripts/generate-schema.ts",
-    "seed": "bun run prisma/seed.ts"
+    "seed": "bun run prisma/seed.ts",
+    "analyze:boundaries": "bun run scripts/analyze-module-boundaries.ts",
+    "fix:boundaries": "bun run scripts/fix-module-boundaries.ts",
+    "validate:boundaries": "bun run scripts/analyze-module-boundaries.ts && bun run test:architecture",
+    "test:architecture": "vitest run test/architecture/",
+    "test:boundaries": "vitest run test/architecture/module-boundaries.test.ts",
+    "docs:generate": "bun run scripts/generate-module-docs.ts",
+    "docs:clean": "rimraf docs/generated",
+    "docs:build": "bun run docs:clean && bun run docs:generate",
+    "test:integration": "vitest run test/integration/",
+    "test:module-communication": "vitest run test/integration/module-communication.integration.test.ts",
+    "test:boundary-compliance": "vitest run test/integration/module-boundary-compliance.test.ts"
   },
   "dependencies": {
     "@apollo/server": "^4.12.2",

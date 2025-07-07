@@ -1,0 +1,95 @@
+{
+  "module": "shared",
+  "description": "Shared utilities and cross-cutting concerns for all modules",
+  "version": "1.0.0",
+  "type": "infrastructure",
+  "dependencies": {
+    "external": [
+      "prisma",
+      "dataloader",
+      "rate-limiter-flexible",
+      "winston",
+      "zod",
+      "uuid",
+      "@pothos/core",
+      "@pothos/plugin-relay"
+    ],
+    "internal": {
+      "modules": [],
+      "services": [],
+      "note": "Shared module has no internal dependencies as it provides foundational services"
+    }
+  },
+  "provides": {
+    "services": ["email.service", "rate-limiter.service"],
+    "utilities": [
+      "pagination.utils",
+      "filter.utils",
+      "relay.utils",
+      "relay-core"
+    ],
+    "interfaces": ["logger.interface", "rate-limiter.service.interface"],
+    "middleware": ["rule-utils", "common.rules"],
+    "database": ["prisma.client", "loaders"],
+    "connections": ["relay.types", "relay.utils"],
+    "client": "shared.client.interface"
+  },
+  "events": {
+    "publishes": [
+      "RATE_LIMIT_EXCEEDED",
+      "EMAIL_SENT",
+      "EMAIL_FAILED",
+      "CACHE_HIT",
+      "CACHE_MISS",
+      "SECURITY_VIOLATION",
+      "SYSTEM_ERROR"
+    ],
+    "subscribes": ["*"],
+    "note": "Shared module can listen to all events for logging and monitoring"
+  },
+  "data_access": {
+    "owns": [],
+    "readonly": ["User", "Post", "RefreshToken"],
+    "restricted": [],
+    "repositories": ["Generic connection and pagination support"],
+    "note": "Shared module provides utilities but doesn't own specific data models"
+  },
+  "business_rules": [
+    "Rate limiting applies across all modules",
+    "Email services must be non-blocking",
+    "Pagination defaults to 10 items per page, max 100",
+    "Filter operations must be SQL injection safe",
+    "Cache TTL defaults based on data sensitivity",
+    "Logging must not expose sensitive information"
+  ],
+  "security": {
+    "authentication": "Provides utilities, doesn't implement auth",
+    "authorization": "Provides rule helpers",
+    "data_protection": "Sanitizes logs and filters",
+    "rate_limiting": "Primary rate limiting implementation"
+  },
+  "configuration": {
+    "required_env": ["RATE_LIMIT_ENABLED"],
+    "optional_env": [
+      "EMAIL_SERVICE_URL",
+      "CACHE_TTL_DEFAULT",
+      "LOG_LEVEL",
+      "PAGINATION_DEFAULT_LIMIT",
+      "PAGINATION_MAX_LIMIT"
+    ]
+  },
+  "testing": {
+    "unit_tests": [
+      "pagination.test.ts",
+      "filter.test.ts",
+      "relay.test.ts",
+      "relay-core.test.ts",
+      "rate-limiter.service.test.ts",
+      "loaders.test.ts"
+    ],
+    "integration_tests": [
+      "rate-limiting.test.ts",
+      "rate-limiting-simple.test.ts"
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "module": "auth",
+  "version": "1.0.0",
+  "description": "Authentication and authorization module",
+  "dependencies": {
+    "external": {
+      "@prisma/client": "^5.0.0",
+      "tsyringe": "^4.8.0",
+      "argon2": "^0.31.0",
+      "jsonwebtoken": "^9.0.0",
+      "uuid": "^9.0.0",
+      "zod": "^3.22.0"
+    },
+    "internal": {
+      "shared": {
+        "services": ["ILogger", "IRateLimiterService"],
+        "interfaces": ["logger.interface", "rate-limiter.service.interface"],
+        "database": ["prisma"]
+      }
+    }
+  },
+  "provides": {
+    "services": [
+      "IPasswordService",
+      "ITokenService",
+      "ILoginAttemptService",
+      "IVerificationTokenService",
+      "IAuthDataRepository"
+    ],
+    "guards": [
+      "requireAuthentication",
+      "hasRole",
+      "hasPermission",
+      "isAuthenticated"
+    ],
+    "types": ["AuthTokens", "AuthUser", "LoginCredentials", "SignupData"],
+    "client": "IAuthClient"
+  },
+  "isolation": {
+    "data": {
+      "owns": ["User", "RefreshToken", "VerificationToken", "LoginAttempt"],
+      "readonly": [],
+      "restricted": ["OIDC*", "Post*"]
+    },
+    "communication": {
+      "accepts": ["user.created", "user.updated"],
+      "publishes": [
+        "user.registered",
+        "user.authenticated",
+        "user.logout",
+        "email.verified",
+        "password.changed",
+        "account.locked",
+        "auth.failed"
+      ]
+    }
+  },
+  "security": {
+    "sensitive_data": ["passwords", "tokens", "private_keys"],
+    "encryption_required": true,
+    "audit_trail": true
+  },
+  "configuration": {
+    "required_env_vars": ["JWT_SECRET"],
+    "optional_env_vars": [
+      "BCRYPT_ROUNDS",
+      "JWT_EXPIRES_IN",
+      "REFRESH_TOKEN_EXPIRES_IN"
+    ]
+  }
+}

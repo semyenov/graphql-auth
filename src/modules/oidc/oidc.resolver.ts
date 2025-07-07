@@ -1,8 +1,8 @@
 import { Services } from '@/app/config/service-registry'
 import { builder } from '@/graphql/schema/builder'
-import { prisma } from '@/modules/shared/database'
-import { isAdmin } from '@/modules/shared/rules/common.rules'
-import { OidcClientInput, OidcClientUpdateInput } from './oidc.types'
+import { prisma } from '@/modules/shared/shared.module'
+import { isAdmin } from '../shared/rules/common.rules'
+import { OidcClientInput } from './oidc.types'
 
 builder.queryFields((t) => ({
   oidcClients: t.prismaField({

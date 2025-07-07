@@ -1,14 +1,14 @@
+import { NotFoundError } from '@/app/errors/types'
+import { createAdapter } from '@/modules/oidc/services/prisma-adapter.service'
+import type { OidcClientInput } from '@/modules/oidc/types/oidc.types'
+import { prisma } from '@/modules/shared/shared.module'
+import type { User } from '@/types'
 import type { OidcClient, OidcSession } from '@prisma/client'
 import Provider, {
   type Configuration,
   type KoaContextWithOIDC,
 } from 'oidc-provider'
 import { injectable } from 'tsyringe'
-import { NotFoundError } from '@/app/errors/types'
-import { prisma } from '@/modules/shared/database'
-import type { User } from '@/types'
-import type { OidcClientInput } from '../types/oidc.types'
-import { createAdapter } from './prisma-adapter.service'
 
 export interface IOidcProviderService {
   getProvider(): Provider

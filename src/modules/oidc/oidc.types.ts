@@ -1,5 +1,5 @@
 import { builder } from '@/graphql/schema/builder'
-import { prisma } from '@/modules/shared/database'
+import { prisma } from '@/modules/shared/shared.module'
 
 export const OidcClientType = builder.prismaObject('OidcClient', {
   fields: (t) => ({

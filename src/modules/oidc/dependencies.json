@@ -1,0 +1,90 @@
+{
+  "module": "oidc",
+  "description": "OpenID Connect authentication and OAuth2 provider implementation",
+  "version": "1.0.0",
+  "type": "feature",
+  "dependencies": {
+    "external": ["oidc-provider", "prisma", "tsyringe", "zod", "h3"],
+    "internal": {
+      "modules": ["shared", "auth"],
+      "services": [
+        "shared.logger",
+        "shared.rate-limiter",
+        "auth.token.service"
+      ],
+      "interfaces": ["shared.logger.interface", "auth.token.service.interface"]
+    }
+  },
+  "provides": {
+    "services": ["oidc-provider.service", "prisma-adapter.service"],
+    "resolvers": ["oidc.resolver"],
+    "middleware": ["oidc.middleware"],
+    "handlers": ["oidc.h3"],
+    "types": ["oidc.types"],
+    "client": "oidc.client.interface (planned)"
+  },
+  "events": {
+    "publishes": [
+      "OIDC_CLIENT_REGISTERED",
+      "OIDC_AUTHORIZATION_GRANTED",
+      "OIDC_TOKEN_ISSUED",
+      "OIDC_TOKEN_REVOKED",
+      "OIDC_SESSION_STARTED",
+      "OIDC_SESSION_ENDED",
+      "OIDC_ERROR"
+    ],
+    "subscribes": [
+      "USER_REGISTERED",
+      "USER_VERIFIED",
+      "AUTH_LOGIN_SUCCESS",
+      "AUTH_LOGOUT"
+    ]
+  },
+  "data_access": {
+    "owns": [
+      "OidcClient",
+      "OidcGrant",
+      "OidcSession",
+      "OidcCode",
+      "OidcAccessToken",
+      "OidcRefreshToken"
+    ],
+    "readonly": ["User"],
+    "restricted": ["RefreshToken", "VerificationToken", "LoginAttempt", "Post"],
+    "repositories": ["prisma-adapter.service handles OIDC model persistence"]
+  },
+  "business_rules": [
+    "OAuth2/OIDC compliance required",
+    "Client registration requires admin approval",
+    "Authorization codes expire in 10 minutes",
+    "Access tokens expire in 1 hour by default",
+    "Refresh tokens can be long-lived based on client configuration",
+    "PKCE required for public clients",
+    "Scopes must be pre-registered and validated",
+    "Sessions tied to user authentication state"
+  ],
+  "security": {
+    "authentication": "Integrates with auth module for user verification",
+    "authorization": "Implements OAuth2 authorization flows",
+    "data_protection": "Encrypts sensitive tokens and client secrets",
+    "compliance": "OAuth2 RFC 6749, OpenID Connect 1.0"
+  },
+  "configuration": {
+    "required_env": ["OIDC_ISSUER", "OIDC_SIGNING_KEY"],
+    "optional_env": [
+      "OIDC_ACCESS_TOKEN_TTL",
+      "OIDC_REFRESH_TOKEN_TTL",
+      "OIDC_CODE_TTL",
+      "OIDC_SESSION_TTL",
+      "OIDC_ADMIN_CLIENT_ID"
+    ]
+  },
+  "testing": {
+    "unit_tests": [
+      "oidc-provider.service.test.ts",
+      "oidc.resolver.test.ts",
+      "oidc.middleware.test.ts"
+    ],
+    "integration_tests": ["oidc.integration.test.ts (planned)"]
+  }
+}

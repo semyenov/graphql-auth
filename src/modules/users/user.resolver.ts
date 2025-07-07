@@ -4,8 +4,6 @@
  * Implements user operations directly in Pothos resolvers without use cases.
  */
 
-import type { Prisma } from '@prisma/client'
-import { z } from 'zod'
 import { ConflictError } from '@/app/errors/types'
 import { builder } from '@/graphql/schema/builder'
 import { UserOrderByInput, UserWhereInput } from '@/graphql/schema/inputs'
@@ -14,12 +12,14 @@ import {
   transformUserWhereInput,
   type UserWhereInputType,
 } from '@/graphql/schema/utils/filter-transform'
-import { prisma } from '@/modules/shared/database'
 import {
   isAuthenticatedUser,
   isPublic,
   or,
 } from '@/modules/shared/rules/common.rules'
+import { prisma } from '@/modules/shared/shared.module'
+import type { Prisma } from '@prisma/client'
+import { z } from 'zod'
 import { requireAuthentication } from '../auth/guards/auth.guards'
 import { parseGlobalId } from '../shared/connections'
 

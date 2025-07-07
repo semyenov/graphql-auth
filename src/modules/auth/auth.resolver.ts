@@ -5,7 +5,6 @@
  * Combines basic auth, token management, and enhanced auth features.
  */
 
-import { z } from 'zod'
 import { ServiceFactory, Services } from '@/app/config/service-registry'
 import { normalizeError } from '@/app/errors/handlers'
 import {
@@ -19,9 +18,9 @@ import {
   applyRateLimit,
   createRateLimitConfig,
 } from '@/graphql/schema/plugins/rate-limit.plugin'
-import { prisma } from '@/modules/shared/database'
-import { isAuthenticatedUser } from '@/modules/shared/rules/common.rules'
-import { RateLimitPresets } from '@/modules/shared/services/rate-limiter.service'
+import { prisma, RateLimitPresets } from '@/modules/shared/shared.module'
+import { z } from 'zod'
+import { isAuthenticatedUser } from '../shared/rules/common.rules'
 import { rateLimitAuth } from './auth.rules'
 import { requireAuthentication } from './guards/auth.guards'
 import { signToken } from './services/jwt.service'

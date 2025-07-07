@@ -1,5 +1,6 @@
 /**
- * Configuration-related constants
+ * Infrastructure configuration constants
+ * Following modular monolith pattern - only cross-cutting infrastructure concerns
  */
 
 export const APP_CONFIG = {
@@ -15,21 +16,6 @@ export const SERVER_CONFIG = {
   HEALTH_CHECK_PATH: '/health',
   CORS_CREDENTIALS: true,
   INTROSPECTION_ENABLED: true,
-} as const
-
-export const AUTH_CONFIG = {
-  DEFAULT_JWT_EXPIRES_IN: '7d',
-  MIN_PASSWORD_LENGTH: 8,
-  MAX_PASSWORD_LENGTH: 128,
-  DEFAULT_JWT_SECRET: 'your-secret-123',
-  TOKEN_ALGORITHM: 'HS256' as const,
-  ARGON2_CONFIG: {
-    type: 2, // argon2id
-    memoryCost: 65536, // 64 MB
-    timeCost: 3,
-    parallelism: 4,
-    hashLength: 32,
-  },
 } as const
 
 export const DATABASE_CONFIG = {

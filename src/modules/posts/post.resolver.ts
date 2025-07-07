@@ -5,8 +5,6 @@
  * Uses inline Shield rules with the Pothos plugin.
  */
 
-import type { Prisma } from '@prisma/client'
-import { z } from 'zod'
 import { ServiceFactory } from '@/app/config/service-registry'
 import {
   AuthorizationError,
@@ -14,11 +12,13 @@ import {
   RateLimitError,
 } from '@/app/errors/types'
 import { builder } from '@/graphql/schema/builder'
-import { prisma } from '@/modules/shared/database'
 import {
   isAuthenticatedUser,
   isPublic,
 } from '@/modules/shared/rules/common.rules'
+import { prisma } from '@/modules/shared/shared.module'
+import type { Prisma } from '@prisma/client'
+import { z } from 'zod'
 import { requireAuthentication } from '../auth/guards/auth.guards'
 import { parseGlobalId } from '../shared/connections'
 import { canIncrementViewCount, canViewPost, isPostOwner } from './post.rules'

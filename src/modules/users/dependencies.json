@@ -1,0 +1,75 @@
+{
+  "module": "users",
+  "version": "1.0.0",
+  "description": "User management and profile operations module",
+  "dependencies": {
+    "external": {
+      "@prisma/client": "^5.0.0",
+      "zod": "^3.22.0"
+    },
+    "internal": {
+      "shared": {
+        "services": ["ILogger"],
+        "connections": ["relay-core", "pagination"],
+        "filtering": ["filter-utils"],
+        "database": ["prisma"],
+        "loaders": ["DataLoaders"]
+      },
+      "auth": {
+        "guards": ["requireAuthentication", "hasRole"],
+        "client": ["IAuthClient"]
+      }
+    }
+  },
+  "provides": {
+    "services": ["IUsersService", "IUsersDataRepository"],
+    "resolvers": ["user", "users", "me", "searchUsers", "updateProfile"],
+    "types": [
+      "User",
+      "UserProfileInput",
+      "UserSearchInput",
+      "UserOrderBy",
+      "UserWhereInput"
+    ],
+    "client": "IUsersClient"
+  },
+  "isolation": {
+    "data": {
+      "owns": ["User"],
+      "readonly": ["Post"],
+      "restricted": [
+        "RefreshToken",
+        "VerificationToken",
+        "LoginAttempt",
+        "OIDC*"
+      ]
+    },
+    "communication": {
+      "accepts": ["auth.failed", "post.created", "post.published"],
+      "publishes": [
+        "user.created",
+        "user.updated",
+        "user.deleted",
+        "user.profile.updated",
+        "user.followed",
+        "user.unfollowed",
+        "user.suspended",
+        "user.unsuspended",
+        "user.activity"
+      ]
+    }
+  },
+  "business_rules": {
+    "privacy": "Users can only see their own private data",
+    "profile_visibility": "Public profiles are visible to all, private profiles to followers only",
+    "moderation": "Only admins can suspend/unsuspend users",
+    "following": "Users can follow/unfollow other users"
+  },
+  "configuration": {
+    "required_env_vars": [],
+    "optional_env_vars": [
+      "MAX_PROFILE_BIO_LENGTH",
+      "DEFAULT_PROFILE_VISIBILITY"
+    ]
+  }
+}

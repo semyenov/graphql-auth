@@ -4,16 +4,15 @@
  * Manages email verification and password reset tokens
  */
 
-import { randomBytes } from 'node:crypto'
-import type { VerificationToken } from '@prisma/client'
-import { inject, injectable } from 'tsyringe'
 import { ValidationError } from '@/app/errors/types'
 import type {
   IVerificationTokenService,
   VerificationResult,
 } from '@/modules/auth/interfaces/verification-token.service.interface'
-import { prisma } from '@/modules/shared/database'
 import type { ILogger } from '@/modules/shared/interfaces/logger.interface'
+import { prisma } from '@/modules/shared/shared.module'
+import { randomBytes } from 'node:crypto'
+import { inject, injectable } from 'tsyringe'
 
 export type TokenType = 'email_verification' | 'password_reset'
 

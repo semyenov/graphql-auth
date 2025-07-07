@@ -1,6 +1,6 @@
+import { prisma } from '@/modules/shared/shared.module'
 import type { Adapter, AdapterPayload } from 'oidc-provider'
 import { injectable } from 'tsyringe'
-import { prisma } from '@/modules/shared/database'
 
 @injectable()
 export class PrismaAdapter<

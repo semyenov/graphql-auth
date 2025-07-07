@@ -4,10 +4,10 @@
  * Authorization rules specific to post operations.
  */
 
-import { rule } from 'graphql-shield'
 import { AuthorizationError, NotFoundError } from '@/app/errors/types'
 import type { DefaultContext } from '@/graphql/context/context.types'
-import { prisma } from '@/modules/shared/database'
+import { prisma } from '@/modules/shared/shared.module'
+import { rule } from 'graphql-shield'
 import { parseGlobalId } from '../shared/connections'
 
 /**
