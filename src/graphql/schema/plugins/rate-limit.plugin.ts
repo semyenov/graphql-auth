@@ -5,11 +5,11 @@
  */
 
 import type { FieldRef, SchemaTypes } from '@pothos/core'
+import type { DefaultContext } from '@/graphql/context/context.types'
 import {
   type RateLimiterOptions,
   rateLimiter,
 } from '@/modules/shared/services/rate-limiter.service'
-import type { DefaultContext } from '../../context/context.types'
 
 /**
  * Rate limit configuration for a field

@@ -12,14 +12,14 @@ import {
 } from 'rate-limiter-flexible'
 import { RateLimitError } from '@/app/errors/types'
 import { logger } from '@/app/services/simple-logger'
+import type {
+  IRateLimiterService,
+  RateLimiterOptions,
+} from '@/modules/shared/interfaces/rate-limiter.service.interface'
 
-export interface RateLimiterOptions {
-  points: number // Number of requests
-  duration: number // Per duration in seconds
-  blockDuration?: number // Block duration in seconds after limit exceeded
-}
+export type { RateLimiterOptions }
 
-export class RateLimiterService {
+export class RateLimiterService implements IRateLimiterService {
   private static instance: RateLimiterService
   private limiters: Map<string, RateLimiterMemory | RateLimiterRedis> =
     new Map()

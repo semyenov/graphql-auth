@@ -5,11 +5,10 @@
  * IMPROVED-FILE-STRUCTURE.md specification.
  */
 
-import { container } from 'tsyringe'
-import { ERROR_MESSAGES } from '../../app/constants'
-import { AuthenticationError } from '../../app/errors/types'
-import { TokenService } from '../../modules/auth/services/token.service'
-import type { UserId } from '../../types/value-objects'
+import { Services } from '@/app/config/service-registry'
+import { ERROR_MESSAGES } from '@/app/constants'
+import { AuthenticationError } from '@/app/errors/types'
+import type { UserId } from '@/types/value-objects'
 
 /**
  * Extract Bearer token from Authorization header
@@ -41,8 +40,7 @@ export async function getUserIdFromAuthHeaderAsync(
   }
 
   try {
-    const tokenService = container.resolve(TokenService)
-    return (await tokenService.verifyAccessToken(
+    return (await Services.token.verifyAccessToken(
       token,
     )) as unknown as UserId | null
   } catch {

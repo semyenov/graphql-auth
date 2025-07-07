@@ -5,7 +5,7 @@
  */
 
 import { defineEventHandler, type H3Event, setHeaders } from 'h3'
-import { isDevelopment } from '../../app/config/environment'
+import { isDevelopment } from '@/app/config/environment'
 
 export interface SecurityHeadersOptions {
   contentSecurityPolicy?: boolean | string

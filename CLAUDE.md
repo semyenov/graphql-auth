@@ -218,20 +218,28 @@ if (!post) throw new Error('Post not found')
 
 ### 4. Service Layer with DI
 
-Complex business logic uses TSyringe dependency injection:
+Complex business logic uses TSyringe dependency injection with improved patterns:
 
 ```typescript
-@injectable()
-export class AuthService implements IAuthService {
-  constructor(
-    @inject('IPasswordService') private passwordService: IPasswordService,
-    @inject('ITokenService') private tokenService: ITokenService,
-  ) {}
-}
+// Interface-based registration
+container.register<IPasswordService>('IPasswordService', {
+  useClass: Argon2PasswordService,
+}, { lifecycle: Lifecycle.Singleton })
 
-// Register in container.ts
-container.register<IAuthService>('IAuthService', { useClass: AuthService })
+// Service access via registry (recommended)
+import { Services } from '@/app/config/service-registry'
+
+const hashedPassword = await Services.password.hash(password)
+const logger = Services.createLogger({ resolver: 'signup' })
+
+// Or direct resolution
+const passwordService = container.resolve<IPasswordService>('IPasswordService')
 ```
+
+**Service Lifecycles**:
+- **Singleton**: Stateless services (password hashing, token signing)
+- **Scoped**: Per-request services (repositories)
+- **Transient**: New instance each time (rarely used)
 
 **When to use services**: Only for complex business logic, not simple CRUD operations.
 
@@ -331,6 +339,8 @@ modules/[feature]/
 8. **DataLoaders**: Available as `context.loaders` for N+1 prevention
 9. **Global IDs**: Decode relay IDs in Shield rules using `parseGlobalId()`
 10. **Unused Parameters**: Prefix with underscore (e.g., `_parent`, `_args`)
+11. **Dependency Injection**: Use interface-based registration with proper lifecycles
+12. **Service Access**: Use `Services` registry or `container.resolve()` with interfaces
 
 ## Environment Variables
 
@@ -503,6 +513,42 @@ Based on Biome configuration:
 - **Default formatter**: Biome for all file types
 - **Fix on save**: Auto-fix linting issues
 - **Organize imports**: On save
+
+## Dependency Injection
+
+The project uses TSyringe for dependency injection with the following patterns:
+
+### Service Registration
+```typescript
+// Core services registered in src/app/config/container.ts
+container.register<IPasswordService>('IPasswordService', {
+  useClass: Argon2PasswordService,
+}, { lifecycle: Lifecycle.Singleton })
+```
+
+### Service Access Patterns
+```typescript
+// 1. Using Service Registry (recommended)
+import { Services } from '@/app/config/service-registry'
+const hash = await Services.password.hash(password)
+
+// 2. Direct container resolution
+const service = container.resolve<IPasswordService>('IPasswordService')
+
+// 3. Constructor injection (for services)
+@injectable()
+class MyService {
+  constructor(@inject('ILogger') private logger: ILogger) {}
+}
+```
+
+### Registered Services
+- **Core**: AppConfig, ILogger, PrismaClient
+- **Auth**: IPasswordService, ITokenService, IRefreshTokenRepository, ILoginAttemptService, IVerificationTokenService
+- **Shared**: IEmailService, IRateLimiterService
+- **OIDC**: IOidcProviderService
+
+See [Dependency Injection Guide](docs/DEPENDENCY-INJECTION.md) for detailed patterns.
 
 ## H3 Server Middleware Stack
 

@@ -1,6 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { container } from 'tsyringe'
-import type { IOidcProviderService } from './services/oidc-provider.service'
+import { Services } from '@/app/config/service-registry'
 
 interface ExpressLikeApp {
   use(path: string, handler: unknown): void
@@ -19,10 +18,7 @@ interface ExpressResponse extends ServerResponse {
 }
 
 export function createOidcMiddleware() {
-  const oidcService = container.resolve<IOidcProviderService>(
-    'IOidcProviderService',
-  )
-  const provider = oidcService.getProvider()
+  const provider = Services.oidcProvider.getProvider()
 
   return async (
     req: IncomingMessage,
@@ -50,10 +46,7 @@ export function createOidcMiddleware() {
 
 // Helper function to mount OIDC routes on the app
 export function mountOidcRoutes(app: ExpressLikeApp) {
-  const oidcService = container.resolve<IOidcProviderService>(
-    'IOidcProviderService',
-  )
-  const provider = oidcService.getProvider()
+  const provider = Services.oidcProvider.getProvider()
 
   // Mount all OIDC routes
   app.use('/oidc', provider.callback())

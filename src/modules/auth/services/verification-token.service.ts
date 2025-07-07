@@ -8,6 +8,10 @@ import { randomBytes } from 'node:crypto'
 import type { VerificationToken } from '@prisma/client'
 import { inject, injectable } from 'tsyringe'
 import { ValidationError } from '@/app/errors/types'
+import type {
+  IVerificationTokenService,
+  VerificationResult,
+} from '@/modules/auth/interfaces/verification-token.service.interface'
 import { prisma } from '@/modules/shared/database'
 import type { ILogger } from '@/modules/shared/interfaces/logger.interface'
 
@@ -27,7 +31,7 @@ export interface VerifyTokenResult {
 }
 
 @injectable()
-export class VerificationTokenService {
+export class VerificationTokenService implements IVerificationTokenService {
   constructor(@inject('ILogger') private logger: ILogger) {}
 
   /**
@@ -186,26 +190,46 @@ export class VerificationTokenService {
   /**
    * Create and return password reset token
    */
-  async createPasswordResetToken(userId: number): Promise<string> {
+  async createPasswordResetToken(email: string): Promise<string> {
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    })
+
+    if (!user) {
+      // Don't reveal if email exists
+      throw new ValidationError(['Invalid request'])
+    }
+
     return this.createToken({
-      userId,
+      userId: user.id,
       type: 'password_reset',
       expiresInHours: 1, // Password reset tokens expire in 1 hour
     })
   }
 
   /**
-   * Verify email with token
+   * Verify email verification token
    */
-  async verifyEmailWithToken(token: string): Promise<number> {
+  async verifyEmailToken(token: string): Promise<VerificationResult> {
     const result = await this.verifyToken(token, 'email_verification')
 
-    if (!(result.valid && result.userId)) {
+    if (!(result.valid && result.userId && result.token)) {
       throw new ValidationError([result.error || 'Invalid token'])
     }
 
     // Mark token as used
     await this.useToken(token)
+
+    // Get user info
+    const user = await prisma.user.findUnique({
+      where: { id: result.userId },
+      select: { id: true, email: true },
+    })
+
+    if (!user) {
+      throw new ValidationError(['User not found'])
+    }
 
     // Update user's email verification status
     await prisma.user.update({
@@ -218,20 +242,30 @@ export class VerificationTokenService {
 
     this.logger.info('Email verified', { userId: result.userId })
 
-    return result.userId
+    return { userId: user.id, email: user.email }
   }
 
   /**
-   * Get user ID from password reset token
+   * Verify password reset token
    */
-  async verifyPasswordResetToken(token: string): Promise<number> {
+  async verifyPasswordResetToken(token: string): Promise<VerificationResult> {
     const result = await this.verifyToken(token, 'password_reset')
 
-    if (!(result.valid && result.userId)) {
+    if (!(result.valid && result.userId && result.token)) {
       throw new ValidationError([result.error || 'Invalid token'])
     }
 
-    return result.userId
+    // Get user info
+    const user = await prisma.user.findUnique({
+      where: { id: result.userId },
+      select: { id: true, email: true },
+    })
+
+    if (!user) {
+      throw new ValidationError(['User not found'])
+    }
+
+    return { userId: user.id, email: user.email }
   }
 
   /**

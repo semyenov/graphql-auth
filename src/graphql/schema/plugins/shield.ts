@@ -6,11 +6,10 @@ import SchemaBuilder, {
   type TypeParam,
 } from '@pothos/core'
 import { type GraphQLSchema, isObjectType } from 'graphql'
-
 import { applyMiddleware } from 'graphql-middleware'
 import { type IRule, type IRules, shield } from 'graphql-shield'
 import type { ILogicRule } from 'graphql-shield/typings/types'
-import type { DefaultContext } from '../../context/context.types'
+import type { DefaultContext } from '@/graphql/context/context.types'
 
 export type ShieldRule = IRule | ILogicRule
 

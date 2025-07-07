@@ -5,8 +5,7 @@
  */
 
 import { defineEventHandler, getHeaders, getRequestIP, readBody } from 'h3'
-import type { ILogger } from '@/modules/shared/interfaces/logger.interface'
-import { container } from '../../app/config/container'
+import { Services } from '@/app/config/service-registry'
 
 /**
  * Format bytes to human readable string
@@ -25,7 +24,7 @@ function formatBytes(bytes: number): string {
 export function createRequestLoggerMiddleware() {
   return defineEventHandler(async (event) => {
     const startTime = Date.now()
-    const logger = container.resolve<ILogger>('ILogger')
+    const logger = Services.logger
 
     // Skip logging for health checks
     if (event.path === '/health') {
@@ -94,7 +93,7 @@ export function createGraphQLLoggerMiddleware() {
       return
     }
 
-    const logger = container.resolve<ILogger>('ILogger')
+    const logger = Services.logger
     const startTime = Date.now()
 
     // Try to extract operation info from request

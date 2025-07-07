@@ -1,13 +1,8 @@
-import { container } from 'tsyringe'
+import { Services } from '@/app/config/service-registry'
 import { builder } from '@/graphql/schema/builder'
 import { prisma } from '@/modules/shared/database'
 import { isAdmin } from '@/modules/shared/rules/common.rules'
 import { OidcClientInput, OidcClientUpdateInput } from './oidc.types'
-import type { IOidcProviderService } from './services/oidc-provider.service'
-
-// Lazy getter to resolve service only when needed
-const getOidcService = () =>
-  container.resolve<IOidcProviderService>('IOidcProviderService')
 
 builder.queryFields((t) => ({
   oidcClients: t.prismaField({
@@ -15,7 +10,7 @@ builder.queryFields((t) => ({
     grantScopes: ['authenticated'],
     shield: isAdmin,
     resolve: async (_query, _parent, _args, _context) => {
-      return getOidcService().listClients()
+      return Services.oidcProvider.listClients()
     },
   }),
 
@@ -27,7 +22,7 @@ builder.queryFields((t) => ({
       clientId: t.arg.string({ required: true }),
     },
     resolve: async (_query, _parent, args, _context) => {
-      return getOidcService().getClient(args.clientId)
+      return Services.oidcProvider.getClient(args.clientId)
     },
   }),
 
@@ -56,7 +51,7 @@ builder.mutationFields((t) => ({
       input: t.arg({ type: OidcClientInput, required: true }),
     },
     resolve: async (_query, _parent, args, _context) => {
-      return getOidcService().createClient({
+      return Services.oidcProvider.createClient({
         clientName: args.input.clientName,
         clientId: args.input.clientId,
         clientSecret: args.input.clientSecret ?? undefined,
@@ -74,7 +69,7 @@ builder.mutationFields((t) => ({
       input: t.arg({ type: OidcClientUpdateInput, required: true }),
     },
     resolve: async (_query, _parent, args, _context) => {
-      return getOidcService().updateClient(args.clientId, {
+      return Services.oidcProvider.updateClient(args.clientId, {
         clientName: args.input.clientName ?? undefined,
         redirectUris: args.input.redirectUris ?? undefined,
         postLogoutRedirectUris: args.input.postLogoutRedirectUris ?? undefined,
@@ -92,7 +87,7 @@ builder.mutationFields((t) => ({
       clientId: t.arg.string({ required: true }),
     },
     resolve: async (_parent, args, _context) => {
-      await getOidcService().deleteClient(args.clientId)
+      await Services.oidcProvider.deleteClient(args.clientId)
       return true
     },
   }),
@@ -107,7 +102,7 @@ builder.mutationFields((t) => ({
       if (!context.userId) {
         throw new Error('Authentication required')
       }
-      await getOidcService().revokeUserSession(
+      await Services.oidcProvider.revokeUserSession(
         context.userId.value,
         args.sessionId,
       )
@@ -122,7 +117,7 @@ builder.mutationFields((t) => ({
       if (!context.userId) {
         throw new Error('Authentication required')
       }
-      await getOidcService().revokeAllUserSessions(context.userId.value)
+      await Services.oidcProvider.revokeAllUserSessions(context.userId.value)
       return true
     },
   }),

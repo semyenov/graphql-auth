@@ -5,8 +5,8 @@
  */
 
 import { rule } from 'graphql-shield'
-import { AuthorizationError } from '../../app/errors/types'
-import type { DefaultContext } from '../../graphql/context/context.types'
+import { AuthorizationError } from '@/app/errors/types'
+import type { DefaultContext } from '@/graphql/context/context.types'
 
 /**
  * Own profile rule

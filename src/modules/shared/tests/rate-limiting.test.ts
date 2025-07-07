@@ -22,17 +22,25 @@ describe('Rate Limiting', () => {
   beforeAll(() => {
     // Enable rate limiting for these tests
     process.env.TEST_RATE_LIMITING = 'true'
+    // Disable account lockout to test rate limiting separately
+    process.env.TEST_DISABLE_LOCKOUT = 'true'
   })
 
   afterAll(() => {
     // Disable rate limiting after tests
     delete process.env.TEST_RATE_LIMITING
+    delete process.env.TEST_DISABLE_LOCKOUT
   })
 
   beforeEach(async () => {
     // Reset rate limits for tests
     await rateLimiter.reset('login', 'email:ratelimit@example.com')
     await rateLimiter.reset('signup', 'email:newuser@example.com')
+
+    // Clear login attempts to prevent account lockout
+    await prisma.loginAttempt.deleteMany({
+      where: { email: 'ratelimit@example.com' },
+    })
   })
 
   describe('Login rate limiting', () => {
@@ -93,6 +101,13 @@ describe('Rate Limiting', () => {
       // Create another user
       await createTestUser({
         email: 'another@example.com',
+      })
+
+      // Clear login attempts to prevent account lockout
+      await prisma.loginAttempt.deleteMany({
+        where: {
+          email: { in: ['ratelimit@example.com', 'another@example.com'] },
+        },
       })
 
       // Exhaust rate limit for first email
@@ -241,6 +256,11 @@ describe('Rate Limiting', () => {
       await createTestUser({
         email: 'ratelimit@example.com',
         name: 'Rate Limit Test',
+      })
+
+      // Clear login attempts to prevent account lockout
+      await prisma.loginAttempt.deleteMany({
+        where: { email: 'ratelimit@example.com' },
       })
     })
 

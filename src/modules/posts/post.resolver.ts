@@ -6,26 +6,22 @@
  */
 
 import type { Prisma } from '@prisma/client'
-import { container } from 'tsyringe'
 import { z } from 'zod'
-import { prisma } from '@/modules/shared/database'
-import type { ILogger } from '@/modules/shared/interfaces/logger.interface'
-import {
-  isAuthenticatedUser,
-  isPublic,
-} from '@/modules/shared/rules/common.rules'
+import { ServiceFactory } from '@/app/config/service-registry'
 import {
   AuthorizationError,
   NotFoundError,
   RateLimitError,
-} from '../../app/errors/types'
-import { builder } from '../../graphql/schema/builder'
+} from '@/app/errors/types'
+import { builder } from '@/graphql/schema/builder'
+import { prisma } from '@/modules/shared/database'
+import {
+  isAuthenticatedUser,
+  isPublic,
+} from '@/modules/shared/rules/common.rules'
 import { requireAuthentication } from '../auth/guards/auth.guards'
 import { parseGlobalId } from '../shared/connections'
 import { canIncrementViewCount, canViewPost, isPostOwner } from './post.rules'
-
-// Service getters
-const getLogger = () => container.resolve<ILogger>('ILogger')
 
 // ============================================================================
 // Input Types
@@ -92,7 +88,7 @@ builder.mutationField('createPost', (t) =>
       }),
     },
     resolve: async (query, _parent, args, context) => {
-      const logger = getLogger().child({ resolver: 'createPost' })
+      const logger = ServiceFactory.createResolverLogger('createPost')
       const userId = requireAuthentication(context)
 
       logger.info('Creating new post', {
@@ -139,7 +135,7 @@ builder.mutationField('updatePost', (t) =>
       }),
     },
     resolve: async (query, _parent, args, context) => {
-      const logger = getLogger().child({ resolver: 'updatePost' })
+      const logger = ServiceFactory.createResolverLogger('updatePost')
       const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
@@ -179,7 +175,7 @@ builder.mutationField('deletePost', (t) =>
       id: t.arg.id({ required: true }),
     },
     resolve: async (_parent, args, context) => {
-      const logger = getLogger().child({ resolver: 'deletePost' })
+      const logger = ServiceFactory.createResolverLogger('deletePost')
       const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
@@ -209,7 +205,7 @@ builder.mutationField('togglePublishPost', (t) =>
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, context) => {
-      const logger = getLogger().child({ resolver: 'togglePublishPost' })
+      const logger = ServiceFactory.createResolverLogger('togglePublishPost')
       requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
@@ -256,7 +252,9 @@ builder.mutationField('incrementPostViewCount', (t) =>
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, _context) => {
-      const logger = getLogger().child({ resolver: 'incrementPostViewCount' })
+      const logger = ServiceFactory.createResolverLogger(
+        'incrementPostViewCount',
+      )
       const postId = parseGlobalId(args.id.toString(), 'Post')
 
       logger.info('Incrementing post view count', { postId })
@@ -295,7 +293,7 @@ builder.mutationField('createComment', (t) =>
       }),
     },
     resolve: async (_parent, args, context) => {
-      const logger = getLogger().child({ resolver: 'createComment' })
+      const logger = ServiceFactory.createResolverLogger('createComment')
       const userId = requireAuthentication(context)
 
       // Check rate limit using enhanced scopes
@@ -475,7 +473,7 @@ builder.mutationField('moderatePost', (t) =>
       }),
     },
     resolve: async (_parent, args, context) => {
-      const logger = getLogger().child({ resolver: 'moderatePost' })
+      const logger = ServiceFactory.createResolverLogger('moderatePost')
       const userId = requireAuthentication(context)
       const postId = parseGlobalId(args.id.toString(), 'Post')
 

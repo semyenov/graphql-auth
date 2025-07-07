@@ -11,12 +11,12 @@ import {
   type H3Event,
   readBody,
 } from 'h3'
+import { RateLimitError } from '@/app/errors/types'
 import {
   type RateLimiterOptions,
   RateLimitPresets,
   rateLimiter,
 } from '@/modules/shared/services/rate-limiter.service'
-import { RateLimitError } from '../../app/errors/types'
 
 /**
  * Extract identifier from event (IP address or user ID)

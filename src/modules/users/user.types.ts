@@ -1,5 +1,5 @@
+import { builder } from '@/graphql/schema/builder'
 import { prisma } from '@/modules/shared/database'
-import { builder } from '../../graphql/schema/builder'
 
 // Define User object type using Relay Node pattern with DataLoader optimizations
 builder.prismaNode('User', {

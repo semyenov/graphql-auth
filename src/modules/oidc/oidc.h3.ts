@@ -6,17 +6,13 @@ import {
   type Router,
   readBody,
 } from 'h3'
-import { container } from 'tsyringe'
-import type { IOidcProviderService } from './services/oidc-provider.service'
+import { Services } from '@/app/config/service-registry'
 
 /**
  * Mount OIDC routes on an H3 router
  */
 export function mountOidcRoutesH3(router: Router) {
-  const oidcService = container.resolve<IOidcProviderService>(
-    'IOidcProviderService',
-  )
-  const provider = oidcService.getProvider()
+  const provider = Services.oidcProvider.getProvider()
 
   // Convert oidc-provider callback to H3 middleware
   const oidcCallback = fromNodeMiddleware(provider.callback())
@@ -79,18 +75,34 @@ export function mountOidcRoutesH3(router: Router) {
         const body = await readBody(event)
         const { email, password } = body
 
-        // TODO: Implement actual authentication logic here
-        // This should validate credentials against your auth service
-        const authService = container.resolve<{
-          login: (credentials: {
-            email: string
-            password: string
-          }) => Promise<{ id: number }>
-        }>('IAuthService')
+        // Authenticate user using existing services
+        const { prisma } = await import('@/modules/shared/database')
 
         try {
-          // Authenticate user
-          const user = await authService.login({ email, password })
+          // Find user
+          const user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase() },
+          })
+
+          if (!user) {
+            throw createError({
+              statusCode: 401,
+              statusMessage: 'Invalid credentials',
+            })
+          }
+
+          // Verify password
+          const isValid = await Services.password.verify(
+            password,
+            user.password,
+          )
+
+          if (!isValid) {
+            throw createError({
+              statusCode: 401,
+              statusMessage: 'Invalid credentials',
+            })
+          }
 
           const result = {
             login: {

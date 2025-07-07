@@ -7,7 +7,7 @@
 
 import type { ApolloServerPlugin } from '@apollo/server'
 import type { ServerResponse } from 'http'
-import type { DefaultContext } from '../../graphql/context/context.types'
+import type { DefaultContext } from '@/graphql/context/context.types'
 import { isDevelopment } from '../config/environment'
 
 /**

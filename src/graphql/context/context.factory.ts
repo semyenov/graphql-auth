@@ -8,16 +8,13 @@
 import type { HeaderMap } from '@apollo/server'
 import type { HTTPMethod } from 'fetchdts'
 import type { IncomingMessage, ServerResponse } from 'http'
-import { container } from 'tsyringe'
+import { Services } from '@/app/config/service-registry'
+import { verifyToken } from '@/modules/auth/services/jwt.service'
 import { prisma } from '@/modules/shared/database'
-import type { ILogger } from '@/modules/shared/interfaces/logger.interface'
 import { createDataLoaders } from '@/modules/shared/loaders/loaders'
-import { verifyToken } from '../../modules/auth/services/jwt.service'
-import type { UserId } from '../../types/value-objects'
-import type { RequestMetadata, SecurityContext, User } from '../../types.d'
+import type { UserId } from '@/types/value-objects'
+import type { RequestMetadata, SecurityContext, User } from '@/types.d'
 import type { Context, DefaultContext } from './context.types'
-
-const getLogger = () => container.resolve<ILogger>('ILogger')
 
 /**
  * Extract JWT token from Authorization header
@@ -89,7 +86,7 @@ async function createBaseContext(
 async function enhanceWithAuth(
   context: DefaultContext,
 ): Promise<DefaultContext> {
-  const logger = getLogger().child({ resolver: 'enhanceWithAuth' })
+  const logger = Services.logger.child({ context: 'auth' })
   const token = extractToken(context.headers.get('authorization') || undefined)
 
   if (!token) {

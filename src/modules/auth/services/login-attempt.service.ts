@@ -7,23 +7,16 @@
 import type { LoginAttempt } from '@prisma/client'
 import { inject, injectable } from 'tsyringe'
 import { AuthenticationError } from '@/app/errors/types'
+import type {
+  AccountLockoutConfig,
+  ILoginAttemptService,
+  LoginAttemptOptions,
+} from '@/modules/auth/interfaces/login-attempt.service.interface'
 import { prisma } from '@/modules/shared/database'
 import type { ILogger } from '@/modules/shared/interfaces/logger.interface'
 
-export interface LoginAttemptOptions {
-  email: string
-  ipAddress: string
-  success: boolean
-}
-
-export interface AccountLockoutConfig {
-  maxAttempts: number
-  lockoutDurationMinutes: number
-  checkWindowMinutes: number
-}
-
-@injectable({})
-export class LoginAttemptService {
+@injectable()
+export class LoginAttemptService implements ILoginAttemptService {
   private readonly defaultConfig: AccountLockoutConfig = {
     maxAttempts: 5,
     lockoutDurationMinutes: 30,
@@ -120,6 +113,14 @@ export class LoginAttemptService {
     email: string,
     config?: Partial<AccountLockoutConfig>,
   ): Promise<void> {
+    // Skip lockout check in test environment if explicitly disabled
+    if (
+      process.env.NODE_ENV === 'test' &&
+      process.env.TEST_DISABLE_LOCKOUT === 'true'
+    ) {
+      return
+    }
+
     const lockoutStatus = await this.isAccountLocked(email, config)
 
     if (lockoutStatus.locked) {

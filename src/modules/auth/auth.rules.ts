@@ -5,7 +5,7 @@
  */
 
 import { rule } from 'graphql-shield'
-import type { DefaultContext } from '../../graphql/context/context.types'
+import type { DefaultContext } from '@/graphql/context/context.types'
 
 /**
  * Rate limit rule for authentication operations

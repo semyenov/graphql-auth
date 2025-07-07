@@ -16,10 +16,22 @@ export interface EmailOptions {
   text?: string
 }
 
+export interface VerificationEmailOptions {
+  to: string
+  name: string
+  token: string
+}
+
+export interface PasswordResetEmailOptions {
+  to: string
+  name: string
+  token: string
+}
+
 export interface IEmailService {
   sendEmail(options: EmailOptions): Promise<boolean>
-  sendVerificationEmail(email: string, token: string): Promise<boolean>
-  sendPasswordResetEmail(email: string, token: string): Promise<boolean>
+  sendVerificationEmail(options: VerificationEmailOptions): Promise<boolean>
+  sendPasswordResetEmail(options: PasswordResetEmailOptions): Promise<boolean>
   sendWelcomeEmail(email: string, name?: string): Promise<boolean>
 }
 
@@ -73,8 +85,10 @@ export class EmailService implements IEmailService {
   /**
    * Send email verification email
    */
-  async sendVerificationEmail(email: string, token: string): Promise<boolean> {
-    const verificationUrl = `${process.env.APP_URL || 'http://localhost:4000'}/verify-email?token=${token}`
+  async sendVerificationEmail(
+    options: VerificationEmailOptions,
+  ): Promise<boolean> {
+    const verificationUrl = `${process.env.APP_URL || 'http://localhost:4000'}/verify-email?token=${options.token}`
 
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -104,7 +118,7 @@ This link will expire in 24 hours. If you didn't sign up for this account, you c
     `
 
     return this.sendEmail({
-      to: email,
+      to: options.to,
       subject: 'Verify your email address',
       html,
       text,
@@ -114,8 +128,10 @@ This link will expire in 24 hours. If you didn't sign up for this account, you c
   /**
    * Send password reset email
    */
-  async sendPasswordResetEmail(email: string, token: string): Promise<boolean> {
-    const resetUrl = `${process.env.APP_URL || 'http://localhost:4000'}/reset-password?token=${token}`
+  async sendPasswordResetEmail(
+    options: PasswordResetEmailOptions,
+  ): Promise<boolean> {
+    const resetUrl = `${process.env.APP_URL || 'http://localhost:4000'}/reset-password?token=${options.token}`
 
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -150,7 +166,7 @@ For security reasons, we recommend changing your password if you didn't make thi
     `
 
     return this.sendEmail({
-      to: email,
+      to: options.to,
       subject: 'Reset your password',
       html,
       text,

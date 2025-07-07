@@ -7,8 +7,7 @@ import RelayPlugin from '@pothos/plugin-relay'
 import AuthScopePlugin from '@pothos/plugin-scope-auth'
 import ValidationPlugin from '@pothos/plugin-validation'
 import type { ZodError } from 'zod'
-import { prisma } from '@/modules/shared/database'
-import { isProduction } from '../../app/config/environment'
+import { isProduction } from '@/app/config/environment'
 import {
   AuthenticationError,
   AuthorizationError,
@@ -16,11 +15,9 @@ import {
   NotFoundError,
   RateLimitError,
   ValidationError,
-} from '../../app/errors/types'
-import {
-  decodeGlobalId,
-  encodeGlobalId,
-} from '../../modules/shared/connections'
+} from '@/app/errors/types'
+import { decodeGlobalId, encodeGlobalId } from '@/modules/shared/connections'
+import { prisma } from '@/modules/shared/database'
 import type { DefaultContext } from '../context/context.types'
 import ShieldPlugin from './plugins/shield'
 
