@@ -4,12 +4,12 @@
 
 import { RateLimiterRes } from 'rate-limiter-flexible'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { RateLimitError } from '../../../app/errors/types'
+import { RateLimitError } from '@/app/errors/types'
 import {
   type RateLimiterOptions,
   RateLimiterService,
   RateLimitPresets,
-} from '../../../app/services/rate-limiter.service'
+} from '@/modules/shared/services/rate-limiter.service'
 
 describe('RateLimiterService', () => {
   describe('getInstance', () => {

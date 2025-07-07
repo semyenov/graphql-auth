@@ -8,7 +8,7 @@ import type { FieldRef, SchemaTypes } from '@pothos/core'
 import {
   type RateLimiterOptions,
   rateLimiter,
-} from '../../../app/services/rate-limiter.service'
+} from '@/modules/shared/services/rate-limiter.service'
 import type { DefaultContext } from '../../context/context.types'
 
 /**

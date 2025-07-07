@@ -5,7 +5,7 @@
 import type { User } from '@prisma/client'
 import { createTestUser } from '@test/utils/factories/user.factory'
 import jwt from 'jsonwebtoken'
-import { UserId } from '../../../src/types/value-objects'
+import { UserId } from '@/types/value-objects'
 import { createAuthContext } from './context'
 
 /**

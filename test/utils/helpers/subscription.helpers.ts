@@ -5,7 +5,7 @@
 import type { ApolloServer, GraphQLResponse } from '@apollo/server'
 import type { ResultOf, TadaDocumentNode, VariablesOf } from 'gql.tada'
 import { parse, print } from 'graphql'
-import type { DefaultContext } from '../../../src/graphql/context/context.types'
+import type { DefaultContext } from '@/graphql/context/context.types'
 
 export interface SubscriptionTestHelper {
   subscribe: () => Promise<AsyncIterator<GraphQLResponse>>

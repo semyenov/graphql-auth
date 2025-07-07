@@ -1,3 +1,6 @@
+import 'reflect-metadata'
+
+import type { HTTPGraphQLRequest } from '@apollo/server'
 import { ApolloServer, type BaseContext, HeaderMap } from '@apollo/server'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 import {
@@ -14,11 +17,8 @@ import {
   toNodeListener,
 } from 'h3'
 import { listen } from 'listhen'
-import 'reflect-metadata'
-
-// Import configuration and DI
-import type { HTTPGraphQLRequest } from '@apollo/server'
-import { mountOidcRoutesH3 } from '../../modules/oidc/oidc.h3'
+import { mountOidcRoutesH3 } from '@/modules/oidc/oidc.h3'
+import { prisma } from '@/modules/shared/database'
 import { createContext } from '../graphql/context/context.factory'
 import {
   createComplexityLimitPlugin,
@@ -32,7 +32,6 @@ import {
   createRequestLoggerMiddleware,
 } from '../middleware/h3/request-logger.middleware'
 import { createSecurityHeadersMiddleware } from '../middleware/h3/security-headers.middleware'
-import { prisma } from '../prisma'
 import { getConfig } from './config/config'
 import { configureContainer } from './config/container'
 

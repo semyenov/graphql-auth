@@ -12,7 +12,7 @@ import type {
 } from '@apollo/server'
 import type { Endpoint, HTTPMethod, MimeType } from 'fetchdts'
 import type { IncomingMessage, ServerResponse } from 'http'
-import type { Loaders } from '../../data/loaders'
+import type { Loaders } from '@/modules/shared/loaders/loaders'
 import type { UserId } from '../../types/value-objects'
 import type { RequestMetadata, SecurityContext, User } from '../../types.d'
 

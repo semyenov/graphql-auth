@@ -1,8 +1,9 @@
 // Import reflect-metadata before anything else
-import { PrismaClient } from '@prisma/client'
 import 'reflect-metadata'
-import { configureContainer } from '../src/app/config/container'
-import { setTestPrismaClient } from '../src/prisma'
+
+import { PrismaClient } from '@prisma/client'
+import { configureContainer } from '@/app/config/container'
+import { setTestPrismaClient } from '@/modules/shared/database'
 import { TEST_DATABASE_URL as testDbUrl } from './test-database-url'
 
 // Set test environment variables

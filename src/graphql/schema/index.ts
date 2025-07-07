@@ -7,15 +7,14 @@ import './enums'
 import './scalars'
 
 // Import types BEFORE inputs (as inputs might reference types)
-import '../../modules/auth/auth.resolver'
+import '@/modules/oidc/oidc.types'
+import '@/modules/posts/types/post.types'
+import '@/modules/users/user.types'
 
-import '../../../modules/oidc/oidc.types'
-import '../../modules/posts/types/post.types'
-import '../../modules/users/user.types'
-
-import '../../../modules/oidc/oidc.resolver'
-import '../../modules/posts/post.resolver'
-import '../../modules/users/user.resolver'
+import '@/modules/auth/auth.resolver'
+import '@/modules/oidc/oidc.resolver'
+import '@/modules/posts/post.resolver'
+import '@/modules/users/user.resolver'
 
 // Import inputs after types
 import './inputs'

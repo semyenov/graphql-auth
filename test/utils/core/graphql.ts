@@ -6,7 +6,7 @@ import type { ApolloServer } from '@apollo/server'
 import type { VariableValues } from '@apollo/server/dist/esm/externalTypes/graphql'
 import type { TadaDocumentNode } from 'gql.tada'
 import type { GraphQLFormattedError } from 'graphql'
-import type { DefaultContext } from '../../../src/graphql/context/context.types'
+import type { DefaultContext } from '@/graphql/context/context.types'
 
 /**
  * Execute a GraphQL operation against a test server

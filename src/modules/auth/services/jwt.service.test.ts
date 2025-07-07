@@ -4,8 +4,8 @@
 
 import jwt from 'jsonwebtoken'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { AUTH, ERROR_MESSAGES } from '../../../app/constants'
-import { AuthenticationError } from '../../../app/errors/types'
+import { AUTH, ERROR_MESSAGES } from '@/app/constants'
+import { AuthenticationError } from '@/app/errors/types'
 import {
   decodeToken,
   extractBearerToken,

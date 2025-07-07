@@ -1,12 +1,15 @@
-// Import GraphQL fix first to ensure single instance
+// Import reflect-metadata first for tsyringe
+import 'reflect-metadata'
+
+// Import GraphQL fix to ensure single instance
 import './vitest-graphql-fix'
 
 import { prisma } from '@test/utils/database/prisma'
 import { execSync } from 'child_process'
 import { rm } from 'fs/promises'
 import { afterAll, beforeAll, beforeEach } from 'vitest'
-import { rateLimiter } from '../src/app/services/rate-limiter.service'
-import { resetSchemaCache } from '../src/graphql/schema'
+import { resetSchemaCache } from '@/graphql/schema'
+import { rateLimiter } from '@/modules/shared/services/rate-limiter.service'
 import { TEST_DATABASE_URL } from './test-database-url'
 
 const dbFilePath = TEST_DATABASE_URL.replace('file:', '')

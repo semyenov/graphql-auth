@@ -1,10 +1,10 @@
 import { execSync } from 'child_process'
 import { rm } from 'fs/promises'
 import { afterAll, beforeAll, beforeEach } from 'vitest'
-import { configureContainer } from '../src/app/config/container'
-import { rateLimiter } from '../src/app/services/rate-limiter.service'
-import { resetSchemaCache } from '../src/graphql/schema'
-import { prisma } from '../src/prisma'
+import { configureContainer } from '@/app/config/container'
+import { resetSchemaCache } from '@/graphql/schema'
+import { prisma } from '@/modules/shared/database'
+import { rateLimiter } from '@/modules/shared/services/rate-limiter.service'
 import { TEST_DATABASE_URL } from './test-database-url'
 
 // Note: __dirname not needed in this setup, using explicit path

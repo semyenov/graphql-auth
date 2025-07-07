@@ -5,8 +5,8 @@
  */
 
 import { defineEventHandler, getHeaders, getRequestIP, readBody } from 'h3'
+import type { ILogger } from '@/modules/shared/interfaces/logger.interface'
 import { container } from '../../app/config/container'
-import type { ILogger } from '../../app/services/logger.interface'
 
 /**
  * Format bytes to human readable string

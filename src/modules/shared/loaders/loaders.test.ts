@@ -6,8 +6,8 @@
 
 import { cleanDatabase } from '@test/utils'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { createDataLoaders } from '../../../data/loaders'
-import { prisma } from '../../../prisma'
+import { prisma } from '@/modules/shared/database'
+import { createDataLoaders } from '@/modules/shared/loaders/loaders'
 
 describe('DataLoaders', () => {
   let loaders: ReturnType<typeof createDataLoaders>

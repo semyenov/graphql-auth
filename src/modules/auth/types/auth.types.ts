@@ -4,7 +4,7 @@
  * Defines types for authentication responses
  */
 
-import { builder } from '../../../graphql/schema/builder'
+import { builder } from '@/graphql/schema/builder'
 
 export class AuthTokens {
   constructor(

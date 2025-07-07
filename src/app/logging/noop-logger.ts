@@ -9,7 +9,7 @@ import type {
   ILogger,
   LogContext,
   LogLevel,
-} from '../services/logger.interface'
+} from '@/modules/shared/interfaces/logger.interface'
 
 @injectable()
 export class NoopLogger implements ILogger {

@@ -5,9 +5,9 @@
  */
 
 import { rule } from 'graphql-shield'
+import { prisma } from '@/modules/shared/database'
 import { AuthorizationError, NotFoundError } from '../../app/errors/types'
 import type { DefaultContext } from '../../graphql/context/context.types'
-import { prisma } from '../../prisma'
 import { parseGlobalId } from '../shared/connections'
 
 /**

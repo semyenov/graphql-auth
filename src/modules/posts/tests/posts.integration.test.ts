@@ -1,0 +1,305 @@
+import {
+  cleanDatabase,
+  createAuthContext,
+  createGraphQLTestHelper,
+  createMockContext,
+  createTestServer,
+} from '@test/utils'
+import { createUserWithPosts } from '@test/utils/factories/post.factory'
+import { createTestUser } from '@test/utils/factories/user.factory'
+import { toPostId } from '@test/utils/helpers/relay.helpers'
+import { beforeEach, describe, expect, it } from 'vitest'
+import {
+  CreatePostMutation,
+  DeletePostMutation,
+  IncrementPostViewCountMutation,
+} from '@/gql/mutations'
+import { DraftsQuery, FeedQuery } from '@/gql/queries'
+import { prisma } from '@/modules/shared/database'
+import { UserId } from '@/types/value-objects'
+
+describe('Posts', () => {
+  const server = createTestServer()
+  const gql = createGraphQLTestHelper(server)
+  let testUserId: UserId
+  let testCounter = 0
+
+  beforeEach(async () => {
+    await cleanDatabase()
+    // Create a test user with unique email
+    testCounter++
+    const user = await createTestUser({
+      email: `posttest${testCounter}@example.com`,
+      name: 'Post Test User',
+    })
+    testUserId = UserId.create(user.id)
+  })
+
+  describe('Query posts', () => {
+    it('should fetch all published posts in feed', async () => {
+      // Create user with posts
+      const { posts } = await createUserWithPosts({
+        postCount: 3,
+        publishedPosts: 2,
+      })
+
+      const data = await gql.query(
+        FeedQuery,
+        { first: 10 },
+        createMockContext(),
+      )
+
+      // At least 2 posts should be returned (may include posts from other tests)
+      expect(data.feed?.edges?.length).toBeGreaterThanOrEqual(2)
+      expect(data.feed?.edges?.every((edge) => edge?.node?.published)).toBe(
+        true,
+      )
+
+      // Verify we got posts from our test user
+      const publishedPosts = posts.filter((p) => p.published)
+      const publishedTitles = publishedPosts.map((p) => p.title)
+      const returnedTitles = data.feed?.edges?.map((edge) => edge?.node?.title)
+
+      // Check that at least some of our posts are in the feed
+      const ourPostsInFeed = returnedTitles?.filter((title) =>
+        publishedTitles.includes(title ?? ''),
+      )
+      expect(ourPostsInFeed?.length).toBeGreaterThanOrEqual(2)
+    })
+
+    it('should fetch user drafts when authenticated', async () => {
+      // Create draft posts
+      await prisma.post.createMany({
+        data: [
+          {
+            title: 'My Draft 1',
+            content: 'Draft content 1',
+            published: false,
+            authorId: testUserId.value,
+          },
+          {
+            title: 'My Draft 2',
+            content: 'Draft content 2',
+            published: false,
+            authorId: testUserId.value,
+          },
+        ],
+      })
+
+      const variables = {
+        first: 10,
+      }
+
+      const data = await gql.query(
+        DraftsQuery,
+        variables,
+        createAuthContext(testUserId),
+      )
+
+      expect(data.drafts?.edges).toHaveLength(2)
+      expect(data.drafts?.edges?.every((edge) => !edge?.node?.published)).toBe(
+        true,
+      )
+    })
+
+    it('should require authentication for drafts', async () => {
+      const variables = {
+        first: 10,
+      }
+
+      await gql.expectError(
+        DraftsQuery,
+        variables,
+        'Not authorized',
+        createMockContext(), // No auth
+      )
+    })
+  })
+
+  describe('Create posts', () => {
+    it('should create a draft when authenticated', async () => {
+      const variables = {
+        input: {
+          title: 'New Draft Post',
+          content: 'This is a new draft',
+        },
+      }
+
+      const data = await gql.mutate(
+        CreatePostMutation,
+        variables,
+        createAuthContext(testUserId),
+      )
+
+      expect(data.createPost).toBeDefined()
+      expect(data.createPost?.title).toBe(variables.input.title)
+      expect(data.createPost?.published).toBe(false)
+      // Author might not be included in the response due to Prisma query optimization
+
+      // Verify in database
+      const posts = await prisma.post.findMany({
+        where: { authorId: testUserId.value },
+      })
+      expect(posts).toHaveLength(1)
+      expect(posts[0]?.title).toBe(variables.input.title)
+    })
+
+    it('should require authentication to create drafts', async () => {
+      const variables = {
+        input: {
+          title: 'Unauthorized Draft',
+          content: 'Should not be created',
+        },
+      }
+
+      await gql.expectError(
+        CreatePostMutation,
+        variables,
+        'Not authorized',
+        createMockContext(), // No auth
+      )
+    })
+  })
+
+  describe('Delete posts', () => {
+    it('should allow owner to delete their post', async () => {
+      // Create a post
+      const post = await prisma.post.create({
+        data: {
+          title: 'Post to Delete',
+          content: 'Will be deleted',
+          published: false,
+          authorId: testUserId.value,
+        },
+      })
+
+      const variables = { id: toPostId(post.id) }
+
+      const data = await gql.mutate(
+        DeletePostMutation,
+        variables,
+        createAuthContext(testUserId),
+      )
+
+      expect(data.deletePost).toBe(true)
+
+      // Verify deletion
+      const deletedPost = await prisma.post.findUnique({
+        where: { id: post.id },
+      })
+      expect(deletedPost).toBeNull()
+    })
+
+    it('should not allow deleting posts by other users', async () => {
+      // Create another user using test helper
+      const otherUser = await createTestUser({
+        email: `deleteother${testCounter}@example.com`,
+        name: 'Other User',
+      })
+
+      // Create a post by other user
+      const post = await prisma.post.create({
+        data: {
+          title: 'Other User Post',
+          content: 'Not mine',
+          published: false,
+          authorId: otherUser.id,
+        },
+      })
+
+      const variables = { id: toPostId(post.id) }
+
+      await gql.expectError(
+        DeletePostMutation,
+        variables,
+        'You can only modify posts that you have created',
+        createAuthContext(testUserId), // Different user
+      )
+
+      // Verify post still exists
+      const existingPost = await prisma.post.findUnique({
+        where: { id: post.id },
+      })
+      expect(existingPost).not.toBeNull()
+    })
+
+    it('should require authentication to delete posts', async () => {
+      // Create a post
+      const post = await prisma.post.create({
+        data: {
+          title: 'Post to Delete',
+          content: 'Will not be deleted',
+          published: false,
+          authorId: testUserId.value,
+        },
+      })
+
+      const variables = { id: toPostId(post.id) }
+
+      await gql.expectError(
+        DeletePostMutation,
+        variables,
+        'Authentication required',
+        createMockContext(), // No authentication
+      )
+
+      // Verify post still exists
+      const existingPost = await prisma.post.findUnique({
+        where: { id: post.id },
+      })
+      expect(existingPost).not.toBeNull()
+    })
+  })
+
+  describe('Increment view count', () => {
+    it('should increment post view count', async () => {
+      // Create a post
+      const post = await prisma.post.create({
+        data: {
+          title: 'Post with Views',
+          content: 'View me',
+          published: true,
+          authorId: testUserId.value,
+          viewCount: 0,
+        },
+      })
+
+      const variables = { id: toPostId(post.id) }
+
+      // First increment
+      const data1 = await gql.mutate(
+        IncrementPostViewCountMutation,
+        variables,
+        createMockContext(), // No auth required
+      )
+
+      expect(data1.incrementPostViewCount?.viewCount).toBe(1)
+
+      // Second increment
+      const data2 = await gql.mutate(
+        IncrementPostViewCountMutation,
+        variables,
+        createMockContext(),
+      )
+
+      expect(data2.incrementPostViewCount?.viewCount).toBe(2)
+
+      // Verify in database
+      const updatedPost = await prisma.post.findUnique({
+        where: { id: post.id },
+      })
+      expect(updatedPost?.viewCount).toBe(2)
+    })
+
+    it('should fail for non-existent post', async () => {
+      const variables = { id: toPostId(999999) } // Non-existent ID
+
+      await gql.expectError(
+        IncrementPostViewCountMutation,
+        variables,
+        'Post not found',
+        createMockContext(),
+      )
+    })
+  })
+})

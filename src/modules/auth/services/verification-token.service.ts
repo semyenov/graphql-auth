@@ -7,9 +7,9 @@
 import { randomBytes } from 'node:crypto'
 import type { VerificationToken } from '@prisma/client'
 import { inject, injectable } from 'tsyringe'
-import { ValidationError } from '../../../app/errors/types'
-import type { ILogger } from '../../../app/services/logger.interface'
-import { prisma } from '../../../prisma'
+import { ValidationError } from '@/app/errors/types'
+import { prisma } from '@/modules/shared/database'
+import type { ILogger } from '@/modules/shared/interfaces/logger.interface'
 
 export type TokenType = 'email_verification' | 'password_reset'
 

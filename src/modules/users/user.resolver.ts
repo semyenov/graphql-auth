@@ -6,12 +6,13 @@
 
 import type { Prisma } from '@prisma/client'
 import { z } from 'zod'
-import { ConflictError } from '../../app/errors/types'
+import { prisma } from '@/modules/shared/database'
 import {
   isAuthenticatedUser,
   isPublic,
   or,
-} from '../../graphql/rules/common.rules'
+} from '@/modules/shared/rules/common.rules'
+import { ConflictError } from '../../app/errors/types'
 import { builder } from '../../graphql/schema/builder'
 import { UserOrderByInput, UserWhereInput } from '../../graphql/schema/inputs'
 import {
@@ -19,7 +20,6 @@ import {
   transformUserWhereInput,
   type UserWhereInputType,
 } from '../../graphql/schema/utils/filter-transform'
-import { prisma } from '../../prisma'
 import { requireAuthentication } from '../auth/guards/auth.guards'
 import { parseGlobalId } from '../shared/connections'
 

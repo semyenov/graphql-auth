@@ -7,20 +7,20 @@
 
 import { container } from 'tsyringe'
 import { z } from 'zod'
+import type { IPasswordService } from '@/modules/auth/interfaces/password.service.interface'
+import type { ITokenService } from '@/modules/auth/interfaces/token.service.interface'
+import { prisma } from '@/modules/shared/database'
+import type { ILogger } from '@/modules/shared/interfaces/logger.interface'
+import { isAuthenticatedUser } from '@/modules/shared/rules/common.rules'
+import { RateLimitPresets } from '@/modules/shared/services/rate-limiter.service'
 import { normalizeError } from '../../app/errors/handlers'
 import { AuthenticationError, ConflictError } from '../../app/errors/types'
-import type { ILogger } from '../../app/services/logger.interface'
-import type { IPasswordService } from '../../app/services/password.service.interface'
-import { RateLimitPresets } from '../../app/services/rate-limiter.service'
-import type { ITokenService } from '../../app/services/token.service.interface'
-import { isAuthenticatedUser } from '../../graphql/rules/common.rules'
 import { builder } from '../../graphql/schema/builder'
 import { commonValidations } from '../../graphql/schema/helpers'
 import {
   applyRateLimit,
   createRateLimitConfig,
 } from '../../graphql/schema/plugins/rate-limit.plugin'
-import { prisma } from '../../prisma'
 import { rateLimitAuth } from './auth.rules'
 import { requireAuthentication } from './guards/auth.guards'
 import { signToken } from './services/jwt.service'

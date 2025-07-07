@@ -4,8 +4,8 @@
  * Creates appropriate logger instances based on configuration.
  */
 
-import type { ILogger } from '../services/logger.interface'
-import { LogLevel } from '../services/logger.interface'
+import type { ILogger } from '@/modules/shared/interfaces/logger.interface'
+import { LogLevel } from '@/modules/shared/interfaces/logger.interface'
 import { ConsoleLogger } from './console-logger'
 import { NoopLogger } from './noop-logger'
 

@@ -4,10 +4,11 @@
  * Bootstraps the application with clean architecture.
  */
 
+import 'reflect-metadata'
+
 import { ApolloServer, type HeaderMap } from '@apollo/server'
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
 import { createServer, type IncomingMessage, type ServerResponse } from 'http'
-import 'reflect-metadata'
 
 // Import configuration and DI
 import { getConfig } from './app/config/config'

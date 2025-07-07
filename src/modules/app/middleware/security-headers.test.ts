@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applySecurityHeaders,
   graphqlSecurityConfig,
-} from '../../../app/middleware/security-headers'
+} from '@/app/middleware/security-headers'
 
 describe('Security Headers Middleware', () => {
   describe('applySecurityHeaders', () => {

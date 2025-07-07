@@ -8,15 +8,18 @@
 import type { Prisma } from '@prisma/client'
 import { container } from 'tsyringe'
 import { z } from 'zod'
+import { prisma } from '@/modules/shared/database'
+import type { ILogger } from '@/modules/shared/interfaces/logger.interface'
+import {
+  isAuthenticatedUser,
+  isPublic,
+} from '@/modules/shared/rules/common.rules'
 import {
   AuthorizationError,
   NotFoundError,
   RateLimitError,
 } from '../../app/errors/types'
-import type { ILogger } from '../../app/services/logger.interface'
-import { isAuthenticatedUser, isPublic } from '../../graphql/rules/common.rules'
 import { builder } from '../../graphql/schema/builder'
-import { prisma } from '../../prisma'
 import { requireAuthentication } from '../auth/guards/auth.guards'
 import { parseGlobalId } from '../shared/connections'
 import { canIncrementViewCount, canViewPost, isPostOwner } from './post.rules'

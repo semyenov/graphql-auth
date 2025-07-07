@@ -5,26 +5,28 @@
  */
 
 import type { PrismaClient } from '@prisma/client'
+import { type AppConfig, getConfig } from '@/app/config/config'
+import { createLoggerFromEnv } from '@/app/logging/logger-factory'
 import 'reflect-metadata'
 import { container } from 'tsyringe'
 // OIDC
+import type { IPasswordService } from '@/modules/auth/interfaces/password.service.interface'
+import type { ITokenService } from '@/modules/auth/interfaces/token.service.interface'
+import { RefreshTokenRepository } from '@/modules/auth/repositories/refresh-token.repository'
+import { Argon2PasswordService } from '@/modules/auth/services/argon2-password.service'
+import { LoginAttemptService } from '@/modules/auth/services/login-attempt.service'
+import { TokenService } from '@/modules/auth/services/token.service'
+import { VerificationTokenService } from '@/modules/auth/services/verification-token.service'
 import {
   type IOidcProviderService,
   OidcProviderService,
-} from '../../../modules/oidc/services/oidc-provider.service'
-import { createLoggerFromEnv } from '../../app/logging/logger-factory'
-import type { ILogger } from '../../app/services/logger.interface'
-import type { IPasswordService } from '../../app/services/password.service.interface'
-import type { ITokenService } from '../../app/services/token.service.interface'
-import { RefreshTokenRepository } from '../../data/repositories/refresh-token.repository'
-import { Argon2PasswordService } from '../../modules/auth/services/argon2-password.service'
-import { LoginAttemptService } from '../../modules/auth/services/login-attempt.service'
-import { TokenService } from '../../modules/auth/services/token.service'
-import { VerificationTokenService } from '../../modules/auth/services/verification-token.service'
-import { prisma } from '../../prisma'
-import { EmailService, type IEmailService } from '../services/email.service'
-// Configuration
-import { type AppConfig, getConfig } from './config'
+} from '@/modules/oidc/services/oidc-provider.service'
+import { prisma } from '@/modules/shared/database'
+import type { ILogger } from '@/modules/shared/interfaces/logger.interface'
+import {
+  EmailService,
+  type IEmailService,
+} from '@/modules/shared/services/email.service'
 
 export function configureContainer(): void {
   // Register config

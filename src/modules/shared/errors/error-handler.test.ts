@@ -12,7 +12,7 @@ import {
   isBaseError,
   normalizeError,
   shouldReportError,
-} from '../../../app/errors/handlers'
+} from '@/app/errors/handlers'
 import {
   AuthenticationError,
   AuthorizationError,
@@ -21,7 +21,7 @@ import {
   ForbiddenError,
   NotFoundError,
   ValidationError,
-} from '../../../app/errors/types'
+} from '@/app/errors/types'
 
 describe('Error Handlers', () => {
   describe('isBaseError', () => {

@@ -4,9 +4,9 @@
 
 import * as jwt from 'jsonwebtoken'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { AppConfig } from '../../../app/config/config'
-import { AuthenticationError } from '../../../app/errors/types'
-import type { TokenPayload } from '../../../app/services/token.service.interface'
+import type { AppConfig } from '@/app/config/config'
+import { AuthenticationError } from '@/app/errors/types'
+import type { TokenPayload } from '@/modules/auth/interfaces/token.service.interface'
 import { RefreshToken } from '../entities/refresh-token.entity'
 import type { IRefreshTokenRepository } from '../interfaces/refresh-token.repository.interface'
 import { TokenService } from './token.service'

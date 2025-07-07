@@ -1,6 +1,6 @@
 import jwt, { type JwtPayload } from 'jsonwebtoken'
-import { AUTH, ERROR_MESSAGES } from '../../../app/constants'
-import { AuthenticationError } from '../../../app/errors/types'
+import { AUTH, ERROR_MESSAGES } from '@/app/constants'
+import { AuthenticationError } from '@/app/errors/types'
 
 /**
  * JWT payload interface

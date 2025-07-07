@@ -3,7 +3,7 @@
  */
 
 import type { User } from '@prisma/client'
-import type { JWTPayload } from '../../../src/modules/auth/services/jwt.service'
+import type { JWTPayload } from '@/modules/auth/services/jwt.service'
 
 export interface IntegrationTestContext {
   user: User

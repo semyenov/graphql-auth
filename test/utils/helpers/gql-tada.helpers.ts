@@ -9,7 +9,7 @@ import type { ApolloServer } from '@apollo/server'
 import type { VariableValues as GraphQLVariableValues } from '@apollo/server/dist/esm/externalTypes/graphql'
 import type { ResultOf, TadaDocumentNode } from 'gql.tada'
 import { print } from 'graphql'
-import type { DefaultContext } from '../../../src/graphql/context/context.types'
+import type { DefaultContext } from '@/graphql/context/context.types'
 import {
   executeOperation,
   extractGraphQLData,

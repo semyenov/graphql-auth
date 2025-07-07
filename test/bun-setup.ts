@@ -2,8 +2,8 @@ import { afterAll, beforeAll, beforeEach } from 'bun:test'
 import { prisma } from '@test/utils/database/prisma'
 import { execSync } from 'child_process'
 import { rm } from 'fs/promises'
-import { rateLimiter } from '../src/app/services/rate-limiter.service'
-import { resetSchemaCache } from '../src/graphql/schema'
+import { resetSchemaCache } from '@/graphql/schema'
+import { rateLimiter } from '@/modules/shared/services/rate-limiter.service'
 import { TEST_DATABASE_URL } from './test-database-url'
 
 const dbFilePath = TEST_DATABASE_URL.replace('file:', '')

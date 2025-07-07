@@ -7,7 +7,7 @@
 
 import { performance } from 'perf_hooks'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { FeedQuery } from '../../src/gql/queries'
+import { FeedQuery } from '@/gql/queries'
 import {
   createGraphQLTestHelper,
   createMockContext,

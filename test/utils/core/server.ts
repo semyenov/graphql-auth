@@ -4,7 +4,7 @@
 
 import { ApolloServer } from '@apollo/server'
 import { createYoga } from 'graphql-yoga'
-import type { DefaultContext } from '../../../src/graphql/context/context.types'
+import type { DefaultContext } from '@/graphql/context/context.types'
 import { getCachedSchema } from '../graphql/schema-cache'
 
 // Cache server instances per worker to avoid rebuilding

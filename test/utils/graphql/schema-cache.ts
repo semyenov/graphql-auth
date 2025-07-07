@@ -11,7 +11,7 @@ import {
   printSchema,
 } from 'graphql'
 import { performance } from 'perf_hooks'
-import { buildSchema, resetSchemaCache } from '../../../src/graphql/schema'
+import { buildSchema, resetSchemaCache } from '@/graphql/schema'
 
 // Cache storage
 let _cachedSchema: GraphQLSchema | null = null

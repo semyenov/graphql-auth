@@ -7,15 +7,15 @@
 import { randomBytes } from 'crypto'
 import * as jwt from 'jsonwebtoken'
 import { inject, injectable } from 'tsyringe'
-import type { AppConfig } from '../../../app/config/config'
-import { AuthenticationError } from '../../../app/errors/types'
+import type { AppConfig } from '@/app/config/config'
+import { AuthenticationError } from '@/app/errors/types'
+import { RefreshToken } from '../entities/refresh-token.entity'
+import type { IRefreshTokenRepository } from '../interfaces/refresh-token.repository.interface'
 import type {
   AuthTokens,
   ITokenService,
   TokenPayload,
-} from '../../../app/services/token.service.interface'
-import { RefreshToken } from '../entities/refresh-token.entity'
-import type { IRefreshTokenRepository } from '../interfaces/refresh-token.repository.interface'
+} from '../interfaces/token.service.interface'
 
 @injectable()
 export class TokenService implements ITokenService {

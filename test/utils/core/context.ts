@@ -3,8 +3,8 @@
  */
 
 import { HeaderMap } from '@apollo/server'
-import type { DefaultContext } from '../../../src/graphql/context/context.types'
-import { UserId } from '../../../src/types/value-objects'
+import type { DefaultContext } from '@/graphql/context/context.types'
+import { UserId } from '@/types/value-objects'
 import { generateTestToken } from './auth'
 
 /**

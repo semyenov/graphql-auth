@@ -1,4 +1,4 @@
-import { builder } from '../../../graphql/schema/builder'
+import { builder } from '@/graphql/schema/builder'
 
 // Define Post object type using Relay Node pattern
 // prismaNode automatically exposes ALL fields including relations

@@ -6,8 +6,11 @@
  */
 
 import { injectable } from 'tsyringe'
-import type { ILogger, LogContext } from '../services/logger.interface'
-import { LogLevel } from '../services/logger.interface'
+import type {
+  ILogger,
+  LogContext,
+} from '@/modules/shared/interfaces/logger.interface'
+import { LogLevel } from '@/modules/shared/interfaces/logger.interface'
 
 @injectable()
 export class ConsoleLogger implements ILogger {
