@@ -127,15 +127,18 @@ export class RateLimiterService {
    * Gets current points for a specific key and identifier
    */
   async getPoints(key: string, identifier: string): Promise<number | null> {
-    const limiter = this.limiters.get(key)
-    if (!limiter) return null
-
-    try {
-      const res = await limiter.get(identifier)
-      return res ? res.remainingPoints : null
-    } catch {
-      return null
+    // Find the first limiter that matches the key prefix
+    for (const [limiterKey, limiter] of this.limiters.entries()) {
+      if (limiterKey.startsWith(`${key}:`)) {
+        try {
+          const res = await limiter.get(identifier)
+          return res ? res.remainingPoints : null
+        } catch {
+          return null
+        }
+      }
     }
+    return null
   }
 
   /**

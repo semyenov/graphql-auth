@@ -82,7 +82,7 @@ export class OidcProviderService implements IOidcProviderService {
             | 'Client',
         ),
 
-      clients: [],
+      // clients: [],
 
       cookies: {
         keys: [process.env.JWT_SECRET || 'your-secret-key'],

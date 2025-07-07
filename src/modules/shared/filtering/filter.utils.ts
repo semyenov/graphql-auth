@@ -109,8 +109,10 @@ export function transformBooleanFilter(
 ): boolean | Record<string, unknown> | undefined {
   if (!filter) return undefined
 
-  if (filter.equals !== undefined) return filter.equals
-  if (filter.not !== undefined) return { not: filter.not }
+  if (filter.equals !== undefined && filter.equals !== null)
+    return filter.equals
+  if (filter.not !== undefined && filter.not !== null)
+    return { not: filter.not }
 
   return undefined
 }
@@ -125,7 +127,7 @@ export function transformOrderBy<T extends string>(
 
   return {
     [orderBy.field]: orderBy.direction,
-  }
+  } as Record<T, SortOrder>
 }
 
 /**
@@ -136,7 +138,9 @@ export function transformOrderByArray<T extends string>(
 ): Record<T, SortOrder>[] | undefined {
   if (!orderBy || orderBy.length === 0) return undefined
 
-  return orderBy.map(transformOrderBy).filter(Boolean)
+  return orderBy
+    .map(transformOrderBy)
+    .filter((item): item is Record<T, SortOrder> => item !== undefined)
 }
 
 /**
@@ -183,7 +187,9 @@ export function combineFilters<T>(
 export function applyBaseFilter<T>(
   filter: T & BaseFilter<T>,
 ): Record<string, unknown> {
-  const result: Record<string, unknown> = { ...filter }
+  const result: Record<string, unknown> = {
+    ...(filter as Record<string, unknown>),
+  }
 
   // Remove base filter properties from main object
   result.AND = undefined
@@ -293,7 +299,7 @@ export function sanitizeFilter<T extends Record<string, unknown>>(
         sanitized[key] = value.map((f) => sanitizeFilter(f, options))
       }
     } else if (key === 'NOT') {
-      sanitized[key] = sanitizeFilter(value, options)
+      sanitized[key] = sanitizeFilter(value as Record<string, unknown>, options)
     } else {
       sanitized[key] = value
     }
@@ -312,16 +318,14 @@ export function applyCaseInsensitive<T extends Record<string, unknown>>(
   const result = { ...filter }
 
   for (const field of fields) {
-    if (result[field] && typeof result[field] === 'object') {
-      if (
-        result[field].contains ||
-        result[field].startsWith ||
-        result[field].endsWith
-      ) {
+    const fieldValue = result[field]
+    if (fieldValue && typeof fieldValue === 'object') {
+      const fieldObj = fieldValue as Record<string, unknown>
+      if (fieldObj.contains || fieldObj.startsWith || fieldObj.endsWith) {
         result[field as keyof T] = {
-          ...result[field],
+          ...fieldObj,
           mode: 'insensitive',
-        }
+        } as T[keyof T]
       }
     }
   }
@@ -344,9 +348,11 @@ export function getFilterSummary(filter: Record<string, unknown>): string[] {
       if (key === 'AND' || key === 'OR' || key === 'NOT') {
         summary.push(`${fieldName} operator`)
         if (Array.isArray(value)) {
-          value.forEach((v, i) => addToSummary(v, `${fieldName}[${i}]`))
+          value.forEach((v, i) =>
+            addToSummary(v as Record<string, unknown>, `${fieldName}[${i}]`),
+          )
         } else {
-          addToSummary(value, fieldName)
+          addToSummary(value as Record<string, unknown>, fieldName)
         }
       } else if (
         typeof value === 'object' &&
@@ -355,7 +361,7 @@ export function getFilterSummary(filter: Record<string, unknown>): string[] {
       ) {
         // For nested objects, add the parent field
         summary.push(fieldName)
-        addToSummary(value, fieldName)
+        addToSummary(value as Record<string, unknown>, fieldName)
       } else {
         summary.push(fieldName)
       }

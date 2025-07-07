@@ -18,7 +18,9 @@ import {
 import * as argon2 from 'argon2'
 import { graphql } from 'gql.tada'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { prisma } from '../../../src/prisma'
+import { configureContainer } from '../../src/app/config/container'
+import { resetSchemaCache } from '../../src/graphql/schema'
+import { prisma } from '../../src/prisma'
 
 // GraphQL queries and mutations
 const ListOidcClientsQuery = graphql(`
@@ -115,13 +117,23 @@ const RevokeAllOidcSessionsMutation = graphql(`
 `)
 
 describe('OIDC Resolver Tests', () => {
-  const server = createTestServer()
-  const gql = createGraphQLTestHelper(server)
+  let server: ReturnType<typeof createTestServer>
+  let gql: ReturnType<typeof createGraphQLTestHelper>
   let adminUser: User
   let regularUser: User
   let testClient: OidcClient
 
   beforeEach(async () => {
+    // Reset schema cache to ensure fresh schema
+    resetSchemaCache()
+
+    // Ensure container is configured
+    configureContainer()
+
+    // Create fresh server for each test to avoid schema caching issues
+    server = createTestServer()
+    gql = createGraphQLTestHelper(server)
+
     // Clean database
     await prisma.oidcSession.deleteMany()
     await prisma.oidcClient.deleteMany()
@@ -171,11 +183,21 @@ describe('OIDC Resolver Tests', () => {
         const data = await gql.query(ListOidcClientsQuery, {}, context)
 
         expect(data.oidcClients).toHaveLength(1)
-        expect(data.oidcClients[0]).toMatchObject({
-          clientId: 'test-client',
-          clientName: 'Test Client',
-          redirectUris: ['http://localhost:3000/callback'],
-        })
+        expect(data.oidcClients?.[0]?.clientId).toBe(testClient.clientId)
+        expect(data.oidcClients?.[0]?.clientName).toBe(testClient.clientName)
+        expect(data.oidcClients?.[0]?.redirectUris).toEqual(
+          JSON.parse(testClient.redirectUris),
+        )
+        expect(data.oidcClients?.[0]?.scope).toBe(testClient.scope)
+        expect(data.oidcClients?.[0]?.grantTypes).toEqual(
+          JSON.parse(testClient.grantTypes),
+        )
+        expect(data.oidcClients?.[0]?.responseTypes).toEqual(
+          JSON.parse(testClient.responseTypes),
+        )
+        expect(data.oidcClients?.[0]?.applicationType).toBe(
+          testClient.applicationType,
+        )
       })
 
       it('should deny access for non-admin users', async () => {
@@ -208,12 +230,28 @@ describe('OIDC Resolver Tests', () => {
           context,
         )
 
-        expect(data.oidcClient).toMatchObject({
-          clientId: 'test-client',
-          clientName: 'Test Client',
-          redirectUris: ['http://localhost:3000/callback'],
-          scope: 'openid profile email',
-        })
+        expect(data.oidcClient?.clientId).toBe(testClient.clientId)
+        expect(data.oidcClient?.clientName).toBe(testClient.clientName)
+        expect(data.oidcClient?.redirectUris).toEqual(
+          JSON.parse(testClient.redirectUris),
+        )
+        expect(data.oidcClient?.scope).toBe(testClient.scope)
+        expect(data.oidcClient?.grantTypes).toEqual(
+          JSON.parse(testClient.grantTypes),
+        )
+        expect(data.oidcClient?.responseTypes).toEqual(
+          JSON.parse(testClient.responseTypes),
+        )
+        expect(data.oidcClient?.applicationType).toBe(
+          testClient.applicationType,
+        )
+        expect(data.oidcClient?.clientUri).toBe(testClient.clientUri)
+        expect(data.oidcClient?.logoUri).toBe(testClient.logoUri)
+        expect(data.oidcClient?.createdAt).toBeDefined()
+        expect(data.oidcClient?.updatedAt).toBeDefined()
+        expect(data.oidcClient?.postLogoutRedirectUris).toBe(
+          testClient.postLogoutRedirectUris,
+        )
       })
 
       it('should return error for non-existent client', async () => {
@@ -247,14 +285,25 @@ describe('OIDC Resolver Tests', () => {
         const data = await gql.query(MyOidcSessionsQuery, {}, context)
 
         expect(data.myOidcSessions).toHaveLength(1)
-        expect(data.myOidcSessions[0]).toMatchObject({
-          sessionId: 'user-session-1',
-          client: {
-            clientId: testClient.clientId,
-            clientName: testClient.clientName,
-          },
-          scope: 'openid profile',
-        })
+        expect(data.myOidcSessions?.[0]?.client?.clientId).toBe(
+          testClient.clientId,
+        )
+        expect(data.myOidcSessions?.[0]?.client?.clientName).toBe(
+          testClient.clientName,
+        )
+        expect(data.myOidcSessions?.[0]?.sessionId).toBe('user-session-1')
+        expect(data.myOidcSessions?.[0]?.scope).toBe('openid profile')
+        expect(data.myOidcSessions?.[0]?.authTime).toBeDefined()
+        expect(data.myOidcSessions?.[0]?.expiresAt).toBeDefined()
+        expect(data.myOidcSessions?.[0]?.client?.clientId).toBe(
+          testClient.clientId,
+        )
+        expect(data.myOidcSessions?.[0]?.client?.clientName).toBe(
+          testClient.clientName,
+        )
+        expect(data.myOidcSessions?.[0]?.client?.clientName).toBe(
+          testClient.clientName,
+        )
       })
 
       it('should require authentication', async () => {

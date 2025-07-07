@@ -12,7 +12,7 @@ declare global {
   namespace NodeJS {
     interface ProcessEnv {
       DATABASE_URL: string
-      JWT_SECRET: string
+      JWT_SECRET?: string
       ARGON2_MEMORY_COST?: string
       ARGON2_TIME_COST?: string
       ARGON2_PARALLELISM?: string

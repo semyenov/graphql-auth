@@ -50,6 +50,13 @@ export interface AuthConfig {
   bcryptRounds: number
 }
 
+export interface JwtConfig {
+  accessTokenSecret: string
+  refreshTokenSecret: string
+  accessTokenExpiresIn: string
+  refreshTokenExpiresIn: string
+}
+
 export interface ServerConfig {
   port: number
   host: string
@@ -100,14 +107,4 @@ export function getConfig(): AppConfig {
       bcryptRounds: env.BCRYPT_ROUNDS,
     },
   }
-}
-
-// Export a singleton instance
-let configInstance: AppConfig | null = null
-
-export function getConfigInstance(): AppConfig {
-  if (!configInstance) {
-    configInstance = getConfig()
-  }
-  return configInstance
 }

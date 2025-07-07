@@ -17,14 +17,11 @@ import { UserOrderByInput, UserWhereInput } from '../../graphql/schema/inputs'
 import {
   transformOrderBy,
   transformUserWhereInput,
+  type UserWhereInputType,
 } from '../../graphql/schema/utils/filter-transform'
 import { prisma } from '../../prisma'
-// import type { ILogger } from '../../app/services/logger.interface'
 import { parseGlobalId } from '../../utils/relay'
 import { requireAuthentication } from '../auth/guards/auth.guards'
-
-// Get logger from container
-// const getLogger = () => container.resolve<ILogger>('ILogger')
 
 // Get user by ID query
 builder.queryField('user', (t) =>
@@ -37,10 +34,7 @@ builder.queryField('user', (t) =>
       id: t.arg.id({ required: true }),
     },
     resolve: async (query, _parent, args, _context) => {
-      // const logger = getLogger().child({ resolver: 'user' })
       const userId = parseGlobalId(args.id.toString(), 'User')
-
-      // logger.info('Fetching user by ID', { userId })
 
       const user = await prisma.user.findUnique({
         ...query,
@@ -48,7 +42,6 @@ builder.queryField('user', (t) =>
       })
 
       if (!user) {
-        // logger.warn('User not found', { userId })
         return null
       }
 
@@ -71,13 +64,17 @@ builder.queryField('users', (t) =>
     resolve: (query, _parent, args, _context) => {
       return prisma.user.findMany({
         ...query,
-        where: args.where ? transformUserWhereInput(args.where) : undefined,
-        orderBy: args.orderBy ? transformOrderBy(args.orderBy) : { id: 'asc' },
+        where: args.where
+          ? transformUserWhereInput(args.where as UserWhereInputType)
+          : undefined,
+        orderBy: args.orderBy
+          ? transformOrderBy(args.orderBy)
+          : { id: 'asc' as const },
       })
     },
     totalCount: (_parent, args, _context) => {
       const whereClause = args.where
-        ? transformUserWhereInput(args.where)
+        ? transformUserWhereInput(args.where as UserWhereInputType)
         : undefined
       return prisma.user.count({ where: whereClause })
     },
@@ -100,9 +97,6 @@ builder.queryField('searchUsers', (t) =>
       }),
     },
     resolve: (query, _parent, args, _context) => {
-      // const logger = getLogger().child({ resolver: 'searchUsers' })
-      // logger.info('Searching users', { searchTerm: args.search })
-
       return prisma.user.findMany({
         ...query,
         where: {
@@ -184,16 +178,13 @@ builder.mutationField('updateUserProfile', (t) =>
       }),
     },
     resolve: async (query, _parent, args, context) => {
-      // const logger = getLogger().child({ resolver: 'updateUserProfile' })
       const userId = requireAuthentication(context)
-
-      // logger.info('Updating user profile', { userId: userId.value })
 
       // Build update data
       const updateData: Prisma.UserUpdateInput = {}
       if (args.input.name !== undefined)
         updateData.name = args.input.name ?? null
-      if (args.input.email !== undefined) {
+      if (args.input.email !== undefined && args.input.email !== null) {
         // Check if email is already taken
         const existingUser = await prisma.user.findUnique({
           where: { email: args.input.email },
@@ -204,7 +195,7 @@ builder.mutationField('updateUserProfile', (t) =>
           throw new ConflictError('Email already in use')
         }
 
-        updateData.email = args.input.email ?? undefined
+        updateData.email = args.input.email
       }
 
       const user = await prisma.user.update({
@@ -212,8 +203,6 @@ builder.mutationField('updateUserProfile', (t) =>
         where: { id: userId.value },
         data: updateData,
       })
-
-      // logger.info('User profile updated', { userId: userId.value })
 
       return user
     },

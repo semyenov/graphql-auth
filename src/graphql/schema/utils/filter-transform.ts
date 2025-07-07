@@ -6,25 +6,29 @@ import type { Prisma } from '@prisma/client'
 
 // Transform string filter to Prisma where clause
 export function transformStringFilter(
-  filter: Prisma.StringFilter | undefined,
+  filter: Prisma.StringFilter | null | undefined,
 ): Prisma.StringFilter | undefined {
   if (!filter) return undefined
 
   const prismaFilter: Prisma.StringFilter = {}
 
-  if (filter.equals !== undefined) prismaFilter.equals = filter.equals
-  if (filter.contains !== undefined) prismaFilter.contains = filter.contains
-  if (filter.startsWith !== undefined)
+  if (filter.equals !== undefined && filter.equals !== null)
+    prismaFilter.equals = filter.equals
+  if (filter.contains !== undefined && filter.contains !== null)
+    prismaFilter.contains = filter.contains
+  if (filter.startsWith !== undefined && filter.startsWith !== null)
     prismaFilter.startsWith = filter.startsWith
-  if (filter.endsWith !== undefined) prismaFilter.endsWith = filter.endsWith
-  if (filter.not !== undefined) prismaFilter.not = filter.not
+  if (filter.endsWith !== undefined && filter.endsWith !== null)
+    prismaFilter.endsWith = filter.endsWith
+  if (filter.not !== undefined && filter.not !== null)
+    prismaFilter.not = filter.not
 
   return Object.keys(prismaFilter).length > 0 ? prismaFilter : undefined
 }
 
-interface UserWhereInputType {
-  name?: Prisma.StringFilter
-  email?: Prisma.StringFilter
+export interface UserWhereInputType {
+  name?: Prisma.StringFilter | null
+  email?: Prisma.StringFilter | null
 }
 
 export function transformUserWhereInput(
@@ -44,7 +48,7 @@ export function transformUserWhereInput(
   return Object.keys(prismaWhere).length > 0 ? prismaWhere : undefined
 }
 
-interface PostWhereInputType {
+export interface PostWhereInputType {
   title?: Prisma.StringFilter
   content?: Prisma.StringFilter
   published?: Prisma.BoolFilter
@@ -83,15 +87,15 @@ export function transformPostWhereInput(
   return Object.keys(prismaWhere).length > 0 ? prismaWhere : undefined
 }
 
-interface OrderByInputType {
-  id?: Prisma.SortOrder
-  title?: Prisma.SortOrder
-  content?: Prisma.SortOrder
-  published?: Prisma.SortOrder
-  viewCount?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-  [key: string]: Prisma.SortOrder | undefined
+export interface OrderByInputType {
+  id?: Prisma.SortOrder | null
+  title?: Prisma.SortOrder | null
+  content?: Prisma.SortOrder | null
+  published?: Prisma.SortOrder | null
+  viewCount?: Prisma.SortOrder | null
+  createdAt?: Prisma.SortOrder | null
+  updatedAt?: Prisma.SortOrder | null
+  [key: string]: Prisma.SortOrder | null | undefined
 }
 
 // Transform order by input to Prisma orderBy clause

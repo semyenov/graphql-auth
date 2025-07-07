@@ -219,28 +219,6 @@ export type introspection_types = {
     ]
   }
   JSON: unknown
-  LoginResult: {
-    kind: 'OBJECT'
-    name: 'LoginResult'
-    fields: {
-      message: {
-        name: 'message'
-        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
-      }
-      requiresEmailVerification: {
-        name: 'requiresEmailVerification'
-        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
-      }
-      token: {
-        name: 'token'
-        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
-      }
-      user: {
-        name: 'user'
-        type: { kind: 'OBJECT'; name: 'User'; ofType: null }
-      }
-    }
-  }
   Mutation: {
     kind: 'OBJECT'
     name: 'Mutation'
@@ -249,9 +227,17 @@ export type introspection_types = {
         name: 'createComment'
         type: { kind: 'SCALAR'; name: 'String'; ofType: null }
       }
+      createOidcClient: {
+        name: 'createOidcClient'
+        type: { kind: 'OBJECT'; name: 'OidcClient'; ofType: null }
+      }
       createPost: {
         name: 'createPost'
         type: { kind: 'OBJECT'; name: 'Post'; ofType: null }
+      }
+      deleteOidcClient: {
+        name: 'deleteOidcClient'
+        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
       }
       deletePost: {
         name: 'deletePost'
@@ -264,10 +250,6 @@ export type introspection_types = {
       login: {
         name: 'login'
         type: { kind: 'SCALAR'; name: 'String'; ofType: null }
-      }
-      loginSecure: {
-        name: 'loginSecure'
-        type: { kind: 'OBJECT'; name: 'LoginResult'; ofType: null }
       }
       loginWithTokens: {
         name: 'loginWithTokens'
@@ -285,29 +267,25 @@ export type introspection_types = {
         name: 'refreshToken'
         type: { kind: 'OBJECT'; name: 'AuthTokens'; ofType: null }
       }
-      requestPasswordReset: {
-        name: 'requestPasswordReset'
-        type: { kind: 'OBJECT'; name: 'PasswordResetResult'; ofType: null }
+      revokeAllOidcSessions: {
+        name: 'revokeAllOidcSessions'
+        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
       }
-      resendVerificationEmail: {
-        name: 'resendVerificationEmail'
-        type: { kind: 'OBJECT'; name: 'ResendVerificationResult'; ofType: null }
-      }
-      resetPassword: {
-        name: 'resetPassword'
-        type: { kind: 'OBJECT'; name: 'ResetPasswordResult'; ofType: null }
+      revokeOidcSession: {
+        name: 'revokeOidcSession'
+        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
       }
       signup: {
         name: 'signup'
         type: { kind: 'SCALAR'; name: 'String'; ofType: null }
       }
-      signupWithVerification: {
-        name: 'signupWithVerification'
-        type: { kind: 'OBJECT'; name: 'SignupResult'; ofType: null }
-      }
       togglePublishPost: {
         name: 'togglePublishPost'
         type: { kind: 'OBJECT'; name: 'Post'; ofType: null }
+      }
+      updateOidcClient: {
+        name: 'updateOidcClient'
+        type: { kind: 'OBJECT'; name: 'OidcClient'; ofType: null }
       }
       updatePost: {
         name: 'updatePost'
@@ -316,10 +294,6 @@ export type introspection_types = {
       updateUserProfile: {
         name: 'updateUserProfile'
         type: { kind: 'OBJECT'; name: 'User'; ofType: null }
-      }
-      verifyEmail: {
-        name: 'verifyEmail'
-        type: { kind: 'OBJECT'; name: 'VerifyEmailResult'; ofType: null }
       }
     }
   }
@@ -357,6 +331,285 @@ export type introspection_types = {
     }
   }
   ObjectID: unknown
+  OidcClient: {
+    kind: 'OBJECT'
+    name: 'OidcClient'
+    fields: {
+      applicationType: {
+        name: 'applicationType'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      clientId: {
+        name: 'clientId'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      clientName: {
+        name: 'clientName'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      clientUri: {
+        name: 'clientUri'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      createdAt: {
+        name: 'createdAt'
+        type: { kind: 'SCALAR'; name: 'DateTime'; ofType: null }
+      }
+      grantTypes: {
+        name: 'grantTypes'
+        type: {
+          kind: 'LIST'
+          name: never
+          ofType: {
+            kind: 'NON_NULL'
+            name: never
+            ofType: { kind: 'SCALAR'; name: 'String'; ofType: null }
+          }
+        }
+      }
+      id: { name: 'id'; type: { kind: 'SCALAR'; name: 'ID'; ofType: null } }
+      logoUri: {
+        name: 'logoUri'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      postLogoutRedirectUris: {
+        name: 'postLogoutRedirectUris'
+        type: {
+          kind: 'LIST'
+          name: never
+          ofType: {
+            kind: 'NON_NULL'
+            name: never
+            ofType: { kind: 'SCALAR'; name: 'String'; ofType: null }
+          }
+        }
+      }
+      redirectUris: {
+        name: 'redirectUris'
+        type: {
+          kind: 'LIST'
+          name: never
+          ofType: {
+            kind: 'NON_NULL'
+            name: never
+            ofType: { kind: 'SCALAR'; name: 'String'; ofType: null }
+          }
+        }
+      }
+      responseTypes: {
+        name: 'responseTypes'
+        type: {
+          kind: 'LIST'
+          name: never
+          ofType: {
+            kind: 'NON_NULL'
+            name: never
+            ofType: { kind: 'SCALAR'; name: 'String'; ofType: null }
+          }
+        }
+      }
+      scope: {
+        name: 'scope'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      updatedAt: {
+        name: 'updatedAt'
+        type: { kind: 'SCALAR'; name: 'DateTime'; ofType: null }
+      }
+    }
+  }
+  OidcClientInput: {
+    kind: 'INPUT_OBJECT'
+    name: 'OidcClientInput'
+    isOneOf: false
+    inputFields: [
+      {
+        name: 'applicationType'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+        defaultValue: null
+      },
+      {
+        name: 'clientId'
+        type: {
+          kind: 'NON_NULL'
+          name: never
+          ofType: { kind: 'SCALAR'; name: 'String'; ofType: null }
+        }
+        defaultValue: null
+      },
+      {
+        name: 'clientName'
+        type: {
+          kind: 'NON_NULL'
+          name: never
+          ofType: { kind: 'SCALAR'; name: 'String'; ofType: null }
+        }
+        defaultValue: null
+      },
+      {
+        name: 'clientSecret'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+        defaultValue: null
+      },
+      {
+        name: 'grantTypes'
+        type: {
+          kind: 'LIST'
+          name: never
+          ofType: {
+            kind: 'NON_NULL'
+            name: never
+            ofType: { kind: 'SCALAR'; name: 'String'; ofType: null }
+          }
+        }
+        defaultValue: null
+      },
+      {
+        name: 'postLogoutRedirectUris'
+        type: {
+          kind: 'LIST'
+          name: never
+          ofType: {
+            kind: 'NON_NULL'
+            name: never
+            ofType: { kind: 'SCALAR'; name: 'String'; ofType: null }
+          }
+        }
+        defaultValue: null
+      },
+      {
+        name: 'redirectUris'
+        type: {
+          kind: 'NON_NULL'
+          name: never
+          ofType: {
+            kind: 'LIST'
+            name: never
+            ofType: {
+              kind: 'NON_NULL'
+              name: never
+              ofType: { kind: 'SCALAR'; name: 'String'; ofType: null }
+            }
+          }
+        }
+        defaultValue: null
+      },
+      {
+        name: 'responseTypes'
+        type: {
+          kind: 'LIST'
+          name: never
+          ofType: {
+            kind: 'NON_NULL'
+            name: never
+            ofType: { kind: 'SCALAR'; name: 'String'; ofType: null }
+          }
+        }
+        defaultValue: null
+      },
+      {
+        name: 'scope'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+        defaultValue: null
+      },
+    ]
+  }
+  OidcClientUpdateInput: {
+    kind: 'INPUT_OBJECT'
+    name: 'OidcClientUpdateInput'
+    isOneOf: false
+    inputFields: [
+      {
+        name: 'clientName'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+        defaultValue: null
+      },
+      {
+        name: 'grantTypes'
+        type: {
+          kind: 'LIST'
+          name: never
+          ofType: {
+            kind: 'NON_NULL'
+            name: never
+            ofType: { kind: 'SCALAR'; name: 'String'; ofType: null }
+          }
+        }
+        defaultValue: null
+      },
+      {
+        name: 'postLogoutRedirectUris'
+        type: {
+          kind: 'LIST'
+          name: never
+          ofType: {
+            kind: 'NON_NULL'
+            name: never
+            ofType: { kind: 'SCALAR'; name: 'String'; ofType: null }
+          }
+        }
+        defaultValue: null
+      },
+      {
+        name: 'redirectUris'
+        type: {
+          kind: 'LIST'
+          name: never
+          ofType: {
+            kind: 'NON_NULL'
+            name: never
+            ofType: { kind: 'SCALAR'; name: 'String'; ofType: null }
+          }
+        }
+        defaultValue: null
+      },
+      {
+        name: 'responseTypes'
+        type: {
+          kind: 'LIST'
+          name: never
+          ofType: {
+            kind: 'NON_NULL'
+            name: never
+            ofType: { kind: 'SCALAR'; name: 'String'; ofType: null }
+          }
+        }
+        defaultValue: null
+      },
+      {
+        name: 'scope'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+        defaultValue: null
+      },
+    ]
+  }
+  OidcSession: {
+    kind: 'OBJECT'
+    name: 'OidcSession'
+    fields: {
+      authTime: {
+        name: 'authTime'
+        type: { kind: 'SCALAR'; name: 'DateTime'; ofType: null }
+      }
+      client: {
+        name: 'client'
+        type: { kind: 'OBJECT'; name: 'OidcClient'; ofType: null }
+      }
+      expiresAt: {
+        name: 'expiresAt'
+        type: { kind: 'SCALAR'; name: 'DateTime'; ofType: null }
+      }
+      id: { name: 'id'; type: { kind: 'SCALAR'; name: 'ID'; ofType: null } }
+      scope: {
+        name: 'scope'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+      sessionId: {
+        name: 'sessionId'
+        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
+      }
+    }
+  }
   PageInfo: {
     kind: 'OBJECT'
     name: 'PageInfo'
@@ -384,20 +637,6 @@ export type introspection_types = {
       startCursor: {
         name: 'startCursor'
         type: { kind: 'SCALAR'; name: 'String'; ofType: null }
-      }
-    }
-  }
-  PasswordResetResult: {
-    kind: 'OBJECT'
-    name: 'PasswordResetResult'
-    fields: {
-      message: {
-        name: 'message'
-        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
-      }
-      success: {
-        name: 'success'
-        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
       }
     }
   }
@@ -610,6 +849,18 @@ export type introspection_types = {
         type: { kind: 'OBJECT'; name: 'QueryFeedConnection'; ofType: null }
       }
       me: { name: 'me'; type: { kind: 'OBJECT'; name: 'User'; ofType: null } }
+      myOidcSessions: {
+        name: 'myOidcSessions'
+        type: {
+          kind: 'LIST'
+          name: never
+          ofType: {
+            kind: 'NON_NULL'
+            name: never
+            ofType: { kind: 'OBJECT'; name: 'OidcSession'; ofType: null }
+          }
+        }
+      }
       node: {
         name: 'node'
         type: { kind: 'INTERFACE'; name: 'Node'; ofType: null }
@@ -623,6 +874,22 @@ export type introspection_types = {
             kind: 'LIST'
             name: never
             ofType: { kind: 'INTERFACE'; name: 'Node'; ofType: null }
+          }
+        }
+      }
+      oidcClient: {
+        name: 'oidcClient'
+        type: { kind: 'OBJECT'; name: 'OidcClient'; ofType: null }
+      }
+      oidcClients: {
+        name: 'oidcClients'
+        type: {
+          kind: 'LIST'
+          name: never
+          ofType: {
+            kind: 'NON_NULL'
+            name: never
+            ofType: { kind: 'OBJECT'; name: 'OidcClient'; ofType: null }
           }
         }
       }
@@ -878,53 +1145,7 @@ export type introspection_types = {
       }
     }
   }
-  ResendVerificationResult: {
-    kind: 'OBJECT'
-    name: 'ResendVerificationResult'
-    fields: {
-      message: {
-        name: 'message'
-        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
-      }
-      success: {
-        name: 'success'
-        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
-      }
-    }
-  }
-  ResetPasswordResult: {
-    kind: 'OBJECT'
-    name: 'ResetPasswordResult'
-    fields: {
-      message: {
-        name: 'message'
-        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
-      }
-      success: {
-        name: 'success'
-        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
-      }
-    }
-  }
   Role: { name: 'Role'; enumValues: 'ADMIN' | 'USER' }
-  SignupResult: {
-    kind: 'OBJECT'
-    name: 'SignupResult'
-    fields: {
-      message: {
-        name: 'message'
-        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
-      }
-      requiresEmailVerification: {
-        name: 'requiresEmailVerification'
-        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
-      }
-      success: {
-        name: 'success'
-        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
-      }
-    }
-  }
   SortOrder: { name: 'SortOrder'; enumValues: 'asc' | 'desc' }
   String: unknown
   StringFilter: {
@@ -1192,20 +1413,6 @@ export type introspection_types = {
       statusCode: {
         name: 'statusCode'
         type: { kind: 'SCALAR'; name: 'Int'; ofType: null }
-      }
-    }
-  }
-  VerifyEmailResult: {
-    kind: 'OBJECT'
-    name: 'VerifyEmailResult'
-    fields: {
-      message: {
-        name: 'message'
-        type: { kind: 'SCALAR'; name: 'String'; ofType: null }
-      }
-      success: {
-        name: 'success'
-        type: { kind: 'SCALAR'; name: 'Boolean'; ofType: null }
       }
     }
   }

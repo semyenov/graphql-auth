@@ -70,7 +70,7 @@ export function hasGraphQLErrors(
  */
 export function getGraphQLErrors(
   response: Awaited<ReturnType<typeof executeOperation>>,
-): GraphQLFormattedError[] {
+): readonly GraphQLFormattedError[] {
   if (response.body.kind !== 'single') {
     return []
   }

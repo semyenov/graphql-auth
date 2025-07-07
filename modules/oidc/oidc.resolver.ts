@@ -5,9 +5,9 @@ import { prisma } from '../../src/prisma'
 import { OidcClientInput, OidcClientUpdateInput } from './oidc.types'
 import type { IOidcProviderService } from './services/oidc-provider.service'
 
-const oidcService = container.resolve<IOidcProviderService>(
-  'IOidcProviderService',
-)
+// Lazy getter to resolve service only when needed
+const getOidcService = () =>
+  container.resolve<IOidcProviderService>('IOidcProviderService')
 
 builder.queryFields((t) => ({
   oidcClients: t.prismaField({
@@ -15,7 +15,7 @@ builder.queryFields((t) => ({
     grantScopes: ['authenticated'],
     shield: isAdmin,
     resolve: async (_query, _parent, _args, _context) => {
-      return oidcService.listClients()
+      return getOidcService().listClients()
     },
   }),
 
@@ -27,7 +27,7 @@ builder.queryFields((t) => ({
       clientId: t.arg.string({ required: true }),
     },
     resolve: async (_query, _parent, args, _context) => {
-      return oidcService.getClient(args.clientId)
+      return getOidcService().getClient(args.clientId)
     },
   }),
 
@@ -56,7 +56,7 @@ builder.mutationFields((t) => ({
       input: t.arg({ type: OidcClientInput, required: true }),
     },
     resolve: async (_query, _parent, args, _context) => {
-      return oidcService.createClient({
+      return getOidcService().createClient({
         clientName: args.input.clientName,
         clientId: args.input.clientId,
         clientSecret: args.input.clientSecret ?? undefined,
@@ -74,7 +74,7 @@ builder.mutationFields((t) => ({
       input: t.arg({ type: OidcClientUpdateInput, required: true }),
     },
     resolve: async (_query, _parent, args, _context) => {
-      return oidcService.updateClient(args.clientId, {
+      return getOidcService().updateClient(args.clientId, {
         clientName: args.input.clientName ?? undefined,
         redirectUris: args.input.redirectUris ?? undefined,
         postLogoutRedirectUris: args.input.postLogoutRedirectUris ?? undefined,
@@ -92,7 +92,7 @@ builder.mutationFields((t) => ({
       clientId: t.arg.string({ required: true }),
     },
     resolve: async (_parent, args, _context) => {
-      await oidcService.deleteClient(args.clientId)
+      await getOidcService().deleteClient(args.clientId)
       return true
     },
   }),
@@ -107,7 +107,10 @@ builder.mutationFields((t) => ({
       if (!context.userId) {
         throw new Error('Authentication required')
       }
-      await oidcService.revokeUserSession(context.userId.value, args.sessionId)
+      await getOidcService().revokeUserSession(
+        context.userId.value,
+        args.sessionId,
+      )
       return true
     },
   }),
@@ -119,7 +122,7 @@ builder.mutationFields((t) => ({
       if (!context.userId) {
         throw new Error('Authentication required')
       }
-      await oidcService.revokeAllUserSessions(context.userId.value)
+      await getOidcService().revokeAllUserSessions(context.userId.value)
       return true
     },
   }),

@@ -4,10 +4,10 @@
  * Tests for DataLoader implementation and N+1 query prevention
  */
 
+import { cleanDatabase } from '@test/utils'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { createDataLoaders } from '../../src/data/loaders'
-import { prisma } from '../../src/prisma'
-import { cleanDatabase } from '../utils'
+import { prisma } from '../prisma'
+import { createDataLoaders } from './loaders'
 
 describe('DataLoaders', () => {
   let loaders: ReturnType<typeof createDataLoaders>

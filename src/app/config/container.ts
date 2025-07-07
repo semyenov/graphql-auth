@@ -15,10 +15,7 @@ import {
 import { createLoggerFromEnv } from '../../app/logging/logger-factory'
 import type { ILogger } from '../../app/services/logger.interface'
 import type { IPasswordService } from '../../app/services/password.service.interface'
-import type {
-  ITokenConfig,
-  ITokenService,
-} from '../../app/services/token.service.interface'
+import type { ITokenService } from '../../app/services/token.service.interface'
 import { RefreshTokenRepository } from '../../data/repositories/refresh-token.repository'
 import { Argon2PasswordService } from '../../modules/auth/services/argon2-password.service'
 import { LoginAttemptService } from '../../modules/auth/services/login-attempt.service'
@@ -30,14 +27,10 @@ import { EmailService, type IEmailService } from '../services/email.service'
 import { type AppConfig, getConfig } from './config'
 
 export function configureContainer(): void {
-  const config = getConfig()
-
   // Register config
-  container.registerInstance<AppConfig>('AppConfig', config)
-
+  container.registerInstance<AppConfig>('AppConfig', getConfig())
   // Register logger using factory
-  const logger = createLoggerFromEnv()
-  container.registerInstance<ILogger>('ILogger', logger)
+  container.registerInstance<ILogger>('ILogger', createLoggerFromEnv())
 
   // Register Prisma client - use the shared instance from prisma.ts
   // This ensures tests can override the client with setTestPrismaClient
@@ -45,14 +38,6 @@ export function configureContainer(): void {
     'PrismaClient',
     prisma as PrismaClient,
   )
-
-  // Register token configuration
-  container.registerInstance<ITokenConfig>('ITokenConfig', {
-    accessTokenSecret: config.auth.jwtSecret,
-    refreshTokenSecret: `${config.auth.jwtSecret}-refresh`, // In production, use a different secret
-    accessTokenExpiresIn: '15m',
-    refreshTokenExpiresIn: '7d',
-  })
 
   // Register services
   container.register<IPasswordService>('IPasswordService', {

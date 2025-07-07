@@ -46,7 +46,6 @@ export async function createAuthenticatedContextFromScratch(): Promise<{
  */
 export function createAuthenticatedContext(user: User) {
   const userId = UserId.create(user.id)
-  const token = generateTestToken(user.id)
 
   return createAuthContext(userId, {
     user: {

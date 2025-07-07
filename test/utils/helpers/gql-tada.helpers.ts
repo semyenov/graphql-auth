@@ -170,7 +170,7 @@ export function createGraphQLTestHelper(
 /**
  * Type guard to check if a value matches the expected type
  */
-export function assertType<T>(value: unknown): asserts value is T {
+export function assertType<T>(_value: unknown): asserts _value is T {
   // This is a compile-time assertion
   // The actual runtime check would depend on your specific needs
 }

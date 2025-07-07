@@ -13,39 +13,33 @@ import {
   createTestServer,
 } from '@test/utils'
 import { createTestUser } from '@test/utils/factories/user.factory'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   LoginMutation,
   LoginWithTokensMutation,
   LogoutMutation,
   RefreshTokenMutation,
   SignupMutation,
-} from '../../../src/gql/mutations'
-import { MeQuery } from '../../../src/gql/queries'
-import { prisma } from '../../../src/prisma'
+} from '../../gql/mutations'
+import { MeQuery } from '../../gql/queries'
+import { prisma } from '../../prisma'
 
 describe('Authentication Integration Tests', () => {
   const server = createTestServer()
   const gql = createGraphQLTestHelper(server)
 
-  beforeEach(async () => {
-    // Clean database before each test
-    await prisma.refreshToken.deleteMany()
-    await prisma.user.deleteMany()
-  })
+  // Database cleanup is handled globally in vitest-setup.ts
 
   describe('Basic Authentication', () => {
     describe('Signup', () => {
       it('should create a new user', async () => {
-        const variables = {
-          email: 'newuser@example.com',
-          password: 'password123',
-          name: 'New User',
-        }
-
         const data = await gql.mutate(
           SignupMutation,
-          variables,
+          {
+            email: 'newuser@example.com',
+            password: 'password123',
+            name: 'New User',
+          },
           createMockContext(),
         )
 
@@ -54,25 +48,23 @@ describe('Authentication Integration Tests', () => {
 
         // Verify user was created
         const user = await prisma.user.findUnique({
-          where: { email: variables.email },
+          where: { email: 'newuser@example.com' },
         })
         expect(user).toBeDefined()
-        expect(user?.name).toBe(variables.name)
+        expect(user?.name).toBe('New User')
       })
 
       it('should fail with duplicate email', async () => {
         // Create existing user
         await createTestUser({ email: 'existing@example.com' })
 
-        const variables = {
-          email: 'existing@example.com',
-          password: 'password123',
-          name: 'Another User',
-        }
-
         await gql.expectError(
           SignupMutation,
-          variables,
+          {
+            email: 'existing@example.com',
+            password: 'password123',
+            name: 'Another User',
+          },
           'An account with this email already exists',
           createMockContext(),
         )
@@ -86,14 +78,12 @@ describe('Authentication Integration Tests', () => {
           password: 'password123',
         })
 
-        const variables = {
-          email: 'test@example.com',
-          password: 'password123',
-        }
-
         const data = await gql.mutate(
           LoginMutation,
-          variables,
+          {
+            email: 'test@example.com',
+            password: 'password123',
+          },
           createMockContext(),
         )
 
@@ -107,28 +97,24 @@ describe('Authentication Integration Tests', () => {
           password: 'password123',
         })
 
-        const variables = {
-          email: 'test@example.com',
-          password: 'wrongpassword',
-        }
-
         await gql.expectError(
           LoginMutation,
-          variables,
+          {
+            email: 'test@example.com',
+            password: 'wrongpassword',
+          },
           'Invalid email or password',
           createMockContext(),
         )
       })
 
       it('should fail with non-existent user', async () => {
-        const variables = {
-          email: 'nonexistent@example.com',
-          password: 'password123',
-        }
-
         await gql.expectError(
           LoginMutation,
-          variables,
+          {
+            email: 'nonexistent@example.com',
+            password: 'password123',
+          },
           'Invalid email or password',
           createMockContext(),
         )

@@ -1,4 +1,4 @@
-import { ApolloServer, HeaderMap } from '@apollo/server'
+import { ApolloServer, type BaseContext, HeaderMap } from '@apollo/server'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 import {
   createApp,
@@ -17,10 +17,21 @@ import { listen } from 'listhen'
 import 'reflect-metadata'
 
 // Import configuration and DI
-import type { BaseContext, HTTPGraphQLRequest } from '@apollo/server'
+import type { HTTPGraphQLRequest } from '@apollo/server'
 import { mountOidcRoutesH3 } from '../../modules/oidc/oidc.h3'
 import { createContext } from '../graphql/context/context.factory'
+import {
+  createComplexityLimitPlugin,
+  createDepthLimitPlugin,
+} from '../graphql/plugins/depth-limit.plugin'
 import { buildSchema } from '../graphql/schema'
+import { createCompressionMiddleware } from '../middleware/h3/compression.middleware'
+import { createGraphQLRateLimiterMiddleware } from '../middleware/h3/rate-limiter.middleware'
+import {
+  createGraphQLLoggerMiddleware,
+  createRequestLoggerMiddleware,
+} from '../middleware/h3/request-logger.middleware'
+import { createSecurityHeadersMiddleware } from '../middleware/h3/security-headers.middleware'
 import { prisma } from '../prisma'
 import { getConfig } from './config/config'
 import { configureContainer } from './config/container'
@@ -41,6 +52,26 @@ async function bootstrap() {
     const app = createApp()
     const router = createRouter()
 
+    // Apply request logging first (for all requests)
+    app.use('/**', createRequestLoggerMiddleware())
+    app.use('/**', createGraphQLLoggerMiddleware())
+
+    // Apply compression middleware
+    app.use(
+      '/**',
+      createCompressionMiddleware({
+        threshold: 1024, // Only compress responses larger than 1KB
+        brotli: true,
+        gzip: true,
+      }),
+    )
+
+    // Apply security headers globally
+    app.use('/**', createSecurityHeadersMiddleware())
+
+    // Apply rate limiting to GraphQL endpoints
+    app.use('/**', createGraphQLRateLimiterMiddleware())
+
     // Apply CORS globally
     app.use(
       '/**',
@@ -59,14 +90,21 @@ async function bootstrap() {
     const apolloServer = new ApolloServer<BaseContext>({
       schema: buildSchema(),
       introspection: isDev,
-      plugins: isDev
-        ? [
-            ApolloServerPluginLandingPageLocalDefault({
-              embed: true,
-              includeCookies: true,
-            }),
-          ]
-        : [],
+      plugins: [
+        // Security plugins (always enabled)
+        createDepthLimitPlugin({ maxDepth: 10, skipIntrospection: true }),
+        createComplexityLimitPlugin(1000),
+
+        // Development plugins
+        ...(isDev
+          ? [
+              ApolloServerPluginLandingPageLocalDefault({
+                embed: true,
+                includeCookies: true,
+              }),
+            ]
+          : []),
+      ],
     })
 
     await apolloServer.start()

@@ -7,10 +7,10 @@
 import { randomBytes } from 'crypto'
 import * as jwt from 'jsonwebtoken'
 import { inject, injectable } from 'tsyringe'
+import type { AppConfig } from '../../../app/config/config'
 import { AuthenticationError } from '../../../app/errors/types'
 import type {
   AuthTokens,
-  ITokenConfig,
   ITokenService,
   TokenPayload,
 } from '../../../app/services/token.service.interface'
@@ -20,7 +20,7 @@ import type { IRefreshTokenRepository } from '../interfaces/refresh-token.reposi
 @injectable()
 export class TokenService implements ITokenService {
   constructor(
-    @inject('ITokenConfig') private config: ITokenConfig,
+    @inject('AppConfig') private config: AppConfig,
     @inject('IRefreshTokenRepository')
     private refreshTokenRepo: IRefreshTokenRepository,
   ) {}
@@ -40,21 +40,23 @@ export class TokenService implements ITokenService {
     // Generate access token with unique identifier
     const accessToken = jwt.sign(
       { ...payload, type: 'access', jti: this.generateSecureToken() },
-      this.config.accessTokenSecret,
-      { expiresIn: this.parseExpiration(this.config.accessTokenExpiresIn) },
+      this.config.auth.jwtSecret,
+      { expiresIn: this.config.auth.jwtExpiresIn },
     )
 
     // Generate refresh token
     const refreshTokenValue = this.generateSecureToken()
     const refreshToken = jwt.sign(
       { ...payload, type: 'refresh', jti: refreshTokenValue },
-      this.config.refreshTokenSecret,
-      { expiresIn: this.parseExpiration(this.config.refreshTokenExpiresIn) },
+      this.config.auth.jwtSecret,
+      {
+        expiresIn: this.config.auth.jwtExpiresIn,
+      },
     )
 
     // Calculate expiration date
     const expiresAt = new Date()
-    const expiresInMs = this.parseExpiration(this.config.refreshTokenExpiresIn)
+    const expiresInMs = this.config.auth.jwtExpiresIn
     expiresAt.setTime(expiresAt.getTime() + expiresInMs)
 
     const refreshTokenEntity = RefreshToken.create({
@@ -80,7 +82,7 @@ export class TokenService implements ITokenService {
     try {
       const decoded = jwt.verify(
         token,
-        this.config.accessTokenSecret,
+        this.config.auth.jwtSecret,
       ) as TokenPayload
 
       if (decoded.type !== 'access') {
@@ -101,7 +103,7 @@ export class TokenService implements ITokenService {
       // Verify refresh token JWT
       const decoded = jwt.verify(
         refreshToken,
-        this.config.refreshTokenSecret,
+        this.config.auth.jwtSecret,
       ) as TokenPayload & { jti: string }
 
       if (decoded.type !== 'refresh') {

@@ -132,8 +132,8 @@ describe('Filter Utilities', () => {
 
       const result = transformDateFilter(filter)
       expect(result?.in).toHaveLength(2)
-      expect(result?.in?.[0]).toBeInstanceOf(Date)
-      expect(result?.notIn?.[0]).toBeInstanceOf(Date)
+      expect((result?.in as Date[])?.[0]).toBeInstanceOf(Date)
+      expect((result?.notIn as Date[])?.[0]).toBeInstanceOf(Date)
     })
   })
 

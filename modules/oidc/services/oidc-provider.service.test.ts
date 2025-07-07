@@ -8,13 +8,12 @@
  * - Account finding
  */
 
-import { beforeEach, describe, expect, it } from 'vitest'
-import 'reflect-metadata'
 import type { OidcClient, User } from '@prisma/client'
 import type { KoaContextWithOIDC } from 'oidc-provider'
-import { container } from 'tsyringe'
-import { OidcProviderService } from '../../../modules/oidc/services/oidc-provider.service'
+import 'reflect-metadata'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { prisma } from '../../../src/prisma'
+import { OidcProviderService } from './oidc-provider.service'
 
 describe('OidcProviderService', () => {
   let service: OidcProviderService
@@ -51,8 +50,7 @@ describe('OidcProviderService', () => {
       },
     })
 
-    // Reset container and create service
-    container.clearInstances()
+    // Create service (container already configured in test setup)
     service = new OidcProviderService()
   })
 
@@ -172,9 +170,9 @@ describe('OidcProviderService', () => {
         const clients = await service.listClients()
 
         expect(clients).toHaveLength(1)
-        expect(clients[0].clientId).toBe(mockClient.clientId)
-        expect(typeof clients[0].redirectUris).toBe('string')
-        expect(typeof clients[0].grantTypes).toBe('string')
+        expect(clients[0]?.clientId).toBe(mockClient.clientId)
+        expect(typeof clients[0]?.redirectUris).toBe('string')
+        expect(typeof clients[0]?.grantTypes).toBe('string')
       })
     })
 

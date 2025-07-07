@@ -49,7 +49,7 @@ export type MutationResolver<TResult = unknown, TArgs = unknown> = Resolver<
   TResult,
   Record<string, never>,
   TArgs,
-  IContext
+  DefaultContext
 >
 
 /**
@@ -59,7 +59,7 @@ export type QueryResolver<TResult = unknown, TArgs = unknown> = Resolver<
   TResult,
   Record<string, never>,
   TArgs,
-  IContext
+  DefaultContext
 >
 
 /**
@@ -263,6 +263,6 @@ export type ValidationContext = {
   fieldValue: unknown
   parentValue: unknown
   args: Record<string, unknown>
-  context: IContext
+  context: DefaultContext
   info: GraphQLResolveInfo
 }

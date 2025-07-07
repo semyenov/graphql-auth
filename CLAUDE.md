@@ -2,6 +2,35 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Recent Improvements (2025-07-06)
+
+### Security Enhancements
+- **Security Headers Middleware**: Comprehensive security headers (CSP, HSTS, X-Frame-Options, etc.)
+- **Rate Limiting**: GraphQL-aware rate limiting with operation-specific limits
+- **Query Depth Limiting**: Prevents deeply nested queries (max depth: 10)
+- **Query Complexity Limiting**: Limits total query complexity (max: 1000)
+
+### Performance Optimizations
+- **Response Compression**: Gzip/Brotli compression for responses > 1KB
+- **Request Logging**: Structured logging with timing and status information
+- **GraphQL Operation Logging**: Specific logging for GraphQL operations
+
+### H3 Server Middleware Stack
+Applied in order:
+1. Request logging (all requests)
+2. GraphQL operation logging
+3. Response compression
+4. Security headers
+5. Rate limiting
+6. CORS handling
+
+### New Middleware Files
+- `src/middleware/h3/security-headers.middleware.ts`
+- `src/middleware/h3/rate-limiter.middleware.ts`
+- `src/middleware/h3/request-logger.middleware.ts`
+- `src/middleware/h3/compression.middleware.ts`
+- `src/graphql/plugins/depth-limit.plugin.ts`
+
 ## Quick Command Reference
 
 ```bash
@@ -14,6 +43,12 @@ bun test -t "should create user"        # Run tests matching pattern
 bun test test/modules/oidc --run        # Run tests in specific directory
 bun run test:ui                         # Run tests with UI
 bun run test:coverage                   # Run tests with coverage
+
+# Test Runner Notes:
+# - For Bun tests: Use `bun test` (works perfectly)
+# - For Vitest: Use `npm run vitest:run` or `npx vitest`
+#   DO NOT use `bun vitest` - it causes GraphQL module duplication issues
+# - Vitest is configured and working, but must be run with npm/npx, not bun
 
 # Database
 bunx prisma migrate dev --name feature  # Create migration
@@ -108,6 +143,11 @@ builder.mutationField('createPost', (t) =>
 )
 ```
 
+**Important**: The `query` parameter must be spread in ALL Prisma operations, not just create:
+- `prisma.user.findUnique({ ...query, where })`
+- `prisma.post.update({ ...query, where, data })`
+- `prisma.comment.delete({ ...query, where })`
+
 ### 3. Dual Authorization (ADR-002)
 
 - **Pothos Scope Auth**: Basic authentication/role checks (`grantScopes`)
@@ -116,6 +156,30 @@ builder.mutationField('createPost', (t) =>
 ```typescript
 grantScopes: ['authenticated']              // Simple auth check
 shield: and(isAuthenticatedUser, isPostOwner)  // Complex rules
+```
+
+**Shield Rule Pattern**: Rules should return errors, not throw:
+```typescript
+// ✅ CORRECT
+export const isPostOwner = rule({ cache: 'strict' })(
+  async (_parent, args, context) => {
+    try {
+      const userId = requireAuthentication(context)
+      const postId = parseGlobalId(args.id, 'Post')
+      const post = await prisma.post.findUnique({ where: { id: postId } })
+      
+      if (!post || post.authorId !== userId.value) {
+        return new ForbiddenError('You can only modify your own posts')
+      }
+      return true
+    } catch (error) {
+      return handleRuleError(error)
+    }
+  },
+)
+
+// ❌ WRONG - Don't throw in Shield rules
+if (!post) throw new Error('Post not found')
 ```
 
 ### 4. Service Layer with DI
@@ -135,6 +199,8 @@ export class AuthService implements IAuthService {
 container.register<IAuthService>('IAuthService', { useClass: AuthService })
 ```
 
+**When to use services**: Only for complex business logic, not simple CRUD operations.
+
 ### 5. GraphQL Tada Testing
 
 Use the new test helpers for type-safe GraphQL operations:
@@ -148,6 +214,15 @@ const gql = createGraphQLTestHelper(server)
 const data = await gql.mutate(LoginMutation, variables, context)
 await gql.expectError(LoginMutation, variables, 'Error message', context)
 
+// Advanced test helpers
+await gqlHelpers.expectSuccessfulQuery(GetUserQuery, { id }, context)
+await gqlHelpers.expectGraphQLError(
+  CreatePostMutation,
+  { title: '' },
+  'Title is required',
+  context
+)
+
 // ❌ WRONG - Don't use raw strings or old patterns
 const result = await executeOperation(server, `mutation { login(...) }`)
 ```
@@ -157,8 +232,18 @@ const result = await executeOperation(server, `mutation { login(...) }`)
 The project uses Base64-encoded global IDs for all entities:
 
 ```typescript
-// Encoding: "Post:1" → "UG9zdDox"
-// Decoding in Shield rules:
+// Encoding format: "EntityType:numericId"
+// Example: "Post:1" → "UG9zdDox"
+
+// Helper functions
+import { toPostId, toUserId, extractNumericId } from '@/utils/relay'
+
+// In resolvers
+const post = await prisma.post.findUnique({
+  where: { id: extractNumericId(args.id) }
+})
+
+// In Shield rules
 const postId = parseGlobalId(args.id, 'Post') // Returns numeric ID
 ```
 
@@ -227,6 +312,7 @@ OIDC_JWKS_PATH="./oidc-jwks.json"    # Path to JWKS keys for OIDC
 - **Lint errors**: Run `bun run check:fix` to auto-fix (add `--unsafe` for any types)
 - **Shield errors**: Shield returns "Not authorized" as fallback - check rule logic
 - **OIDC resolver errors**: Ensure DI container is configured before schema building
+- **GraphQL duplication**: Use npm/npx for Vitest, not bun vitest
 
 ## Performance Optimizations
 
@@ -243,6 +329,7 @@ Tests use Vitest with the following configuration:
 - **Path aliases**: Use `@test/*` for test utilities, `@` for src imports
 - **GraphQL deduplication**: Single GraphQL instance enforced to prevent schema errors
 - **Test database**: Separate SQLite database created for tests
+- **Automatic cleanup**: Database cleaned between test files automatically
 
 ### Test Path Aliases
 
@@ -272,6 +359,13 @@ The project includes comprehensive test utilities:
 - `createMockContext()`: Creates unauthenticated context
 - `createGraphQLTestHelper()`: Type-safe GraphQL test helper with query/mutate/expectError methods
 
+### Advanced Test Helpers (`@test/utils/helpers/`)
+- `gqlHelpers.expectSuccessfulQuery()`: Assert successful query execution
+- `gqlHelpers.expectSuccessfulMutation()`: Assert successful mutation execution
+- `gqlHelpers.expectGraphQLError()`: Assert specific GraphQL errors
+- `benchmark()`: Performance testing utility
+- `GraphQLSnapshotTester`: Snapshot testing for GraphQL responses
+
 ### Database Utilities (`@test/utils/database/`)
 - `prisma`: Test database Prisma client
 - `cleanDatabase()`: Cleans test database between tests
@@ -286,6 +380,14 @@ Context is created by `context.factory.ts` and includes:
 - `requestId`: Unique request identifier
 
 Never add Prisma to context - always import directly.
+
+### DataLoader Usage
+
+```typescript
+// Available loaders in context
+const users = await context.loaders.userById.loadMany([1, 2, 3])
+const posts = await context.loaders.postById.load(postId)
+```
 
 ## Code Style & Formatting
 
@@ -413,6 +515,63 @@ The project uses H3 as the HTTP framework with the following endpoints:
 - Event handlers with `defineEventHandler()`
 - Integration with Apollo Server via custom handler
 
+## GraphQL Tada Patterns
+
+### Fragment Definitions
+```typescript
+// Define fragments in src/gql/fragments/
+export const UserFragment = graphql(`
+  fragment UserFields on User @_unmask {
+    id
+    email
+    name
+  }
+`)
+
+// Use in operations
+export const GetUserQuery = graphql(`
+  query GetUser($id: ID!) {
+    user(id: $id) {
+      ...UserFields
+    }
+  }
+`, [UserFragment])
+```
+
+### Type Extraction
+```typescript
+import type { ResultOf, VariablesOf } from '@graphql-typed-document-node/core'
+
+type UserData = ResultOf<typeof GetUserQuery>
+type UserVars = VariablesOf<typeof GetUserQuery>
+```
+
+## Error Handling Patterns
+
+### Error Hierarchy
+- `GraphQLError` (base)
+  - `AuthenticationError` (401)
+  - `ForbiddenError` (403)
+  - `UserInputError` (400)
+  - `NotFoundError` (404)
+  - `InternalServerError` (500)
+
+### Prisma Error Mapping
+```typescript
+// Automatic mapping in normalizeError()
+P2002 → UserInputError (unique constraint)
+P2025 → NotFoundError (record not found)
+P2003 → UserInputError (foreign key constraint)
+```
+
+### Error Constants
+```typescript
+import { ERROR_MESSAGES } from '@/shared/constants/errors'
+
+// Use predefined messages
+throw new AuthenticationError(ERROR_MESSAGES.INVALID_CREDENTIALS)
+```
+
 ## Important Cursor Rules
 
 The project includes extensive Cursor rules in `.cursor/rules/` that provide:
@@ -423,3 +582,35 @@ The project includes extensive Cursor rules in `.cursor/rules/` that provide:
 - Common issue resolutions
 
 These rules ensure consistent code patterns across the codebase.
+
+## Common Pitfalls
+
+### Wrong: Manual relation resolvers
+```typescript
+// ❌ WRONG
+t.field('author', {
+  type: 'User',
+  resolve: (parent) => prisma.user.findUnique({ where: { id: parent.authorId } })
+})
+
+// ✅ CORRECT
+t.relation('author')
+```
+
+### Wrong: Not spreading query in Prisma operations
+```typescript
+// ❌ WRONG
+return prisma.post.findMany({ where: { authorId } })
+
+// ✅ CORRECT
+return prisma.post.findMany({ ...query, where: { authorId } })
+```
+
+### Wrong: Throwing in Shield rules
+```typescript
+// ❌ WRONG
+throw new Error('Not authorized')
+
+// ✅ CORRECT
+return new ForbiddenError('Not authorized')
+```

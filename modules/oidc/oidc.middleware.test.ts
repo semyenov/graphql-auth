@@ -11,8 +11,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import 'reflect-metadata'
 import { container } from 'tsyringe'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createOidcMiddleware } from '../../../modules/oidc/oidc.middleware'
-import type { IOidcProviderService } from '../../../modules/oidc/services/oidc-provider.service'
+import { createOidcMiddleware } from './oidc.middleware'
+import type { IOidcProviderService } from './services/oidc-provider.service'
 
 // Create mocks that will be reset in beforeEach
 interface MockProvider {
@@ -62,8 +62,7 @@ describe('OIDC Middleware Tests', () => {
     const callbackHandler = vi.fn().mockResolvedValue(undefined)
     mockProvider.callback.mockReturnValue(callbackHandler)
 
-    // Register mock service
-    container.clearInstances()
+    // Register mock service (override existing registration)
     container.register<IOidcProviderService>('IOidcProviderService', {
       useValue: mockOidcService,
     })

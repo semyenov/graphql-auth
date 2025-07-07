@@ -66,7 +66,7 @@ describe('OIDC Integration Tests', () => {
   describe('Session Management Integration', () => {
     it('should create and retrieve sessions through service', async () => {
       // Create a session
-      const session = await prisma.oidcSession.create({
+      await prisma.oidcSession.create({
         data: {
           sessionId: 'test-session-id',
           userId: testUser.id,
@@ -90,7 +90,7 @@ describe('OIDC Integration Tests', () => {
 
     it('should handle session expiration correctly', async () => {
       // Create expired session
-      const expiredSession = await prisma.oidcSession.create({
+      await prisma.oidcSession.create({
         data: {
           sessionId: 'expired-session',
           userId: testUser.id,
@@ -102,7 +102,7 @@ describe('OIDC Integration Tests', () => {
       })
 
       // Create active session
-      const activeSession = await prisma.oidcSession.create({
+      await prisma.oidcSession.create({
         data: {
           sessionId: 'active-session',
           userId: testUser.id,

@@ -87,7 +87,7 @@ export function mountOidcRoutes(app: ExpressLikeApp) {
     '/oidc/interaction/:uid/login',
     async (req: ExpressRequest, res: ExpressResponse) => {
       try {
-        const { uid } = req.params
+        const { uid: _uid } = req.params
 
         // Authenticate user (you'll need to implement this based on your auth service)
         // For now, this is a placeholder

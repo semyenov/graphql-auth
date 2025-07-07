@@ -37,6 +37,10 @@ async function createBaseContext(
   _res: ServerResponse,
 ): Promise<DefaultContext> {
   const headers = req.headers as Record<string, string>
+  const ipAddress = req.socket.remoteAddress
+  const userAgent = req.headers['user-agent'] || 'unknown'
+  const contentType = req.headers['content-type'] || 'application/json'
+  const requestId = crypto.randomUUID()
 
   return {
     // Request information
@@ -46,12 +50,15 @@ async function createBaseContext(
       headers,
       body: undefined, // Will be populated by Apollo Server
     },
+
     headers: new Map(Object.entries(headers)) as HeaderMap,
     method: (req.method || 'POST') as HTTPMethod,
-    contentType: headers['content-type'] || 'application/json',
+    contentType,
+
     metadata: {
+      userAgent,
+      requestId,
       timestamp: Date.now(),
-      userAgent: headers['user-agent'] || 'unknown',
       startTime: Date.now(),
     } as RequestMetadata,
 
@@ -64,15 +71,15 @@ async function createBaseContext(
 
     // Additional request info for rate limiting
     request: {
-      ip: req.socket.remoteAddress,
+      ip: ipAddress,
       headers: req.headers,
       connection: {
-        remoteAddress: req.socket.remoteAddress,
+        remoteAddress: ipAddress,
       },
     },
 
     // Client information
-    ipAddress: req.socket.remoteAddress,
+    ipAddress,
   }
 }
 

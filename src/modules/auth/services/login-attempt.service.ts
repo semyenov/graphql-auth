@@ -22,7 +22,7 @@ export interface AccountLockoutConfig {
   checkWindowMinutes: number
 }
 
-@injectable()
+@injectable({})
 export class LoginAttemptService {
   private readonly defaultConfig: AccountLockoutConfig = {
     maxAttempts: 5,

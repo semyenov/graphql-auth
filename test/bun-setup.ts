@@ -2,7 +2,6 @@ import { afterAll, beforeAll, beforeEach } from 'bun:test'
 import { prisma } from '@test/utils/database/prisma'
 import { execSync } from 'child_process'
 import { rm } from 'fs/promises'
-import { configureContainer } from '../src/app/config/container'
 import { rateLimiter } from '../src/app/services/rate-limiter.service'
 import { resetSchemaCache } from '../src/graphql/schema'
 import { TEST_DATABASE_URL } from './test-database-url'
@@ -12,7 +11,7 @@ const dbFilePath = TEST_DATABASE_URL.replace('file:', '')
 beforeAll(async () => {
   try {
     console.log(`Setting up test database: ${TEST_DATABASE_URL}`)
-    configureContainer()
+    // Container is already configured in test-env.ts
 
     await prisma.$connect()
 

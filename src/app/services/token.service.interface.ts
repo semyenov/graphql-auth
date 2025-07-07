@@ -15,13 +15,6 @@ export interface AuthTokens {
   refreshToken: string
 }
 
-export interface ITokenConfig {
-  accessTokenSecret: string
-  refreshTokenSecret: string
-  accessTokenExpiresIn: string // e.g., '15m'
-  refreshTokenExpiresIn: string // e.g., '7d'
-}
-
 export interface ITokenService {
   /**
    * Generate both access and refresh tokens for a user.

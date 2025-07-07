@@ -6,7 +6,7 @@
  */
 
 import type { ApolloServerPlugin } from '@apollo/server'
-import type { IncomingMessage, ServerResponse } from 'http'
+import type { ServerResponse } from 'http'
 import type { DefaultContext } from '../../graphql/context/context.types'
 import { isDevelopment } from '../config/environment'
 
@@ -192,27 +192,6 @@ export function applySecurityHeaders(
   // X-XSS-Protection
   if (config.xssFilter !== false) {
     res.setHeader('X-XSS-Protection', '0') // Modern browsers have this disabled
-  }
-}
-
-/**
- * Security headers middleware factory
- */
-export function createSecurityHeadersMiddleware(
-  config?: SecurityHeadersConfig,
-) {
-  const mergedConfig = { ...defaultConfig, ...config }
-
-  return async (
-    _req: IncomingMessage,
-    res: ServerResponse,
-    next: () => Promise<void>,
-  ) => {
-    // Apply security headers
-    applySecurityHeaders(res, mergedConfig)
-
-    // Continue to next middleware
-    await next()
   }
 }
 

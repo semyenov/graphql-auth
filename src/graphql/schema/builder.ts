@@ -4,7 +4,7 @@ import ErrorsPlugin from '@pothos/plugin-errors'
 import PrismaPlugin from '@pothos/plugin-prisma'
 import type PrismaTypes from '@pothos/plugin-prisma/generated'
 import RelayPlugin from '@pothos/plugin-relay'
-import ScopeAuthPlugin from '@pothos/plugin-scope-auth'
+import AuthScopePlugin from '@pothos/plugin-scope-auth'
 import ValidationPlugin from '@pothos/plugin-validation'
 import type { ZodError } from 'zod'
 import { isProduction } from '../../app/config/environment'
@@ -24,6 +24,9 @@ import ShieldPlugin from './plugins/shield'
 export const builder = new SchemaBuilder<{
   Context: DefaultContext
   PrismaTypes: PrismaTypes
+  AuthScopes: {
+    public: boolean
+  }
   Scalars: {
     DateTime: {
       Input: Date
@@ -60,17 +63,10 @@ export const builder = new SchemaBuilder<{
     RelayPlugin,
     ErrorsPlugin,
     DataloaderPlugin,
-    ScopeAuthPlugin,
     ValidationPlugin,
+    AuthScopePlugin,
     ShieldPlugin,
   ],
-  scopeAuth: {
-    authScopes: async (context) => ({
-      public: true,
-      authenticated: !!context.userId,
-      admin: context.security?.roles?.includes('admin') ?? false,
-    }),
-  },
   prisma: {
     client: prisma,
     exposeDescriptions: true,
@@ -101,6 +97,13 @@ export const builder = new SchemaBuilder<{
           .filter(Boolean) as string[],
         'Validation failed',
       )
+    },
+  },
+  scopeAuth: {
+    authScopes(_ctx) {
+      return {
+        public: true,
+      }
     },
   },
 })
