@@ -14,8 +14,7 @@ import {
   SignupMutation,
 } from '@/gql/mutations'
 import { DraftsQuery, FeedQuery, MeQuery, PostQuery } from '@/gql/queries'
-import { prisma } from '@/modules/shared/database'
-import { PermissionUtils } from '@/modules/shared/middleware/utils-clean'
+import { prisma } from '@/modules/shared/shared.module'
 import { UserId } from '@/types/value-objects'
 
 describe('Enhanced Permissions System', () => {

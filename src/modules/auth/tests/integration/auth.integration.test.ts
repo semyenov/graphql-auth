@@ -22,7 +22,7 @@ import {
   SignupMutation,
 } from '@/gql/mutations'
 import { MeQuery } from '@/gql/queries'
-import { prisma } from '@/modules/shared/database'
+import { prisma } from '@/modules/shared/shared.module'
 
 describe('Authentication Integration Tests', () => {
   const server = createTestServer()

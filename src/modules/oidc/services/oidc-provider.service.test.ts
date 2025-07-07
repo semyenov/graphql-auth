@@ -12,7 +12,7 @@ import type { OidcClient, User } from '@prisma/client'
 import type { KoaContextWithOIDC } from 'oidc-provider'
 import 'reflect-metadata'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { prisma } from '@/modules/shared/database'
+import { prisma } from '@/modules/shared/shared.module'
 import { OidcProviderService } from './oidc-provider.service'
 
 describe('OidcProviderService', () => {
